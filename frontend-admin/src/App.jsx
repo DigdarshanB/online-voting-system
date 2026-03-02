@@ -11,8 +11,18 @@
  */
 
 import React from "react";
+import { Routes, Route } from "react-router-dom";
 import AdminAuthPage from "./pages/AdminAuthPage";
 
+function DashboardPage() {
+  return <div>Welcome, admin!</div>;
+}
+
 export default function App() {
-  return <AdminAuthPage />;
+  return (
+    <Routes>
+      <Route path="/" element={<AdminAuthPage />} />
+      <Route path="/dashboard" element={<DashboardPage />} />
+    </Routes>
+  );
 }

@@ -1,4 +1,6 @@
 import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import "./VoterAuthPage.css";
 
 /**
@@ -41,6 +43,11 @@ export default function VoterAuthPage() {
 
   /* UI-level error messaging for immediate feedback (does not replace server validation). */
   const [formError, setFormError] = useState("");
+
+  /* Loading flag to disable submit during in-flight requests. */
+  const [loading, setLoading] = useState(false);
+
+  const navigate = useNavigate();
 
   /* Public asset reference; do not import from /public using relative paths. */
   const nepalFlagUrl = useMemo(() => "/assets/nepal-flag.png", []);
@@ -89,11 +96,8 @@ export default function VoterAuthPage() {
   /**
    * Purpose:
    *   Handle form submission for the active mode.
-   *
-   * Integration Point:
-   *   Insert API calls in the placeholders without changing the UI layout.
    */
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
     const errorMessage = validateCurrentMode();
@@ -102,21 +106,32 @@ export default function VoterAuthPage() {
       return;
     }
 
-    if (mode === "login") {
-      /*
-       * TODO (Integration):
-       *   POST to voter login endpoint.
-       *   Example payload: { citizenshipId, password }
-       */
-    } else {
-      /*
-       * TODO (Integration):
-       *   POST to voter registration endpoint.
-       *   Example payload: { fullName, phoneNumber, citizenshipId, password }
-       */
-    }
-
     setFormError("");
+    setLoading(true);
+
+    try {
+      if (mode === "login") {
+        const { data } = await axios.post("http://localhost:8000/auth/login", {
+          citizenship_number: loginForm.citizenshipId,
+          password: loginForm.password,
+        });
+        localStorage.setItem("access_token", data.access_token);
+        navigate("/home");
+      } else {
+        await axios.post("http://localhost:8000/auth/register", {
+          full_name: registerForm.fullName,
+          phone_number: registerForm.phoneNumber,
+          citizenship_number: registerForm.citizenshipId,
+          password: registerForm.password,
+        });
+        setMode("login");
+      }
+    } catch (err) {
+      const detail = err?.response?.data?.detail;
+      setFormError(typeof detail === "string" ? detail : "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -310,8 +325,8 @@ export default function VoterAuthPage() {
             </div>
           )}
 
-          <button className="voter-continue" type="submit">
-            Continue
+          <button className="voter-continue" type="submit" disabled={loading}>
+            {loading ? "Please wait…" : "Continue"}
           </button>
 
           <footer className="voter-footer">Secure Authentication System</footer>

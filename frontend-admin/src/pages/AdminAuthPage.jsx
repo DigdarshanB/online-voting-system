@@ -16,6 +16,8 @@
  */
 
 import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import "./AdminAuthPage.css";
 
 const PORTAL_TABS = {
@@ -31,6 +33,14 @@ export default function AdminAuthPage() {
   const [activeTab, setActiveTab] = useState(PORTAL_TABS.LOGIN);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  /* Loading flag to disable submit during in-flight requests. */
+  const [loading, setLoading] = useState(false);
+
+  /* Server-side error message. */
+  const [serverError, setServerError] = useState("");
+
+  const navigate = useNavigate();
 
   /**
    * Purpose:
@@ -69,33 +79,48 @@ export default function AdminAuthPage() {
   function handleLoginChange(event) {
     const { name, value } = event.target;
     setLoginForm((prev) => ({ ...prev, [name]: value }));
+    setServerError("");
   }
 
   function handleRegisterChange(event) {
     const { name, value } = event.target;
     setRegisterForm((prev) => ({ ...prev, [name]: value }));
+    setServerError("");
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
-    /**
-     * Purpose:
-     *   Prevent submission when passwords do not match (register tab).
-     *
-     * Expected Outcome:
-     *   A user-friendly block that avoids sending inconsistent input to the backend.
-     */
     if (activeTab === PORTAL_TABS.REGISTER && passwordMismatch) {
       return;
     }
 
-    /**
-     * Placeholder:
-     *   Replace with backend integration (e.g., POST /admin/auth/login or /admin/auth/register).
-     *   The server must enforce identity verification and role-based access checks.
-     */
-    // console.log({ activeTab, loginForm, registerForm });
+    setServerError("");
+    setLoading(true);
+
+    try {
+      if (activeTab === PORTAL_TABS.LOGIN) {
+        const { data } = await axios.post("http://localhost:8000/auth/login", {
+          citizenship_number: loginForm.adminId,
+          password: loginForm.password,
+        });
+        localStorage.setItem("access_token", data.access_token);
+        navigate("/dashboard");
+      } else {
+        await axios.post("http://localhost:8000/auth/register", {
+          full_name: registerForm.fullName,
+          phone_number: registerForm.phoneNumber,
+          citizenship_number: registerForm.adminId,
+          password: registerForm.password,
+        });
+        setActiveTab(PORTAL_TABS.LOGIN);
+      }
+    } catch (err) {
+      const detail = err?.response?.data?.detail;
+      setServerError(typeof detail === "string" ? detail : "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -138,6 +163,12 @@ export default function AdminAuthPage() {
         {activeTab === PORTAL_TABS.REGISTER && passwordMismatch && (
           <div className="admin-error" role="alert">
             Password and confirm password must match.
+          </div>
+        )}
+
+        {serverError && (
+          <div className="admin-error" role="alert">
+            {serverError}
           </div>
         )}
 
@@ -299,8 +330,8 @@ export default function AdminAuthPage() {
             </div>
           )}
 
-          <button type="submit" className="admin-continue">
-            Continue
+          <button type="submit" className="admin-continue" disabled={loading}>
+            {loading ? "Please wait…" : "Continue"}
           </button>
 
           <div className="admin-footer">Secure Authentication System</div>

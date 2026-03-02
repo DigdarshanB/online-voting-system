@@ -5,7 +5,7 @@ from app.routes.auth import router as auth_router
 
 app = FastAPI(title="Online Voting System API")
 
-# ✅ DEV CORS (allow Vite ports)
+# DEV CORS (allow Vite ports)
 origins = [
     "http://localhost:5173",
     "http://localhost:5174",
@@ -21,7 +21,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth_router, prefix="/auth", tags=["auth"])
+app.include_router(auth_router)
 
 @app.get("/health")
 def health():
