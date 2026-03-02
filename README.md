@@ -12,13 +12,12 @@ A web-based online voting system with separate **Voter** and **Admin** portals, 
 ---
 
 ## Repository Structure
-
-``
-├── backend/ # FastAPI API + SQLAlchemy models + Alembic migrations
-├── frontend/ # Voter portal (React/Vite)
+```text
+.
+├── backend/        # FastAPI API + SQLAlchemy models + Alembic migrations
+├── frontend/       # Voter portal (React/Vite)
 ├── frontend-admin/ # Admin portal (React/Vite)
-└── infra/ # Docker Compose (MySQL + Adminer)
-``
+└── infra/          # Docker Compose (MySQL + Adminer)
 
 ---
 
