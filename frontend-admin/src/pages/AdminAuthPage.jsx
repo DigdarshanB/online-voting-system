@@ -22,7 +22,7 @@ import "./AdminAuthPage.css";
 
 const PORTAL_TABS = {
   LOGIN: "login",
-  REGISTER: "register",
+  ACTIVATE: "activate",
 };
 
 export default function AdminAuthPage() {
@@ -63,18 +63,21 @@ export default function AdminAuthPage() {
     confirmPassword: "",
   });
 
-  /**
-   * Purpose:
-   *   Provide a simple client-side mismatch check to improve usability.
-   *
-   * Security Note:
-   *   Client-side checks are not a security control; server-side validation is required.
-   */
+  const [activateForm, setActivateForm] = useState({
+    invite_code: "",
+    full_name: "",
+    phone_number: "",
+    citizenship_number: "",
+    password: "",
+  });
+
+  /* Success message shown after a successful invite activation. */
+  const [activateSuccess, setActivateSuccess] = useState("");
+
   const passwordMismatch = useMemo(() => {
-    if (activeTab !== PORTAL_TABS.REGISTER) return false;
-    if (!registerForm.password || !registerForm.confirmPassword) return false;
-    return registerForm.password !== registerForm.confirmPassword;
-  }, [activeTab, registerForm.password, registerForm.confirmPassword]);
+    if (activeTab !== PORTAL_TABS.LOGIN) return false;
+    return false;
+  }, [activeTab]);
 
   function handleLoginChange(event) {
     const { name, value } = event.target;
@@ -88,32 +91,38 @@ export default function AdminAuthPage() {
     setServerError("");
   }
 
+  function handleActivateChange(event) {
+    const { name, value } = event.target;
+    setActivateForm((prev) => ({ ...prev, [name]: value }));
+    setServerError("");
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
 
-    if (activeTab === PORTAL_TABS.REGISTER && passwordMismatch) {
-      return;
-    }
-
     setServerError("");
+    setActivateSuccess("");
     setLoading(true);
 
     try {
       if (activeTab === PORTAL_TABS.LOGIN) {
-        const { data } = await axios.post("http://localhost:8000/auth/login", {
+        const { data } = await axios.post("http://localhost:8000/auth/admin/login", {
           citizenship_number: loginForm.adminId,
           password: loginForm.password,
         });
         localStorage.setItem("access_token", data.access_token);
         navigate("/dashboard");
       } else {
-        await axios.post("http://localhost:8000/auth/register", {
-          full_name: registerForm.fullName,
-          phone_number: registerForm.phoneNumber,
-          citizenship_number: registerForm.adminId,
-          password: registerForm.password,
+        const { data } = await axios.post("http://localhost:8000/auth/admin/activate", {
+          invite_code: activateForm.invite_code,
+          full_name: activateForm.full_name,
+          phone_number: activateForm.phone_number,
+          citizenship_number: activateForm.citizenship_number,
+          password: activateForm.password,
         });
-        setActiveTab(PORTAL_TABS.LOGIN);
+        setActivateSuccess(
+          `Account activated. Status: ${data.status ?? "PENDING_VERIFICATION"}`
+        );
       }
     } catch (err) {
       const detail = err?.response?.data?.detail;
@@ -151,19 +160,28 @@ export default function AdminAuthPage() {
 
           <button
             type="button"
-            className="admin-tab"
+            className={`admin-tab ${activeTab === PORTAL_TABS.ACTIVATE ? "active" : ""}`}
             role="tab"
-            aria-selected={false}
-            disabled
-            title="Admins are provisioned by the Election Commission"
+            aria-selected={activeTab === PORTAL_TABS.ACTIVATE}
+            onClick={() => {
+              setActiveTab(PORTAL_TABS.ACTIVATE);
+              setActivateSuccess("");
+              setServerError("");
+            }}
           >
-            Register
+            Activate Invite
           </button>
         </div>
 
         {serverError && (
           <div className="admin-error" role="alert">
             {serverError}
+          </div>
+        )}
+
+        {activateSuccess && (
+          <div className="admin-error" role="status" style={{ background: "#d1fae5", color: "#065f46", borderColor: "#6ee7b7" }}>
+            {activateSuccess}
           </div>
         )}
 
@@ -216,9 +234,97 @@ export default function AdminAuthPage() {
             </div>
           ) : (
             <div className="admin-grid">
-              <p className="admin-label" style={{ gridColumn: "1 / -1", textAlign: "center", padding: "1.5rem 0" }}>
-                Admins are provisioned by the Election Commission.
-              </p>
+              <div className="admin-field">
+                <label className="admin-label" htmlFor="inviteCode">
+                  Invite Code
+                </label>
+                <input
+                  id="inviteCode"
+                  className="admin-input"
+                  name="invite_code"
+                  type="text"
+                  value={activateForm.invite_code}
+                  onChange={handleActivateChange}
+                  placeholder="Enter invite code"
+                  autoComplete="off"
+                />
+              </div>
+
+              <div className="admin-field">
+                <label className="admin-label" htmlFor="fullNameActivate">
+                  Full Name
+                </label>
+                <input
+                  id="fullNameActivate"
+                  className="admin-input"
+                  name="full_name"
+                  type="text"
+                  value={activateForm.full_name}
+                  onChange={handleActivateChange}
+                  placeholder="Enter full name"
+                  autoComplete="name"
+                />
+              </div>
+
+              <div className="admin-field">
+                <label className="admin-label" htmlFor="phoneActivate">
+                  Phone Number
+                </label>
+                <input
+                  id="phoneActivate"
+                  className="admin-input"
+                  name="phone_number"
+                  type="tel"
+                  value={activateForm.phone_number}
+                  onChange={handleActivateChange}
+                  placeholder="Enter phone number"
+                  autoComplete="tel"
+                />
+              </div>
+
+              <div className="admin-field">
+                <label className="admin-label" htmlFor="citizenshipActivate">
+                  Citizenship Number
+                </label>
+                <input
+                  id="citizenshipActivate"
+                  className="admin-input"
+                  name="citizenship_number"
+                  type="text"
+                  value={activateForm.citizenship_number}
+                  onChange={handleActivateChange}
+                  placeholder="Enter citizenship number"
+                  autoComplete="off"
+                />
+              </div>
+
+              <div className="admin-field">
+                <label className="admin-label" htmlFor="passwordActivate">
+                  Password
+                </label>
+                <div className="admin-password-row">
+                  <input
+                    id="passwordActivate"
+                    className="admin-input"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    value={activateForm.password}
+                    onChange={handleActivateChange}
+                    placeholder="Create password"
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    className="admin-mini-btn"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="admin-empty-slot" aria-hidden="true" />
             </div>
           )}
 

@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.routes.auth import router as auth_router
+from app.routes.admin import router as admin_router
 
 app = FastAPI(title="Online Voting System API")
 
@@ -22,6 +23,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(admin_router)
 
 @app.get("/health")
 def health():
