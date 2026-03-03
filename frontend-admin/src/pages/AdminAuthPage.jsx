@@ -151,20 +151,15 @@ export default function AdminAuthPage() {
 
           <button
             type="button"
-            className={`admin-tab ${activeTab === PORTAL_TABS.REGISTER ? "active" : ""}`}
+            className="admin-tab"
             role="tab"
-            aria-selected={activeTab === PORTAL_TABS.REGISTER}
-            onClick={() => setActiveTab(PORTAL_TABS.REGISTER)}
+            aria-selected={false}
+            disabled
+            title="Admins are provisioned by the Election Commission"
           >
             Register
           </button>
         </div>
-
-        {activeTab === PORTAL_TABS.REGISTER && passwordMismatch && (
-          <div className="admin-error" role="alert">
-            Password and confirm password must match.
-          </div>
-        )}
 
         {serverError && (
           <div className="admin-error" role="alert">
@@ -220,6 +215,14 @@ export default function AdminAuthPage() {
               </div>
             </div>
           ) : (
+            <div className="admin-grid">
+              <p className="admin-label" style={{ gridColumn: "1 / -1", textAlign: "center", padding: "1.5rem 0" }}>
+                Admins are provisioned by the Election Commission.
+              </p>
+            </div>
+          )}
+
+          {false && (
             <div className="admin-grid admin-grid-register">
               <div className="admin-field">
                 <label className="admin-label" htmlFor="fullNameRegister">

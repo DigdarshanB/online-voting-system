@@ -16,6 +16,7 @@ class RegisterRequest(BaseModel):
     phone_number: str
     citizenship_number: str
     password: str
+    role: str | None = None
 
 class LoginRequest(BaseModel):
     citizenship_number: str
@@ -23,6 +24,16 @@ class LoginRequest(BaseModel):
 
 @router.post("/register")
 def register(payload: RegisterRequest, db: Session = Depends(get_db)):
+    # --- Segment A0.1: block admin self-registration ---
+    if payload.role and payload.role.lower() in ("admin", "super_admin"):
+        raise HTTPException(
+            status_code=403,
+            detail="Public registration cannot create admin accounts",
+        )
+    # Force voter role regardless of any supplied value
+    resolved_role = "voter"
+    # -----------------------------------------------
+
     normalized = normalize_citizenship_number(payload.citizenship_number)
 
     existing = db.execute(
@@ -37,7 +48,7 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
         citizenship_no_raw=payload.citizenship_number,
         citizenship_no_normalized=normalized,
         hashed_password=hash_password(payload.password),
-        role="voter",
+        role=resolved_role,
         status="ACTIVE",
     )
     db.add(user)
@@ -60,3 +71,4 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
 
     token = create_access_token(subject=str(user.id), role=user.role)
     return {"access_token": token, "token_type": "bearer"}
+
