@@ -111,7 +111,9 @@ export default function AdminAuthPage() {
           password: loginForm.password,
         });
         localStorage.setItem("access_token", data.access_token);
-        navigate("/dashboard");
+        // Mandatory MFA per login session: reset session flag and force TOTP step.
+        sessionStorage.setItem("admin_mfa_ok", "0");
+        navigate("/totp-setup");
       } else {
         const { data } = await axios.post("http://localhost:8000/auth/admin/activate", {
           invite_code: activateForm.invite_code,

@@ -10,7 +10,7 @@ from app.db.deps import get_db
 from app.models.admin_invite import AdminInvite
 from app.models.user import User
 from app.core.security import hash_password, verify_password
-from app.core.jwt import create_access_token
+from app.core.jwt import create_access_token, get_current_user
 from app.utils.citizenship import normalize_citizenship_number
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -153,4 +153,23 @@ def admin_login(payload: LoginRequest, db: Session = Depends(get_db)):
 
     token = create_access_token(subject=str(user.id), role=user.role)
     return {"access_token": token, "token_type": "bearer"}
+
+
+# ── GET /auth/me ────────────────────────────────────────────────
+
+class MeResponse(BaseModel):
+    id: int
+    role: str
+    status: str
+    totp_enabled: bool
+
+
+@router.get("/me", response_model=MeResponse)
+def me(current_user: User = Depends(get_current_user)):
+    return MeResponse(
+        id=current_user.id,
+        role=current_user.role,
+        status=current_user.status,
+        totp_enabled=current_user.totp_enabled_at is not None,
+    )
 
