@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routes.auth import router as auth_router
 from app.routes.admin import router as admin_router
 from app.routes.verification import router as verification_router
+from app.routes.admin_verifications import router as admin_verifications_router
 
 app = FastAPI(title="Online Voting System API")
 
@@ -26,6 +27,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(admin_router)
 app.include_router(verification_router)
+app.include_router(admin_verifications_router)
 
 @app.get("/health")
 def health():

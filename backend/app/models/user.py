@@ -20,3 +20,5 @@ class User(Base):
     status: Mapped[str] = mapped_column(String(20), default="ACTIVE")
     totp_secret: Mapped[str | None] = mapped_column(String(255), nullable=True)
     totp_enabled_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    rejection_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)

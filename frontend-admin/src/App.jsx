@@ -11,12 +11,84 @@
  */
 
 import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, Link } from "react-router-dom";
 import AdminAuthPage from "./pages/AdminAuthPage";
 import AdminTotpSetup from "./pages/AdminTotpSetup";
+import SuperAdminInvitesPage from "./pages/SuperAdminInvitesPage";
+import PendingAdmins from "./pages/PendingAdmins";
+import ManageAdmins from "./pages/ManageAdmins";
+import ActivateInvitePage from "./pages/ActivateInvitePage";
 
-function DashboardPage() {
-  return <div>Welcome, admin!</div>;
+function PendingApprovalPage() {
+  const navigate = React.useNavigate();
+
+  function handleLogout() {
+    localStorage.removeItem("access_token");
+    sessionStorage.removeItem("admin_mfa_ok");
+    navigate("/", { replace: true });
+  }
+
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#f8fafc",
+        fontFamily: "sans-serif",
+        padding: 24,
+      }}
+    >
+      <div
+        style={{
+          maxWidth: 460,
+          width: "100%",
+          background: "#fff",
+          borderRadius: 12,
+          boxShadow: "0 2px 16px rgba(0,0,0,.08)",
+          padding: "40px 36px",
+          textAlign: "center",
+        }}
+      >
+        <div style={{ fontSize: 48, marginBottom: 16 }}>&#9203;</div>
+        <h2 style={{ margin: "0 0 12px", color: "#1e293b" }}>Awaiting Approval</h2>
+        <p style={{ color: "#64748b", fontSize: 14, lineHeight: 1.6, marginBottom: 28 }}>
+          Your account has been set up and your MFA authenticator is configured.
+          A super admin must approve your account before you can access the dashboard.
+          Please check back later.
+        </p>
+        <button
+          onClick={handleLogout}
+          style={{
+            background: "#1e56c7",
+            color: "#fff",
+            border: "none",
+            borderRadius: 8,
+            padding: "10px 28px",
+            fontSize: 14,
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
+          Back to Login
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
+  return (
+    <div style={{ padding: 32, fontFamily: "sans-serif" }}>
+      <h1 style={{ marginBottom: 16 }}>Welcome, admin!</h1>
+      <nav style={{ display: "flex", gap: 12 }}>
+        <Link to="/superadmin/manage-admins" style={{ color: "#1e56c7", fontWeight: 700 }}>
+          Manage Admins
+        </Link>
+      </nav>
+    </div>
+  );
 }
 
 function RequireDashboardMfa({ children }) {
@@ -57,6 +129,26 @@ export default function App() {
           </RequireAuthForTotp>
         }
       />
+      <Route
+        path="/superadmin/invites"
+        element={<Navigate to="/superadmin/manage-admins" replace />}
+      />
+      <Route
+        path="/superadmin/pending-admins"
+        element={<Navigate to="/superadmin/manage-admins" replace />}
+      />
+      <Route
+        path="/superadmin/manage-admins"
+        element={
+          <RequireDashboardMfa>
+            <ManageAdmins />
+          </RequireDashboardMfa>
+        }
+      />
+      {/* Public: no auth guard – the invited admin has no token yet */}
+      <Route path="/activate-invite" element={<ActivateInvitePage />} />
+      {/* Shown after MFA setup when account is awaiting super-admin approval */}
+      <Route path="/pending-approval" element={<PendingApprovalPage />} />
     </Routes>
   );
 }

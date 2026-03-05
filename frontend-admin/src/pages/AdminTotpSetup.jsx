@@ -47,6 +47,18 @@ export default function AdminTotpSetup() {
           headers: authHeaders(),
         });
 
+        // Account is already approved and MFA was verified this session — go to dashboard.
+        if (data.status === "ACTIVE" && sessionStorage.getItem("admin_mfa_ok") === "1") {
+          navigate("/dashboard", { replace: true });
+          return;
+        }
+
+        // Account is awaiting super-admin approval — show pending screen.
+        if (data.status === "PENDING_APPROVAL") {
+          navigate("/pending-approval", { replace: true });
+          return;
+        }
+
         if (data.totp_enabled) {
           setStep("challenge");
         } else {
@@ -95,9 +107,22 @@ export default function AdminTotpSetup() {
         { code },
         { headers: authHeaders() }
       );
-      sessionStorage.setItem("admin_mfa_ok", "1");
-      setStep("done");
-      navigate("/dashboard");
+      // Re-fetch status: MFA setup transitions PENDING_MFA → PENDING_APPROVAL.
+      const { data: me } = await axios.get(`${API}/auth/me`, { headers: authHeaders() });
+      if (me.status === "ACTIVE") {
+        sessionStorage.setItem("admin_mfa_ok", "1");
+        setStep("done");
+        navigate("/dashboard");
+      } else if (me.status === "PENDING_APPROVAL") {
+        // Do NOT grant dashboard access; send to waiting screen.
+        setStep("done");
+        navigate("/pending-approval");
+      } else {
+        // Unexpected state — clear session and return to login.
+        localStorage.removeItem("access_token");
+        sessionStorage.removeItem("admin_mfa_ok");
+        navigate("/", { replace: true });
+      }
     } catch (err) {
       const detail = err?.response?.data?.detail;
       setError(typeof detail === "string" ? detail : "Verification failed. Try again.");

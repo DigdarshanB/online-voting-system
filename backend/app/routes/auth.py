@@ -1,7 +1,8 @@
 import hashlib
 from datetime import datetime, timezone
+from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy import select
@@ -10,7 +11,7 @@ from app.db.deps import get_db
 from app.models.admin_invite import AdminInvite
 from app.models.user import User
 from app.core.security import hash_password, verify_password
-from app.core.jwt import create_access_token, get_current_user
+from app.core.jwt import create_access_token, decode_activation_token, get_current_user
 from app.utils.citizenship import normalize_citizenship_number
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -28,7 +29,8 @@ class LoginRequest(BaseModel):
 
 
 class AdminActivateRequest(BaseModel):
-    invite_code: str
+    invite_code: Optional[str] = None
+    token: Optional[str] = None
     full_name: str
     phone_number: str
     citizenship_number: str
@@ -68,21 +70,69 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     db.refresh(user)
     return {"id": user.id, "citizenship_no": user.citizenship_no_normalized, "role": user.role}
 
-@router.post("/admin/activate")
-def admin_activate(payload: AdminActivateRequest, db: Session = Depends(get_db)):
-    """Activate an admin account using a one-time invite code."""
-    code_hash = hashlib.sha256(payload.invite_code.encode()).hexdigest()
+def _resolve_invite(payload: AdminActivateRequest, db: Session) -> AdminInvite:
+    """Resolve invite from token (preferred) or invite_code (backward compat)."""
+    invite: AdminInvite | None = None
 
+    if payload.token:
+        invite_id = decode_activation_token(payload.token)
+        invite = db.execute(
+            select(AdminInvite).where(AdminInvite.id == invite_id)
+        ).scalar_one_or_none()
+        if not invite:
+            raise HTTPException(status_code=400, detail="Invalid activation token")
+    elif payload.invite_code:
+        code_hash = hashlib.sha256(payload.invite_code.encode()).hexdigest()
+        invite = db.execute(
+            select(AdminInvite).where(AdminInvite.code_hash == code_hash)
+        ).scalar_one_or_none()
+        if not invite:
+            raise HTTPException(status_code=400, detail="Invalid invite code")
+    else:
+        raise HTTPException(status_code=400, detail="Provide token or invite_code")
+
+    # Lifecycle checks
+    if invite.status == "REVOKED":
+        raise HTTPException(status_code=400, detail="Invite has been revoked")
+    if invite.status == "USED":
+        raise HTTPException(status_code=400, detail="Invite already used")
+    if invite.status == "EXPIRED" or invite.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="Invite has expired")
+
+    return invite
+
+
+@router.get("/admin/activate/validate")
+def validate_activation_token(
+    token: str = Query(..., description="Signed activation token from invite link"),
+    db: Session = Depends(get_db),
+):
+    """Validate an activation token and return invite info (no auth required)."""
+    invite_id = decode_activation_token(token)
     invite = db.execute(
-        select(AdminInvite).where(AdminInvite.code_hash == code_hash)
+        select(AdminInvite).where(AdminInvite.id == invite_id)
     ).scalar_one_or_none()
 
     if not invite:
-        raise HTTPException(status_code=400, detail="Invalid invite code")
-    if invite.used_at is not None:
-        raise HTTPException(status_code=400, detail="Invite code already used")
-    if invite.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
-        raise HTTPException(status_code=400, detail="Invite code has expired")
+        raise HTTPException(status_code=400, detail="Invalid activation token")
+    if invite.status == "REVOKED":
+        raise HTTPException(status_code=400, detail="Invite has been revoked")
+    if invite.status == "USED":
+        raise HTTPException(status_code=400, detail="Invite already used")
+    if invite.status == "EXPIRED" or invite.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="Invite has expired")
+
+    return {
+        "valid": True,
+        "recipient_identifier": invite.recipient_identifier,
+        "expires_at": invite.expires_at.isoformat(),
+    }
+
+
+@router.post("/admin/activate")
+def admin_activate(payload: AdminActivateRequest, db: Session = Depends(get_db)):
+    """Activate an admin account using a signed token or raw invite code."""
+    invite = _resolve_invite(payload, db)
 
     normalized = normalize_citizenship_number(payload.citizenship_number)
 
@@ -99,11 +149,12 @@ def admin_activate(payload: AdminActivateRequest, db: Session = Depends(get_db))
         citizenship_no_normalized=normalized,
         hashed_password=hash_password(payload.password),
         role="admin",
-        status="PENDING_VERIFICATION",
+        status="PENDING_MFA",
     )
     db.add(user)
 
     invite.used_at = datetime.now(timezone.utc)
+    invite.status = "USED"
     db.commit()
     db.refresh(user)
 
@@ -148,8 +199,13 @@ def admin_login(payload: LoginRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=403, detail="Access denied: admin accounts only")
     # --------------------------------
 
-    if user.status != "ACTIVE":
-        raise HTTPException(status_code=403, detail="Account is not active")
+    # Allow PENDING_MFA so admin can reach TOTP-setup after activation;
+    # block every other non-ACTIVE state.
+    if user.status not in ("ACTIVE", "PENDING_MFA"):
+        raise HTTPException(
+            status_code=403,
+            detail="Admin account pending MFA setup or approval. Please complete MFA enrolment first.",
+        )
 
     token = create_access_token(subject=str(user.id), role=user.role)
     return {"access_token": token, "token_type": "bearer"}

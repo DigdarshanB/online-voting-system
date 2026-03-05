@@ -15,8 +15,8 @@
  *   - Uses a public static asset path for the national flag image.
  */
 
-import React, { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import "./AdminAuthPage.css";
 
@@ -41,6 +41,25 @@ export default function AdminAuthPage() {
   const [serverError, setServerError] = useState("");
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromActivation = location.state?.fromActivation === true;
+  const [searchParams] = useSearchParams();
+
+  /* Token from activation link URL (?tab=activate&token=...) */
+  const [urlToken, setUrlToken] = useState("");
+
+  /* On mount: auto-switch to Activate tab and capture token from URL. */
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    const tokenParam = searchParams.get("token");
+    if (tabParam === "activate") {
+      setActiveTab(PORTAL_TABS.ACTIVATE);
+    }
+    if (tokenParam) {
+      setUrlToken(tokenParam);
+      setActiveTab(PORTAL_TABS.ACTIVATE);
+    }
+  }, [searchParams]);
 
   /**
    * Purpose:
@@ -115,13 +134,19 @@ export default function AdminAuthPage() {
         sessionStorage.setItem("admin_mfa_ok", "0");
         navigate("/totp-setup");
       } else {
-        const { data } = await axios.post("http://localhost:8000/auth/admin/activate", {
-          invite_code: activateForm.invite_code,
+        // Build payload: prefer URL token, fall back to manual invite_code.
+        const activatePayload = {
           full_name: activateForm.full_name,
           phone_number: activateForm.phone_number,
           citizenship_number: activateForm.citizenship_number,
           password: activateForm.password,
-        });
+        };
+        if (urlToken) {
+          activatePayload.token = urlToken;
+        } else {
+          activatePayload.invite_code = activateForm.invite_code;
+        }
+        const { data } = await axios.post("http://localhost:8000/auth/admin/activate", activatePayload);
         setActivateSuccess(
           `Account activated. Status: ${data.status ?? "PENDING_VERIFICATION"}`
         );
@@ -148,6 +173,25 @@ export default function AdminAuthPage() {
           <h1 className="admin-title">Online Voting System</h1>
           <p className="admin-subtitle">Secure &amp; Transparent Elections</p>
         </header>
+
+        {fromActivation && (
+          <div
+            style={{
+              background: "#eff6ff",
+              border: "2px solid #93c5fd",
+              borderRadius: 10,
+              padding: "12px 16px",
+              marginBottom: 16,
+              color: "#1e40af",
+              fontSize: 13,
+              lineHeight: 1.5,
+            }}
+            role="status"
+          >
+            <strong>Account created!</strong> Log in below — you will be
+            automatically guided to set up your MFA authenticator app.
+          </div>
+        )}
 
         <div className="admin-tabs" role="tablist" aria-label="Admin authentication tabs">
           <button
@@ -238,17 +282,19 @@ export default function AdminAuthPage() {
             <div className="admin-grid">
               <div className="admin-field">
                 <label className="admin-label" htmlFor="inviteCode">
-                  Invite Code
+                  Invite Code {urlToken && <span style={{ fontSize: 11, color: "var(--muted)", fontWeight: 400 }}>(auto-filled from link)</span>}
                 </label>
                 <input
                   id="inviteCode"
                   className="admin-input"
                   name="invite_code"
                   type="text"
-                  value={activateForm.invite_code}
+                  value={urlToken ? "(using activation link)" : activateForm.invite_code}
                   onChange={handleActivateChange}
                   placeholder="Enter invite code"
                   autoComplete="off"
+                  disabled={!!urlToken}
+                  style={urlToken ? { opacity: 0.6, fontStyle: "italic" } : undefined}
                 />
               </div>
 

@@ -19,6 +19,42 @@ def create_access_token(subject: str, role: str) -> str:
     return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
 
 
+# ── Activation tokens (invite links) ───────────────────────────
+
+def create_activation_token(invite_id: int, expires_at: datetime) -> str:
+    """Create a short-lived JWT that encodes an invite_id for activation links."""
+    now = datetime.now(timezone.utc)
+    payload = {
+        "sub": str(invite_id),
+        "purpose": "invite_activation",
+        "iat": int(now.timestamp()),
+        "exp": int(expires_at.timestamp()),
+    }
+    return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
+
+
+def decode_activation_token(token: str) -> int:
+    """Decode an activation token and return the invite_id.
+
+    Raises HTTPException(400) on invalid/expired tokens.
+    """
+    try:
+        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
+    except JWTError:
+        raise HTTPException(status_code=400, detail="Invalid or expired activation token")
+
+    if payload.get("purpose") != "invite_activation":
+        raise HTTPException(status_code=400, detail="Invalid activation token")
+
+    invite_id = payload.get("sub")
+    if invite_id is None:
+        raise HTTPException(status_code=400, detail="Invalid activation token payload")
+
+    return int(invite_id)
+
+
+# ── User auth dependency ────────────────────────────────────────
+
 def get_current_user(
     creds: HTTPAuthorizationCredentials = Depends(_bearer),
     db: Session = Depends(get_db),

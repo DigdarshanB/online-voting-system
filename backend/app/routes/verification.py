@@ -60,6 +60,13 @@ def totp_verify(
 ):
     _require_admin(current_user)
 
+    # Only PENDING_MFA (first-time setup) and ACTIVE (per-session challenge) may verify.
+    if current_user.status not in ("PENDING_MFA", "ACTIVE"):
+        raise HTTPException(
+            status_code=403,
+            detail="Account is not in a state that allows TOTP verification",
+        )
+
     if not current_user.totp_secret:
         raise HTTPException(status_code=400, detail="TOTP setup not started")
 
@@ -68,5 +75,10 @@ def totp_verify(
         raise HTTPException(status_code=400, detail="Invalid TOTP code")
 
     current_user.totp_enabled_at = datetime.now(timezone.utc)
+
+    # Transition PENDING_MFA → PENDING_APPROVAL (requires super_admin approval).
+    if current_user.status == "PENDING_MFA":
+        current_user.status = "PENDING_APPROVAL"
+
     db.commit()
     return {"success": True}

@@ -8,4 +8,7 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRE_MINUTES: int = 60
 
+    # Admin-portal base URL used to build invite activation links.
+    ADMIN_FRONTEND_URL: str = "http://localhost:5174"
+
 settings = Settings()
