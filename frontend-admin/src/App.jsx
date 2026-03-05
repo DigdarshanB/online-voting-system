@@ -78,7 +78,7 @@ function PendingApprovalPage() {
   );
 }
 
-
+function DashboardPage() {
   return (
     <div style={{ padding: 32, fontFamily: "sans-serif" }}>
       <h1 style={{ marginBottom: 16 }}>Welcome, admin!</h1>
