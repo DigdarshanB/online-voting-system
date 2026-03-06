@@ -200,3 +200,21 @@ def disable_active_admin(
     user.approved_at = None
     db.commit()
     return {"success": True}
+
+
+# ── POST /admin/verifications/recovery/{user_id}/reset-totp ────
+
+@router.post("/recovery/{user_id}/reset-totp")
+def reset_admin_totp(
+    user_id: int,
+    db: Session = Depends(get_db),
+    _sa: User = Depends(_require_super_admin),
+):
+    """Force-reset an admin's TOTP so they can re-enrol (e.g. lost phone)."""
+    user = _get_admin_or_404(user_id, db)
+
+    user.totp_secret = None
+    user.totp_enabled_at = None
+    user.status = "PENDING_MFA"
+    db.commit()
+    return {"success": True, "status": user.status}

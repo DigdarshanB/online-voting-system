@@ -140,6 +140,18 @@
   font-weight: 800;
 }
 
+/* Success banner */
+.voter-success {
+  width: min(600px, 100%);
+  margin: 0 auto 12px auto;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  font-weight: 800;
+}
+
 .voter-form {
   width: min(660px, 100%);
   margin: 0 auto;

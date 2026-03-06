@@ -14,6 +14,8 @@ from app.db.deps import get_db
 from app.models.admin_invite import AdminInvite
 from app.models.user import User
 from app.services.invite_delivery import send_invite
+from app.utils.rate_limit import check_rate_limit
+from app.utils.citizenship import normalize_citizenship_number
 
 INVITE_EXPIRE_HOURS = 24
 
@@ -94,6 +96,24 @@ def create_invite(
 ):
     """Generate a one-time invite code for admin activation (super_admin only)."""
     _require_super_admin(current_user)
+    check_rate_limit(f"invite_create:{current_user.id}", limit=30, window_seconds=3600)
+
+    # Early check: reject if citizenship number is already registered
+    try:
+        normalized = normalize_citizenship_number(payload.recipient_identifier)
+        existing = db.execute(
+            select(User).where(User.citizenship_no_normalized == normalized)
+        ).scalar_one_or_none()
+        if existing:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Citizenship number is already registered (user id={existing.id}, role={existing.role})",
+            )
+    except HTTPException as e:
+        if e.status_code == 400 and "format" in (e.detail or "").lower():
+            pass  # recipient_identifier may not be a citizenship number — skip
+        else:
+            raise
 
     code = secrets.token_urlsafe(12)[:12]  # 12-char URL-safe random string
     code_hash = _hash_code(code)

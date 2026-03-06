@@ -17,6 +17,7 @@ import AdminTotpSetup from "./pages/AdminTotpSetup";
 import SuperAdminInvitesPage from "./pages/SuperAdminInvitesPage";
 import PendingAdmins from "./pages/PendingAdmins";
 import ManageAdmins from "./pages/ManageAdmins";
+import ManageVoters from "./pages/ManageVoters";
 import ActivateInvitePage from "./pages/ActivateInvitePage";
 
 function PendingApprovalPage() {
@@ -86,6 +87,9 @@ function DashboardPage() {
         <Link to="/superadmin/manage-admins" style={{ color: "#1e56c7", fontWeight: 700 }}>
           Manage Admins
         </Link>
+        <Link to="/admin/voter-verifications" style={{ color: "#1e56c7", fontWeight: 700 }}>
+          Voter Verifications
+        </Link>
       </nav>
     </div>
   );
@@ -147,6 +151,15 @@ export default function App() {
       />
       {/* Public: no auth guard – the invited admin has no token yet */}
       <Route path="/activate-invite" element={<ActivateInvitePage />} />
+      {/* Voter verification queue — admin + super_admin */}
+      <Route
+        path="/admin/voter-verifications"
+        element={
+          <RequireDashboardMfa>
+            <ManageVoters />
+          </RequireDashboardMfa>
+        }
+      />
       {/* Shown after MFA setup when account is awaiting super-admin approval */}
       <Route path="/pending-approval" element={<PendingApprovalPage />} />
     </Routes>

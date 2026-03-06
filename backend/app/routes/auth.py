@@ -13,6 +13,7 @@ from app.models.user import User
 from app.core.security import hash_password, verify_password
 from app.core.jwt import create_access_token, decode_activation_token, get_current_user
 from app.utils.citizenship import normalize_citizenship_number
+from app.utils.rate_limit import check_rate_limit
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -63,7 +64,7 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
         citizenship_no_normalized=normalized,
         hashed_password=hash_password(payload.password),
         role=resolved_role,
-        status="ACTIVE",
+        status="PENDING_DOCUMENT",
     )
     db.add(user)
     db.commit()
@@ -176,7 +177,12 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
     if not user or not verify_password(payload.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    if user.status != "ACTIVE":
+    # Voters may login in any verification state so they can check status / complete steps.
+    # Admins still require ACTIVE (handled by /admin/login).
+    _VOTER_BLOCKED_STATUSES = {"DISABLED"}
+    if user.role == "voter" and user.status in _VOTER_BLOCKED_STATUSES:
+        raise HTTPException(status_code=403, detail="Account is disabled")
+    if user.role != "voter" and user.status != "ACTIVE":
         raise HTTPException(status_code=403, detail="Account is not active")
 
     token = create_access_token(subject=str(user.id), role=user.role)
@@ -187,6 +193,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
 def admin_login(payload: LoginRequest, db: Session = Depends(get_db)):
     """Admin-only login gate: rejects voters before issuing a token."""
     normalized = normalize_citizenship_number(payload.citizenship_number)
+    check_rate_limit(f"admin_login:{normalized}", limit=10, window_seconds=300)
 
     user = db.execute(
         select(User).where(User.citizenship_no_normalized == normalized)
@@ -218,6 +225,7 @@ class MeResponse(BaseModel):
     role: str
     status: str
     totp_enabled: bool
+    rejection_reason: Optional[str] = None
 
 
 @router.get("/me", response_model=MeResponse)
@@ -227,5 +235,6 @@ def me(current_user: User = Depends(get_current_user)):
         role=current_user.role,
         status=current_user.status,
         totp_enabled=current_user.totp_enabled_at is not None,
+        rejection_reason=current_user.rejection_reason,
     )
 

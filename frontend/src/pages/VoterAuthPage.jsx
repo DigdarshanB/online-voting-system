@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./VoterAuthPage.css";
@@ -46,6 +46,11 @@ export default function VoterAuthPage() {
 
   /* Loading flag to disable submit during in-flight requests. */
   const [loading, setLoading] = useState(false);
+
+  /* Document upload state (shown after login). */
+  const [uploadStatus, setUploadStatus] = useState(""); // "" | "uploading" | "success" | "error"
+  const [uploadMessage, setUploadMessage] = useState("");
+  const fileInputRef = useRef(null);
 
   const navigate = useNavigate();
 
@@ -95,6 +100,40 @@ export default function VoterAuthPage() {
 
   /**
    * Purpose:
+   *   Handle citizenship document upload after login.
+   */
+  async function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploadStatus("uploading");
+    setUploadMessage("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const token = localStorage.getItem("access_token");
+      await axios.post(
+        "http://localhost:8000/verification/citizenship/upload",
+        formData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setUploadStatus("success");
+      setUploadMessage("Document uploaded successfully.");
+    } catch (err) {
+      const detail = err?.response?.data?.detail;
+      setUploadStatus("error");
+      setUploadMessage(
+        typeof detail === "string" ? detail : "Upload failed. Please try again."
+      );
+    } finally {
+      // Reset file input so the same file can be re-selected after an error.
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  /**
+   * Purpose:
    *   Handle form submission for the active mode.
    */
   async function handleSubmit(event) {
@@ -116,7 +155,16 @@ export default function VoterAuthPage() {
           password: loginForm.password,
         });
         localStorage.setItem("access_token", data.access_token);
-        navigate("/home");
+        const { data: me } = await axios.get("http://localhost:8000/auth/me", {
+          headers: { Authorization: `Bearer ${data.access_token}` },
+        });
+        if (me.status === "ACTIVE" && me.totp_enabled) {
+          navigate("/home");
+        } else if (me.status === "ACTIVE" && !me.totp_enabled) {
+          navigate("/totp-setup");
+        } else {
+          navigate("/status");
+        }
       } else {
         await axios.post("http://localhost:8000/auth/register", {
           full_name: registerForm.fullName,
@@ -177,8 +225,50 @@ export default function VoterAuthPage() {
           </div>
         ) : null}
 
+        {uploadMessage ? (
+          <div
+            className={uploadStatus === "success" ? "voter-success" : "voter-error"}
+            role="alert"
+            aria-live="polite"
+          >
+            {uploadMessage}
+          </div>
+        ) : null}
+
         <form className="voter-form" onSubmit={handleSubmit} noValidate>
-          {mode === "login" ? (
+          {mode === "upload" ? (
+            <div className="voter-grid" style={{ gridTemplateColumns: "1fr" }}>
+              <div className="voter-field" style={{ textAlign: "center" }}>
+                <p className="voter-label" style={{ marginBottom: "1rem" }}>
+                  Upload your citizenship document image to verify your identity.
+                </p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={handleFileSelect}
+                />
+                <button
+                  type="button"
+                  className="voter-continue"
+                  disabled={uploadStatus === "uploading"}
+                  onClick={() => fileInputRef.current.click()}
+                  style={{ marginBottom: "0.75rem" }}
+                >
+                  {uploadStatus === "uploading" ? "Uploading\u2026" : "Upload Document"}
+                </button>
+                <br />
+                <button
+                  type="button"
+                  className="voter-mini-btn"
+                  onClick={() => navigate("/totp-setup")}
+                >
+                  {uploadStatus === "success" ? "Continue to Setup →" : "Skip for now"}
+                </button>
+              </div>
+            </div>
+          ) : mode === "login" ? (
             <div className="voter-grid voter-grid-login">
               <div className="voter-field">
                 <label className="voter-label" htmlFor="loginCitizenship">
@@ -325,10 +415,11 @@ export default function VoterAuthPage() {
             </div>
           )}
 
-          <button className="voter-continue" type="submit" disabled={loading}>
-            {loading ? "Please wait…" : "Continue"}
-          </button>
-
+          {mode !== "upload" && (
+            <button className="voter-continue" type="submit" disabled={loading}>
+              {loading ? "Please wait\u2026" : "Continue"}
+            </button>
+          )}
           <footer className="voter-footer">Secure Authentication System</footer>
         </form>
       </section>
