@@ -226,6 +226,7 @@ class MeResponse(BaseModel):
     status: str
     totp_enabled: bool
     rejection_reason: Optional[str] = None
+    face_uploaded: bool = False
 
 
 @router.get("/me", response_model=MeResponse)
@@ -236,5 +237,6 @@ def me(current_user: User = Depends(get_current_user)):
         status=current_user.status,
         totp_enabled=current_user.totp_enabled_at is not None,
         rejection_reason=current_user.rejection_reason,
+        face_uploaded=current_user.face_uploaded_at is not None,
     )
 

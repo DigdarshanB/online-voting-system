@@ -162,6 +162,8 @@ export default function VoterAuthPage() {
           navigate("/home");
         } else if (me.status === "ACTIVE" && !me.totp_enabled) {
           navigate("/totp-setup");
+        } else if (me.status === "PENDING_FACE") {
+          navigate("/face-verification");
         } else {
           navigate("/status");
         }

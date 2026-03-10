@@ -154,6 +154,57 @@ function DocumentPreview({ userId }) {
   );
 }
 
+// ── Face photo preview — fetched via axios (auth header) ─────────
+
+function FacePreview({ userId }) {
+  const [objectUrl, setObjectUrl] = useState(null);
+  const [err, setErr] = useState("");
+  const prevUrl = useRef(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setObjectUrl(null);
+    setErr("");
+
+    axios
+      .get(`${API}/admin/voters/${userId}/face`, {
+        headers: authHeaders(),
+        responseType: "blob",
+      })
+      .then(({ data }) => {
+        if (cancelled) return;
+        const url = URL.createObjectURL(data);
+        prevUrl.current = url;
+        setObjectUrl(url);
+      })
+      .catch(() => {
+        if (!cancelled) setErr("No face photo uploaded.");
+      });
+
+    return () => {
+      cancelled = true;
+      if (prevUrl.current) URL.revokeObjectURL(prevUrl.current);
+    };
+  }, [userId]);
+
+  if (err) return <p style={{ color: "#991b1b", fontSize: 13 }}>{err}</p>;
+  if (!objectUrl) return <p style={{ color: "#64748b", fontSize: 13 }}>Loading image…</p>;
+  return (
+    <img
+      src={objectUrl}
+      alt="Live face photo"
+      style={{
+        maxWidth: "100%",
+        maxHeight: 320,
+        borderRadius: 8,
+        border: "1px solid #e2e8f0",
+        display: "block",
+        marginTop: 8,
+      }}
+    />
+  );
+}
+
 // ── Review Panel ─────────────────────────────────────────────────
 
 function ReviewPanel({ voter, onApprove, onReject, busy }) {
@@ -180,6 +231,9 @@ function ReviewPanel({ voter, onApprove, onReject, busy }) {
     else onReject(voter.id, rejectReason.trim());
   }
 
+  const hasDocument = !!voter.document_uploaded_at;
+  const hasFace = !!voter.face_uploaded_at;
+
   return (
     <tr>
       <td colSpan={5} style={{ padding: "0 0 12px 0", background: "#f8fafc" }}>
@@ -204,14 +258,16 @@ function ReviewPanel({ voter, onApprove, onReject, busy }) {
             background: "#fff",
           }}
         >
+          {/* Voter details table */}
           <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 12 }}>
             <tbody>
               {[
-                ["Full Name", voter.full_name ?? "—"],
-                ["Citizenship # (raw)", voter.citizenship_no_raw ?? "—"],
-                ["Citizenship # (normalized)", voter.citizenship_no_normalized ?? "—"],
-                ["Phone", voter.phone_number ?? "—"],
+                ["Full Name", voter.full_name ?? "\u2014"],
+                ["Citizenship # (raw)", voter.citizenship_no_raw ?? "\u2014"],
+                ["Citizenship # (normalized)", voter.citizenship_no_normalized ?? "\u2014"],
+                ["Phone", voter.phone_number ?? "\u2014"],
                 ["Document Uploaded", fmtDate(voter.document_uploaded_at)],
+                ["Face Photo Uploaded", fmtDate(voter.face_uploaded_at)],
               ].map(([label, value]) => (
                 <tr key={label}>
                   <td style={{ ...TD, fontWeight: 700, width: 220, color: "#475569" }}>{label}</td>
@@ -221,10 +277,92 @@ function ReviewPanel({ voter, onApprove, onReject, busy }) {
             </tbody>
           </table>
 
-          <p style={{ fontWeight: 700, fontSize: 13, marginBottom: 4, color: "#475569" }}>
-            Citizenship Document:
-          </p>
-          <DocumentPreview userId={voter.id} />
+          {/* Side-by-side comparison: Document vs Face (stacks on mobile) */}
+          <div
+            style={{
+              display: "flex",
+              gap: 16,
+              marginBottom: 16,
+              flexWrap: "wrap",
+            }}
+          >
+            <div style={{ flex: "1 1 280px", minWidth: 0 }}>
+              <p style={{ fontWeight: 700, fontSize: 13, marginBottom: 4, color: "#475569" }}>
+                Citizenship Document:
+              </p>
+              <DocumentPreview userId={voter.id} />
+            </div>
+            <div style={{ flex: "1 1 280px", minWidth: 0 }}>
+              <p style={{ fontWeight: 700, fontSize: 13, marginBottom: 4, color: "#475569" }}>
+                Live Face Photo:
+              </p>
+              <FacePreview userId={voter.id} />
+            </div>
+          </div>
+
+          {/* Review checklist */}
+          <div
+            style={{
+              background: "#f8fafc",
+              border: "1px solid #e2e8f0",
+              borderRadius: 8,
+              padding: "12px 16px",
+              marginBottom: 16,
+            }}
+          >
+            <p style={{ fontWeight: 700, fontSize: 13, marginBottom: 8, color: "#475569" }}>
+              Review Checklist:
+            </p>
+            <ul style={{ margin: 0, padding: 0, listStyle: "none", fontSize: 13 }}>
+              {[
+                { label: "Citizenship document uploaded", ok: hasDocument },
+                { label: "Live face photo uploaded", ok: hasFace },
+                { label: "Full face clearly visible", ok: null },
+                { label: "Both ears visible", ok: null },
+                { label: "Document photo matches live photo", ok: null },
+              ].map((item) => (
+                <li
+                  key={item.label}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "4px 0",
+                    color: item.ok === false ? "#991b1b" : "#334155",
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: 4,
+                      border: "2px solid",
+                      borderColor:
+                        item.ok === true
+                          ? "#16a34a"
+                          : item.ok === false
+                          ? "#dc2626"
+                          : "#cbd5e1",
+                      background:
+                        item.ok === true
+                          ? "#f0fdf4"
+                          : item.ok === false
+                          ? "#fef2f2"
+                          : "#fff",
+                      display: "grid",
+                      placeItems: "center",
+                      fontSize: 11,
+                      fontWeight: 900,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {item.ok === true ? "\u2713" : item.ok === false ? "\u2717" : ""}
+                  </span>
+                  {item.label}
+                </li>
+              ))}
+            </ul>
+          </div>
 
           <div style={{ display: "flex", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
             <button
@@ -248,7 +386,7 @@ function ReviewPanel({ voter, onApprove, onReject, busy }) {
           {showRejectBox && (
             <textarea
               rows={3}
-              placeholder="Reason for rejection…"
+              placeholder="Reason for rejection\u2026"
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
               style={{
@@ -364,7 +502,7 @@ export default function ManageVoters() {
         <header className="admin-auth-header" style={{ marginBottom: 8 }}>
           <img className="admin-flag" src="/assets/nepal-flag.png" alt="Nepal national flag" />
           <h1 className="admin-title">Voter Verification Queue</h1>
-          <p className="admin-subtitle">Review and approve citizenship document submissions.</p>
+          <p className="admin-subtitle">Review citizenship documents and face photos, then approve or reject.</p>
         </header>
 
         {actionMsg && (

@@ -20,6 +20,8 @@ class User(Base):
     status: Mapped[str] = mapped_column(String(20), default="ACTIVE")
     citizenship_image_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     document_uploaded_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    face_image_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    face_uploaded_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     totp_secret: Mapped[str | None] = mapped_column(String(255), nullable=True)
     totp_enabled_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     approved_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)

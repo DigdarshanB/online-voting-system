@@ -4,6 +4,7 @@ import axios from "axios";
 import VoterAuthPage from "./pages/VoterAuthPage";
 import VoterTotpSetup from "./pages/VoterTotpSetup";
 import VoterStatus from "./pages/VoterStatus";
+import VoterFaceVerification from "./pages/VoterFaceVerification";
 
 /**
  * File: App.jsx
@@ -31,6 +32,8 @@ function ProtectedHome() {
           setAllowed(true);
         } else if (data.status === "ACTIVE" && !data.totp_enabled) {
           navigate("/totp-setup", { replace: true });
+        } else if (data.status === "PENDING_FACE") {
+          navigate("/face-verification", { replace: true });
         } else {
           navigate("/status", { replace: true });
         }
@@ -53,6 +56,7 @@ export default function App() {
         <Route path="/" element={<VoterAuthPage />} />
         <Route path="/totp-setup" element={<VoterTotpSetup />} />
         <Route path="/status" element={<VoterStatus />} />
+        <Route path="/face-verification" element={<VoterFaceVerification />} />
         <Route path="/home" element={<ProtectedHome />} />
       </Routes>
     </BrowserRouter>

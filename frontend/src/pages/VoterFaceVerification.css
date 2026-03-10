@@ -1,0 +1,657 @@
+/**
+ * VoterFaceVerification.css
+ *
+ * Premium styles for the voter face verification step.
+ * Inherits CSS custom properties from VoterAuthPage.css (:root).
+ *
+ * Design language: modern identity-verification / KYC flow.
+ * Values: trustworthy, spacious, calm, official.
+ */
+
+/* ─────────────────────────────────────────────────────────────
+   Card override — wider to support two-column layout
+───────────────────────────────────────────────────────────── */
+
+.fv-card {
+  width: min(900px, 100%);
+  padding: 26px 28px 22px 28px;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Page header
+───────────────────────────────────────────────────────────── */
+
+.fv-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 22px;
+  border-bottom: 1.5px solid rgba(148, 163, 184, 0.3);
+  margin-bottom: 24px;
+}
+
+.fv-header-identity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.fv-flag {
+  width: 46px !important;
+  height: 46px !important;
+  margin: 0 !important;
+  filter: drop-shadow(0 4px 10px rgba(2, 6, 23, 0.18)) !important;
+  flex-shrink: 0;
+}
+
+.fv-title {
+  font-size: 22px !important;
+  font-weight: 900 !important;
+  color: var(--text) !important;
+  margin: 0 !important;
+  text-align: left !important;
+  letter-spacing: 0 !important;
+}
+
+.fv-subtitle {
+  font-size: 12.5px !important;
+  color: var(--muted) !important;
+  font-weight: 600 !important;
+  margin: 4px 0 0 0 !important;
+  text-align: left !important;
+}
+
+.fv-header-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 7px;
+  padding-top: 2px;
+}
+
+.fv-step-badge {
+  display: inline-block;
+  background: var(--primary-blue);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 4px 13px;
+  border-radius: 99px;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(30, 86, 199, 0.3);
+}
+
+.fv-trust-note {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 600;
+  text-align: right;
+  max-width: 210px;
+  line-height: 1.45;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Alert banners (reuse voter-error / voter-success + this)
+───────────────────────────────────────────────────────────── */
+
+.fv-alert {
+  margin-bottom: 20px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Two-column body
+───────────────────────────────────────────────────────────── */
+
+.fv-body {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 32px;
+  align-items: start;
+  margin-bottom: 28px;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Camera column
+───────────────────────────────────────────────────────────── */
+
+.fv-camera-col {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+/* Camera viewport box */
+.fv-camera-box {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 2.5px solid var(--border-soft);
+  background: #f1f5f9;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* State: camera is opening or ready — dark film bg + blue accent border */
+.fv-camera-box--opening,
+.fv-camera-box--ready {
+  background: #0b1320;
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 3px rgba(30, 86, 199, 0.14);
+}
+
+/* State: photo captured — green accent border to confirm success */
+.fv-camera-box--captured {
+  background: #0b1320;
+  border-color: #16a34a;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.16);
+}
+
+/* ── Off-state placeholder ── */
+
+.fv-camera-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  background: #f8fafc;
+}
+
+.fv-camera-icon {
+  width: 50px;
+  height: 50px;
+  color: #cbd5e1;
+}
+
+.fv-placeholder-label {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #94a3b8;
+  margin: 0;
+  text-align: center;
+}
+
+.fv-placeholder-hint {
+  font-size: 12px;
+  font-weight: 600;
+  color: #cbd5e1;
+  margin: 0;
+  text-align: center;
+}
+
+/* ── Opening state: spinner overlay ── */
+
+.fv-camera-loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: #0b1320;
+  z-index: 5;
+}
+
+.fv-spinner-ring {
+  width: 42px;
+  height: 42px;
+  border: 3px solid rgba(255, 255, 255, 0.10);
+  border-top-color: var(--primary-blue);
+  border-radius: 50%;
+  animation: fv-spin 0.75s linear infinite;
+}
+
+.fv-loader-text {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #94a3b8;
+  margin: 0;
+  letter-spacing: 0.2px;
+}
+
+@keyframes fv-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Live video element ── */
+
+.fv-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* Mirror for natural selfie view */
+  display: block;
+}
+
+/* ── Face guide oval overlay ── */
+
+.fv-guide-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.fv-guide-oval {
+  width: 54%;
+  aspect-ratio: 3 / 4;
+  border: 2px dashed rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  animation: fv-oval-breathe 2.8s ease-in-out infinite;
+}
+
+@keyframes fv-oval-breathe {
+  0%, 100% { border-color: rgba(255, 255, 255, 0.6); }
+  50%       { border-color: rgba(255, 255, 255, 0.95); }
+}
+
+/* ── LIVE badge ── */
+
+.fv-live-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(0, 0, 0, 0.52);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 900;
+  padding: 5px 12px;
+  border-radius: 99px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.fv-live-dot {
+  display: block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ef4444;
+  flex-shrink: 0;
+  animation: fv-dot-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes fv-dot-pulse {
+  0%, 100% { opacity: 1;   transform: scale(1); }
+  50%       { opacity: 0.45; transform: scale(0.8); }
+}
+
+/* ── Captured state ── */
+
+.fv-captured-preview {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.fv-captured-badge {
+  position: absolute;
+  bottom: 13px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(22, 163, 74, 0.88);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+  padding: 7px 18px;
+  border-radius: 99px;
+  white-space: nowrap;
+  letter-spacing: 0.2px;
+}
+
+.fv-captured-check {
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* ── Camera status caption (below the box) ── */
+
+.fv-camera-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #94a3b8;
+  min-height: 20px;
+  text-align: center;
+}
+
+.fv-status-dot {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.fv-status-dot--off     { background: #cbd5e1; }
+.fv-status-dot--opening { background: var(--primary-blue); animation: fv-dot-pulse 1s ease-in-out infinite; }
+.fv-status-dot--ready   { background: #22c55e; animation: fv-dot-pulse 2s ease-in-out infinite; }
+.fv-status-dot--captured { background: #16a34a; }
+
+/* ─────────────────────────────────────────────────────────────
+   Instructions column
+───────────────────────────────────────────────────────────── */
+
+.fv-info-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Headline requirement box */
+.fv-requirement-banner {
+  background: linear-gradient(135deg, #eff4ff 0%, #e8f0fe 100%);
+  border: 1.5px solid #c5d2f8;
+  border-left: 4px solid var(--primary-blue);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.fv-requirement-text {
+  font-size: 13px;
+  font-weight: 900;
+  color: #1e3a8a;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Instruction checklist card */
+.fv-instructions-card {
+  background: #ffffff;
+  border: 1.5px solid rgba(148, 163, 184, 0.45);
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: 0 2px 10px rgba(2, 6, 23, 0.05);
+}
+
+.fv-instructions-title {
+  font-size: 11px;
+  font-weight: 900;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.9px;
+  margin: 0 0 14px 0;
+}
+
+.fv-instruction-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fv-instruction-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #334155;
+  line-height: 1.5;
+}
+
+/* Styled bullet indicator */
+.fv-instruction-item::before {
+  content: '';
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary-blue);
+  flex-shrink: 0;
+  margin-top: 5px;
+  opacity: 0.75;
+}
+
+/* Security / trust note */
+.fv-security-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 11px;
+  padding: 12px 15px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #64748b;
+  line-height: 1.55;
+}
+
+.fv-security-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+  line-height: 1.45;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Action buttons
+───────────────────────────────────────────────────────────── */
+
+.fv-actions {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 22px;
+}
+
+.fv-action-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+}
+
+/* Base button */
+.fv-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-width: 200px;
+  padding: 13px 30px;
+  border-radius: 11px;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  border: 2.5px solid transparent;
+  transition:
+    background 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.1s ease,
+    opacity 0.15s ease;
+  white-space: nowrap;
+  letter-spacing: 0.1px;
+}
+
+.fv-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.fv-btn:not(:disabled):active {
+  transform: scale(0.975);
+}
+
+/* Primary — blue */
+.fv-btn--primary {
+  background: var(--primary-blue);
+  color: #fff;
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 16px rgba(30, 86, 199, 0.3), 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.fv-btn--primary:not(:disabled):hover {
+  background: var(--primary-blue-hover);
+  box-shadow: 0 6px 22px rgba(30, 86, 199, 0.38);
+}
+
+/* Success — green, for Capture Photo */
+.fv-btn--success {
+  background: #16a34a;
+  color: #fff;
+  border-color: #15803d;
+  box-shadow: 0 4px 16px rgba(22, 163, 74, 0.3), 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.fv-btn--success:not(:disabled):hover {
+  background: #15803d;
+  box-shadow: 0 6px 22px rgba(22, 163, 74, 0.38);
+}
+
+/* Muted — for Retake */
+.fv-btn--muted {
+  background: #f1f5f9;
+  color: #475569;
+  border-color: rgba(15, 23, 42, 0.2);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.fv-btn--muted:not(:disabled):hover {
+  background: #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+}
+
+/* Inline spinner for button loading state */
+.fv-btn-inner-spinner {
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  border: 2.5px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: fv-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Page footer
+───────────────────────────────────────────────────────────── */
+
+.fv-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 1.5px solid rgba(148, 163, 184, 0.22);
+  font-size: 12px;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.fv-signout-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s ease;
+  line-height: 1;
+}
+
+.fv-signout-btn:hover {
+  color: #64748b;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Responsive — tablet and mobile
+───────────────────────────────────────────────────────────── */
+
+@media (max-width: 740px) {
+  .fv-card {
+    padding: 18px 16px 16px 16px;
+  }
+
+  .fv-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .fv-header-meta {
+    align-items: flex-start;
+  }
+
+  .fv-trust-note {
+    text-align: left;
+    max-width: 100%;
+  }
+
+  /* Stack camera above instructions on mobile */
+  .fv-body {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  /* Full-width buttons on mobile */
+  .fv-btn {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .fv-action-row {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .fv-footer {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .fv-card {
+    padding: 16px 14px 14px 14px;
+  }
+
+  .fv-title {
+    font-size: 19px !important;
+  }
+
+  .fv-camera-box {
+    border-radius: 12px;
+  }
+}

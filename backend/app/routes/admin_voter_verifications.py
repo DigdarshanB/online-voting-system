@@ -5,6 +5,7 @@ Routes:
   GET   /admin/voters/pending
   GET   /admin/voters/{user_id}
   GET   /admin/voters/{user_id}/document
+  GET   /admin/voters/{user_id}/face
   POST  /admin/voters/{user_id}/approve
   POST  /admin/voters/{user_id}/reject
 """
@@ -26,6 +27,7 @@ from app.models.user import User
 router = APIRouter(prefix="/admin/voters", tags=["admin-voter-verifications"])
 
 _UPLOAD_BASE = Path(__file__).resolve().parents[2] / "uploads" / "citizenship"
+_UPLOAD_BASE_FACES = Path(__file__).resolve().parents[2] / "uploads" / "faces"
 
 
 # ── Helpers ─────────────────────────────────────────────────────
@@ -54,6 +56,7 @@ class PendingVoterItem(BaseModel):
     citizenship_no_raw: Optional[str]
     citizenship_no_normalized: Optional[str]
     document_uploaded_at: Optional[datetime]
+    face_uploaded_at: Optional[datetime]
 
     class Config:
         from_attributes = True
@@ -124,6 +127,30 @@ def get_voter_document(
     return FileResponse(full_path, media_type=media_type)
 
 
+# ── GET /admin/voters/{user_id}/face ──────────────────────────
+
+@router.get("/{user_id}/face")
+def get_voter_face(
+    user_id: int,
+    db: Session = Depends(get_db),
+    _admin: User = Depends(_require_admin),
+):
+    voter = _get_voter_or_404(user_id, db)
+    if not voter.face_image_path:
+        raise HTTPException(status_code=404, detail="No face photo uploaded")
+
+    file_path = _UPLOAD_BASE_FACES / str(voter.id)
+    filename = Path(voter.face_image_path).name
+    full_path = file_path / filename
+
+    if not full_path.is_file():
+        raise HTTPException(status_code=404, detail="Face photo file not found on disk")
+
+    suffix = full_path.suffix.lower()
+    media_type = _MEDIA_TYPES.get(suffix, "application/octet-stream")
+    return FileResponse(full_path, media_type=media_type)
+
+
 # ── POST /admin/voters/{user_id}/approve ────────────────────────
 
 @router.post("/{user_id}/approve")
@@ -133,6 +160,13 @@ def approve_voter(
     _admin: User = Depends(_require_admin),
 ):
     voter = _get_voter_or_404(user_id, db)
+
+    # Both citizenship document and face photo must exist before approval.
+    if not voter.citizenship_image_path:
+        raise HTTPException(status_code=400, detail="Cannot approve: citizenship document not uploaded")
+    if not voter.face_image_path:
+        raise HTTPException(status_code=400, detail="Cannot approve: face photo not uploaded")
+
     voter.status = "ACTIVE"
     voter.approved_at = datetime.now(timezone.utc)
     voter.rejection_reason = None

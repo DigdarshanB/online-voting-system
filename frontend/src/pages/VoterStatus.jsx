@@ -10,15 +10,22 @@ const STATUS_CONFIG = {
     action: "upload",
     actionLabel: "Upload Document",
   },
+  PENDING_FACE: {
+    title: "Face Verification Required",
+    message:
+      "Your citizenship document has been uploaded. Please complete the face verification step to proceed.",
+    action: "face",
+    actionLabel: "Continue Face Verification",
+  },
   PENDING_REVIEW: {
     title: "Under Review",
     message:
-      "Your documents have been submitted and are currently being reviewed by an administrator. This may take some time.",
+      "Your documents and face photo have been submitted and are currently being reviewed by an administrator. This may take some time.",
     action: null,
   },
   ACTIVE: {
     title: "Verified",
-    message: "Your account is verified. Redirecting…",
+    message: "Your account is verified. Redirecting\u2026",
     action: "home",
   },
   REJECTED: {
@@ -63,6 +70,10 @@ export default function VoterStatus() {
           navigate("/totp-setup");
           return;
         }
+        if (data.status === "PENDING_FACE") {
+          navigate("/face-verification");
+          return;
+        }
         setMeData(data);
         setLoading(false);
       })
@@ -92,8 +103,9 @@ export default function VoterStatus() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUploadStatus("done");
-      setUploadMessage("Document uploaded successfully! Awaiting admin review.");
-      fetchMe();
+      setUploadMessage("Document uploaded successfully! Redirecting to face verification\u2026");
+      // Redirect to face verification after successful document upload.
+      setTimeout(() => navigate("/face-verification"), 1200);
     } catch (err) {
       const detail = err?.response?.data?.detail;
       setUploadStatus("error");
@@ -226,12 +238,21 @@ export default function VoterStatus() {
               disabled={uploadStatus === "uploading"}
             >
               {uploadStatus === "uploading"
-                ? "Uploading…"
+                ? "Uploading\u2026"
                 : meData?.status === "REJECTED"
                 ? "Re-upload Document"
                 : "Upload Document"}
             </button>
           </>
+        )}
+
+        {meData?.status === "PENDING_FACE" && (
+          <button
+            className="voter-continue"
+            onClick={() => navigate("/face-verification")}
+          >
+            Continue Face Verification
+          </button>
         )}
 
         {meData?.status !== "DISABLED" && (
