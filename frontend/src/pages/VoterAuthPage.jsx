@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./VoterAuthPage.css";
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 /**
  * File: VoterAuthPage.jsx
  *
@@ -34,6 +36,7 @@ export default function VoterAuthPage() {
 
   /* Register form state matching the wireframe fields and placement. */
   const [registerForm, setRegisterForm] = useState({
+    email: "",
     fullName: "",
     phoneNumber: "",
     citizenshipId: "",
@@ -90,6 +93,8 @@ export default function VoterAuthPage() {
     }
 
     if (!registerForm.fullName.trim()) return "Full name is required.";
+    if (!registerForm.email.trim()) return "Email is required.";
+    if (!EMAIL_REGEX.test(registerForm.email.trim())) return "Please enter a valid email address.";
     if (!registerForm.phoneNumber.trim()) return "Phone number is required.";
     if (!registerForm.citizenshipId.trim()) return "Citizenship ID is required.";
     if (!registerForm.password) return "Create password is required.";
@@ -169,6 +174,7 @@ export default function VoterAuthPage() {
         }
       } else {
         await axios.post("http://localhost:8000/auth/register", {
+          email: registerForm.email.trim().toLowerCase(),
           full_name: registerForm.fullName,
           phone_number: registerForm.phoneNumber,
           citizenship_number: registerForm.citizenshipId,
@@ -331,6 +337,21 @@ export default function VoterAuthPage() {
               </div>
 
               <div className="voter-field">
+                <label className="voter-label" htmlFor="regEmail">
+                  Email Address
+                </label>
+                <input
+                  id="regEmail"
+                  className="voter-input"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={registerForm.email}
+                  onChange={(e) => updateRegisterField("email", e.target.value)}
+                  autoComplete="email"
+                />
+              </div>
+
+              <div className="voter-field">
                 <label className="voter-label" htmlFor="regPhone">
                   Phone Number
                 </label>
@@ -385,9 +406,6 @@ export default function VoterAuthPage() {
                   </button>
                 </div>
               </div>
-
-              {/* Wireframe placement: confirm password appears as a right-column field on the next row. */}
-              <div className="voter-field voter-empty-slot" aria-hidden="true" />
 
               <div className="voter-field">
                 <label className="voter-label" htmlFor="regConfirm">

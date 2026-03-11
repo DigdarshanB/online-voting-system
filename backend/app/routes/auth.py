@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
@@ -13,16 +13,23 @@ from app.models.user import User
 from app.core.security import hash_password, verify_password
 from app.core.jwt import create_access_token, decode_activation_token, get_current_user
 from app.utils.citizenship import normalize_citizenship_number
+from app.utils.email import is_valid_email, normalize_email
 from app.utils.rate_limit import check_rate_limit
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 class RegisterRequest(BaseModel):
+    email: str
     full_name: str
     phone_number: str
     citizenship_number: str
     password: str
     role: str | None = None
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, value: str) -> str:
+        return normalize_email(value)
 
 class LoginRequest(BaseModel):
     citizenship_number: str
@@ -32,10 +39,16 @@ class LoginRequest(BaseModel):
 class AdminActivateRequest(BaseModel):
     invite_code: Optional[str] = None
     token: Optional[str] = None
+    email: str
     full_name: str
     phone_number: str
     citizenship_number: str
     password: str
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, value: str) -> str:
+        return normalize_email(value)
 
 @router.post("/register")
 def register(payload: RegisterRequest, db: Session = Depends(get_db)):
@@ -57,7 +70,14 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     if existing:
         raise HTTPException(status_code=400, detail="Citizenship number already registered")
 
+    existing_email = db.execute(
+        select(User).where(User.email == payload.email)
+    ).scalar_one_or_none()
+    if existing_email:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
     user = User(
+        email=payload.email,
         full_name=payload.full_name,
         phone_number=payload.phone_number,
         citizenship_no_raw=payload.citizenship_number,
@@ -69,7 +89,12 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     db.add(user)
     db.commit()
     db.refresh(user)
-    return {"id": user.id, "citizenship_no": user.citizenship_no_normalized, "role": user.role}
+    return {
+        "id": user.id,
+        "email": user.email,
+        "citizenship_no": user.citizenship_no_normalized,
+        "role": user.role,
+    }
 
 def _resolve_invite(payload: AdminActivateRequest, db: Session) -> AdminInvite:
     """Resolve invite from token (preferred) or invite_code (backward compat)."""
@@ -143,7 +168,18 @@ def admin_activate(payload: AdminActivateRequest, db: Session = Depends(get_db))
     if existing:
         raise HTTPException(status_code=400, detail="Citizenship number already registered")
 
+    existing_email = db.execute(
+        select(User).where(User.email == payload.email)
+    ).scalar_one_or_none()
+    if existing_email:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    invite_recipient = (invite.recipient_identifier or "").strip().lower()
+    if is_valid_email(invite_recipient) and invite_recipient != payload.email:
+        raise HTTPException(status_code=400, detail="Email does not match invite")
+
     user = User(
+        email=payload.email,
         full_name=payload.full_name,
         phone_number=payload.phone_number,
         citizenship_no_raw=payload.citizenship_number,
@@ -161,6 +197,7 @@ def admin_activate(payload: AdminActivateRequest, db: Session = Depends(get_db))
 
     return {
         "id": user.id,
+        "email": user.email,
         "citizenship_no": user.citizenship_no_normalized,
         "role": user.role,
         "status": user.status,
@@ -185,7 +222,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
     if user.role != "voter" and user.status != "ACTIVE":
         raise HTTPException(status_code=403, detail="Account is not active")
 
-    token = create_access_token(subject=str(user.id), role=user.role)
+    token = create_access_token(subject=str(user.id), role=user.role, token_version=user.token_version)
     return {"access_token": token, "token_type": "bearer"}
 
 
@@ -214,7 +251,7 @@ def admin_login(payload: LoginRequest, db: Session = Depends(get_db)):
             detail="Admin account pending MFA setup or approval. Please complete MFA enrolment first.",
         )
 
-    token = create_access_token(subject=str(user.id), role=user.role)
+    token = create_access_token(subject=str(user.id), role=user.role, token_version=user.token_version)
     return {"access_token": token, "token_type": "bearer"}
 
 
@@ -222,6 +259,7 @@ def admin_login(payload: LoginRequest, db: Session = Depends(get_db)):
 
 class MeResponse(BaseModel):
     id: int
+    email: str | None = None
     role: str
     status: str
     totp_enabled: bool
@@ -233,6 +271,7 @@ class MeResponse(BaseModel):
 def me(current_user: User = Depends(get_current_user)):
     return MeResponse(
         id=current_user.id,
+        email=current_user.email,
         role=current_user.role,
         status=current_user.status,
         totp_enabled=current_user.totp_enabled_at is not None,

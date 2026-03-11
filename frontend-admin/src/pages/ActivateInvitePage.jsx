@@ -41,6 +41,7 @@ export default function ActivateInvitePage() {
   const countdownRef = useRef(null);
 
   const [form, setForm] = useState({
+    email: "",
     fullName: "",
     phoneNumber: "",
     citizenshipNumber: "",
@@ -65,6 +66,7 @@ export default function ActivateInvitePage() {
         setExpiresAt(data.expires_at ?? "");
         setForm((f) => ({
           ...f,
+          email: isEmail(recipient) ? recipient.toLowerCase() : "",
           citizenshipNumber: isEmail(recipient) ? "" : recipient,
         }));
         setStep("form");
@@ -87,11 +89,16 @@ export default function ActivateInvitePage() {
       setServerError("Passwords do not match.");
       return;
     }
+    if (!isEmail(form.email)) {
+      setServerError("Please enter a valid email address.");
+      return;
+    }
 
     setStep("submitting");
     try {
       await axios.post(`${API}/auth/admin/activate`, {
         token,
+        email: form.email.trim().toLowerCase(),
         full_name: form.fullName.trim(),
         phone_number: form.phoneNumber.trim(),
         citizenship_number: form.citizenshipNumber.trim(),
@@ -215,6 +222,22 @@ export default function ActivateInvitePage() {
                 })}
               </p>
             )}
+
+            <div className="admin-field">
+              <label className="admin-label" htmlFor="email">
+                Email Address
+              </label>
+              <input
+                id="email"
+                className="admin-input"
+                type="email"
+                placeholder="you@example.com"
+                value={form.email}
+                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                autoComplete="email"
+                required
+              />
+            </div>
 
             <div className="admin-field">
               <label className="admin-label" htmlFor="fullName">

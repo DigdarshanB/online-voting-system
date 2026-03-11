@@ -18,6 +18,7 @@ import axios from "axios";
 import "./AdminAuthPage.css";
 
 const API = "http://localhost:8000";
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function authHeaders() {
   const token = localStorage.getItem("access_token");
@@ -201,11 +202,16 @@ export default function ManageAdmins() {
     evt.preventDefault();
     setInviteFormErr("");
     setNewCode(null);
+    const normalizedEmail = recipientId.trim().toLowerCase();
+    if (!EMAIL_REGEX.test(normalizedEmail)) {
+      setInviteFormErr("Please enter a valid recipient email address.");
+      return;
+    }
     setCreating(true);
     try {
       const { data } = await axios.post(
         `${API}/admin/invites`,
-        { recipient_identifier: recipientId.trim() },
+        { recipient_identifier: normalizedEmail },
         { headers: authHeaders() },
       );
       setNewCode({ code: data.invite_code, activationUrl: data.activation_url, expiresAt: data.expires_at });
@@ -386,16 +392,13 @@ export default function ManageAdmins() {
             {inviteFormErr && <div className="admin-error" role="alert">{inviteFormErr}</div>}
             <div className="admin-field">
               <label className="admin-label" htmlFor="recipientId">
-                Recipient Identifier
-                <span style={{ fontWeight: 400, color: "var(--muted)", marginLeft: 6 }}>
-                  (citizenship no. or email)
-                </span>
+                Recipient Email
               </label>
               <input
                 id="recipientId"
                 className="admin-input"
-                type="text"
-                placeholder="e.g. 01-02-03-12345 or admin@example.com"
+                type="email"
+                placeholder="admin@example.com"
                 value={recipientId}
                 onChange={(e) => { setRecipientId(e.target.value); setInviteFormErr(""); setNewCode(null); }}
                 required

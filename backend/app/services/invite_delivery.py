@@ -22,7 +22,7 @@ def send_invite(recipient_identifier: str, activation_url: str) -> None:
     Parameters
     ----------
     recipient_identifier:
-        Citizenship number or email of the invitee.
+        Email of the invitee.
     activation_url:
         One-time URL containing the invite code.  **Must not be logged.**
 

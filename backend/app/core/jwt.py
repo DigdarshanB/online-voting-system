@@ -12,10 +12,16 @@ from app.models.user import User
 _bearer = HTTPBearer()
 
 
-def create_access_token(subject: str, role: str) -> str:
+def create_access_token(subject: str, role: str, token_version: int = 0) -> str:
     now = datetime.now(timezone.utc)
     exp = now + timedelta(minutes=settings.JWT_EXPIRE_MINUTES)
-    payload = {"sub": subject, "role": role, "iat": int(now.timestamp()), "exp": int(exp.timestamp())}
+    payload = {
+        "sub": subject,
+        "role": role,
+        "tv": token_version,
+        "iat": int(now.timestamp()),
+        "exp": int(exp.timestamp()),
+    }
     return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
 
 
@@ -72,4 +78,7 @@ def get_current_user(
     user = db.execute(select(User).where(User.id == int(user_id))).scalar_one_or_none()
     if user is None:
         raise HTTPException(status_code=401, detail="User not found")
+    token_version = payload.get("tv", 0)
+    if token_version != user.token_version:
+        raise HTTPException(status_code=401, detail="Token has been invalidated")
     return user

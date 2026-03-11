@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -15,7 +15,7 @@ from app.models.admin_invite import AdminInvite
 from app.models.user import User
 from app.services.invite_delivery import send_invite
 from app.utils.rate_limit import check_rate_limit
-from app.utils.citizenship import normalize_citizenship_number
+from app.utils.email import normalize_email
 
 INVITE_EXPIRE_HOURS = 24
 
@@ -26,7 +26,12 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 
 
 class CreateInviteRequest(BaseModel):
-    recipient_identifier: str  # citizenship number or email of invitee
+    recipient_identifier: str  # normalized email of invitee
+
+    @field_validator("recipient_identifier")
+    @classmethod
+    def validate_recipient_identifier(cls, value: str) -> str:
+        return normalize_email(value)
 
 
 class InviteResponse(BaseModel):
@@ -98,22 +103,14 @@ def create_invite(
     _require_super_admin(current_user)
     check_rate_limit(f"invite_create:{current_user.id}", limit=30, window_seconds=3600)
 
-    # Early check: reject if citizenship number is already registered
-    try:
-        normalized = normalize_citizenship_number(payload.recipient_identifier)
-        existing = db.execute(
-            select(User).where(User.citizenship_no_normalized == normalized)
-        ).scalar_one_or_none()
-        if existing:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Citizenship number is already registered (user id={existing.id}, role={existing.role})",
-            )
-    except HTTPException as e:
-        if e.status_code == 400 and "format" in (e.detail or "").lower():
-            pass  # recipient_identifier may not be a citizenship number — skip
-        else:
-            raise
+    existing_email = db.execute(
+        select(User).where(User.email == payload.recipient_identifier)
+    ).scalar_one_or_none()
+    if existing_email:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Email is already registered (user id={existing_email.id}, role={existing_email.role})",
+        )
 
     code = secrets.token_urlsafe(12)[:12]  # 12-char URL-safe random string
     code_hash = _hash_code(code)

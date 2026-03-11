@@ -20,6 +20,8 @@ import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import "./AdminAuthPage.css";
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const PORTAL_TABS = {
   LOGIN: "login",
   ACTIVATE: "activate",
@@ -84,6 +86,7 @@ export default function AdminAuthPage() {
 
   const [activateForm, setActivateForm] = useState({
     invite_code: "",
+    email: "",
     full_name: "",
     phone_number: "",
     citizenship_number: "",
@@ -134,8 +137,17 @@ export default function AdminAuthPage() {
         sessionStorage.setItem("admin_mfa_ok", "0");
         navigate("/totp-setup");
       } else {
+        if (!activateForm.email.trim()) {
+          setServerError("Email is required.");
+          return;
+        }
+        if (!EMAIL_REGEX.test(activateForm.email.trim())) {
+          setServerError("Please enter a valid email address.");
+          return;
+        }
         // Build payload: prefer URL token, fall back to manual invite_code.
         const activatePayload = {
+          email: activateForm.email.trim().toLowerCase(),
           full_name: activateForm.full_name,
           phone_number: activateForm.phone_number,
           citizenship_number: activateForm.citizenship_number,
@@ -295,6 +307,22 @@ export default function AdminAuthPage() {
                   autoComplete="off"
                   disabled={!!urlToken}
                   style={urlToken ? { opacity: 0.6, fontStyle: "italic" } : undefined}
+                />
+              </div>
+
+              <div className="admin-field">
+                <label className="admin-label" htmlFor="emailActivate">
+                  Email Address
+                </label>
+                <input
+                  id="emailActivate"
+                  className="admin-input"
+                  name="email"
+                  type="email"
+                  value={activateForm.email}
+                  onChange={handleActivateChange}
+                  placeholder="Enter email address"
+                  autoComplete="email"
                 />
               </div>
 
