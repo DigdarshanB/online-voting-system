@@ -5,6 +5,11 @@ import VoterAuthPage from "./pages/VoterAuthPage";
 import VoterTotpSetup from "./pages/VoterTotpSetup";
 import VoterStatus from "./pages/VoterStatus";
 import VoterFaceVerification from "./pages/VoterFaceVerification";
+import VoterEmailVerification from "./pages/VoterEmailVerification";
+import VoterForgotPassword from "./pages/VoterForgotPassword";
+import VoterResetPassword from "./pages/VoterResetPassword";
+import VoterChangePassword from "./pages/VoterChangePassword";
+import VoterTotpRecovery from "./pages/VoterTotpRecovery";
 
 /**
  * File: App.jsx
@@ -28,7 +33,9 @@ function ProtectedHome() {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then(({ data }) => {
-        if (data.status === "ACTIVE" && data.totp_enabled) {
+        if (!data.email_verified) {
+          navigate("/verify-email", { replace: true });
+        } else if (data.status === "ACTIVE" && data.totp_enabled) {
           setAllowed(true);
         } else if (data.status === "ACTIVE" && !data.totp_enabled) {
           navigate("/totp-setup", { replace: true });
@@ -46,7 +53,19 @@ function ProtectedHome() {
 
   if (allowed === null) return <div style={{ textAlign: "center", padding: 40 }}>Loading…</div>;
   if (allowed === false) return <Navigate to="/" replace />;
-  return <div>Welcome, voter!</div>;
+  return (
+    <div style={{ padding: 32, fontFamily: "sans-serif" }}>
+      <h1 style={{ marginBottom: 16 }}>Welcome, voter!</h1>
+      <nav style={{ display: "flex", gap: 12 }}>
+        <a
+          href="/change-password"
+          style={{ color: "#1e56c7", fontWeight: 700, textDecoration: "none" }}
+        >
+          Change Password
+        </a>
+      </nav>
+    </div>
+  );
 }
 
 export default function App() {
@@ -57,6 +76,11 @@ export default function App() {
         <Route path="/totp-setup" element={<VoterTotpSetup />} />
         <Route path="/status" element={<VoterStatus />} />
         <Route path="/face-verification" element={<VoterFaceVerification />} />
+        <Route path="/verify-email" element={<VoterEmailVerification />} />
+        <Route path="/forgot-password" element={<VoterForgotPassword />} />
+        <Route path="/reset-password" element={<VoterResetPassword />} />
+        <Route path="/totp-recovery" element={<VoterTotpRecovery />} />
+        <Route path="/change-password" element={<VoterChangePassword />} />
         <Route path="/home" element={<ProtectedHome />} />
       </Routes>
     </BrowserRouter>

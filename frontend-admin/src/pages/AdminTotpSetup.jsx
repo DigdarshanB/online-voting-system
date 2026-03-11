@@ -59,6 +59,12 @@ export default function AdminTotpSetup() {
           return;
         }
 
+        // Email must be verified before TOTP setup proceeds.
+        if (!data.email_verified) {
+          navigate("/verify-email", { replace: true });
+          return;
+        }
+
         if (data.totp_enabled) {
           setStep("challenge");
         } else {

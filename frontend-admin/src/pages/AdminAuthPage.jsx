@@ -16,7 +16,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams, Link } from "react-router-dom";
 import axios from "axios";
 import "./AdminAuthPage.css";
 
@@ -288,6 +288,22 @@ export default function AdminAuthPage() {
                     {showPassword ? "Hide" : "Show"}
                   </button>
                 </div>
+              </div>
+
+              <div style={{ textAlign: "right", marginTop: -6 }}>
+                <Link
+                  to="/forgot-password"
+                  style={{ fontSize: 12, fontWeight: 700, color: "var(--primary-blue)", textDecoration: "none" }}
+                >
+                  Forgot password?
+                </Link>
+                <span style={{ margin: "0 8px", color: "var(--muted)", fontWeight: 700 }}>·</span>
+                <Link
+                  to="/totp-recovery"
+                  style={{ fontSize: 12, fontWeight: 700, color: "var(--primary-blue)", textDecoration: "none" }}
+                >
+                  Lost authenticator?
+                </Link>
               </div>
             </div>
           ) : (

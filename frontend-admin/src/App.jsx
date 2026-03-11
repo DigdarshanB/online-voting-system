@@ -19,6 +19,11 @@ import PendingAdmins from "./pages/PendingAdmins";
 import ManageAdmins from "./pages/ManageAdmins";
 import ManageVoters from "./pages/ManageVoters";
 import ActivateInvitePage from "./pages/ActivateInvitePage";
+import AdminEmailVerification from "./pages/AdminEmailVerification";
+import AdminForgotPassword from "./pages/AdminForgotPassword";
+import AdminResetPassword from "./pages/AdminResetPassword";
+import AdminChangePassword from "./pages/AdminChangePassword";
+import AdminTotpRecovery from "./pages/AdminTotpRecovery";
 
 function PendingApprovalPage() {
   const navigate = React.useNavigate();
@@ -90,6 +95,9 @@ function DashboardPage() {
         <Link to="/admin/voter-verifications" style={{ color: "#1e56c7", fontWeight: 700 }}>
           Voter Verifications
         </Link>
+        <Link to="/change-password" style={{ color: "#1e56c7", fontWeight: 700 }}>
+          Change Password
+        </Link>
       </nav>
     </div>
   );
@@ -151,6 +159,19 @@ export default function App() {
       />
       {/* Public: no auth guard – the invited admin has no token yet */}
       <Route path="/activate-invite" element={<ActivateInvitePage />} />
+      {/* Email verification: required before TOTP setup */}
+      <Route path="/verify-email" element={<AdminEmailVerification />} />
+      <Route path="/forgot-password" element={<AdminForgotPassword />} />
+      <Route path="/reset-password" element={<AdminResetPassword />} />
+      <Route path="/totp-recovery" element={<AdminTotpRecovery />} />
+      <Route
+        path="/change-password"
+        element={
+          <RequireDashboardMfa>
+            <AdminChangePassword />
+          </RequireDashboardMfa>
+        }
+      />
       {/* Voter verification queue — admin + super_admin */}
       <Route
         path="/admin/voter-verifications"

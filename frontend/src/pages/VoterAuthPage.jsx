@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import "./VoterAuthPage.css";
 
@@ -163,7 +163,9 @@ export default function VoterAuthPage() {
         const { data: me } = await axios.get("http://localhost:8000/auth/me", {
           headers: { Authorization: `Bearer ${data.access_token}` },
         });
-        if (me.status === "ACTIVE" && me.totp_enabled) {
+        if (!me.email_verified) {
+          navigate("/verify-email");
+        } else if (me.status === "ACTIVE" && me.totp_enabled) {
           navigate("/home");
         } else if (me.status === "ACTIVE" && !me.totp_enabled) {
           navigate("/totp-setup");
@@ -317,6 +319,22 @@ export default function VoterAuthPage() {
                     {showLoginPassword ? "Hide" : "Show"}
                   </button>
                 </div>
+              </div>
+
+              <div style={{ textAlign: "right", marginTop: -6 }}>
+                <Link
+                  to="/forgot-password"
+                  style={{ fontSize: 12, fontWeight: 700, color: "var(--primary-blue)", textDecoration: "none" }}
+                >
+                  Forgot password?
+                </Link>
+                <span style={{ margin: "0 8px", color: "var(--muted)", fontWeight: 700 }}>·</span>
+                <Link
+                  to="/totp-recovery"
+                  style={{ fontSize: 12, fontWeight: 700, color: "var(--primary-blue)", textDecoration: "none" }}
+                >
+                  Lost authenticator?
+                </Link>
               </div>
             </div>
           ) : (

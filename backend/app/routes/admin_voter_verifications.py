@@ -23,6 +23,7 @@ from sqlalchemy.orm import Session
 from app.db.deps import get_db
 from app.core.jwt import get_current_user
 from app.models.user import User
+from app.services.auth_audit import audit_auth_event
 
 router = APIRouter(prefix="/admin/voters", tags=["admin-voter-verifications"])
 
@@ -171,6 +172,12 @@ def approve_voter(
     voter.approved_at = datetime.now(timezone.utc)
     voter.rejection_reason = None
     db.commit()
+    audit_auth_event(
+        action="ACCOUNT_APPROVED",
+        actor_user_id=_admin.id,
+        target_user_id=voter.id,
+        metadata={"target_role": voter.role, "new_status": voter.status},
+    )
     return {"success": True, "status": voter.status}
 
 
@@ -187,4 +194,10 @@ def reject_voter(
     voter.status = "REJECTED"
     voter.rejection_reason = payload.reason
     db.commit()
+    audit_auth_event(
+        action="ACCOUNT_REJECTED",
+        actor_user_id=_admin.id,
+        target_user_id=voter.id,
+        metadata={"target_role": voter.role, "reason": payload.reason},
+    )
     return {"success": True, "status": voter.status, "reason": voter.rejection_reason}

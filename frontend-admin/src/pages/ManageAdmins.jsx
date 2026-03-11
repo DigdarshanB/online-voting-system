@@ -138,6 +138,10 @@ export default function ManageAdmins() {
   const [activeAdmins, setActiveAdmins] = useState([]);
   const [activeErr, setActiveErr]       = useState("");
 
+  // TOTP recovery queue state
+  const [recoveryQueue, setRecoveryQueue] = useState([]);
+  const [recoveryErr, setRecoveryErr] = useState("");
+
   // Shared action message
   const [actionMsg, setActionMsg] = useState("");
 
@@ -173,6 +177,18 @@ export default function ManageAdmins() {
     }
   }, []);
 
+  const loadRecoveryQueue = useCallback(async () => {
+    setRecoveryErr("");
+    try {
+      const { data } = await axios.get(`${API}/admin/verifications/recovery/pending`, {
+        headers: authHeaders(),
+      });
+      setRecoveryQueue(data);
+    } catch (err) {
+      setRecoveryErr(err?.response?.data?.detail ?? "Failed to load TOTP recovery queue.");
+    }
+  }, []);
+
   // ── Bootstrap ──
 
   useEffect(() => {
@@ -184,6 +200,7 @@ export default function ManageAdmins() {
           loadInvites();
           loadPending();
           loadActive();
+          loadRecoveryQueue();
         }
       } catch {
         localStorage.removeItem("access_token");
@@ -192,7 +209,7 @@ export default function ManageAdmins() {
       }
     }
     bootstrap();
-  }, [navigate, loadInvites, loadPending, loadActive]);
+  }, [navigate, loadInvites, loadPending, loadActive, loadRecoveryQueue]);
 
   // ═══════════════════════════════════════════════════════════════
   // Section A: Invites
@@ -317,6 +334,39 @@ export default function ManageAdmins() {
       loadActive();
     } catch (err) {
       setActionMsg(`✗ Disable failed: ${err?.response?.data?.detail ?? "unknown error"}`);
+    }
+  }
+
+  async function handleApproveRecovery(requestId, email) {
+    setActionMsg("");
+    try {
+      await axios.post(
+        `${API}/admin/verifications/recovery/${requestId}/approve`,
+        {},
+        { headers: authHeaders() },
+      );
+      setActionMsg(`✓ TOTP recovery approved for ${email}.`);
+      loadRecoveryQueue();
+      loadPending();
+      loadActive();
+    } catch (err) {
+      setActionMsg(`✗ Approve failed: ${err?.response?.data?.detail ?? "unknown error"}`);
+    }
+  }
+
+  async function handleRejectRecovery(requestId, email) {
+    const reason = prompt(`Reason for rejecting TOTP recovery for ${email}:`) || "Rejected by super admin";
+    setActionMsg("");
+    try {
+      await axios.post(
+        `${API}/admin/verifications/recovery/${requestId}/reject`,
+        { reason },
+        { headers: authHeaders() },
+      );
+      setActionMsg(`✓ TOTP recovery rejected for ${email}.`);
+      loadRecoveryQueue();
+    } catch (err) {
+      setActionMsg(`✗ Reject failed: ${err?.response?.data?.detail ?? "unknown error"}`);
     }
   }
 
@@ -744,7 +794,89 @@ export default function ManageAdmins() {
         <hr style={divider} />
 
         {/* ═══════════════════════════════════════════════════════ */}
-        {/* Section C: Active Admins                               */}
+        {/* Section C: TOTP Recovery Queue                         */}
+        {/* ═══════════════════════════════════════════════════════ */}
+        <section style={sectionWrap}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+            <h2 style={{ ...sectionTitle, fontSize: 16 }}>Admin TOTP Recovery Queue</h2>
+            <button type="button" className="admin-mini-btn" onClick={loadRecoveryQueue}>Refresh</button>
+          </div>
+          <p style={{ color: "#92400e", fontSize: 12, fontWeight: 700, marginBottom: 10 }}>
+            Approving will immediately invalidate current sessions and require fresh TOTP setup.
+          </p>
+          {recoveryErr && <div className="admin-error" role="alert">{recoveryErr}</div>}
+          {recoveryQueue.length === 0 ? (
+            <p style={{ color: "var(--muted)", fontSize: 13, textAlign: "center", padding: "16px 0" }}>
+              No pending TOTP recovery requests.
+            </p>
+          ) : (
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                <thead>
+                  <tr style={{ borderBottom: "3px solid var(--border-strong)" }}>
+                    <th style={TH}>Request ID</th>
+                    <th style={TH}>Email</th>
+                    <th style={TH}>Role</th>
+                    <th style={TH}>Requested At</th>
+                    <th style={TH}>Request IP</th>
+                    <th style={TH}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recoveryQueue.map((r) => (
+                    <tr key={r.id} style={{ borderBottom: "1px solid var(--border-soft)" }}>
+                      <td style={TD}>{r.id}</td>
+                      <td style={{ ...TD, fontWeight: 700 }}>{r.email}</td>
+                      <td style={TD}>{r.role}</td>
+                      <td style={TD}>{fmtDate(r.created_at)}</td>
+                      <td style={TD}>{r.requested_ip || "—"}</td>
+                      <td style={{ ...TD, whiteSpace: "nowrap" }}>
+                        <button
+                          type="button"
+                          onClick={() => handleApproveRecovery(r.id, r.email)}
+                          style={{
+                            border: "none",
+                            background: "#d1fae5",
+                            color: "#065f46",
+                            borderRadius: 6,
+                            padding: "5px 12px",
+                            fontWeight: 700,
+                            fontSize: 12,
+                            cursor: "pointer",
+                            marginRight: 6,
+                          }}
+                        >
+                          Approve
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRejectRecovery(r.id, r.email)}
+                          style={{
+                            border: "none",
+                            background: "#fee2e2",
+                            color: "#991b1b",
+                            borderRadius: 6,
+                            padding: "5px 12px",
+                            fontWeight: 700,
+                            fontSize: 12,
+                            cursor: "pointer",
+                          }}
+                        >
+                          Reject
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        <hr style={divider} />
+
+        {/* ═══════════════════════════════════════════════════════ */}
+        {/* Section D: Active Admins                               */}
         {/* ═══════════════════════════════════════════════════════ */}
         <section style={sectionWrap}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>

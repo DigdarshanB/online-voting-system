@@ -3,14 +3,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import pyotp
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.db.deps import get_db
 from app.core.jwt import get_current_user
 from app.models.user import User
-from app.utils.rate_limit import check_rate_limit
+from app.utils.rate_limit import check_named_rate_limit
+from app.services.auth_audit import audit_auth_event
 
 logger = logging.getLogger(__name__)
 
@@ -90,11 +91,14 @@ def totp_setup(
 @router.post("/totp/verify")
 def totp_verify(
     payload: TOTPVerifyRequest,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     _require_authenticated(current_user)
-    check_rate_limit(f"totp_verify:{current_user.id}", limit=10, window_seconds=300)
+    client_ip = request.client.host if request.client else "unknown"
+    check_named_rate_limit("totp_verify_user", f"totp_verify:user:{current_user.id}")
+    check_named_rate_limit("totp_verify_ip", f"totp_verify:ip:{client_ip}")
 
     # Voters can verify TOTP in PENDING_DOCUMENT or ACTIVE state;
     # admins may be PENDING_MFA or ACTIVE.
@@ -115,6 +119,7 @@ def totp_verify(
     if not totp.verify(payload.code, valid_window=1):
         raise HTTPException(status_code=400, detail="Invalid TOTP code")
 
+    was_enrolled = current_user.totp_enabled_at is not None
     current_user.totp_enabled_at = datetime.now(timezone.utc)
 
     # Admin-only: transition PENDING_MFA → PENDING_APPROVAL.
@@ -122,7 +127,14 @@ def totp_verify(
         current_user.status = "PENDING_APPROVAL"
 
     db.commit()
-    return {"success": True}
+    audit_auth_event(
+        action="TOTP_ENROLLED" if not was_enrolled else "TOTP_VERIFIED",
+        actor_user_id=current_user.id,
+        target_user_id=current_user.id,
+        request=request,
+        metadata={"role": current_user.role, "status": current_user.status},
+    )
+    return {"detail": "TOTP verified successfully", "success": True}
 
 
 # ── POST /verification/citizenship/upload ───────────────────────
