@@ -1,4 +1,4 @@
-# Online Voting System (Final Year Project)
+# Online Voting System 
 
 A web-based online voting system with separate **Voter** and **Admin** portals, backed by a **FastAPI** REST API and **MySQL** database (Docker). This repository contains the complete full-stack source code and development setup.
 
