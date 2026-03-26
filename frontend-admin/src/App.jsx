@@ -15,74 +15,18 @@ import { Routes, Route, Navigate, Link } from "react-router-dom";
 import AdminAuthPage from "./pages/AdminAuthPage";
 import AdminTotpSetup from "./pages/AdminTotpSetup";
 import SuperAdminInvitesPage from "./pages/SuperAdminInvitesPage";
-import PendingAdmins from "./pages/PendingAdmins";
 import ManageAdmins from "./pages/ManageAdmins";
 import ManageVoters from "./pages/ManageVoters";
+import ManageVotersDashboard from "./pages/ManageVotersDashboard";
 import ActivateInvitePage from "./pages/ActivateInvitePage";
 import AdminEmailVerification from "./pages/AdminEmailVerification";
 import AdminForgotPassword from "./pages/AdminForgotPassword";
 import AdminResetPassword from "./pages/AdminResetPassword";
 import AdminChangePassword from "./pages/AdminChangePassword";
 import AdminTotpRecovery from "./pages/AdminTotpRecovery";
-
-function PendingApprovalPage() {
-  const navigate = React.useNavigate();
-
-  function handleLogout() {
-    localStorage.removeItem("access_token");
-    sessionStorage.removeItem("admin_mfa_ok");
-    navigate("/", { replace: true });
-  }
-
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "#f8fafc",
-        fontFamily: "sans-serif",
-        padding: 24,
-      }}
-    >
-      <div
-        style={{
-          maxWidth: 460,
-          width: "100%",
-          background: "#fff",
-          borderRadius: 12,
-          boxShadow: "0 2px 16px rgba(0,0,0,.08)",
-          padding: "40px 36px",
-          textAlign: "center",
-        }}
-      >
-        <div style={{ fontSize: 48, marginBottom: 16 }}>&#9203;</div>
-        <h2 style={{ margin: "0 0 12px", color: "#1e293b" }}>Awaiting Approval</h2>
-        <p style={{ color: "#64748b", fontSize: 14, lineHeight: 1.6, marginBottom: 28 }}>
-          Your account has been set up and your MFA authenticator is configured.
-          A super admin must approve your account before you can access the dashboard.
-          Please check back later.
-        </p>
-        <button
-          onClick={handleLogout}
-          style={{
-            background: "#1e56c7",
-            color: "#fff",
-            border: "none",
-            borderRadius: 8,
-            padding: "10px 28px",
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: "pointer",
-          }}
-        >
-          Back to Login
-        </button>
-      </div>
-    </div>
-  );
-}
+import ManageElections from "./pages/ManageElections";
+import ManageCandidates from "./pages/ManageCandidates";
+import PendingApprovalPage from "./pages/PendingApprovalPage";
 
 function DashboardPage() {
   return (
@@ -94,6 +38,15 @@ function DashboardPage() {
         </Link>
         <Link to="/admin/voter-verifications" style={{ color: "#1e56c7", fontWeight: 700 }}>
           Voter Verifications
+        </Link>
+        <Link to="/admin/manage-voters" style={{ color: "#1e56c7", fontWeight: 700 }}>
+          Manage Voters
+        </Link>
+        <Link to="/admin/elections" style={{ color: "#1e56c7", fontWeight: 700 }}>
+          Manage Elections
+        </Link>
+        <Link to="/admin/candidates" style={{ color: "#1e56c7", fontWeight: 700 }}>
+          Manage Candidates
         </Link>
         <Link to="/change-password" style={{ color: "#1e56c7", fontWeight: 700 }}>
           Change Password
@@ -109,6 +62,30 @@ function RequireDashboardMfa({ children }) {
 
   if (!token) return <Navigate to="/" replace />;
   if (!mfaOk) return <Navigate to="/totp-setup" replace />;
+  return children;
+}
+
+function getTokenRole(token) {
+  if (!token) return null;
+  try {
+    const payloadBase64 = token.split(".")[1];
+    if (!payloadBase64) return null;
+    const payloadJson = atob(payloadBase64.replace(/-/g, "+").replace(/_/g, "/"));
+    const payload = JSON.parse(payloadJson);
+    return payload.role ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function RequireAdminOrSuperAdmin({ children }) {
+  const token = localStorage.getItem("access_token");
+  const mfaOk = sessionStorage.getItem("admin_mfa_ok") === "1";
+  const role = getTokenRole(token);
+
+  if (!token) return <Navigate to="/" replace />;
+  if (!mfaOk) return <Navigate to="/totp-setup" replace />;
+  if (role !== "admin" && role !== "super_admin") return <Navigate to="/" replace />;
   return children;
 }
 
@@ -179,6 +156,30 @@ export default function App() {
           <RequireDashboardMfa>
             <ManageVoters />
           </RequireDashboardMfa>
+        }
+      />
+      <Route
+        path="/admin/manage-voters"
+        element={
+          <RequireAdminOrSuperAdmin>
+            <ManageVotersDashboard />
+          </RequireAdminOrSuperAdmin>
+        }
+      />
+      <Route
+        path="/admin/elections"
+        element={
+          <RequireAdminOrSuperAdmin>
+            <ManageElections />
+          </RequireAdminOrSuperAdmin>
+        }
+      />
+      <Route
+        path="/admin/candidates"
+        element={
+          <RequireAdminOrSuperAdmin>
+            <ManageCandidates />
+          </RequireAdminOrSuperAdmin>
         }
       />
       {/* Shown after MFA setup when account is awaiting super-admin approval */}

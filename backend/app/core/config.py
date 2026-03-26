@@ -1,3 +1,4 @@
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -10,5 +11,39 @@ class Settings(BaseSettings):
 
     # Admin-portal base URL used to build invite activation links.
     ADMIN_FRONTEND_URL: str = "http://localhost:5174"
+
+    # SMTP config for transactional email delivery.
+    SMTP_HOST: str | None = None
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str | None = None
+    SMTP_PASSWORD: str | None = None
+    SMTP_USE_TLS: bool = True
+    SMTP_USE_SSL: bool = False
+    SMTP_FROM_EMAIL: str | None = None
+    SMTP_FROM_NAME: str = "Online Voting System"
+
+    # Development-only helpers
+    EMAIL_DEV_FALLBACK: bool = True
+    EMAIL_DEV_FALLBACK_EXPOSE_TOKEN: bool = True
+
+    @model_validator(mode="after")
+    def _strip_and_validate(cls, values: "Settings") -> "Settings":
+        # Strip incidental whitespace from string settings to avoid subtle auth failures.
+        for field in [
+            "SMTP_HOST",
+            "SMTP_USERNAME",
+            "SMTP_PASSWORD",
+            "SMTP_FROM_EMAIL",
+            "SMTP_FROM_NAME",
+            "ADMIN_FRONTEND_URL",
+        ]:
+            val = getattr(values, field, None)
+            if isinstance(val, str):
+                setattr(values, field, val.strip())
+
+        if values.SMTP_USE_TLS and values.SMTP_USE_SSL:
+            raise ValueError("SMTP_USE_TLS and SMTP_USE_SSL cannot both be true")
+
+        return values
 
 settings = Settings()

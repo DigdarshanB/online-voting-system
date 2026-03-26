@@ -13,6 +13,7 @@ from app.core.jwt import create_activation_token, get_current_user
 from app.db.deps import get_db
 from app.models.admin_invite import AdminInvite
 from app.models.user import User
+from app.services.email_delivery import EmailDeliveryError
 from app.services.invite_delivery import send_invite
 from app.utils.rate_limit import check_rate_limit
 from app.utils.email import normalize_email
@@ -135,8 +136,13 @@ def create_invite(
         f"{settings.ADMIN_FRONTEND_URL}/?tab=activate&token={activation_token}"
     )
 
-    # Notify recipient (stub: no email yet — super_admin copies the link)
-    send_invite(payload.recipient_identifier, activation_url)
+    try:
+        send_invite(payload.recipient_identifier, activation_url)
+    except EmailDeliveryError as exc:
+        detail = exc.public_message
+        if exc.fallback_token and settings.EMAIL_DEV_FALLBACK_EXPOSE_TOKEN:
+            detail = f"{detail} | DEV ACTIVATION URL: {exc.fallback_token}"
+        raise HTTPException(status_code=500, detail=detail) from exc
 
     return InviteResponse(
         invite_code=code,

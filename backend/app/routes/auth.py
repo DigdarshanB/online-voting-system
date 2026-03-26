@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, field_validator
 from sqlalchemy.orm import Session
 from sqlalchemy import select, update
+from sqlalchemy.exc import OperationalError, SQLAlchemyError
 
 from app.db.deps import get_db
 from app.models.admin_invite import AdminInvite
@@ -21,7 +22,8 @@ from app.core.jwt import create_access_token, decode_activation_token, get_curre
 from app.utils.citizenship import normalize_citizenship_number
 from app.utils.email import is_valid_email, normalize_email
 from app.utils.rate_limit import check_named_rate_limit, check_rate_limit
-from app.services.email_verification_delivery import send_email_verification
+from app.services.email_delivery import EmailDeliveryError
+from app.services.email_verification_delivery import send_email_verification_with_fallback
 from app.services.password_reset_delivery import send_password_reset_code, send_password_changed_notification
 from app.services.totp_recovery_delivery import (
     send_totp_recovery_code,
@@ -29,6 +31,7 @@ from app.services.totp_recovery_delivery import (
     send_totp_recovery_pending_notice,
 )
 from app.services.auth_audit import audit_auth_event
+from app.core.config import settings
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 logger = logging.getLogger(__name__)
@@ -231,9 +234,12 @@ def _issue_email_verification_token(
     db.commit()
 
     try:
-        send_email_verification(user.email, raw_token, expires_at)
-    except Exception:
-        logger.exception("Failed to dispatch email verification for user_id=%s", user.id)
+        send_email_verification_with_fallback(user.email, raw_token, expires_at)
+    except EmailDeliveryError as exc:
+        detail = exc.public_message
+        if exc.fallback_token and settings.EMAIL_DEV_FALLBACK_EXPOSE_TOKEN:
+            detail = f"{detail} | DEV TOKEN: {exc.fallback_token}"
+        raise HTTPException(status_code=500, detail=detail) from exc
 
 @router.post("/register")
 def register(payload: RegisterRequest, request: Request, db: Session = Depends(get_db)):
@@ -250,38 +256,60 @@ def register(payload: RegisterRequest, request: Request, db: Session = Depends(g
     normalized = normalize_citizenship_number(payload.citizenship_number)
     _validate_password_policy(payload.password)
 
-    existing = db.execute(
-        select(User).where(User.citizenship_no_normalized == normalized)
-    ).scalar_one_or_none()
-    if existing:
-        raise HTTPException(status_code=400, detail="Citizenship number already registered")
+    try:
+        existing = db.execute(
+            select(User).where(User.citizenship_no_normalized == normalized)
+        ).scalar_one_or_none()
+        if existing:
+            raise HTTPException(status_code=400, detail="Citizenship number already registered")
 
-    existing_email = db.execute(
-        select(User).where(User.email == payload.email)
-    ).scalar_one_or_none()
-    if existing_email:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        existing_email = db.execute(
+            select(User).where(User.email == payload.email)
+        ).scalar_one_or_none()
+        if existing_email:
+            raise HTTPException(status_code=400, detail="Email already registered")
 
-    user = User(
-        email=payload.email,
-        full_name=payload.full_name,
-        phone_number=payload.phone_number,
-        citizenship_no_raw=payload.citizenship_number,
-        citizenship_no_normalized=normalized,
-        hashed_password=hash_password(payload.password),
-        role=resolved_role,
-        status="PENDING_DOCUMENT",
-    )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    _issue_email_verification_token(user=user, db=db, request=request)
-    return {
-        "id": user.id,
-        "email": user.email,
-        "citizenship_no": user.citizenship_no_normalized,
-        "role": user.role,
-    }
+        user = User(
+            email=payload.email,
+            full_name=payload.full_name,
+            phone_number=payload.phone_number,
+            citizenship_no_raw=payload.citizenship_number,
+            citizenship_no_normalized=normalized,
+            hashed_password=hash_password(payload.password),
+            role=resolved_role,
+            status="PENDING_DOCUMENT",
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        _issue_email_verification_token(user=user, db=db, request=request)
+        return {
+            "id": user.id,
+            "email": user.email,
+            "citizenship_no": user.citizenship_no_normalized,
+            "role": user.role,
+        }
+    except HTTPException:
+        raise
+    except OperationalError:
+        db.rollback()
+        logger.exception(
+            "Registration failed due to database connectivity issue for email=%s ip=%s",
+            payload.email,
+            _get_client_ip(request),
+        )
+        raise HTTPException(
+            status_code=503,
+            detail="Database connection failed. Please verify backend database configuration.",
+        )
+    except SQLAlchemyError:
+        db.rollback()
+        logger.exception(
+            "Registration failed due to database error for email=%s ip=%s",
+            payload.email,
+            _get_client_ip(request),
+        )
+        raise HTTPException(status_code=500, detail="Registration failed due to a server error")
 
 
 @router.post("/send-email-verification")
@@ -669,8 +697,14 @@ def forgot_password(payload: ForgotPasswordRequest, request: Request, db: Sessio
 
     try:
         send_password_reset_code(user.email, raw_code, expires_at)
-    except Exception:
+    except EmailDeliveryError as exc:
+        detail = exc.public_message
+        if exc.fallback_token and settings.EMAIL_DEV_FALLBACK_EXPOSE_TOKEN:
+            detail = f"{detail} | DEV RESET CODE: {exc.fallback_token}"
+        raise HTTPException(status_code=500, detail=detail) from exc
+    except Exception as exc:
         logger.exception("Failed to dispatch password reset code for user_id=%s", user.id)
+        raise HTTPException(status_code=500, detail="Password reset email failed to send") from exc
 
     audit_auth_event(
         action="PASSWORD_RESET_REQUESTED",
@@ -865,8 +899,14 @@ def request_totp_recovery(
 
     try:
         send_totp_recovery_code(user.email, raw_code, expires_at)
-    except Exception:
+    except EmailDeliveryError as exc:
+        detail = exc.public_message
+        if exc.fallback_token and settings.EMAIL_DEV_FALLBACK_EXPOSE_TOKEN:
+            detail = f"{detail} | DEV TOTP CODE: {exc.fallback_token}"
+        raise HTTPException(status_code=500, detail=detail) from exc
+    except Exception as exc:
         logger.exception("Failed to send TOTP recovery code for user_id=%s", user.id)
+        raise HTTPException(status_code=500, detail="TOTP recovery email failed to send") from exc
 
     logger.info(
         "TOTP recovery requested user_id=%s role=%s ip=%s",

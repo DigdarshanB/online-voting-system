@@ -20,6 +20,11 @@ import { useNavigate, useLocation, useSearchParams, Link } from "react-router-do
 import axios from "axios";
 import "./AdminAuthPage.css";
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
+// Create a small axios instance so we can set a timeout and a single base URL.
+const api = axios.create({ baseURL: API_BASE, timeout: 10000 });
+
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const PORTAL_TABS = {
@@ -128,7 +133,7 @@ export default function AdminAuthPage() {
 
     try {
       if (activeTab === PORTAL_TABS.LOGIN) {
-        const { data } = await axios.post("http://localhost:8000/auth/admin/login", {
+        const { data } = await api.post("/auth/admin/login", {
           citizenship_number: loginForm.adminId,
           password: loginForm.password,
         });
@@ -139,10 +144,12 @@ export default function AdminAuthPage() {
       } else {
         if (!activateForm.email.trim()) {
           setServerError("Email is required.");
+          setLoading(false);
           return;
         }
         if (!EMAIL_REGEX.test(activateForm.email.trim())) {
           setServerError("Please enter a valid email address.");
+          setLoading(false);
           return;
         }
         // Build payload: prefer URL token, fall back to manual invite_code.
@@ -158,14 +165,21 @@ export default function AdminAuthPage() {
         } else {
           activatePayload.invite_code = activateForm.invite_code;
         }
-        const { data } = await axios.post("http://localhost:8000/auth/admin/activate", activatePayload);
+        const { data } = await api.post("/auth/admin/activate", activatePayload);
         setActivateSuccess(
           `Account activated. Status: ${data.status ?? "PENDING_VERIFICATION"}`
         );
       }
     } catch (err) {
       const detail = err?.response?.data?.detail;
-      setServerError(typeof detail === "string" ? detail : "Something went wrong. Please try again.");
+      // Distinguish network timeouts/connection errors for clearer UX.
+      if (err?.code === "ECONNABORTED" || err?.message?.includes("timeout")) {
+        setServerError("Login request timed out. Please check your connection or API URL.");
+      } else if (err?.message === "Network Error") {
+        setServerError("Cannot reach the server. Verify the backend is running and the URL is correct.");
+      } else {
+        setServerError(typeof detail === "string" ? detail : "Something went wrong. Please try again.");
+      }
     } finally {
       setLoading(false);
     }

@@ -105,6 +105,44 @@ export default function VoterAuthPage() {
 
   /**
    * Purpose:
+   *   Normalize API errors into a user-friendly string, including FastAPI validation payloads.
+   */
+  function getApiErrorMessage(error) {
+    const detail = error?.response?.data?.detail;
+
+    if (typeof detail === "string" && detail.trim()) {
+      return detail;
+    }
+
+    if (Array.isArray(detail) && detail.length > 0) {
+      const joined = detail
+        .map((item) => {
+          if (!item || typeof item !== "object") return null;
+          const field = Array.isArray(item.loc) ? item.loc[item.loc.length - 1] : null;
+          const msg = typeof item.msg === "string" ? item.msg : null;
+          if (field && msg) return `${field}: ${msg}`;
+          return msg;
+        })
+        .filter(Boolean)
+        .join("; ");
+
+      if (joined) return joined;
+    }
+
+    const message = error?.response?.data?.message;
+    if (typeof message === "string" && message.trim()) {
+      return message;
+    }
+
+    if (!error?.response) {
+      return "Cannot reach backend API. Please confirm the server is running.";
+    }
+
+    return `Request failed (${error.response.status}). Please try again.`;
+  }
+
+  /**
+   * Purpose:
    *   Handle citizenship document upload after login.
    */
   async function handleFileSelect(e) {
@@ -185,8 +223,7 @@ export default function VoterAuthPage() {
         setMode("login");
       }
     } catch (err) {
-      const detail = err?.response?.data?.detail;
-      setFormError(typeof detail === "string" ? detail : "Something went wrong. Please try again.");
+      setFormError(getApiErrorMessage(err));
     } finally {
       setLoading(false);
     }
