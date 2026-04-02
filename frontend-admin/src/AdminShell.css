@@ -3,13 +3,23 @@
 .admin-sidebar {
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), left 0.3s ease;
   z-index: 100;
+  box-shadow: 4px 0 24px rgba(15, 23, 42, 0.1);
+}
+
+.admin-sidebar-nav a:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: #FFFFFF !important;
+}
+
+.admin-sidebar-nav a:hover svg {
+  color: #FFFFFF !important;
 }
 
 .admin-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.5);
-  backdrop-filter: blur(2px);
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
   z-index: 90;
   opacity: 0;
   visibility: hidden;
@@ -25,11 +35,11 @@
   display: none;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  border: 1px solid #E6EAF0;
-  background: #FFFFFF;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid #DCE3EC;
+  background: #F9FBFD;
   color: #475569;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -38,9 +48,16 @@
 }
 
 .admin-burger-btn:hover {
-  background: #F2F7FF;
+  background: #EAF2FF;
   border-color: #2F6FED;
   color: #2F6FED;
+}
+
+/* Animations */
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.6); opacity: 0; }
+  100% { transform: scale(1); opacity: 0; }
 }
 
 /* Mobile & Tablet Breakpoints */
@@ -49,7 +66,7 @@
     position: fixed !important;
     left: 0;
     transform: translateX(-100%);
-    box-shadow: 10px 0 30px rgba(15, 23, 42, 0.1);
+    box-shadow: 20px 0 40px rgba(15, 23, 42, 0.2);
   }
 
   .admin-sidebar.open {
@@ -69,21 +86,21 @@
   }
 
   .admin-main-content {
-    padding: 20px 16px 40px !important;
+    padding: 24px 16px 48px !important;
   }
 }
 
-/* Scrollbar styling for a premium feel */
+/* Scrollbar styling */
 .admin-sidebar-nav::-webkit-scrollbar {
-  width: 5px;
+  width: 4px;
 }
 .admin-sidebar-nav::-webkit-scrollbar-track {
   background: transparent;
 }
 .admin-sidebar-nav::-webkit-scrollbar-thumb {
-  background: #E6EAF0;
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 10px;
 }
 .admin-sidebar-nav::-webkit-scrollbar-thumb:hover {
-  background: #CBD5E1;
+  background: rgba(255, 255, 255, 0.2);
 }

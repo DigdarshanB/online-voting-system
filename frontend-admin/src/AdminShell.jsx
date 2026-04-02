@@ -1,87 +1,45 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { 
+  LayoutDashboard, 
+  ShieldCheck, 
+  BadgeCheck, 
+  Users, 
+  Landmark, 
+  UserCircle, 
+  LockKeyhole,
+  Menu,
+  LifeBuoy
+} from "lucide-react";
 import "./AdminShell.css";
 
 const PALETTE = {
-  pageBg:      "#F6F8FB",
-  sidebarBg:   "#FBFCFE",
-  topbarBg:    "#FFFFFF",
-  border:      "#E6EAF0",
-  primaryText: "#0F172A",
-  secondaryText:"#475569",
-  mutedText:   "#64748B",
-  deepNavy:    "#163B73",
-  accentBlue:  "#2F6FED",
+  appBg:       "#F5F7FB",
+  surface:     "#FFFFFF",
+  sidebarBg:   "#173B72",
+  sidebarHover: "rgba(255,255,255,0.08)",
+  sidebarText:  "#F8FAFC",
+  sidebarMuted: "#C7D2E5",
   activeBg:    "#EAF2FF",
-  hoverBg:     "#F2F7FF",
-  successGreen:"#0F9F6E",
-  successSoft: "#EAFBF4",
+  activeText:  "#173B72",
+  activeIcon:  "#2F6FED",
+  topbarText:  "#0F172A",
+  mutedText:   "#64748B",
+  navy:        "#173B72",
+  accentBlue:  "#2F6FED",
+  success:     "#0F9F6E",
+  secureBg:    "#EAFBF4",
+  nepalRed:    "#D42C3A",
 };
 
 const SIDEBAR_ITEMS = [
-  {
-    label: "Dashboard",
-    to: "/dashboard",
-    icon: (
-      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-      </svg>
-    ),
-  },
-  {
-    label: "Manage Admins",
-    to: "/superadmin/manage-admins",
-    icon: (
-      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6 5.87v-2a4 4 0 00-3-3.87m0 0a4 4 0 10-6 0m9 0a4 4 0 116 0" />
-      </svg>
-    ),
-  },
-  {
-    label: "Voter Verifications",
-    to: "/admin/voter-verifications",
-    icon: (
-      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-  },
-  {
-    label: "Manage Voters",
-    to: "/admin/manage-voters",
-    icon: (
-      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-5-3.87M9 11a4 4 0 100-8 4 4 0 000 8zm0 0v9m0-9H4a4 4 0 00-4 4v2h9" />
-      </svg>
-    ),
-  },
-  {
-    label: "Manage Elections",
-    to: "/admin/elections",
-    icon: (
-      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-      </svg>
-    ),
-  },
-  {
-    label: "Manage Candidates",
-    to: "/admin/candidates",
-    icon: (
-      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-      </svg>
-    ),
-  },
-  {
-    label: "Change Password",
-    to: "/change-password",
-    icon: (
-      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-      </svg>
-    ),
-  },
+  { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
+  { label: "Manage Admins", to: "/superadmin/manage-admins", icon: ShieldCheck },
+  { label: "Voter Verifications", to: "/admin/voter-verifications", icon: BadgeCheck },
+  { label: "Manage Voters", to: "/admin/manage-voters", icon: Users },
+  { label: "Manage Elections", to: "/admin/elections", icon: Landmark },
+  { label: "Manage Candidates", to: "/admin/candidates", icon: UserCircle },
+  { label: "Change Password", to: "/change-password", icon: LockKeyhole },
 ];
 
 export default function AdminShell({ children, title, subtitle }) {
@@ -99,7 +57,6 @@ export default function AdminShell({ children, title, subtitle }) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Prevent background scroll when mobile sidebar is open
   useEffect(() => {
     if (isSidebarOpen && isMobile) {
       document.body.style.overflow = "hidden";
@@ -118,74 +75,74 @@ export default function AdminShell({ children, title, subtitle }) {
       style={{
         display: "flex",
         minHeight: "100vh",
-        background: PALETTE.pageBg,
+        background: PALETTE.appBg,
         fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
       }}
     >
-      {/* ── Mobile Backdrop ────────────────────────────────────────────────── */}
       <div
         className={`admin-backdrop ${isSidebarOpen ? "visible" : ""}`}
         onClick={toggleSidebar}
       />
 
-      {/* ── Sidebar Drawer ─────────────────────────────────────────────────── */}
       <aside
         className={`admin-sidebar ${isSidebarOpen ? "open" : ""}`}
         style={{
-          width: 280,
+          width: 270,
           background: PALETTE.sidebarBg,
-          borderRight: `1px solid ${PALETTE.border}`,
           display: "flex",
           flexDirection: "column",
           flexShrink: 0,
           position: "sticky",
           top: 0,
           height: "100vh",
+          zIndex: 100,
         }}
       >
-        {/* Branding */}
+        {/* Branding Block */}
         <div
           style={{
-            height: 70,
+            height: 72,
             display: "flex",
             alignItems: "center",
             padding: "0 24px",
-            borderBottom: `1px solid ${PALETTE.border}`,
+            borderBottom: "1px solid rgba(255,255,255,0.1)",
             gap: 12,
           }}
         >
           <div
             style={{
-              width: 32,
-              height: 32,
+              width: 34,
+              height: 34,
               borderRadius: 8,
-              background: PALETTE.deepNavy,
+              background: "#FFF",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              position: "relative",
+              overflow: "hidden",
             }}
           >
-            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#FFFFFF" strokeWidth="2.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
+            <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 3, background: PALETTE.nepalRed }} />
+            <ShieldCheck size={20} color={PALETTE.navy} strokeWidth={2.5} />
           </div>
           <div>
-            <div style={{ fontWeight: 800, fontSize: 14, color: PALETTE.deepNavy, letterSpacing: "-0.01em" }}>
+            <div style={{ fontWeight: 800, fontSize: 13.5, color: "#FFF", letterSpacing: "-0.01em", lineHeight: 1.2 }}>
               Election Portal
             </div>
-            <div style={{ fontSize: 10, color: PALETTE.mutedText, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              Admin Shell
+            <div style={{ fontSize: 10, color: PALETTE.sidebarMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              Administrator
             </div>
           </div>
         </div>
 
-        {/* Navigation */}
+        {/* Sidebar Navigation */}
         <nav
           className="admin-sidebar-nav"
           style={{ padding: "20px 12px", display: "flex", flexDirection: "column", gap: 4, flex: 1, overflowY: "auto" }}
         >
           {SIDEBAR_ITEMS.map((item) => {
             const isActive = location.pathname === item.to;
+            const IconComp = item.icon;
             return (
               <Link
                 key={item.to}
@@ -195,39 +152,43 @@ export default function AdminShell({ children, title, subtitle }) {
                   display: "flex",
                   alignItems: "center",
                   gap: 12,
-                  padding: "10px 16px",
+                  padding: "10px 14px",
                   borderRadius: 10,
                   textDecoration: "none",
-                  transition: "all 0.15s ease",
+                  transition: "all 0.2s ease",
                   background: isActive ? PALETTE.activeBg : "transparent",
-                  color: isActive ? PALETTE.accentBlue : PALETTE.secondaryText,
-                  fontWeight: isActive ? 600 : 500,
-                  fontSize: 14,
+                  color: isActive ? PALETTE.activeText : PALETTE.sidebarText,
+                  fontWeight: isActive ? 700 : 500,
+                  fontSize: 13.5,
+                  position: "relative",
                 }}
               >
-                <span
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: isActive ? PALETTE.accentBlue : PALETTE.mutedText,
-                  }}
-                >
-                  {item.icon}
-                </span>
+                {isActive && (
+                  <div style={{ position: "absolute", left: -12, top: "20%", height: "60%", width: 3, background: PALETTE.nepalRed, borderRadius: "0 2px 2px 0" }} />
+                )}
+                <IconComp 
+                  size={20} 
+                  strokeWidth={isActive ? 2.2 : 1.8} 
+                  color={isActive ? PALETTE.activeIcon : PALETTE.sidebarMuted} 
+                />
                 {item.label}
               </Link>
             );
           })}
         </nav>
 
-        {/* Footer info */}
-        <div style={{ padding: "20px 24px", borderTop: `1px solid ${PALETTE.border}`, fontSize: 11, color: PALETTE.mutedText }}>
-          System Version 1.2 &nbsp;·&nbsp; Support
+        {/* Footer Area */}
+        <div style={{ padding: "20px 24px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+          <div style={{ fontSize: 11, color: PALETTE.sidebarMuted, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span>v1.2.4 Official</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#FFF", cursor: "pointer" }}>
+              <LifeBuoy size={14} />
+              <span>Support</span>
+            </div>
+          </div>
         </div>
       </aside>
 
-      {/* ── Main Content Area ─────────────────────────────────────────────── */}
       <div
         className="admin-content-wrap"
         style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}
@@ -236,9 +197,9 @@ export default function AdminShell({ children, title, subtitle }) {
         <header
           className="admin-topbar"
           style={{
-            height: 70,
-            background: PALETTE.topbarBg,
-            borderBottom: `1px solid ${PALETTE.border}`,
+            height: 72,
+            background: PALETTE.surface,
+            borderBottom: "1px solid #DCE3EC",
             display: "flex",
             alignItems: "center",
             padding: "0 32px",
@@ -247,41 +208,55 @@ export default function AdminShell({ children, title, subtitle }) {
             zIndex: 10,
           }}
         >
-          {/* Hamburger Menu Toggle */}
-          <button
-            className="admin-burger-btn"
-            onClick={toggleSidebar}
-            aria-label="Toggle Menu"
-          >
-            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16m-7 6h7" />
-            </svg>
+          <button className="admin-burger-btn" onClick={toggleSidebar} aria-label="Toggle Menu">
+            <Menu size={22} strokeWidth={2.2} />
           </button>
 
           <div style={{ flex: 1 }}>
-            <h1 style={{ margin: 0, fontSize: isMobile ? 16 : 18, fontWeight: 700, color: PALETTE.primaryText, letterSpacing: "-0.01em" }}>
+            <h1 style={{ margin: 0, fontSize: isMobile ? 16 : 19, fontWeight: 800, color: PALETTE.topbarText, letterSpacing: "-0.02em" }}>
               {title}
             </h1>
             {subtitle && (
-              <p style={{ margin: "2px 0 0", fontSize: 12, color: PALETTE.mutedText }}>
+              <p style={{ margin: "2px 0 0", fontSize: 13, color: PALETTE.mutedText, fontWeight: 500 }}>
                 {subtitle}
               </p>
             )}
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginLeft: 16 }}>
-            <span
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: "50%",
-                background: PALETTE.successGreen,
-                boxShadow: "0 0 0 3px rgba(15,159,110,0.15)",
-                display: isMobile ? "none" : "block",
-              }}
-            />
-            <span style={{ fontSize: 13, fontWeight: 600, color: PALETTE.secondaryText, whiteSpace: "nowrap" }}>
-              {isMobile ? "Admin" : "Secure Session"}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              padding: "7px 16px",
+              background: PALETTE.secureBg,
+              borderRadius: 12,
+              border: "1px solid #0F9F6E20",
+            }}
+          >
+            <div style={{ position: "relative" }}>
+              <span
+                style={{
+                  display: "block",
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  background: PALETTE.success,
+                }}
+              />
+              <span
+                style={{
+                  position: "absolute",
+                  inset: -2,
+                  borderRadius: "50%",
+                  background: PALETTE.success,
+                  opacity: 0.3,
+                  animation: "pulse 2s infinite",
+                }}
+              />
+            </div>
+            <span style={{ fontSize: 12, fontWeight: 700, color: PALETTE.success, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+              {isMobile ? "Secure" : "Secure Connection"}
             </span>
           </div>
         </header>

@@ -48,175 +48,11 @@ const DB_PALETTE = {
   hoverBg:     "#F2F7FF",
   successGreen:"#0F9F6E",
   successBg:   "#EAFBF4",
+  warningAmber: "#D97706",
+  warningBg:   "#FFF7E8",
+  dangerRed:   "#DC2626",
+  dangerBg:    "#FEECEC",
 };
-
-const DB_NAV_ITEMS = [
-  {
-    to: "/superadmin/manage-admins",
-    icon: (
-      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke={DB_PALETTE.accentBlue} strokeWidth="1.8">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6 5.87v-2a4 4 0 00-3-3.87m0 0a4 4 0 10-6 0m9 0a4 4 0 116 0" />
-      </svg>
-    ),
-    label: "Manage Admins",
-    desc: "Create, suspend, and oversee administrator accounts",
-  },
-  {
-    to: "/admin/voter-verifications",
-    icon: (
-      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke={DB_PALETTE.accentBlue} strokeWidth="1.8">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-    label: "Voter Verifications",
-    desc: "Review and approve pending voter identity requests",
-  },
-  {
-    to: "/admin/manage-voters",
-    icon: (
-      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke={DB_PALETTE.accentBlue} strokeWidth="1.8">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-5-3.87M9 11a4 4 0 100-8 4 4 0 000 8zm0 0v9m0-9H4a4 4 0 00-4 4v2h9" />
-      </svg>
-    ),
-    label: "Manage Voters",
-    desc: "Search, view, and manage registered voter profiles",
-  },
-  {
-    to: "/admin/elections",
-    icon: (
-      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke={DB_PALETTE.accentBlue} strokeWidth="1.8">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-      </svg>
-    ),
-    label: "Manage Elections",
-    desc: "Configure, schedule, and publish electoral events",
-  },
-  {
-    to: "/admin/candidates",
-    icon: (
-      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke={DB_PALETTE.accentBlue} strokeWidth="1.8">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-      </svg>
-    ),
-    label: "Manage Candidates",
-    desc: "Add, edit, and organise electoral candidates",
-  },
-  {
-    to: "/change-password",
-    icon: (
-      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke={DB_PALETTE.accentBlue} strokeWidth="1.8">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-      </svg>
-    ),
-    label: "Change Password",
-    desc: "Update your administrator account credentials",
-  },
-];
-
-const DB_SUMMARY_CARDS = [
-  {
-    label: "System Status",
-    value: "Operational",
-    sub: "All services running",
-    accent: DB_PALETTE.successGreen,
-    bg: DB_PALETTE.successBg,
-    icon: (
-      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke={DB_PALETTE.successGreen} strokeWidth="2">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-      </svg>
-    ),
-  },
-  {
-    label: "Portal",
-    value: "Admin",
-    sub: "Secure authenticated session",
-    accent: DB_PALETTE.accentBlue,
-    bg: DB_PALETTE.activeBg,
-    icon: (
-      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke={DB_PALETTE.accentBlue} strokeWidth="2">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-      </svg>
-    ),
-  },
-  {
-    label: "Voting System",
-    value: "Online Voting",
-    sub: "Electoral management platform",
-    accent: DB_PALETTE.deepNavy,
-    bg: "#EEF3FB",
-    icon: (
-      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke={DB_PALETTE.deepNavy} strokeWidth="2">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
-      </svg>
-    ),
-  },
-];
-
-function DashboardNavCard({ item }) {
-  const [hovered, setHovered] = React.useState(false);
-  return (
-    <Link
-      to={item.to}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        display: "flex",
-        alignItems: "flex-start",
-        gap: 14,
-        padding: "18px 20px",
-        borderRadius: 12,
-        border: `1.5px solid ${hovered ? DB_PALETTE.accentBlue : DB_PALETTE.border}`,
-        background: hovered ? DB_PALETTE.hoverBg : DB_PALETTE.navSurface,
-        textDecoration: "none",
-        transition: "all 0.18s ease",
-        boxShadow: hovered
-          ? "0 4px 18px rgba(47,111,237,0.10)"
-          : "0 1px 4px rgba(15,23,42,0.04)",
-        cursor: "pointer",
-      }}
-    >
-      <span
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          width: 42,
-          height: 42,
-          borderRadius: 10,
-          background: hovered ? DB_PALETTE.activeBg : "#F0F4FB",
-          flexShrink: 0,
-          transition: "background 0.18s ease",
-        }}
-      >
-        {item.icon}
-      </span>
-      <span style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-        <span
-          style={{
-            fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
-            fontWeight: 600,
-            fontSize: 14.5,
-            color: hovered ? DB_PALETTE.accentBlue : DB_PALETTE.primaryText,
-            letterSpacing: "-0.01em",
-            transition: "color 0.18s ease",
-          }}
-        >
-          {item.label}
-        </span>
-        <span
-          style={{
-            fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
-            fontSize: 12.5,
-            color: DB_PALETTE.mutedText,
-            lineHeight: 1.5,
-          }}
-        >
-          {item.desc}
-        </span>
-      </span>
-    </Link>
-  );
-}
 
 function DashboardPage() {
   const now = new Date();
@@ -228,165 +64,303 @@ function DashboardPage() {
   });
 
   return (
-    <main style={{ maxWidth: 1040, margin: "0 auto", padding: "40px 32px 64px" }}>
-      {/* ── Welcome heading ─────────────────────────────────────────────── */}
-      <div
+    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 24px 64px" }}>
+      {/* ── 1. Command Header ─────────────────────────────────────────────── */}
+      <header
         style={{
-          background: DB_PALETTE.surface,
-          border: `1px solid ${DB_PALETTE.border}`,
-          borderRadius: 16,
-          padding: "32px 36px",
-          marginBottom: 28,
-          boxShadow: "0 2px 12px rgba(15,23,42,0.05)",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-          <div>
-            <h2
-              style={{
-                margin: 0,
-                fontSize: 26,
-                fontWeight: 700,
-                color: DB_PALETTE.primaryText,
-                letterSpacing: "-0.03em",
-                lineHeight: 1.2,
-              }}
-            >
-              Welcome back, Administrator
-            </h2>
-            <p
-              style={{
-                margin: "6px 0 0",
-                fontSize: 14,
-                color: DB_PALETTE.mutedText,
-              }}
-            >
-              {dateStr}
-            </p>
-          </div>
-          <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "6px 16px",
-              borderRadius: 24,
-              background: DB_PALETTE.successBg,
-              border: `1px solid ${DB_PALETTE.successGreen}22`,
-              color: DB_PALETTE.successGreen,
-              fontSize: 12.5,
-              fontWeight: 600,
-            }}
-          >
-            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke={DB_PALETTE.successGreen} strokeWidth="2.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-            All Systems Operational
-          </span>
-        </div>
-      </div>
-
-      {/* ── Summary stat cards ──────────────────────────────────────────── */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-          gap: 16,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 20,
           marginBottom: 32,
         }}
       >
-        {DB_SUMMARY_CARDS.map((card) => (
-          <div
-            key={card.label}
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+            <h2 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: DB_PALETTE.primaryText, letterSpacing: "-0.02em" }}>
+              Election Command Center
+            </h2>
+            <span
+              style={{
+                padding: "4px 12px",
+                borderRadius: 20,
+                background: DB_PALETTE.successBg,
+                color: DB_PALETTE.successGreen,
+                fontSize: 12.5,
+                fontWeight: 700,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: DB_PALETTE.successGreen }} />
+              Operational
+            </span>
+          </div>
+          <p style={{ margin: 0, fontSize: 14, color: DB_PALETTE.secondaryText, fontWeight: 500 }}>
+            {dateStr} &nbsp;·&nbsp; System Status: <span style={{ color: DB_PALETTE.successGreen }}>Normal</span>
+          </p>
+        </div>
+
+        <div style={{ display: "flex", gap: 10 }}>
+          <Link
+            to="/admin/elections"
             style={{
-              background: card.bg,
-              border: `1.5px solid ${card.accent}22`,
-              borderRadius: 14,
-              padding: "20px 22px",
-              boxShadow: "0 2px 8px rgba(15,23,42,0.04)",
+              padding: "10px 18px",
+              borderRadius: 10,
+              background: DB_PALETTE.accentBlue,
+              color: "#FFF",
+              textDecoration: "none",
+              fontSize: 14,
+              fontWeight: 600,
+              boxShadow: "0 4px 12px rgba(47,111,237,0.2)",
+              transition: "transform 0.2s ease",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-1px)")}
+            onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
+          >
+            Create Election
+          </Link>
+          <Link
+            to="/admin/voter-verifications"
+            style={{
+              padding: "10px 18px",
+              borderRadius: 10,
+              background: "#FFF",
+              color: DB_PALETTE.primaryText,
+              border: `1px solid ${DB_PALETTE.border}`,
+              textDecoration: "none",
+              fontSize: 14,
+              fontWeight: 600,
+              boxShadow: "0 2px 6px rgba(15,23,42,0.04)",
+              transition: "all 0.2s ease",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = DB_PALETTE.hoverBg)}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "#FFF")}
+          >
+            Review Queue
+          </Link>
+        </div>
+      </header>
+
+      {/* ── 2. KPI Cards ──────────────────────────────────────────────────── */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: 20,
+          marginBottom: 32,
+        }}
+      >
+        {[
+          { label: "Active Elections", val: "3", sub: "2 Federal · 1 Local", icon: "🗳️" },
+          { label: "Registered Voters", val: "142,850", sub: "+124 this week", icon: "👥" },
+          { label: "Pending Verification", val: "1,240", sub: "Needs urgent review", icon: "⏳", warn: true },
+          { label: "Total Votes Cast", val: "582,410", sub: "72.4% avg turnout", icon: "📊" },
+        ].map((kpi, i) => (
+          <div
+            key={i}
+            style={{
+              background: "#FFF",
+              padding: "24px",
+              borderRadius: 16,
+              border: `1px solid ${DB_PALETTE.border}`,
+              boxShadow: "0 2px 10px rgba(15,23,42,0.03)",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-              <span
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 34,
-                  height: 34,
-                  borderRadius: 9,
-                  background: DB_PALETTE.surface,
-                  boxShadow: "0 1px 4px rgba(15,23,42,0.07)",
-                }}
-              >
-                {card.icon}
-              </span>
-              <span style={{ fontSize: 12, color: card.accent, fontWeight: 600, letterSpacing: "0.02em" }}>
-                {card.label}
-              </span>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: DB_PALETTE.mutedText }}>{kpi.label}</span>
+              <span style={{ fontSize: 20 }}>{kpi.icon}</span>
             </div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: DB_PALETTE.primaryText, letterSpacing: "-0.02em" }}>
-              {card.value}
-            </div>
-            <div style={{ fontSize: 12, color: DB_PALETTE.mutedText, marginTop: 3 }}>
-              {card.sub}
+            <div style={{ fontSize: 26, fontWeight: 800, color: DB_PALETTE.primaryText, letterSpacing: "-0.03em" }}>{kpi.val}</div>
+            <div
+              style={{
+                fontSize: 12,
+                marginTop: 6,
+                fontWeight: 500,
+                color: kpi.warn ? DB_PALETTE.warningAmber : DB_PALETTE.secondaryText,
+                padding: kpi.warn ? "2px 8px" : "0",
+                background: kpi.warn ? DB_PALETTE.warningBg : "transparent",
+                borderRadius: 4,
+                display: "inline-block",
+              }}
+            >
+              {kpi.sub}
             </div>
           </div>
         ))}
       </div>
 
-      {/* ── Navigation section ──────────────────────────────────────────── */}
+      {/* ── 3. Charts & Analytics Section ─────────────────────────────────── */}
       <div
         style={{
-          background: DB_PALETTE.surface,
-          border: `1px solid ${DB_PALETTE.border}`,
-          borderRadius: 16,
-          padding: "28px 32px",
-          boxShadow: "0 2px 12px rgba(15,23,42,0.05)",
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(450px, 1fr))",
+          gap: 24,
+          marginBottom: 32,
         }}
       >
-        <div style={{ marginBottom: 20 }}>
-          <h3
-            style={{
-              margin: 0,
-              fontSize: 16,
-              fontWeight: 700,
-              color: DB_PALETTE.primaryText,
-              letterSpacing: "-0.02em",
-            }}
-          >
-            Administration
-          </h3>
-          <p style={{ margin: "4px 0 0", fontSize: 13, color: DB_PALETTE.mutedText }}>
-            Select a module to manage
-          </p>
-        </div>
-
+        {/* Placeholder: Election Distribution */}
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-            gap: 12,
+            background: "#FFF",
+            padding: "28px",
+            borderRadius: 16,
+            border: `1px solid ${DB_PALETTE.border}`,
+            boxShadow: "0 2px 10px rgba(15,23,42,0.03)",
           }}
         >
-          {DB_NAV_ITEMS.map((item) => (
-            <DashboardNavCard key={item.to} item={item} />
-          ))}
+          <h3 style={{ margin: "0 0 4px", fontSize: 16, fontWeight: 700, color: DB_PALETTE.primaryText }}>Election Status Distribution</h3>
+          <p style={{ margin: "0 0 24px", fontSize: 13, color: DB_PALETTE.mutedText }}>Global overview of electoral events</p>
+          
+          <div style={{ height: 200, display: "flex", alignItems: "center", justifyContent: "center", background: "#F9FAFB", borderRadius: 12, border: `1px dashed ${DB_PALETTE.border}` }}>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 32, marginBottom: 8 }}>🍩</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: DB_PALETTE.mutedText }}>Distribution Analysis Chart</div>
+              <div style={{ fontSize: 11, color: "#94A3B8" }}>Integrating next phase</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Placeholder: Voter Trend */}
+        <div
+          style={{
+            background: "#FFF",
+            padding: "28px",
+            borderRadius: 16,
+            border: `1px solid ${DB_PALETTE.border}`,
+            boxShadow: "0 2px 10px rgba(15,23,42,0.03)",
+          }}
+        >
+          <h3 style={{ margin: "0 0 4px", fontSize: 16, fontWeight: 700, color: DB_PALETTE.primaryText }}>Registration Activity</h3>
+          <p style={{ margin: "0 0 24px", fontSize: 13, color: DB_PALETTE.mutedText }}>New registrations per month (Last 6 Months)</p>
+          
+          <div style={{ height: 200, display: "flex", alignItems: "center", justifyContent: "center", background: "#F9FAFB", borderRadius: 12, border: `1px dashed ${DB_PALETTE.border}` }}>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 32, marginBottom: 8 }}>📈</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: DB_PALETTE.mutedText }}>Voter Trend Analytics</div>
+              <div style={{ fontSize: 11, color: "#94A3B8" }}>Integrating next phase</div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* ── Footer ──────────────────────────────────────────────────────── */}
+      {/* ── 4. Operational Panels ─────────────────────────────────────────── */}
       <div
         style={{
-          marginTop: 36,
-          textAlign: "center",
-          fontSize: 12,
-          color: DB_PALETTE.mutedText,
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
+          gap: 24,
         }}
       >
-        Online Voting System &nbsp;·&nbsp; Admin Portal &nbsp;·&nbsp; All rights reserved
+        {/* Upcoming Elections */}
+        <div
+          style={{
+            background: "#FFF",
+            padding: "28px",
+            borderRadius: 16,
+            border: `1px solid ${DB_PALETTE.border}`,
+            boxShadow: "0 2px 10px rgba(15,23,42,0.03)",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: DB_PALETTE.primaryText }}>Scheduled Elections</h3>
+            <Link to="/admin/elections" style={{ fontSize: 13, fontWeight: 600, color: DB_PALETTE.accentBlue, textDecoration: "none" }}>View All</Link>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {[
+              { name: "2026 Federal General", date: "Nov 04, 2026", type: "Federal", status: "Active" },
+              { name: "Provincial Assembly (Bagmati)", date: "Dec 12, 2026", type: "Provincial", status: "Draft" },
+              { name: "Local Government (Kathmandu)", date: "Jan 15, 2027", type: "Local", status: "Scheduled" },
+            ].map((el, i) => (
+              <div key={i} style={{ padding: "14px", borderRadius: 12, border: `1px solid ${DB_PALETTE.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: DB_PALETTE.primaryText }}>{el.name}</div>
+                  <div style={{ fontSize: 12, color: DB_PALETTE.mutedText, marginTop: 2 }}>{el.type} · {el.date}</div>
+                </div>
+                <span
+                  style={{
+                    padding: "4px 10px",
+                    borderRadius: 6,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.02em",
+                    background: el.status === "Active" ? DB_PALETTE.successBg : DB_PALETTE.hoverBg,
+                    color: el.status === "Active" ? DB_PALETTE.successGreen : DB_PALETTE.secondaryText,
+                  }}
+                >
+                  {el.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Quick Admin Actions */}
+        <div
+          style={{
+            background: "#FFF",
+            padding: "28px",
+            borderRadius: 16,
+            border: `1px solid ${DB_PALETTE.border}`,
+            boxShadow: "0 2px 10px rgba(15,23,42,0.03)",
+          }}
+        >
+          <h3 style={{ margin: "0 0 20px", fontSize: 16, fontWeight: 700, color: DB_PALETTE.primaryText }}>Core Administration</h3>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            {[
+              { to: "/admin/manage-voters", label: "Manage Voters", color: DB_PALETTE.accentBlue, bg: DB_PALETTE.activeBg, icon: "👤" },
+              { to: "/admin/candidates", label: "Candidates", color: "#10B981", bg: "#ECFDF5", icon: "⭐" },
+              { to: "/admin/voter-verifications", label: "Review Queue", color: "#F59E0B", bg: "#FFFBEB", icon: "🔍" },
+              { to: "/superadmin/manage-admins", label: "Admin Staff", color: "#6366F1", bg: "#F5F3FF", icon: "🛡️" },
+            ].map((action, i) => (
+              <Link
+                key={i}
+                to={action.to}
+                style={{
+                  padding: "16px",
+                  borderRadius: 12,
+                  background: action.bg,
+                  textDecoration: "none",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  transition: "transform 0.2s ease",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-2px)")}
+                onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
+              >
+                <span style={{ fontSize: 24 }}>{action.icon}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: action.color }}>{action.label}</span>
+              </Link>
+            ))}
+          </div>
+          
+          <div
+            style={{
+              marginTop: 24,
+              padding: "16px",
+              borderRadius: 12,
+              background: DB_PALETTE.dangerBg,
+              border: `1px solid ${DB_PALETTE.dangerRed}22`,
+            }}
+          >
+            <div style={{ fontSize: 14, fontWeight: 700, color: DB_PALETTE.dangerRed, marginBottom: 4 }}>Security Alert</div>
+            <div style={{ fontSize: 12, color: DB_PALETTE.dangerRed, opacity: 0.8, lineHeight: 1.5 }}>
+              There are 12 unassigned security logs from the last 24 hours. Administrator review is required.
+            </div>
+          </div>
+        </div>
       </div>
-    </main>
+
+      <footer style={{ marginTop: 48, textAlign: "center", fontSize: 13, color: DB_PALETTE.mutedText }}>
+        Election Control System &nbsp;·&nbsp; Deployment v2.4a &nbsp;·&nbsp; Secure Instance
+      </footer>
+    </div>
   );
 }
 
