@@ -1,45 +1,49 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { 
-  LayoutDashboard, 
-  ShieldCheck, 
-  BadgeCheck, 
-  Users, 
-  Landmark, 
-  UserCircle, 
+import {
+  LayoutDashboard,
+  ShieldCheck,
+  BadgeCheck,
+  Users,
+  Landmark,
+  UserCircle,
   LockKeyhole,
   Menu,
-  LifeBuoy
+  LifeBuoy,
+  UserCircle2
 } from "lucide-react";
 import "./AdminShell.css";
 
 const PALETTE = {
-  appBg:       "#F5F7FB",
-  surface:     "#FFFFFF",
-  sidebarBg:   "#173B72",
+  appBg: "#F5F7FB",
+  surface: "#FFFFFF",
+  sidebarBg: "#173B72",
   sidebarHover: "rgba(255,255,255,0.08)",
-  sidebarText:  "#F8FAFC",
+  sidebarText: "#F8FAFC",
   sidebarMuted: "#C7D2E5",
-  activeBg:    "#EAF2FF",
-  activeText:  "#173B72",
-  activeIcon:  "#2F6FED",
-  topbarText:  "#0F172A",
-  mutedText:   "#64748B",
-  navy:        "#173B72",
-  accentBlue:  "#2F6FED",
-  success:     "#0F9F6E",
-  secureBg:    "#EAFBF4",
-  nepalRed:    "#D42C3A",
+  activeBg: "#EAF2FF",
+  activeText: "#173B72",
+  activeIcon: "#2F6FED",
+  topbarText: "#0F172A",
+  mutedText: "#64748B",
+  navy: "#173B72",
+  accentBlue: "#2F6FED",
+  success: "#0F9F6E",
+  secureBg: "#EAFBF4",
+  nepalRed: "#D42C3A",
 };
 
-const SIDEBAR_ITEMS = [
+const MAIN_NAV_ITEMS = [
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
   { label: "Manage Admins", to: "/superadmin/manage-admins", icon: ShieldCheck },
   { label: "Voter Verifications", to: "/admin/voter-verifications", icon: BadgeCheck },
   { label: "Manage Voters", to: "/admin/manage-voters", icon: Users },
   { label: "Manage Elections", to: "/admin/elections", icon: Landmark },
   { label: "Manage Candidates", to: "/admin/candidates", icon: UserCircle },
-  { label: "Change Password", to: "/change-password", icon: LockKeyhole },
+];
+
+const ACCOUNT_NAV_ITEMS = [
+  { label: "Account Center", to: "/account-center", icon: UserCircle2 },
 ];
 
 export default function AdminShell({ children, title, subtitle }) {
@@ -140,7 +144,7 @@ export default function AdminShell({ children, title, subtitle }) {
           className="admin-sidebar-nav"
           style={{ padding: "20px 12px", display: "flex", flexDirection: "column", gap: 4, flex: 1, overflowY: "auto" }}
         >
-          {SIDEBAR_ITEMS.map((item) => {
+          {MAIN_NAV_ITEMS.map((item) => {
             const isActive = location.pathname === item.to;
             const IconComp = item.icon;
             return (
@@ -166,10 +170,66 @@ export default function AdminShell({ children, title, subtitle }) {
                 {isActive && (
                   <div style={{ position: "absolute", left: -12, top: "20%", height: "60%", width: 3, background: PALETTE.nepalRed, borderRadius: "0 2px 2px 0" }} />
                 )}
-                <IconComp 
-                  size={20} 
-                  strokeWidth={isActive ? 2.2 : 1.8} 
-                  color={isActive ? PALETTE.activeIcon : PALETTE.sidebarMuted} 
+                <IconComp
+                  size={20}
+                  strokeWidth={isActive ? 2.2 : 1.8}
+                  color={isActive ? PALETTE.activeIcon : PALETTE.sidebarMuted}
+                />
+                {item.label}
+              </Link>
+            );
+          })}
+
+          {/* Account Section Separator */}
+          <div 
+            style={{ 
+              marginTop: 24, 
+              marginBottom: 8,
+              padding: "16px 14px 8px", 
+              fontSize: 11, 
+              fontWeight: 800, 
+              color: PALETTE.sidebarMuted, 
+              textTransform: "uppercase", 
+              letterSpacing: "0.08em",
+              borderTop: "1px solid rgba(255,255,255,0.08)",
+              display: "flex",
+              alignItems: "center",
+              gap: 8
+            }}
+          >
+            Account Control
+          </div>
+
+          {ACCOUNT_NAV_ITEMS.map((item) => {
+            const isActive = location.pathname === item.to;
+            const IconComp = item.icon;
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                onClick={closeSidebar}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "10px 14px",
+                  borderRadius: 10,
+                  textDecoration: "none",
+                  transition: "all 0.2s ease",
+                  background: isActive ? PALETTE.activeBg : "transparent",
+                  color: isActive ? PALETTE.activeText : PALETTE.sidebarText,
+                  fontWeight: isActive ? 700 : 500,
+                  fontSize: 13.5,
+                  position: "relative",
+                }}
+              >
+                {isActive && (
+                  <div style={{ position: "absolute", left: -12, top: "20%", height: "60%", width: 3, background: PALETTE.nepalRed, borderRadius: "0 2px 2px 0" }} />
+                )}
+                <IconComp
+                  size={20}
+                  strokeWidth={isActive ? 2.2 : 1.8}
+                  color={isActive ? PALETTE.activeIcon : PALETTE.sidebarMuted}
                 />
                 {item.label}
               </Link>
@@ -177,16 +237,6 @@ export default function AdminShell({ children, title, subtitle }) {
           })}
         </nav>
 
-        {/* Footer Area */}
-        <div style={{ padding: "20px 24px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-          <div style={{ fontSize: 11, color: PALETTE.sidebarMuted, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span>v1.2.4 Official</span>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#FFF", cursor: "pointer" }}>
-              <LifeBuoy size={14} />
-              <span>Support</span>
-            </div>
-          </div>
-        </div>
       </aside>
 
       <div
