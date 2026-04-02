@@ -15,6 +15,12 @@
   color: #FFFFFF !important;
 }
 
+.admin-sidebar-link:focus-visible {
+  outline: 2px solid #2F6FED;
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+
 .admin-backdrop {
   position: fixed;
   inset: 0;
@@ -51,6 +57,11 @@
   background: #EAF2FF;
   border-color: #2F6FED;
   color: #2F6FED;
+}
+
+.admin-burger-btn:focus-visible {
+  outline: 2px solid #2F6FED;
+  outline-offset: 2px;
 }
 
 /* Animations */
