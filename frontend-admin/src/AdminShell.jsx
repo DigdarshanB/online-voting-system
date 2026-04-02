@@ -10,6 +10,9 @@ import {
   LockKeyhole,
   Menu,
   LifeBuoy,
+  BarChart3,
+  ClipboardList,
+  FileBarChart,
   UserCircle2
 } from "lucide-react";
 import "./AdminShell.css";
@@ -40,6 +43,9 @@ const MAIN_NAV_ITEMS = [
   { label: "Manage Voters", to: "/admin/manage-voters", icon: Users },
   { label: "Manage Elections", to: "/admin/elections", icon: Landmark },
   { label: "Manage Candidates", to: "/admin/candidates", icon: UserCircle },
+  { label: "Results", to: "/admin/results", icon: BarChart3 },
+  { label: "Audit Logs", to: "/admin/audit-logs", icon: ClipboardList },
+  { label: "Reports", to: "/admin/reports", icon: FileBarChart },
 ];
 
 const ACCOUNT_NAV_ITEMS = [

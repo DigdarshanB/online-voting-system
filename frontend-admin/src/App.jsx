@@ -429,6 +429,25 @@ const AC_PALETTE = {
   bg: "#F5F7FB",
 };
 
+const SIMPLE_PAGE_PALETTE = {
+  appBg: "#F5F7FB",
+  surface: "#FFFFFF",
+  surfaceAlt: "#F9FBFD",
+  border: "#DCE3EC",
+  borderStrong: "#C9D4E3",
+  textMain: "#0F172A",
+  textSecondary: "#475569",
+  textMuted: "#64748B",
+  accent: "#2F6FED",
+  accentSoft: "#EAF2FF",
+  success: "#0F9F6E",
+  successSoft: "#EAFBF4",
+  warning: "#D97706",
+  warningSoft: "#FFF7E8",
+  danger: "#DC2626",
+  dangerSoft: "#FEECEC",
+};
+
 function AccountCenterPage() {
   const token = localStorage.getItem("access_token");
   const mfaOk = sessionStorage.getItem("admin_mfa_ok") === "1";
@@ -621,6 +640,193 @@ function AccountCenterPage() {
   );
 }
 
+function ResultsPage() {
+  return (
+    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px 64px" }}>
+      <header style={{ marginBottom: 24 }}>
+        <h2 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: SIMPLE_PAGE_PALETTE.textMain }}>Results</h2>
+        <p style={{ margin: "6px 0 0", fontSize: 14, color: SIMPLE_PAGE_PALETTE.textSecondary, fontWeight: 500 }}>
+          View election outcomes, vote totals, and turnout summaries
+        </p>
+      </header>
+
+      <section
+        style={{
+          background: SIMPLE_PAGE_PALETTE.surface,
+          borderRadius: 16,
+          padding: "24px",
+          border: `1px solid ${SIMPLE_PAGE_PALETTE.border}`,
+          boxShadow: "0 2px 10px rgba(15,23,42,0.03)",
+        }}
+      >
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
+          {[
+            { title: "Election Results Overview", meta: "Latest certified outcomes" },
+            { title: "Turnout Summary", meta: "Participation rate snapshot" },
+            { title: "Published Results", meta: "Official releases and PDFs" },
+          ].map((card) => (
+            <div
+              key={card.title}
+              style={{
+                background: SIMPLE_PAGE_PALETTE.surfaceAlt,
+                border: `1px solid ${SIMPLE_PAGE_PALETTE.border}`,
+                borderRadius: 12,
+                padding: "16px",
+              }}
+            >
+              <div style={{ fontSize: 13, fontWeight: 700, color: SIMPLE_PAGE_PALETTE.textMain }}>{card.title}</div>
+              <div style={{ marginTop: 6, fontSize: 12, color: SIMPLE_PAGE_PALETTE.textMuted }}>{card.meta}</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ marginTop: 20, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
+          {[
+            { label: "Total Votes", value: "--" },
+            { label: "Turnout Rate", value: "--" },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              style={{
+                padding: "14px 16px",
+                borderRadius: 12,
+                border: `1px dashed ${SIMPLE_PAGE_PALETTE.borderStrong}`,
+                background: SIMPLE_PAGE_PALETTE.surface,
+              }}
+            >
+              <div style={{ fontSize: 12, fontWeight: 700, color: SIMPLE_PAGE_PALETTE.textMuted }}>{stat.label}</div>
+              <div style={{ marginTop: 6, fontSize: 18, fontWeight: 800, color: SIMPLE_PAGE_PALETTE.textMain }}>{stat.value}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function AuditLogsPage() {
+  return (
+    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px 64px" }}>
+      <header style={{ marginBottom: 24 }}>
+        <h2 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: SIMPLE_PAGE_PALETTE.textMain }}>Audit Logs</h2>
+        <p style={{ margin: "6px 0 0", fontSize: 14, color: SIMPLE_PAGE_PALETTE.textSecondary, fontWeight: 500 }}>
+          Review important administrative actions and system activity
+        </p>
+      </header>
+
+      <section
+        style={{
+          background: SIMPLE_PAGE_PALETTE.surface,
+          borderRadius: 16,
+          padding: "24px",
+          border: `1px solid ${SIMPLE_PAGE_PALETTE.border}`,
+          boxShadow: "0 2px 10px rgba(15,23,42,0.03)",
+        }}
+      >
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
+          {[
+            { title: "Recent Activity", meta: "Latest admin actions" },
+            { title: "Security Events", meta: "Critical access updates" },
+            { title: "Admin Actions", meta: "Approvals and changes" },
+          ].map((card) => (
+            <div
+              key={card.title}
+              style={{
+                background: SIMPLE_PAGE_PALETTE.surfaceAlt,
+                border: `1px solid ${SIMPLE_PAGE_PALETTE.border}`,
+                borderRadius: 12,
+                padding: "16px",
+              }}
+            >
+              <div style={{ fontSize: 13, fontWeight: 700, color: SIMPLE_PAGE_PALETTE.textMain }}>{card.title}</div>
+              <div style={{ marginTop: 6, fontSize: 12, color: SIMPLE_PAGE_PALETTE.textMuted }}>{card.meta}</div>
+            </div>
+          ))}
+        </div>
+
+        <div
+          style={{
+            marginTop: 20,
+            padding: "18px",
+            borderRadius: 12,
+            border: `1px dashed ${SIMPLE_PAGE_PALETTE.borderStrong}`,
+            background: SIMPLE_PAGE_PALETTE.surface,
+          }}
+        >
+          <div style={{ fontSize: 13, fontWeight: 700, color: SIMPLE_PAGE_PALETTE.textMain }}>Audit Log Feed</div>
+          <div style={{ marginTop: 6, fontSize: 12, color: SIMPLE_PAGE_PALETTE.textMuted }}>
+            A structured timeline or table of administrative events will appear here.
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ReportsPage() {
+  return (
+    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px 64px" }}>
+      <header style={{ marginBottom: 24 }}>
+        <h2 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: SIMPLE_PAGE_PALETTE.textMain }}>Reports</h2>
+        <p style={{ margin: "6px 0 0", fontSize: 14, color: SIMPLE_PAGE_PALETTE.textSecondary, fontWeight: 500 }}>
+          Generate and review administrative and election reports
+        </p>
+      </header>
+
+      <section
+        style={{
+          background: SIMPLE_PAGE_PALETTE.surface,
+          borderRadius: 16,
+          padding: "24px",
+          border: `1px solid ${SIMPLE_PAGE_PALETTE.border}`,
+          boxShadow: "0 2px 10px rgba(15,23,42,0.03)",
+        }}
+      >
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
+          {[
+            { title: "Available Reports", meta: "Election, voter, and security" },
+            { title: "Export Center", meta: "PDF, CSV, and audit bundles" },
+            { title: "Recent Reports", meta: "Latest generated files" },
+          ].map((card) => (
+            <div
+              key={card.title}
+              style={{
+                background: SIMPLE_PAGE_PALETTE.surfaceAlt,
+                border: `1px solid ${SIMPLE_PAGE_PALETTE.border}`,
+                borderRadius: 12,
+                padding: "16px",
+              }}
+            >
+              <div style={{ fontSize: 13, fontWeight: 700, color: SIMPLE_PAGE_PALETTE.textMain }}>{card.title}</div>
+              <div style={{ marginTop: 6, fontSize: 12, color: SIMPLE_PAGE_PALETTE.textMuted }}>{card.meta}</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ marginTop: 20, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
+          {[
+            { label: "Scheduled Exports", note: "No schedules yet" },
+            { label: "Delivery Destinations", note: "Configure destinations" },
+          ].map((item) => (
+            <div
+              key={item.label}
+              style={{
+                padding: "14px 16px",
+                borderRadius: 12,
+                border: `1px dashed ${SIMPLE_PAGE_PALETTE.borderStrong}`,
+                background: SIMPLE_PAGE_PALETTE.surface,
+              }}
+            >
+              <div style={{ fontSize: 12, fontWeight: 700, color: SIMPLE_PAGE_PALETTE.textMuted }}>{item.label}</div>
+              <div style={{ marginTop: 6, fontSize: 13, color: SIMPLE_PAGE_PALETTE.textSecondary }}>{item.note}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <Routes>
@@ -723,6 +929,36 @@ export default function App() {
           <RequireAdminOrSuperAdmin>
             <AdminShell title="Manage Candidates" subtitle="Add, edit, and organise electoral candidates">
               <ManageCandidates />
+            </AdminShell>
+          </RequireAdminOrSuperAdmin>
+        }
+      />
+      <Route
+        path="/admin/results"
+        element={
+          <RequireAdminOrSuperAdmin>
+            <AdminShell title="Results" subtitle="View election outcomes, vote totals, and turnout summaries">
+              <ResultsPage />
+            </AdminShell>
+          </RequireAdminOrSuperAdmin>
+        }
+      />
+      <Route
+        path="/admin/audit-logs"
+        element={
+          <RequireAdminOrSuperAdmin>
+            <AdminShell title="Audit Logs" subtitle="Review important administrative actions and system activity">
+              <AuditLogsPage />
+            </AdminShell>
+          </RequireAdminOrSuperAdmin>
+        }
+      />
+      <Route
+        path="/admin/reports"
+        element={
+          <RequireAdminOrSuperAdmin>
+            <AdminShell title="Reports" subtitle="Generate and review administrative and election reports">
+              <ReportsPage />
             </AdminShell>
           </RequireAdminOrSuperAdmin>
         }
