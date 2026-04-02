@@ -6,12 +6,12 @@
   box-shadow: 4px 0 24px rgba(15, 23, 42, 0.1);
 }
 
-.admin-sidebar-nav a:hover {
+.admin-sidebar-nav .admin-sidebar-link:not(.active):hover {
   background-color: rgba(255, 255, 255, 0.08) !important;
   color: #FFFFFF !important;
 }
 
-.admin-sidebar-nav a:hover svg {
+.admin-sidebar-nav .admin-sidebar-link:not(.active):hover svg {
   color: #FFFFFF !important;
 }
 

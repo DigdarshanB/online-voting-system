@@ -16,6 +16,7 @@ import {
   UserCircle2
 } from "lucide-react";
 import "./AdminShell.css";
+import ecnLogo from "./assets/ECN.png";
 
 const PALETTE = {
   appBg: "#F5F7FB",
@@ -56,6 +57,52 @@ export default function AdminShell({ children, title, subtitle }) {
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
+  const routeMeta = {
+    "/dashboard": {
+      title: "Dashboard",
+      subtitle: "Overview and quick access",
+    },
+    "/superadmin/manage-admins": {
+      title: "Manage Admins",
+      subtitle: "Review, manage, and oversee administrator accounts",
+    },
+    "/admin/voter-verifications": {
+      title: "Voter Verifications",
+      subtitle: "Review identity checks and approval requests",
+    },
+    "/admin/manage-voters": {
+      title: "Manage Voters",
+      subtitle: "Search, review, and manage voter profiles",
+    },
+    "/admin/elections": {
+      title: "Manage Elections",
+      subtitle: "Configure, schedule, and monitor electoral events",
+    },
+    "/admin/candidates": {
+      title: "Manage Candidates",
+      subtitle: "Add, review, and organize electoral candidates",
+    },
+    "/admin/results": {
+      title: "Results",
+      subtitle: "View election outcomes, turnout, and summaries",
+    },
+    "/admin/audit-logs": {
+      title: "Audit Logs",
+      subtitle: "Review administrative actions and system activity",
+    },
+    "/admin/reports": {
+      title: "Reports",
+      subtitle: "Generate and review administrative and election reports",
+    },
+    "/account-center": {
+      title: "Account Center",
+      subtitle: "Manage your profile, security, and current session",
+    },
+  };
+  const currentMeta = routeMeta[location.pathname] ?? {
+    title: "Admin Portal",
+    subtitle: "Election administration workspace",
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -132,8 +179,11 @@ export default function AdminShell({ children, title, subtitle }) {
               overflow: "hidden",
             }}
           >
-            <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 3, background: PALETTE.nepalRed }} />
-            <ShieldCheck size={20} color={PALETTE.navy} strokeWidth={2.5} />
+            <img
+              src={ecnLogo}
+              alt="Election Commission Nepal logo"
+              style={{ width: 26, height: 26, objectFit: "contain" }}
+            />
           </div>
           <div>
             <div style={{ fontWeight: 800, fontSize: 13.5, color: "#FFF", letterSpacing: "-0.01em", lineHeight: 1.2 }}>
@@ -156,6 +206,7 @@ export default function AdminShell({ children, title, subtitle }) {
             return (
               <Link
                 key={item.to}
+                className={`admin-sidebar-link${isActive ? " active" : ""}`}
                 to={item.to}
                 onClick={closeSidebar}
                 style={{
@@ -212,6 +263,7 @@ export default function AdminShell({ children, title, subtitle }) {
             return (
               <Link
                 key={item.to}
+                className={`admin-sidebar-link${isActive ? " active" : ""}`}
                 to={item.to}
                 onClick={closeSidebar}
                 style={{
@@ -270,11 +322,11 @@ export default function AdminShell({ children, title, subtitle }) {
 
           <div style={{ flex: 1 }}>
             <h1 style={{ margin: 0, fontSize: isMobile ? 16 : 19, fontWeight: 800, color: PALETTE.topbarText, letterSpacing: "-0.02em" }}>
-              {title}
+              {currentMeta.title}
             </h1>
-            {subtitle && (
+            {currentMeta.subtitle && (
               <p style={{ margin: "2px 0 0", fontSize: 13, color: PALETTE.mutedText, fontWeight: 500 }}>
-                {subtitle}
+                {currentMeta.subtitle}
               </p>
             )}
           </div>
@@ -324,6 +376,18 @@ export default function AdminShell({ children, title, subtitle }) {
         >
           {children}
         </main>
+        <footer
+          style={{
+            padding: "16px 32px",
+            textAlign: "center",
+            fontSize: 12,
+            color: PALETTE.mutedText,
+            borderTop: "1px solid #DCE3EC",
+            background: PALETTE.surface,
+          }}
+        >
+          Election Commission Nepal <span style={{ fontWeight: 800, color: PALETTE.topbarText }}>©</span>
+        </footer>
       </div>
     </div>
   );

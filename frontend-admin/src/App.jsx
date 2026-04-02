@@ -364,9 +364,6 @@ function DashboardPage() {
         </div>
       </div>
 
-      <footer style={{ marginTop: 48, textAlign: "center", fontSize: 13, color: DB_PALETTE.mutedText }}>
-        Election Control System &nbsp;·&nbsp; Deployment v2.4a &nbsp;·&nbsp; Secure Instance
-      </footer>
     </div>
   );
 }
