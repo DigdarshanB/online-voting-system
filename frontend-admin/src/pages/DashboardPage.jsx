@@ -1,75 +1,22 @@
-import React, { Suspense, useMemo } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardCard from "../components/dashboard/DashboardCard";
 import { BarChart3, ShieldCheck, Users, Vote } from "lucide-react";
 import PremiumMetricCard from "../components/dashboard/PremiumMetricCard";
-import DashboardFilters from "../features/dashboard/components/DashboardFilters";
-import useDashboardFilters from "../features/dashboard/hooks/useDashboardFilters";
+import PremiumChartPanel from "../components/dashboard/PremiumChartPanel";
+import ElectionStatusDistributionDonut from "../components/charts/ElectionStatusDistributionDonut";
+import RegistrationActivityAreaChart from "../components/charts/RegistrationActivityAreaChart";
+import useDashboardAnalytics from "../hooks/useDashboardAnalytics";
 import useDashboardSummary from "../hooks/useDashboardSummary";
-
-const ElectionStatusDonutChart = React.lazy(() => import("../components/charts/ElectionStatusDonutChart"));
-const RegistrationTrendChart = React.lazy(() => import("../components/charts/RegistrationTrendChart"));
-
-const registrationTrendData = [
-  { date: "2025-09-01", label: "Sep", value: 1610 },
-  { date: "2025-10-01", label: "Oct", value: 1745 },
-  { date: "2025-11-01", label: "Nov", value: 1820 },
-  { date: "2025-12-01", label: "Dec", value: 1965 },
-  { date: "2026-01-01", label: "Jan", value: 2140 },
-  { date: "2026-02-01", label: "Feb", value: 2310 },
-  { date: "2026-03-01", label: "Mar", value: 2495 },
-  { date: "2026-04-01", label: "Apr", value: 2670 },
-];
-
-const electionStatusData = [
-  { name: "Active", value: 3 },
-  { name: "Scheduled", value: 5 },
-  { name: "Draft", value: 2 },
-  { name: "Closed", value: 4 },
-];
 
 export default function DashboardPage() {
   const { data, loading, error } = useDashboardSummary();
-  const { range, startDate, endDate, setRange, setStartDate, setEndDate } = useDashboardFilters();
+  const [registrationRange, setRegistrationRange] = useState("6m");
+  const { statusDistribution, registrationActivity, loading: analyticsLoading, error: analyticsError, reload } = useDashboardAnalytics(registrationRange);
   const activeElections = Number(data?.active_elections ?? 0) || 0;
   const registeredVoters = Number(data?.registered_voters ?? 0) || 0;
   const pendingVerifications = Number(data?.pending_verifications ?? 0) || 0;
   const totalVotesCast = Number(data?.total_votes_cast ?? 0) || 0;
-  const filteredRegistrationTrendData = useMemo(() => {
-    if (!startDate && !endDate) {
-      const now = new Date();
-      const lowerBound = new Date(now);
-
-      if (range === "30d") {
-        lowerBound.setDate(lowerBound.getDate() - 30);
-      } else if (range === "90d") {
-        lowerBound.setDate(lowerBound.getDate() - 90);
-      } else if (range === "6m") {
-        lowerBound.setMonth(lowerBound.getMonth() - 6);
-      } else if (range === "12m") {
-        lowerBound.setMonth(lowerBound.getMonth() - 12);
-      }
-
-      return registrationTrendData.filter((item) => new Date(`${item.date}T00:00:00`) >= lowerBound);
-    }
-
-    const start = startDate ? new Date(`${startDate}T00:00:00`) : null;
-    const end = endDate ? new Date(`${endDate}T23:59:59`) : null;
-
-    return registrationTrendData.filter((item) => {
-      const itemDate = new Date(`${item.date}T00:00:00`);
-
-      if (start && itemDate < start) {
-        return false;
-      }
-
-      if (end && itemDate > end) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [range, startDate, endDate]);
 
   const now = new Date();
   const dateStr = now.toLocaleDateString("en-US", {
@@ -218,56 +165,76 @@ export default function DashboardPage() {
 
       <div
         className="dashboard-grid"
-        style={{ gridTemplateColumns: "repeat(auto-fit, minmax(450px, 1fr))", marginBottom: 32 }}
+        style={{
+          display: "grid",
+          gap: 24,
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 420px), 1fr))",
+          marginBottom: 32,
+        }}
       >
-        <section className="dashboard-card-surface">
-          <h3 className="dashboard-section-title">Election Status Distribution</h3>
-          <p className="dashboard-section-copy">Global overview of electoral events</p>
-          <Suspense
-            fallback={
-              <div
-                style={{
-                  height: 280,
-                  borderRadius: 12,
-                  border: "1px dashed var(--dashboard-border)",
-                  background: "var(--dashboard-surface-muted)",
-                }}
-              />
-            }
+        <div style={{ minWidth: 0, maxWidth: "100%" }}>
+          <PremiumChartPanel
+            title="Election Status Distribution"
+            subtitle="Global overview of electoral events"
+            loading={analyticsLoading}
+            error={Boolean(analyticsError)}
+            empty={!analyticsLoading && !analyticsError && (!statusDistribution?.items || statusDistribution.items.length === 0)}
+            emptyMessage="No election data available"
           >
-            <ElectionStatusDonutChart data={electionStatusData} />
-          </Suspense>
-        </section>
-        <section className="dashboard-card-surface">
-          <h3 className="dashboard-section-title">Registration Activity</h3>
-          <p className="dashboard-section-copy">New registrations per month (Last 6 Months)</p>
-          <DashboardFilters
-            range={range}
-            startDate={startDate}
-            endDate={endDate}
-            onRangeChange={(value) => setRange(value)}
-            onStartDateChange={(value) => setStartDate(value)}
-            onEndDateChange={(value) => setEndDate(value)}
-          />
-          {filteredRegistrationTrendData.length === 0 ? (
-            <p style={{ marginTop: 12, fontSize: 13, color: "var(--dashboard-text-muted)" }}>No data for selected range</p>
-          ) : (
-            <Suspense
-              fallback={
-                <div
+            <ElectionStatusDistributionDonut items={statusDistribution?.items || []} />
+          </PremiumChartPanel>
+        </div>
+        <div style={{ minWidth: 0, maxWidth: "100%" }}>
+          <PremiumChartPanel
+            title="Registration Activity"
+            subtitle="New voter registrations over time"
+            loading={analyticsLoading}
+            error={Boolean(analyticsError)}
+            empty={!analyticsLoading && !analyticsError && (!registrationActivity?.items || registrationActivity.items.length === 0)}
+            emptyMessage="No registration data available"
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 12, justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600, color: "#475569" }}>
+                <span>Range</span>
+                <select
+                  value={registrationRange}
+                  onChange={(event) => setRegistrationRange(event.target.value)}
                   style={{
-                    height: 280,
-                    borderRadius: 12,
-                    border: "1px dashed var(--dashboard-border)",
-                    background: "var(--dashboard-surface-muted)",
+                    height: 32,
+                    borderRadius: 8,
+                    border: "1px solid #DCE3EC",
+                    background: "#FFFFFF",
+                    color: "#0F172A",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    padding: "0 10px",
                   }}
-                />
-              }
-            >
-              <RegistrationTrendChart data={filteredRegistrationTrendData} />
-            </Suspense>
-          )}
-        </section>
+                >
+                  <option value="30d">30d</option>
+                  <option value="90d">90d</option>
+                  <option value="6m">6m</option>
+                  <option value="12m">12m</option>
+                </select>
+              </label>
+              <button
+                type="button"
+                onClick={reload}
+                style={{
+                  border: "none",
+                  background: "transparent",
+                  color: "#2F6FED",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  padding: 0,
+                }}
+              >
+                Refresh
+              </button>
+            </div>
+            <RegistrationActivityAreaChart items={registrationActivity?.items || []} />
+          </PremiumChartPanel>
+        </div>
       </div>
 
       <div className="dashboard-grid-panels">

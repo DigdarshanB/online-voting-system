@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routes.auth import router as auth_router
 from app.routes.admin import router as admin_router
 from app.routes.admin_dashboard import router as admin_dashboard_router
+from app.routes.admin_dashboard_analytics import router as admin_dashboard_analytics_router
 from app.routes.candidates import router as candidates_router
 from app.routes.elections import router as elections_router
 from app.routes.verification import router as verification_router
@@ -31,6 +32,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(admin_router)
 app.include_router(admin_dashboard_router)
+app.include_router(admin_dashboard_analytics_router)
 app.include_router(candidates_router)
 app.include_router(elections_router)
 app.include_router(verification_router)
