@@ -12,6 +12,8 @@
   "dependencies": {
     "@tanstack/react-query": "^5.96.1",
     "axios": "^1.13.2",
+    "echarts": "^6.0.0",
+    "echarts-for-react": "^3.0.6",
     "lucide-react": "^1.7.0",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.0",

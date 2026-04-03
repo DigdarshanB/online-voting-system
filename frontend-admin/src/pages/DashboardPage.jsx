@@ -1,12 +1,72 @@
-import React from "react";
+import React, { Suspense, useMemo } from "react";
 import { Link } from "react-router-dom";
 import DashboardCard from "../components/dashboard/DashboardCard";
 import DashboardMetricCard from "../components/dashboard/DashboardMetricCard";
 import DashboardPlaceholderChart from "../components/dashboard/DashboardPlaceholderChart";
+import DashboardFilters from "../features/dashboard/components/DashboardFilters";
+import useDashboardFilters from "../features/dashboard/hooks/useDashboardFilters";
 import { useDashboardSystemStatus } from "../features/dashboard/hooks/useDashboardSystemStatus";
+
+const ElectionStatusDonutChart = React.lazy(() => import("../components/charts/ElectionStatusDonutChart"));
+const RegistrationTrendChart = React.lazy(() => import("../components/charts/RegistrationTrendChart"));
+
+const registrationTrendData = [
+  { date: "2025-09-01", label: "Sep", value: 1610 },
+  { date: "2025-10-01", label: "Oct", value: 1745 },
+  { date: "2025-11-01", label: "Nov", value: 1820 },
+  { date: "2025-12-01", label: "Dec", value: 1965 },
+  { date: "2026-01-01", label: "Jan", value: 2140 },
+  { date: "2026-02-01", label: "Feb", value: 2310 },
+  { date: "2026-03-01", label: "Mar", value: 2495 },
+  { date: "2026-04-01", label: "Apr", value: 2670 },
+];
+
+const electionStatusData = [
+  { name: "Active", value: 3 },
+  { name: "Scheduled", value: 5 },
+  { name: "Draft", value: 2 },
+  { name: "Closed", value: 4 },
+];
 
 export default function DashboardPage() {
   const { data, isLoading, isError } = useDashboardSystemStatus();
+  const { range, startDate, endDate, setRange, setStartDate, setEndDate } = useDashboardFilters();
+  const filteredRegistrationTrendData = useMemo(() => {
+    if (!startDate && !endDate) {
+      const now = new Date();
+      const lowerBound = new Date(now);
+
+      if (range === "30d") {
+        lowerBound.setDate(lowerBound.getDate() - 30);
+      } else if (range === "90d") {
+        lowerBound.setDate(lowerBound.getDate() - 90);
+      } else if (range === "6m") {
+        lowerBound.setMonth(lowerBound.getMonth() - 6);
+      } else if (range === "12m") {
+        lowerBound.setMonth(lowerBound.getMonth() - 12);
+      }
+
+      return registrationTrendData.filter((item) => new Date(`${item.date}T00:00:00`) >= lowerBound);
+    }
+
+    const start = startDate ? new Date(`${startDate}T00:00:00`) : null;
+    const end = endDate ? new Date(`${endDate}T23:59:59`) : null;
+
+    return registrationTrendData.filter((item) => {
+      const itemDate = new Date(`${item.date}T00:00:00`);
+
+      if (start && itemDate < start) {
+        return false;
+      }
+
+      if (end && itemDate > end) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [range, startDate, endDate]);
+
   const now = new Date();
   const dateStr = now.toLocaleDateString("en-US", {
     weekday: "long",
@@ -105,16 +165,54 @@ export default function DashboardPage() {
         className="dashboard-grid"
         style={{ gridTemplateColumns: "repeat(auto-fit, minmax(450px, 1fr))", marginBottom: 32 }}
       >
-        <DashboardPlaceholderChart
-          icon="🍩"
-          title="Election Status Distribution"
-          caption="Global overview of electoral events"
-        />
-        <DashboardPlaceholderChart
-          icon="📈"
-          title="Registration Activity"
-          caption="New registrations per month (Last 6 Months)"
-        />
+        <section className="dashboard-card-surface">
+          <h3 className="dashboard-section-title">Election Status Distribution</h3>
+          <p className="dashboard-section-copy">Global overview of electoral events</p>
+          <Suspense
+            fallback={
+              <div
+                style={{
+                  height: 280,
+                  borderRadius: 12,
+                  border: "1px dashed var(--dashboard-border)",
+                  background: "var(--dashboard-surface-muted)",
+                }}
+              />
+            }
+          >
+            <ElectionStatusDonutChart data={electionStatusData} />
+          </Suspense>
+        </section>
+        <section className="dashboard-card-surface">
+          <h3 className="dashboard-section-title">Registration Activity</h3>
+          <p className="dashboard-section-copy">New registrations per month (Last 6 Months)</p>
+          <DashboardFilters
+            range={range}
+            startDate={startDate}
+            endDate={endDate}
+            onRangeChange={(value) => setRange(value)}
+            onStartDateChange={(value) => setStartDate(value)}
+            onEndDateChange={(value) => setEndDate(value)}
+          />
+          {filteredRegistrationTrendData.length === 0 ? (
+            <p style={{ marginTop: 12, fontSize: 13, color: "var(--dashboard-text-muted)" }}>No data for selected range</p>
+          ) : (
+            <Suspense
+              fallback={
+                <div
+                  style={{
+                    height: 280,
+                    borderRadius: 12,
+                    border: "1px dashed var(--dashboard-border)",
+                    background: "var(--dashboard-surface-muted)",
+                  }}
+                />
+              }
+            >
+              <RegistrationTrendChart data={filteredRegistrationTrendData} />
+            </Suspense>
+          )}
+        </section>
       </div>
 
       <div className="dashboard-grid-panels">

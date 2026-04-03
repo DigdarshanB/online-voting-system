@@ -48,7 +48,7 @@
 .dashboard-card-surface {
   background: var(--dashboard-surface);
   border: 1px solid var(--dashboard-border);
-  border-radius: var(--dashboard-radius-lg);
+  border-radius: var(--dashboard-radius-md);
   box-shadow: var(--dashboard-shadow-sm);
   padding: 24px;
 }
@@ -79,8 +79,22 @@
 }
 
 .dashboard-page-shell a:focus-visible,
-.dashboard-page-shell button:focus-visible {
-  outline: 2px solid var(--dashboard-accent);
+.dashboard-page-shell button:focus-visible,
+.dashboard-page-shell input:focus-visible,
+.dashboard-page-shell select:focus-visible {
+  outline: 3px solid var(--dashboard-accent);
   outline-offset: 2px;
   border-radius: 8px;
+  box-shadow: 0 0 0 2px var(--dashboard-accent-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-page-shell *,
+  .dashboard-page-shell *::before,
+  .dashboard-page-shell *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

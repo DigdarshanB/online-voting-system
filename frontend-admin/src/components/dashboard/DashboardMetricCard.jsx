@@ -8,7 +8,7 @@ import React from "react";
  * @param {React.ReactNode=} props.icon
  * @param {"default" | "success" | "warning" | "danger"=} props.tone
  */
-export default function DashboardMetricCard({ label, value, meta, icon, tone = "default" }) {
+function DashboardMetricCard({ label, value, meta, icon, tone = "default" }) {
   const toneMap = {
     default: {
       color: "var(--dashboard-text-soft)",
@@ -54,3 +54,5 @@ export default function DashboardMetricCard({ label, value, meta, icon, tone = "
     </section>
   );
 }
+
+export default React.memo(DashboardMetricCard);

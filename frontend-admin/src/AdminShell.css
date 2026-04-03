@@ -115,3 +115,105 @@
 .admin-sidebar-nav::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
 }
+
+.admin-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.admin-topbar-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid #DCE3EC;
+  background: #F9FBFD;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-topbar-action-btn:hover {
+  background: #EAF2FF;
+  border-color: #2F6FED;
+  color: #2F6FED;
+}
+
+.admin-topbar-action-btn:focus-visible {
+  outline: 2px solid #2F6FED;
+  outline-offset: 2px;
+}
+
+.admin-command-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(3px);
+}
+
+.admin-command-panel {
+  position: fixed;
+  top: 12vh;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(680px, calc(100vw - 32px));
+  max-height: 72vh;
+  z-index: 150;
+  border-radius: 14px;
+  border: 1px solid #DCE3EC;
+  background: #FFFFFF;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
+  overflow: hidden;
+}
+
+.admin-command-input {
+  width: 100%;
+  height: 42px;
+  border: 1px solid #DCE3EC;
+  border-radius: 10px;
+  padding: 0 12px;
+  font-size: 14px;
+  color: #1E293B;
+  background: #FFFFFF;
+}
+
+.admin-command-input:focus-visible {
+  outline: 2px solid #2F6FED;
+  outline-offset: 1px;
+}
+
+.admin-command-list {
+  max-height: 52vh;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.admin-command-item {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #1E293B;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.admin-command-item.active {
+  background: #EAF2FF;
+  color: #1D4E89;
+}
+
+.admin-shell.compact-density {
+  --admin-density-gap: 8px;
+  --admin-density-padding: 12px;
+  --admin-density-font-size: 13px;
+}
