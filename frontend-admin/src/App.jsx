@@ -35,7 +35,7 @@ import AdminTotpRecovery from "./pages/AdminTotpRecovery";
 import ManageElections from "./pages/ManageElections";
 import ManageCandidates from "./pages/ManageCandidates";
 import PendingApprovalPage from "./pages/PendingApprovalPage";
-import DashboardPage from "./pages/DashboardPage";
+import DashboardPageView from "./pages/DashboardPage";
 
 function RequireDashboardMfa({ children }) {
   const token = localStorage.getItem("access_token");
@@ -502,7 +502,7 @@ export default function App() {
         element={
           <RequireDashboardMfa>
             <AdminShell title="Dashboard" subtitle="Overview and quick access">
-              <DashboardPage />
+              <DashboardPageView />
             </AdminShell>
           </RequireDashboardMfa>
         }

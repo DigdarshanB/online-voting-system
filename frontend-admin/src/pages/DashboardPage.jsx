@@ -1,11 +1,11 @@
 import React, { Suspense, useMemo } from "react";
 import { Link } from "react-router-dom";
 import DashboardCard from "../components/dashboard/DashboardCard";
-import DashboardMetricCard from "../components/dashboard/DashboardMetricCard";
-import DashboardPlaceholderChart from "../components/dashboard/DashboardPlaceholderChart";
+import { BarChart3, ShieldCheck, Users, Vote } from "lucide-react";
+import PremiumMetricCard from "../components/dashboard/PremiumMetricCard";
 import DashboardFilters from "../features/dashboard/components/DashboardFilters";
 import useDashboardFilters from "../features/dashboard/hooks/useDashboardFilters";
-import { useDashboardSystemStatus } from "../features/dashboard/hooks/useDashboardSystemStatus";
+import useDashboardSummary from "../hooks/useDashboardSummary";
 
 const ElectionStatusDonutChart = React.lazy(() => import("../components/charts/ElectionStatusDonutChart"));
 const RegistrationTrendChart = React.lazy(() => import("../components/charts/RegistrationTrendChart"));
@@ -29,8 +29,12 @@ const electionStatusData = [
 ];
 
 export default function DashboardPage() {
-  const { data, isLoading, isError } = useDashboardSystemStatus();
+  const { data, loading, error } = useDashboardSummary();
   const { range, startDate, endDate, setRange, setStartDate, setEndDate } = useDashboardFilters();
+  const activeElections = Number(data?.active_elections ?? 0) || 0;
+  const registeredVoters = Number(data?.registered_voters ?? 0) || 0;
+  const pendingVerifications = Number(data?.pending_verifications ?? 0) || 0;
+  const totalVotesCast = Number(data?.total_votes_cast ?? 0) || 0;
   const filteredRegistrationTrendData = useMemo(() => {
     if (!startDate && !endDate) {
       const now = new Date();
@@ -98,7 +102,7 @@ export default function DashboardPage() {
             </span>
           </div>
           <p style={{ margin: 0, fontSize: 14, color: "var(--dashboard-text-soft)", fontWeight: 500 }}>
-            {dateStr} &nbsp;·&nbsp; System Status: <span style={{ color: "var(--dashboard-success)" }}>{isLoading ? "Checking..." : isError ? "Unavailable" : data.label}</span>
+            {dateStr} &nbsp;·&nbsp; System Status: <span style={{ color: "var(--dashboard-success)" }}>{loading ? "Checking..." : error ? "Unavailable" : "Normal"}</span>
           </p>
         </div>
 
@@ -143,22 +147,73 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <div className="dashboard-grid-kpi">
-        {[
-          { label: "Active Elections", val: "3", sub: "2 Federal · 1 Local", icon: "🗳️" },
-          { label: "Registered Voters", val: "142,850", sub: "+124 this week", icon: "👥" },
-          { label: "Pending Verification", val: "1,240", sub: "Needs urgent review", icon: "⏳", tone: "warning" },
-          { label: "Total Votes Cast", val: "582,410", sub: "72.4% avg turnout", icon: "📊" },
-        ].map((kpi) => (
-          <DashboardMetricCard
-            key={kpi.label}
-            label={kpi.label}
-            value={kpi.val}
-            meta={kpi.sub}
-            icon={kpi.icon}
-            tone={kpi.tone}
-          />
-        ))}
+      <div
+        className="dashboard-grid-kpi"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+          gap: 24,
+          marginBottom: 32,
+        }}
+      >
+        <PremiumMetricCard
+          title="Active Elections"
+          value={activeElections}
+          helperText="2 Federal · 1 Local"
+          statusLabel={activeElections > 0 ? "Live" : "No open election"}
+          statusTone={activeElections > 0 ? "info" : "neutral"}
+          icon={<Vote size={20} strokeWidth={2} />}
+          loading={loading}
+          error={Boolean(error)}
+          empty={activeElections === 0}
+          emptyMessage="No elections are currently open"
+        />
+        <PremiumMetricCard
+          title="Registered Voters"
+          value={registeredVoters}
+          helperText="Verified accounts in system"
+          statusLabel="Updated today"
+          statusTone="info"
+          icon={<Users size={20} strokeWidth={2} />}
+          loading={loading}
+          error={Boolean(error)}
+        />
+        <PremiumMetricCard
+          title="Pending Verification"
+          value={pendingVerifications}
+          helperText="Awaiting admin validation"
+          statusLabel={
+            pendingVerifications === 0
+              ? "Queue clear"
+              : pendingVerifications > 25
+                ? "Urgent review"
+                : "Review pending"
+          }
+          statusTone={
+            pendingVerifications === 0
+              ? "success"
+              : pendingVerifications > 25
+                ? "danger"
+                : "warning"
+          }
+          icon={<ShieldCheck size={20} strokeWidth={2} />}
+          loading={loading}
+          error={Boolean(error)}
+          empty={pendingVerifications === 0}
+          emptyMessage="Verification queue is clear"
+        />
+        <PremiumMetricCard
+          title="Total Votes Cast"
+          value={totalVotesCast}
+          helperText="Across all open elections"
+          statusLabel={totalVotesCast > 0 ? "Live count" : "No active voting"}
+          statusTone={totalVotesCast > 0 ? "info" : "neutral"}
+          icon={<BarChart3 size={20} strokeWidth={2} />}
+          loading={loading}
+          error={Boolean(error)}
+          empty={totalVotesCast === 0}
+          emptyMessage="Voting has not started"
+        />
       </div>
 
       <div

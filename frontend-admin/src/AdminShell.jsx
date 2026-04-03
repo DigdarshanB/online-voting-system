@@ -17,8 +17,6 @@ import {
 } from "lucide-react";
 import "./AdminShell.css";
 import ecnLogo from "./assets/ECN.png";
-import AdminCommandPalette from "./components/command/AdminCommandPalette";
-import useDashboardPreferences from "./features/preferences/useDashboardPreferences";
 
 const PALETTE = {
   appBg: "#F5F7FB",
@@ -57,22 +55,8 @@ const ACCOUNT_NAV_ITEMS = [
 
 export default function AdminShell({ children, title, subtitle }) {
   const location = useLocation();
-  const { density, toggleDensity } = useDashboardPreferences();
-  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
-  const commandPaletteItems = [
-    { label: "Dashboard", description: "Overview and quick access", to: "/dashboard" },
-    { label: "Manage Admins", description: "Administrator account controls", to: "/superadmin/manage-admins" },
-    { label: "Voter Verifications", description: "Review verification requests", to: "/admin/voter-verifications" },
-    { label: "Manage Voters", description: "Search and manage voter profiles", to: "/admin/manage-voters" },
-    { label: "Manage Elections", description: "Configure and monitor elections", to: "/admin/elections" },
-    { label: "Manage Candidates", description: "Add and manage candidates", to: "/admin/candidates" },
-    { label: "Results", description: "Election outcomes and turnout", to: "/admin/results" },
-    { label: "Audit Logs", description: "Administrative activity records", to: "/admin/audit-logs" },
-    { label: "Reports", description: "Generate and review reports", to: "/admin/reports" },
-    { label: "Account Center", description: "Profile and session controls", to: "/account-center" },
-  ];
   const routeMeta = {
     "/dashboard": {
       title: "Dashboard",
@@ -138,18 +122,6 @@ export default function AdminShell({ children, title, subtitle }) {
     }
   }, [isSidebarOpen, isMobile]);
 
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        setIsCommandPaletteOpen(true);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
-
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
   const closeSidebar = () => {
     if (isMobile) setIsSidebarOpen(false);
@@ -157,7 +129,7 @@ export default function AdminShell({ children, title, subtitle }) {
 
   return (
     <div
-      className={`admin-shell ${density === "compact" ? "compact-density" : ""}`}
+      className="admin-shell"
       style={{
         display: "flex",
         minHeight: "100vh",
@@ -361,16 +333,6 @@ export default function AdminShell({ children, title, subtitle }) {
           </div>
 
           <div className="admin-topbar-actions">
-            <button
-              className="admin-topbar-action-btn"
-              onClick={() => setIsCommandPaletteOpen(true)}
-              type="button"
-            >
-              Quick Search
-            </button>
-            <button className="admin-topbar-action-btn" onClick={toggleDensity} type="button">
-              Density
-            </button>
             <div
               style={{
                 display: "flex",
@@ -430,11 +392,6 @@ export default function AdminShell({ children, title, subtitle }) {
           Election Commission Nepal <span style={{ fontWeight: 800, color: PALETTE.topbarText }}>©</span>
         </footer>
       </div>
-      <AdminCommandPalette
-        open={isCommandPaletteOpen}
-        onClose={() => setIsCommandPaletteOpen(false)}
-        items={commandPaletteItems}
-      />
     </div>
   );
 }
