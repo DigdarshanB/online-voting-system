@@ -34,6 +34,7 @@ import AdminChangePassword from "./pages/AdminChangePassword";
 import AdminTotpRecovery from "./pages/AdminTotpRecovery";
 import ManageElections from "./pages/ManageElections";
 import ManageCandidates from "./pages/ManageCandidates";
+import VoterVerificationQueue from "./pages/VoterVerificationQueue";
 import PendingApprovalPage from "./pages/PendingApprovalPage";
 import DashboardPageView from "./pages/DashboardPage";
 

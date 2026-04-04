@@ -812,7 +812,6 @@ export default function ManageVotersDashboard() {
       const failureCount = data?.failures?.length || 0;
       pushToast(`${bulkDialog.title} complete`, failureCount ? "danger" : "success", `${successCount} succeeded, ${failureCount} failed`);
       setSelectedIds(new Set());
-      setBulkDialog(null);
       handleRefresh();
     } catch (err) {
       pushToast("Bulk action failed", "danger", err?.response?.data?.detail || "Unexpected error");
