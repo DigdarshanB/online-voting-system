@@ -104,6 +104,8 @@ export default function AdminShell({ children, title, subtitle }) {
     subtitle: "Election administration workspace",
   };
 
+  const [userRole, setUserRole] = useState(null);
+
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth <= 1024;
@@ -111,6 +113,22 @@ export default function AdminShell({ children, title, subtitle }) {
       if (!mobile) setIsSidebarOpen(false);
     };
     window.addEventListener("resize", handleResize);
+
+    // Initial role check
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      try {
+        const payloadBase64 = token.split(".")[1];
+        if (payloadBase64) {
+          const payloadJson = atob(payloadBase64.replace(/-/g, "+").replace(/_/g, "/"));
+          const payload = JSON.parse(payloadJson);
+          setUserRole(payload.role);
+        }
+      } catch (e) {
+        console.error("Failed to parse token for role", e);
+      }
+    }
+
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
@@ -126,6 +144,13 @@ export default function AdminShell({ children, title, subtitle }) {
   const closeSidebar = () => {
     if (isMobile) setIsSidebarOpen(false);
   };
+
+  const filteredMainItems = MAIN_NAV_ITEMS.filter(item => {
+    if (item.to === "/superadmin/manage-admins") {
+      return userRole === "super_admin";
+    }
+    return true;
+  });
 
   return (
     <div
@@ -201,7 +226,7 @@ export default function AdminShell({ children, title, subtitle }) {
           className="admin-sidebar-nav"
           style={{ padding: "20px 12px", display: "flex", flexDirection: "column", gap: 4, flex: 1, overflowY: "auto" }}
         >
-          {MAIN_NAV_ITEMS.map((item) => {
+          {filteredMainItems.map((item) => {
             const isActive = location.pathname === item.to;
             const IconComp = item.icon;
             return (
@@ -239,15 +264,15 @@ export default function AdminShell({ children, title, subtitle }) {
           })}
 
           {/* Account Section Separator */}
-          <div 
-            style={{ 
-              marginTop: 24, 
+          <div
+            style={{
+              marginTop: 24,
               marginBottom: 8,
-              padding: "16px 14px 8px", 
-              fontSize: 11, 
-              fontWeight: 800, 
-              color: PALETTE.sidebarMuted, 
-              textTransform: "uppercase", 
+              padding: "16px 14px 8px",
+              fontSize: 11,
+              fontWeight: 800,
+              color: PALETTE.sidebarMuted,
+              textTransform: "uppercase",
               letterSpacing: "0.08em",
               borderTop: "1px solid rgba(255,255,255,0.08)",
               display: "flex",

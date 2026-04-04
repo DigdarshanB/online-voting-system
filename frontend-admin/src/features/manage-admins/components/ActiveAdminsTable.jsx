@@ -4,15 +4,16 @@ import SectionCard from './SectionCard';
 import SectionHeader from './SectionHeader';
 import StatusPill from './StatusPill';
 import EmptyStateBlock from './EmptyStateBlock';
-import { Check, X, RefreshCw, ShieldQuestion } from 'lucide-react';
+import { ShieldAlert, RefreshCw, XCircle, UserCheck } from 'lucide-react';
 
-export default function TotpRecoveryQueueTable({
+export default function ActiveAdminsTable({
   items = [],
-  loading = false,
+  isLoading = false,
   error = "",
+  searchValue,
+  onSearchChange,
   onRefresh,
-  onApprove,
-  onReject
+  onDisableAdmin
 }) {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -40,75 +41,73 @@ export default function TotpRecoveryQueueTable({
     transition: "background-color 0.2s",
   };
 
+  const filterContainerStyle = {
+    display: "flex",
+    padding: `${tokens.spacing.md}px 0`,
+  };
+
+  const searchInputStyle = {
+    flex: 1,
+    padding: "8px 12px",
+    borderRadius: tokens.borderRadius.medium,
+    border: `1px solid ${tokens.cardBorder}`,
+    fontSize: 14,
+    color: tokens.text.primary,
+    backgroundColor: tokens.input.background,
+  };
+
   const renderContent = () => {
-    const pendingCount = items.filter(item => item.status === 'PENDING').length;
-
-    if (loading && !error && items.length === 0) {
-      return (
-        <div style={{
-          position: "absolute",
-          top: 0, left: 0, right: 0, bottom: 0,
-          background: "rgba(255,255,255,0.7)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 10,
-          color: tokens.colors.brandBlue,
-          fontWeight: 700
-        }}>
-          Loading...
-        </div>
-      );
+    if (isLoading) {
+      return <EmptyStateBlock title="Loading Active Administrators..." description="Please wait while we load the records." height={200} />;
     }
-
-    if (error && !loading && items.length === 0) {
-      return (
-        <div style={{
-          padding: tokens.spacing.lg,
-          color: tokens.colors.danger,
-          backgroundColor: tokens.colors.dangerSoft,
-          borderRadius: tokens.radius.md,
-          textAlign: "center"
-        }}>
-          {error}
-        </div>
-      );
+    if (error) {
+      return <EmptyStateBlock icon={XCircle} title="Error Loading Data" description={error} height={200} />;
     }
-
-    if (!loading && !error && items.length === 0) {
+    if (items.length === 0) {
       return (
         <EmptyStateBlock
-          icon={ShieldQuestion}
-          title="Recovery Queue is Empty"
-          description="There are no pending TOTP recovery requests at this time."
-          height={150}
+          icon={UserCheck}
+          title="No Active Administrators Found"
+          description="There are no admins matching your search, or no admins have been approved yet."
+          height={200}
         />
       );
     }
-
     return isMobile ? (
-      <MobileView items={items} onApprove={onApprove} onReject={onReject} />
+      <MobileView items={items} onDisableAdmin={onDisableAdmin} />
     ) : (
-      <TableView items={items} onApprove={onApprove} onReject={onReject} />
+      <TableView items={items} onDisableAdmin={onDisableAdmin} />
     );
   };
 
   return (
     <SectionCard>
       <SectionHeader
-        title="Admin TOTP Recovery Queue"
-        description="Approve or reject requests from administrators who have lost access to their authenticator app."
+        title="Active Administrator Roster"
+        description="Manage all verified administrators with active system access."
         actions={
           <button
             style={actionButtonStyle}
             onClick={onRefresh}
             onMouseOver={(e) => (e.currentTarget.style.backgroundColor = tokens.input.background)}
             onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+            title="Refresh Data"
           >
             <RefreshCw size={14} />
           </button>
         }
       />
+      <div style={filterContainerStyle}>
+        <input
+          type="search"
+          placeholder="Search by name or email..."
+          style={searchInputStyle}
+          value={searchValue}
+          onChange={(e) => onSearchChange(e.target.value)}
+          aria-label="Search active administrators"
+        />
+      </div>
+
       <div style={{ marginTop: tokens.spacing.lg }}>
         {renderContent()}
       </div>
@@ -118,27 +117,28 @@ export default function TotpRecoveryQueueTable({
 
 function formatDate(dateString) {
   if (!dateString) return "—";
-  return new Date(dateString).toLocaleString();
+  const date = new Date(dateString);
+  return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) + ' ' + date.toLocaleTimeString();
 }
 
-function TableView({ items, onApprove, onReject }) {
+function TableView({ items, onDisableAdmin }) {
   const tableWrapperStyle = { overflowX: "auto" };
   const tableStyle = { width: "100%", borderCollapse: "collapse", textAlign: "left" };
   const thStyle = {
-    padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px`,
+    padding: `10px ${tokens.spacing.md}px`,
     color: tokens.text.secondary,
     fontSize: 12,
     textTransform: "uppercase",
     letterSpacing: "0.05em",
-    fontWeight: 500,
+    fontWeight: 600,
+    borderBottom: `1px solid ${tokens.cardBorder}`,
   };
   const trStyle = { borderBottom: `1px solid ${tokens.cardBorder}`, transition: "background-color 0.2s" };
   const tdStyle = { padding: `${tokens.spacing.md}px`, verticalAlign: "middle", fontSize: 14 };
-  const userStyle = { fontWeight: 500, color: tokens.text.primary };
+  const userStyle = { fontWeight: 600, color: tokens.text.primary };
   const userEmailStyle = { fontSize: 13, color: tokens.text.secondary };
   const actionsStyle = { display: "flex", justifyContent: "flex-end", gap: tokens.spacing.sm };
-  
-  const actionBaseStyle = {
+  const dangerActionButtonStyle = {
     display: "flex",
     alignItems: "center",
     gap: tokens.spacing.sm,
@@ -148,69 +148,61 @@ function TableView({ items, onApprove, onReject }) {
     borderRadius: tokens.borderRadius.small,
     fontSize: 13,
     fontWeight: 500,
+    color: tokens.status.danger.text,
     cursor: "pointer",
     transition: "background-color 0.2s",
-  };
-
-  const approveButtonStyle = {
-    ...actionBaseStyle,
-    color: tokens.status.success.text,
-  };
-
-  const rejectButtonStyle = {
-    ...actionBaseStyle,
-    color: tokens.status.danger.text,
   };
 
   return (
     <div style={tableWrapperStyle}>
       <table style={tableStyle}>
         <caption style={{ captionSide: "bottom", textAlign: "left", padding: "12px", fontSize: 13, color: tokens.text.muted }}>
-          Queue of administrators requesting to reset their two-factor authentication.
+          List of all active administrators with system access. Use actions to manage access.
         </caption>
         <thead>
           <tr style={{ borderBottom: `2px solid ${tokens.cardBorder}` }}>
             <th style={thStyle}>Administrator</th>
-            <th style={thStyle}>Requested</th>
-            <th style={{ ...thStyle, textAlign: "right" }}>Actions</th>
+            <th style={thStyle}>Approved / Since</th>
+            <th style={thStyle}>Role</th>
+            <th style={thStyle}>2FA Status</th>
+            <th style={{ ...thStyle, textAlign: "right" }}>Governance Actions</th>
           </tr>
         </thead>
         <tbody>
           {items.map((item) => (
             <tr
-              key={item.requestId}
+              key={item.id}
               style={trStyle}
               onMouseOver={(e) => (e.currentTarget.style.backgroundColor = tokens.pageBackground)}
               onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
             >
               <td style={tdStyle}>
-                <div style={userStyle}>{item.name}</div>
+                <div style={userStyle}>{item.full_name}</div>
                 <div style={userEmailStyle}>{item.email}</div>
               </td>
               <td style={tdStyle}>
-                {formatDate(item.requestedAt)}
+                {formatDate(item.approved_at)}
+              </td>
+              <td style={tdStyle}>
+                {item.role ? <StatusPill status={item.role} /> : "—"}
+              </td>
+              <td style={tdStyle}>
+                {item.totp_enabled_at
+                  ? <StatusPill status="TOTP_ENABLED" />
+                  : <StatusPill status="TOTP_DISABLED" />
+                }
               </td>
               <td style={{ ...tdStyle, textAlign: "right" }}>
                 <div style={actionsStyle}>
                   <button
-                    style={approveButtonStyle}
-                    onClick={() => onApprove(item)}
-                    onMouseOver={(e) => (e.currentTarget.style.backgroundColor = tokens.status.success.background)}
-                    onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-                    title="Approve Request"
-                  >
-                    <Check size={16} />
-                    <span>Approve</span>
-                  </button>
-                  <button
-                    style={rejectButtonStyle}
-                    onClick={() => onReject(item)}
+                    style={dangerActionButtonStyle}
+                    onClick={() => onDisableAdmin(item)}
                     onMouseOver={(e) => (e.currentTarget.style.backgroundColor = tokens.status.danger.background)}
                     onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-                    title="Reject Request"
+                    title="Disable Administrator Access"
                   >
-                    <X size={16} />
-                    <span>Reject</span>
+                    <XCircle size={16} />
+                    <span>Disable Access</span>
                   </button>
                 </div>
               </td>
@@ -222,7 +214,7 @@ function TableView({ items, onApprove, onReject }) {
   );
 }
 
-function MobileView({ items, onApprove, onReject }) {
+function MobileView({ items, onDisableAdmin }) {
   const cardStyle = {
     padding: tokens.spacing.lg,
     border: `1px solid ${tokens.cardBorder}`,
@@ -230,38 +222,65 @@ function MobileView({ items, onApprove, onReject }) {
     display: "flex",
     flexDirection: "column",
     gap: tokens.spacing.md,
+    backgroundColor: tokens.background,
   };
   const headerStyle = { display: "flex", justifyContent: "space-between", alignItems: "flex-start" };
   const userStyle = { fontWeight: 600, color: tokens.text.primary };
   const userEmailStyle = { fontSize: 13, color: tokens.text.secondary };
-  const dateStyle = { fontSize: 13, color: tokens.text.secondary };
+  const infoGridStyle = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: tokens.spacing.md, alignItems: 'center', marginTop: tokens.spacing.md };
+  const infoLabelStyle = { fontSize: 12, color: tokens.text.secondary, textTransform: 'uppercase', fontWeight: 500 };
+  const infoValueStyle = { fontSize: 13, color: tokens.text.primary };
+
   const footerStyle = {
-    marginTop: tokens.spacing.sm,
-    paddingTop: tokens.spacing.sm,
+    marginTop: tokens.spacing.md,
+    paddingTop: tokens.spacing.md,
     borderTop: `1px solid ${tokens.cardBorder}`,
     display: "flex",
-    gap: tokens.spacing.md,
     justifyContent: "flex-end",
   };
-  const buttonStyle = { background: "none", border: "none", fontWeight: 600, cursor: "pointer", padding: "8px" };
+  const buttonStyle = { 
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: tokens.spacing.sm,
+    background: 'none', 
+    border: 'none', 
+    fontWeight: 600, 
+    cursor: 'pointer', 
+    padding: "8px", 
+    color: tokens.status.danger.text,
+    fontSize: 14,
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: tokens.spacing.md }}>
       {items.map(item => (
-        <div key={item.requestId} style={cardStyle}>
+        <div key={item.id} style={cardStyle}>
           <div style={headerStyle}>
             <div>
-              <div style={userStyle}>{item.name}</div>
-              <div style={userEmailStyle}>{item.email}</div>
+              <div style={userStyle}>{item.full_name || "—"}</div>
+              <div style={userEmailStyle}>{item.email || "—"}</div>
             </div>
-            <StatusPill status="PENDING" />
+            {item.role && <StatusPill status={item.role} />}
           </div>
-          <div style={dateStyle}>
-            <strong>Requested:</strong> {formatDate(item.requestedAt)}
+          
+          <div style={infoGridStyle}>
+            <div>
+              <div style={infoLabelStyle}>2FA Status</div>
+              <div style={infoValueStyle}>
+                {item.totp_enabled_at ? <StatusPill status="TOTP_ENABLED" /> : <StatusPill status="TOTP_DISABLED" />}
+              </div>
+            </div>
+            <div>
+              <div style={infoLabelStyle}>Approved Since</div>
+              <div style={infoValueStyle}>{formatDate(item.approved_at)}</div>
+            </div>
           </div>
+
           <div style={footerStyle}>
-            <button onClick={() => onReject(item)} style={{ ...buttonStyle, color: tokens.status.danger.text }}>Reject</button>
-            <button onClick={() => onApprove(item)} style={{ ...buttonStyle, color: tokens.status.success.text }}>Approve</button>
+            <button onClick={() => onDisableAdmin(item)} style={buttonStyle} title="Disable Administrator Access">
+              <XCircle size={16} />
+              <span>Disable Access</span>
+            </button>
           </div>
         </div>
       ))}

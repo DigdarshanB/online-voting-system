@@ -12,12 +12,12 @@
 
 import React from "react";
 import { Routes, Route, Navigate, Link } from "react-router-dom";
-import { 
-  UserCircle2, 
-  ShieldCheck, 
-  LockKeyhole, 
+import {
+  UserCircle2,
+  ShieldCheck,
+  LockKeyhole,
   BadgeCheck,
-  Activity 
+  Activity
 } from "lucide-react";
 import AdminShell from "./AdminShell";
 import AdminAuthPage from "./pages/AdminAuthPage";
@@ -117,7 +117,7 @@ const SIMPLE_PAGE_PALETTE = {
 function AccountCenterPage() {
   const token = localStorage.getItem("access_token");
   const mfaOk = sessionStorage.getItem("admin_mfa_ok") === "1";
-  
+
   let userData = {
     fullName: "Administrator",
     role: "System Admin",
@@ -140,7 +140,7 @@ function AccountCenterPage() {
         phone: payload.phone_number || "+977 XXXXXXXX",
         status: "Active"
       };
-    } catch (e) {}
+    } catch (e) { }
   }
 
   const initials = userData.fullName.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2);
@@ -148,10 +148,10 @@ function AccountCenterPage() {
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", padding: "40px 24px" }}>
       {/* Profile Header Card */}
-      <div style={{ 
-        background: AC_PALETTE.surface, 
-        borderRadius: 20, 
-        padding: "32px", 
+      <div style={{
+        background: AC_PALETTE.surface,
+        borderRadius: 20,
+        padding: "32px",
         border: `1px solid ${AC_PALETTE.border}`,
         boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
         display: "flex",
@@ -159,14 +159,14 @@ function AccountCenterPage() {
         gap: 24,
         marginBottom: 32
       }}>
-        <div style={{ 
-          width: 80, 
-          height: 80, 
-          borderRadius: 20, 
-          background: AC_PALETTE.primary, 
-          color: "#FFF", 
-          display: "flex", 
-          alignItems: "center", 
+        <div style={{
+          width: 80,
+          height: 80,
+          borderRadius: 20,
+          background: AC_PALETTE.primary,
+          color: "#FFF",
+          display: "flex",
+          alignItems: "center",
           justifyContent: "center",
           fontSize: 28,
           fontWeight: 800,
@@ -177,12 +177,12 @@ function AccountCenterPage() {
         <div>
           <h2 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: AC_PALETTE.textMain }}>{userData.fullName}</h2>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
-            <span style={{ 
-              padding: "4px 10px", 
-              borderRadius: 6, 
-              background: AC_PALETTE.bg, 
-              fontSize: 12, 
-              fontWeight: 700, 
+            <span style={{
+              padding: "4px 10px",
+              borderRadius: 6,
+              background: AC_PALETTE.bg,
+              fontSize: 12,
+              fontWeight: 700,
               color: AC_PALETTE.primary,
               textTransform: "uppercase"
             }}>
@@ -196,10 +196,10 @@ function AccountCenterPage() {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }}>
         <section>
           <h3 style={{ fontSize: 16, fontWeight: 700, color: AC_PALETTE.textMain, marginBottom: 16 }}>Account Information</h3>
-          <div style={{ 
-            background: AC_PALETTE.surface, 
-            borderRadius: 16, 
-            padding: "24px", 
+          <div style={{
+            background: AC_PALETTE.surface,
+            borderRadius: 16,
+            padding: "24px",
             border: `1px solid ${AC_PALETTE.border}`,
             display: "flex",
             flexDirection: "column",
@@ -214,13 +214,13 @@ function AccountCenterPage() {
               <div key={i}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: AC_PALETTE.textMuted, textTransform: "uppercase", marginBottom: 4 }}>{item.label}</div>
                 {item.badge ? (
-                  <span style={{ 
-                    padding: "4px 10px", 
-                    borderRadius: 6, 
-                    background: AC_PALETTE.successBg, 
-                    fontSize: 13, 
-                    fontWeight: 700, 
-                    color: AC_PALETTE.success 
+                  <span style={{
+                    padding: "4px 10px",
+                    borderRadius: 6,
+                    background: AC_PALETTE.successBg,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: AC_PALETTE.success
                   }}>
                     {item.value}
                   </span>
@@ -234,10 +234,10 @@ function AccountCenterPage() {
 
         <section>
           <h3 style={{ fontSize: 16, fontWeight: 700, color: AC_PALETTE.textMain, marginBottom: 16 }}>Security & Access</h3>
-          <div style={{ 
-            background: AC_PALETTE.surface, 
-            borderRadius: 16, 
-            padding: "24px", 
+          <div style={{
+            background: AC_PALETTE.surface,
+            borderRadius: 16,
+            padding: "24px",
             border: `1px solid ${AC_PALETTE.border}`,
             display: "flex",
             flexDirection: "column",
@@ -267,20 +267,20 @@ function AccountCenterPage() {
               </div>
             </div>
 
-            <div style={{ 
-              marginTop: 8, 
-              paddingTop: 24, 
+            <div style={{
+              marginTop: 8,
+              paddingTop: 24,
               borderTop: `1px solid ${AC_PALETTE.border}`,
               display: "flex",
               flexDirection: "column",
               gap: 12
             }}>
               <div style={{ fontSize: 14, color: AC_PALETTE.textMain, fontWeight: 600 }}>Access Control</div>
-              <Link 
-                to="/change-password" 
-                style={{ 
-                  display: "flex", 
-                  alignItems: "center", 
+              <Link
+                to="/change-password"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
                   justifyContent: "space-between",
                   padding: "14px 16px",
                   borderRadius: 10,
@@ -493,6 +493,17 @@ function ReportsPage() {
   );
 }
 
+function RequireSuperAdmin({ children }) {
+  const token = localStorage.getItem("access_token");
+  const mfaOk = sessionStorage.getItem("admin_mfa_ok") === "1";
+  const role = getTokenRole(token);
+
+  if (!token) return <Navigate to="/" replace />;
+  if (!mfaOk) return <Navigate to="/totp-setup" replace />;
+  if (role !== "super_admin") return <Navigate to="/dashboard" replace />;
+  return children;
+}
+
 export default function App() {
   return (
     <Routes>
@@ -527,20 +538,28 @@ export default function App() {
       />
       <Route
         path="/superadmin/invites"
-        element={<Navigate to="/superadmin/manage-admins" replace />}
+        element={
+          <RequireSuperAdmin>
+            <Navigate to="/superadmin/manage-admins" replace />
+          </RequireSuperAdmin>
+        }
       />
       <Route
         path="/superadmin/pending-admins"
-        element={<Navigate to="/superadmin/manage-admins" replace />}
+        element={
+          <RequireSuperAdmin>
+            <Navigate to="/superadmin/manage-admins" replace />
+          </RequireSuperAdmin>
+        }
       />
       <Route
         path="/superadmin/manage-admins"
         element={
-          <RequireDashboardMfa>
+          <RequireSuperAdmin>
             <AdminShell title="Manage Admins" subtitle="Issue invites and review administrator requests">
               <ManageAdmins />
             </AdminShell>
-          </RequireDashboardMfa>
+          </RequireSuperAdmin>
         }
       />
       {/* Public: no auth guard – the invited admin has no token yet */}

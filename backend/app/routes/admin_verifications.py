@@ -44,8 +44,13 @@ def _get_admin_or_404(user_id: int, db: Session) -> User:
     user = db.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    if user.role == "super_admin":
+        raise HTTPException(
+            status_code=403, 
+            detail="Governance rule: Super admin accounts cannot be modified through this interface."
+        )
     if user.role != "admin":
-        raise HTTPException(status_code=400, detail="Target user is not an admin")
+        raise HTTPException(status_code=400, detail="Target user is not a standard administrator")
     return user
 
 
@@ -76,13 +81,13 @@ class RecoveryRejectRequest(BaseModel):
 
 
 class TotpRecoveryQueueItem(BaseModel):
-    id: int
+    request_id: int
     user_id: int
+    full_name: str
     email: str
-    role: str
     status: str
+    requested_at: datetime
     requested_ip: Optional[str]
-    created_at: datetime
 
     class Config:
         from_attributes = True
@@ -107,7 +112,7 @@ def list_pending_admins(
 
 # ── POST /admin/verifications/{user_id}/approve ────────────────
 
-@router.post("/{user_id}/approve")
+@router.post("/{user_id}/approve", response_model=dict)
 def approve_admin(
     user_id: int,
     db: Session = Depends(get_db),
@@ -118,7 +123,7 @@ def approve_admin(
     if user.status not in ("PENDING_APPROVAL", "PENDING_MFA"):
         raise HTTPException(
             status_code=400,
-            detail=f"Cannot approve admin with status '{user.status}'",
+            detail=f"Cannot approve this administrator. Their current status is '{user.status}', not 'PENDING_APPROVAL' or 'PENDING_MFA'.",
         )
 
     user.status = "ACTIVE"
@@ -131,12 +136,12 @@ def approve_admin(
         target_user_id=user.id,
         metadata={"target_role": user.role, "new_status": user.status},
     )
-    return {"success": True, "status": user.status}
+    return {"status": "success", "message": f"Administrator {user.email} has been approved and is now active."}
 
 
 # ── POST /admin/verifications/{user_id}/reject ─────────────────
 
-@router.post("/{user_id}/reject")
+@router.post("/{user_id}/reject", response_model=dict)
 def reject_admin(
     user_id: int,
     payload: RejectRequest,
@@ -145,10 +150,10 @@ def reject_admin(
 ):
     user = _get_admin_or_404(user_id, db)
 
-    if user.status not in ("PENDING_APPROVAL", "PENDING_MFA", "ACTIVE"):
+    if user.status not in ("PENDING_APPROVAL", "PENDING_MFA"):
         raise HTTPException(
             status_code=400,
-            detail=f"Cannot reject admin with status '{user.status}'",
+            detail=f"Cannot reject this administrator. Their current status is '{user.status}', not 'PENDING_APPROVAL' or 'PENDING_MFA'.",
         )
 
     user.status = "REJECTED"
@@ -162,32 +167,43 @@ def reject_admin(
         target_user_id=user.id,
         metadata={"target_role": user.role, "reason": payload.reason},
     )
-    return {"success": True, "status": user.status}
+    return {"status": "success", "message": f"Administrator enrollment for {user.email} has been rejected."}
 
 
 # ── DELETE /admin/verifications/{user_id} ───────────────────────
 
-@router.delete("/{user_id}")
-def delete_pending_admin(
+@router.delete("/{user_id}/remove-record", response_model=dict)
+def remove_pending_admin_record(
     user_id: int,
     db: Session = Depends(get_db),
     _sa: User = Depends(_require_super_admin),
 ):
-    """Soft-delete a pending/rejected admin (marks as REJECTED)."""
+    """
+    Removes a pending or rejected admin record. This is a cleanup action,
+    not a standard rejection. It sets the status to REJECTED with a specific
+    reason indicating administrative removal.
+    """
     user = _get_admin_or_404(user_id, db)
 
     if user.status not in ("PENDING_MFA", "PENDING_APPROVAL", "REJECTED"):
         raise HTTPException(
             status_code=400,
-            detail=f"Cannot delete admin with status '{user.status}'. Only pending or rejected admins can be removed.",
+            detail=f"Cannot remove this record. Admin status is '{user.status}'. Only 'PENDING' or 'REJECTED' records can be removed.",
         )
 
+    # We don't hard-delete, we mark as rejected for audit purposes.
     user.status = "REJECTED"
-    user.rejection_reason = "Deleted by super admin"
+    user.rejection_reason = "Administrative removal (record cleanup)"
     user.approved_at = None
     user.token_version += 1
     db.commit()
-    return {"success": True}
+    audit_auth_event(
+        action="ACCOUNT_RECORD_REMOVED",
+        actor_user_id=_sa.id,
+        target_user_id=user.id,
+        metadata={"target_role": user.role, "reason": "Administrative cleanup"},
+    )
+    return {"status": "success", "message": f"The record for {user.email} has been removed from the pending queue."}
 
 
 # ── DTOs (active admins) ───────────────────────────────────────
@@ -204,6 +220,9 @@ class ActiveAdminItem(BaseModel):
 
     class Config:
         from_attributes = True
+
+class DisableAccessPayload(BaseModel):
+    reason: str
 
 
 # ── GET /admin/verifications/active-admins ──────────────────────
@@ -223,15 +242,16 @@ def list_active_admins(
     return rows
 
 
-# ── DELETE /admin/verifications/active-admins/{user_id} ────────
+# ── POST /admin/verifications/active-admins/{user_id}/disable-access ───
 
-@router.delete("/active-admins/{user_id}")
+@router.post("/active-admins/{user_id}/disable-access")
 def disable_active_admin(
     user_id: int,
+    payload: DisableAccessPayload,
     db: Session = Depends(get_db),
     _sa: User = Depends(_require_super_admin),
 ):
-    """Soft-disable an active admin (sets status to REJECTED)."""
+    """Soft-disable an active admin (sets status to DISABLED)."""
     user = _get_admin_or_404(user_id, db)
 
     if user.status != "ACTIVE":
@@ -240,12 +260,20 @@ def disable_active_admin(
             detail=f"Admin is not ACTIVE (current status: '{user.status}'). Cannot disable.",
         )
 
-    user.status = "REJECTED"
-    user.rejection_reason = "Deleted by super admin"
+    user.status = "DISABLED"
+    user.disabled_at = datetime.now(timezone.utc)
+    user.disabled_by_user_id = _sa.id
+    user.rejection_reason = payload.reason
     user.approved_at = None
-    user.token_version += 1
+    user.token_version += 1  # Invalidate active sessions
     db.commit()
-    return {"success": True}
+    audit_auth_event(
+        action="ACCOUNT_DISABLED",
+        actor_user_id=_sa.id,
+        target_user_id=user.id,
+        metadata={"target_role": user.role, "reason": payload.reason},
+    )
+    return {"success": True, "status": user.status}
 
 
 # ── POST /admin/verifications/recovery/{user_id}/reset-totp ────
@@ -280,18 +308,26 @@ def list_pending_totp_recoveries(
     db: Session = Depends(get_db),
     _sa: User = Depends(_require_super_admin),
 ):
-    rows = db.execute(
-        select(TotpRecoveryRequest).where(
-            TotpRecoveryRequest.status == "PENDING_APPROVAL",
-            TotpRecoveryRequest.role.in_(["admin", "super_admin"]),
-        )
-    ).scalars().all()
-    return rows
+    """Lists pending TOTP recovery requests specifically for 'admin' role users."""
+    requests = db.query(
+        TotpRecoveryRequest.id.label("request_id"),
+        User.id.label("user_id"),
+        User.full_name,
+        User.email,
+        TotpRecoveryRequest.status,
+        TotpRecoveryRequest.created_at.label("requested_at"),
+        TotpRecoveryRequest.requested_ip,
+    ).join(User, TotpRecoveryRequest.user_id == User.id).filter(
+        TotpRecoveryRequest.status == "PENDING_APPROVAL",
+        User.role == "admin"  # Explicitly filter for admins
+    ).order_by(TotpRecoveryRequest.created_at.asc()).all()
+    
+    return requests
 
 
 # ── POST /admin/verifications/recovery/{request_id}/approve ───
 
-@router.post("/recovery/{request_id}/approve")
+@router.post("/recovery/{request_id}/approve", response_model=dict)
 def approve_totp_recovery_request(
     request_id: int,
     db: Session = Depends(get_db),
@@ -301,47 +337,45 @@ def approve_totp_recovery_request(
         select(TotpRecoveryRequest).where(TotpRecoveryRequest.id == request_id)
     ).scalar_one_or_none()
     if not req:
-        raise HTTPException(status_code=404, detail="Recovery request not found")
+        raise HTTPException(status_code=404, detail="Recovery request not found.")
     if req.status != "PENDING_APPROVAL":
-        raise HTTPException(status_code=400, detail="Recovery request is not pending approval")
+        raise HTTPException(status_code=400, detail=f"Request is not pending approval (status: {req.status}).")
 
     user = _get_admin_or_404(req.user_id, db)
 
+    # Perform the core recovery action
     user.totp_secret = None
     user.totp_enabled_at = None
     user.status = "PENDING_MFA"
-    user.token_version += 1
+    user.token_version += 1  # Invalidate sessions, force re-login and MFA setup
 
+    # Update the request record
     req.status = "COMPLETED"
     req.resolved_by_user_id = current_user.id
     req.resolved_at = datetime.now(timezone.utc)
-    req.resolution_note = "Approved by super admin"
+    req.resolution_note = "Approved by super admin."
 
     db.commit()
 
+    # Notify and Audit
     try:
         send_totp_recovery_completed_notice(user.email)
     except Exception:
-        logger.exception("Failed to send TOTP recovery completion notice user_id=%s", user.id)
+        logger.exception("Failed to send TOTP recovery completion notice to user_id=%s", user.id)
 
-    logger.info(
-        "TOTP recovery approved request_id=%s user_id=%s approved_by=%s",
-        req.id,
-        user.id,
-        current_user.id,
-    )
     audit_auth_event(
-        action="TOTP_RESET",
+        action="TOTP_RECOVERY_APPROVED",
         actor_user_id=current_user.id,
         target_user_id=user.id,
-        metadata={"method": "super_admin_approval", "recovery_request_id": req.id},
+        metadata={"recovery_request_id": req.id},
     )
-    return {"success": True, "status": req.status}
+    
+    return {"status": "success", "message": f"Recovery for {user.email} approved. User must re-enroll MFA on next login."}
 
 
 # ── POST /admin/verifications/recovery/{request_id}/reject ────
 
-@router.post("/recovery/{request_id}/reject")
+@router.post("/recovery/{request_id}/reject", response_model=dict)
 def reject_totp_recovery_request(
     request_id: int,
     payload: RecoveryRejectRequest,
@@ -352,35 +386,31 @@ def reject_totp_recovery_request(
         select(TotpRecoveryRequest).where(TotpRecoveryRequest.id == request_id)
     ).scalar_one_or_none()
     if not req:
-        raise HTTPException(status_code=404, detail="Recovery request not found")
+        raise HTTPException(status_code=404, detail="Recovery request not found.")
     if req.status != "PENDING_APPROVAL":
-        raise HTTPException(status_code=400, detail="Recovery request is not pending approval")
+        raise HTTPException(status_code=400, detail=f"Request is not pending approval (status: {req.status}).")
 
     user = _get_admin_or_404(req.user_id, db)
-    user.token_version += 1
-
+    
+    # Update the request record
     req.status = "REJECTED"
     req.resolved_by_user_id = current_user.id
     req.resolved_at = datetime.now(timezone.utc)
-    req.resolution_note = (payload.reason or "Rejected by super admin")[:500]
+    req.resolution_note = (payload.reason or "Rejected by super admin.")[:500]
 
     db.commit()
 
+    # Notify and Audit
     try:
         send_totp_recovery_rejected_notice(user.email)
     except Exception:
-        logger.exception("Failed to send TOTP recovery rejection notice user_id=%s", user.id)
+        logger.exception("Failed to send TOTP recovery rejection notice to user_id=%s", user.id)
 
-    logger.info(
-        "TOTP recovery rejected request_id=%s user_id=%s rejected_by=%s",
-        req.id,
-        user.id,
-        current_user.id,
-    )
     audit_auth_event(
-        action="TOTP_RESET_REJECTED",
+        action="TOTP_RECOVERY_REJECTED",
         actor_user_id=current_user.id,
         target_user_id=user.id,
         metadata={"recovery_request_id": req.id, "reason": req.resolution_note},
     )
-    return {"success": True, "status": req.status}
+    
+    return {"status": "success", "message": f"Recovery request for {user.email} has been rejected."}

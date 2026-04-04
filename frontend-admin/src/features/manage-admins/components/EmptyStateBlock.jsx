@@ -1,38 +1,36 @@
 import React from "react";
 import { tokens } from "./tokens";
 
-export default function EmptyStateBlock({ icon: Icon, title, description, height = 120 }) {
+export default function EmptyStateBlock({ icon: Icon, title, description }) {
   const containerStyle = {
     display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
+    flexDirection: "row",
+    justifyContent: "flex-start",
     alignItems: "center",
-    textAlign: "center",
-    padding: "24px",
+    textAlign: "left",
+    padding: `${tokens.spacing.md}px ${tokens.spacing.lg}px`,
     borderRadius: tokens.borderRadius.medium,
-    border: `1px dashed ${tokens.cardBorder}`,
-    backgroundColor: tokens.pageBackground,
-    height: `${height}px`,
-    boxSizing: "border-box",
+    border: `1px solid ${tokens.cardBorder}`,
+    backgroundColor: tokens.cardBackground,
   };
 
   const iconStyle = {
     color: tokens.text.muted,
-    marginBottom: tokens.spacing.md,
+    marginRight: tokens.spacing.md,
+    flexShrink: 0,
   };
 
   const titleStyle = {
     margin: 0,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 600,
     color: tokens.text.primary,
   };
 
   const descriptionStyle = {
     margin: 0,
-    fontSize: 14,
+    fontSize: 13,
     color: tokens.text.secondary,
-    maxWidth: 400,
     marginTop: tokens.spacing.xs,
   };
 
@@ -40,7 +38,7 @@ export default function EmptyStateBlock({ icon: Icon, title, description, height
     <div style={containerStyle}>
       {Icon && (
         <div style={iconStyle}>
-          <Icon size={32} strokeWidth={1.5} />
+          <Icon size={20} strokeWidth={1.5} />
         </div>
       )}
       <div>

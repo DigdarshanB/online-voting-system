@@ -27,7 +27,7 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 
 
 class CreateInviteRequest(BaseModel):
-    recipient_identifier: str  # normalized email of invitee
+    recipient_identifier: str
 
     @field_validator("recipient_identifier")
     @classmethod
@@ -35,21 +35,51 @@ class CreateInviteRequest(BaseModel):
         return normalize_email(value)
 
 
-class InviteResponse(BaseModel):
-    invite_code: str
-    activation_token: str
-    activation_url: str
-    expires_at: str
+class RevokeInviteRequest(BaseModel):
+    reason: str
 
 
-class InviteListItem(BaseModel):
+class InviteDetails(BaseModel):
     id: int
     recipient_identifier: str
     status: str
-    expires_at: str
-    used_at: str | None
-    revoked_at: str | None
-    created_at: str
+    expires_at: datetime
+
+
+class DevActivationDetails(BaseModel):
+    """Activation details ONLY for dev/test environments."""
+    invite_code: str
+    activation_url: str
+
+
+class CreateInviteResponse(BaseModel):
+    status: str = "success"
+    message: str
+    invite: InviteDetails
+    activation_details: DevActivationDetails | None = None
+
+
+class InvitationLedgerItem(BaseModel):
+    id: int
+    recipient_identifier: str
+    status: str
+    created_at: datetime
+    expires_at: datetime
+    used_at: datetime | None = None
+    revoked_at: datetime | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class RevokeInviteResponse(BaseModel):
+    message: str
+    invite: InvitationLedgerItem
+
+
+class DeleteInviteResponse(BaseModel):
+    message: str
+    id: int
 
 
 # ── Helpers ─────────────────────────────────────────────────────
@@ -62,13 +92,13 @@ def _hash_code(code: str) -> str:
 
 def _require_super_admin(user: User) -> None:
     if user.role != "super_admin":
-        raise HTTPException(status_code=403, detail="Only super_admin can manage invites")
+        raise HTTPException(status_code=403, detail="Forbidden: Requires super_admin privileges.")
 
 
 # ── Endpoints ───────────────────────────────────────────────────
 
 
-@router.get("/invites", response_model=List[InviteListItem])
+@router.get("/invites", response_model=List[InvitationLedgerItem])
 def list_invites(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -80,81 +110,100 @@ def list_invites(
         select(AdminInvite).order_by(AdminInvite.created_at.desc())
     ).scalars().all()
 
-    return [
-        InviteListItem(
-            id=inv.id,
-            recipient_identifier=inv.recipient_identifier,
-            status=inv.status,
-            expires_at=inv.expires_at.isoformat() if inv.expires_at else "",
-            used_at=inv.used_at.isoformat() if inv.used_at else None,
-            revoked_at=inv.revoked_at.isoformat() if inv.revoked_at else None,
-            created_at=inv.created_at.isoformat() if inv.created_at else "",
-        )
-        for inv in invites
-    ]
+    return invites
 
 
-@router.post("/invites", response_model=InviteResponse)
+@router.post("/invites", response_model=CreateInviteResponse, status_code=201)
 def create_invite(
     payload: CreateInviteRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Generate a one-time invite code for admin activation (super_admin only)."""
+    """Generate a one-time invite for admin activation (super_admin only)."""
     _require_super_admin(current_user)
     check_rate_limit(f"invite_create:{current_user.id}", limit=30, window_seconds=3600)
 
-    existing_email = db.execute(
+    # 1. Validate recipient doesn't already exist
+    existing_user = db.execute(
         select(User).where(User.email == payload.recipient_identifier)
     ).scalar_one_or_none()
-    if existing_email:
+    if existing_user:
         raise HTTPException(
-            status_code=400,
-            detail=f"Email is already registered (user id={existing_email.id}, role={existing_email.role})",
+            status_code=409,
+            detail="An active user account with this email already exists.",
         )
 
-    code = secrets.token_urlsafe(12)[:12]  # 12-char URL-safe random string
-    code_hash = _hash_code(code)
-    expires_at = datetime.now(timezone.utc) + timedelta(hours=INVITE_EXPIRE_HOURS)
+    # 2. Validate no other active, unexpired invite exists
+    now = datetime.now(timezone.utc)
+    existing_invite = db.execute(
+        select(AdminInvite)
+        .where(
+            AdminInvite.recipient_identifier == payload.recipient_identifier,
+            AdminInvite.status.in_(["ISSUED", "SENT"]),
+            AdminInvite.expires_at > now
+        )
+    ).scalar_one_or_none()
+    if existing_invite:
+        raise HTTPException(
+            status_code=409,
+            detail="A valid, unexpired invitation already exists for this email. Revoke the previous one before issuing a new one."
+        )
 
-    invite = AdminInvite(
+    # 3. Create new invite
+    code = secrets.token_urlsafe(16)[:16]
+    code_hash = _hash_code(code)
+    expires_at = now + timedelta(hours=INVITE_EXPIRE_HOURS)
+
+    new_invite = AdminInvite(
         code_hash=code_hash,
         recipient_identifier=payload.recipient_identifier,
         status="ISSUED",
         expires_at=expires_at,
         created_by=current_user.id,
     )
-    db.add(invite)
+    db.add(new_invite)
     db.commit()
-    db.refresh(invite)
+    db.refresh(new_invite)
 
-    # Signed activation token — same expiry as the invite itself
-    activation_token = create_activation_token(invite.id, expires_at)
-
-    # Build activation URL — uses signed token (preferred over raw code)
-    activation_url = (
-        f"{settings.ADMIN_FRONTEND_URL}/?tab=activate&token={activation_token}"
-    )
-
+    # 4. Send email
+    activation_token = create_activation_token(new_invite.id, expires_at)
+    activation_url = f"{settings.ADMIN_FRONTEND_URL}/activate-admin?token={activation_token}"
+    
     try:
         send_invite(payload.recipient_identifier, activation_url)
-    except EmailDeliveryError as exc:
-        detail = exc.public_message
-        if exc.fallback_token and settings.EMAIL_DEV_FALLBACK_EXPOSE_TOKEN:
-            detail = f"{detail} | DEV ACTIVATION URL: {exc.fallback_token}"
-        raise HTTPException(status_code=500, detail=detail) from exc
+        new_invite.status = "SENT"
+        db.commit()
+        message = f"An invitation has been successfully sent to {payload.recipient_identifier}."
+    except EmailDeliveryError:
+        message = (
+            f"Invitation for {payload.recipient_identifier} was created, but email delivery failed. "
+            "The invite code must be sent manually."
+        )
 
-    return InviteResponse(
-        invite_code=code,
-        activation_token=activation_token,
-        activation_url=activation_url,
-        expires_at=expires_at.isoformat(),
+    # 5. Shape and return the response
+    response = CreateInviteResponse(
+        message=message,
+        invite=InviteDetails(
+            id=new_invite.id,
+            recipient_identifier=new_invite.recipient_identifier,
+            status=new_invite.status,
+            expires_at=new_invite.expires_at,
+        ),
     )
 
+    if settings.ENVIRONMENT != "production":
+        response.activation_details = DevActivationDetails(
+            invite_code=code,
+            activation_url=activation_url,
+        )
 
-@router.post("/invites/{invite_id}/revoke")
+    return response
+
+
+@router.post("/invites/{invite_id}/revoke", response_model=RevokeInviteResponse)
 def revoke_invite(
     invite_id: int,
+    payload: RevokeInviteRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -166,28 +215,37 @@ def revoke_invite(
     ).scalar_one_or_none()
 
     if not invite:
-        raise HTTPException(status_code=404, detail="Invite not found")
+        raise HTTPException(status_code=404, detail="Invitation record not found.")
 
-    if invite.status != "ISSUED":
+    if invite.status not in ("ISSUED", "SENT"):
         raise HTTPException(
             status_code=400,
-            detail=f"Cannot revoke invite with status '{invite.status}'",
+            detail=f"Cannot revoke an invitation with status '{invite.status}'. Only 'ISSUED' or 'SENT' invites can be revoked.",
         )
 
     invite.status = "REVOKED"
     invite.revoked_at = datetime.now(timezone.utc)
+    invite.revoked_by_user_id = current_user.id
+    invite.revoked_reason = payload.reason
     db.commit()
+    db.refresh(invite)
 
-    return {"detail": "Invite revoked", "id": invite.id, "status": invite.status}
+    return RevokeInviteResponse(
+        message=f"Invitation for {invite.recipient_identifier} has been revoked.",
+        invite=InvitationLedgerItem.from_orm(invite)
+    )
 
 
-@router.delete("/invites/{invite_id}")
+@router.delete("/invites/{invite_id}", response_model=DeleteInviteResponse)
 def delete_invite(
     invite_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Permanently delete an invite record (super_admin only)."""
+    """
+    Permanently delete an invite record from the ledger (super_admin only).
+    This is a cleanup action for terminal-state invites.
+    """
     _require_super_admin(current_user)
 
     invite = db.execute(
@@ -195,9 +253,19 @@ def delete_invite(
     ).scalar_one_or_none()
 
     if not invite:
-        raise HTTPException(status_code=404, detail="Invite not found")
+        raise HTTPException(status_code=404, detail="Invitation record not found.")
+
+    if invite.status not in ("EXPIRED", "REVOKED", "USED"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot remove ledger record with status '{invite.status}'. Only expired, revoked, or used records can be removed."
+        )
 
     db.delete(invite)
     db.commit()
 
-    return {"success": True}
+    return DeleteInviteResponse(
+        message="Ledger record permanently removed.",
+        id=invite_id
+    )
+

@@ -1,62 +1,22 @@
-import React from 'react';
-import { tokens } from './tokens';
+import React from "react";
 
-export default function ManageAdminsPageShell({
-  title,
-  subtitle,
-  meta = null,
-  children
-}) {
-  const mainStyle = {
-    display: "flex",
-    flexDirection: "column",
-    gap: tokens.spacing.xxxl,
-  };
-
+/**
+ * Provides a consistent page shell for administrative console pages.
+ * It establishes the main heading, subtitle, and content layout, ensuring
+ * a standardized and calm government-grade information architecture.
+ */
+export default function ManageAdminsPageShell({ children }) {
   return (
-    <div style={mainStyle}>
-      <div style={{
-        width: "100%",
-        maxWidth: 1320,
-        margin: "0 auto",
-        minWidth: 0,
-        display: "flex",
-        flexDirection: "column",
-        gap: tokens.spacing.xxxl
-      }}>
-        <header style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: tokens.spacing.sm
-        }}>
-          <h1 style={{
-            margin: 0,
-            fontSize: 32,
-            fontWeight: 800,
-            color: tokens.text.primary
-          }}>
-            {title}
-          </h1>
-          {subtitle && (
-            <p style={{
-              margin: 0,
-              fontSize: 16,
-              color: tokens.text.secondary
-            }}>
-              {subtitle}
-            </p>
-          )}
-          {meta && (
-            <div style={{ marginTop: tokens.spacing.md }}>
-              {meta}
-            </div>
-          )}
-        </header>
-
-        <main style={mainStyle}>
-          {children}
-        </main>
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
+      <div className="pb-8 border-b border-gray-200">
+        <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900">
+          Administrator Access Control
+        </h1>
+        <p className="mt-2 max-w-4xl text-base text-gray-500">
+          Manage administrator accounts, pending approvals, and security events for the entire system.
+        </p>
       </div>
+      <main className="pt-10">{children}</main>
     </div>
   );
 }

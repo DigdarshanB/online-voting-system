@@ -1,5 +1,8 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+
+// API
 import {
   getMe,
   getPendingAdmins,
@@ -8,318 +11,357 @@ import {
   getTotpRecoveryRequests,
   createAdminInvite,
   revokeAdminInvite,
+  deleteAdminInvite,
   approvePendingAdmin,
   rejectPendingAdmin,
-  deletePendingAdmin,
-  deleteActiveAdmin,
+  disableActiveAdmin,
   approveTotpRecovery,
   rejectTotpRecovery,
-  resetAdminTotp,
 } from "../features/admin-management/api/adminManagementApi";
 
-// Components
-import InviteAdminForm from "../features/manage-admins/components/InviteAdminForm";
-import AdminActivationCodeModal from "../features/manage-admins/components/AdminActivationCodeModal";
-import AdminListTable from "../features/manage-admins/components/AdminListTable";
+// Governance Components
+import { tokens } from "../features/manage-admins/components/tokens";
+import ManageAdminsPageShell from "../features/manage-admins/components/ManageAdminsPageShell";
+import GovernanceSummaryStrip from "../features/manage-admins/components/GovernanceSummaryStrip";
+import InviteAdminComposer from "../features/manage-admins/components/InviteAdminComposer";
+import ActiveAdminsTable from "../features/manage-admins/components/ActiveAdminsTable";
 import PendingAdminsTable from "../features/manage-admins/components/PendingAdminsTable";
-import InvitesListTable from "../features/manage-admins/components/InvitesListTable";
-import RecoveryQueueTable from "../features/manage-admins/components/RecoveryQueueTable";
-
-// Design Tokens (Matching AdminShell)
-const PALETTE = {
-  primary: "#173B72",
-  accent: "#2F6FED",
-  success: "#0F9F6E",
-  danger: "#DC2626",
-  border: "#E2E8F0",
-  textMain: "#0F172A",
-  textMuted: "#64748B",
-  surface: "#FFFFFF",
-  bg: "#F8FAFC",
-};
+import InvitationLedgerTable from "../features/manage-admins/components/InvitationLedgerTable";
+import TotpRecoveryQueueTable from "../features/manage-admins/components/TotpRecoveryQueueTable";
+import ConfirmActionDialog from "../features/manage-admins/components/ConfirmActionDialog";
+import SecurityWorkflowBanner from "../features/manage-admins/components/SecurityWorkflowBanner";
 
 export default function ManageAdmins() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  
+  // ── 1. Auth & Data Fetching ──────────────────────────────────
+  
+  const { data: me, isLoading: authLoading } = useQuery({
+    queryKey: ["admin-me"],
+    queryFn: getMe,
+    retry: false
+  });
 
-  // Auth / role
-  const [role, setRole] = useState(null);
-  const [me, setMe] = useState(null);
+  const isSuperAdmin = me?.role === "super_admin";
 
-  // Lists & Loading
-  const [pendingAdmins, setPendingAdmins] = useState([]);
-  const [activeAdmins, setActiveAdmins] = useState([]);
-  const [invitedAdmins, setInvitedAdmins] = useState([]);
-  const [recoveryQueue, setRecoveryQueue] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const pendingQuery = useQuery({
+    queryKey: ["pending-admins"],
+    queryFn: getPendingAdmins,
+    enabled: !!isSuperAdmin,
+  });
 
-  // Interaction State
-  const [showInviteModal, setShowInviteModal] = useState(null); // stores {email, code, activationUrl, expiresAt}
-  const [actionMsg, setActionMsg] = useState(null);
-  const [isInviting, setIsInviting] = useState(false);
+  const activeQuery = useQuery({
+    queryKey: ["active-admins"],
+    queryFn: getActiveAdmins,
+    enabled: !!isSuperAdmin,
+  });
 
-  // ── Loaders ──
+  const invitesQuery = useQuery({
+    queryKey: ["invited-admins"],
+    queryFn: getInvitedAdmins,
+    enabled: !!isSuperAdmin,
+  });
 
-  const loadAll = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const [pending, active, invited, recovery] = await Promise.all([
-        getPendingAdmins(),
-        getActiveAdmins(),
-        getInvitedAdmins(),
-        getTotpRecoveryRequests()
-      ]);
-      setPendingAdmins(pending);
-      setActiveAdmins(active);
-      setInvitedAdmins(invited);
-      setRecoveryQueue(recovery);
-    } catch (error) {
-      console.error("Failed to load admin data:", error);
-      setActionMsg({ type: "error", text: "Failed to sync with server. Please refresh." });
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const recoveryQuery = useQuery({
+    queryKey: ["recovery-queue"],
+    queryFn: getTotpRecoveryRequests,
+    enabled: !!isSuperAdmin,
+  });
 
-  useEffect(() => {
-    async function bootstrap() {
-      try {
-        const data = await getMe();
-        setMe(data);
-        setRole(data.role);
-        if (data.role === "super_admin") {
-          loadAll();
-        }
-      } catch {
-        navigate("/", { replace: true });
-      }
-    }
-    bootstrap();
-  }, [navigate, loadAll]);
+  // ── 2. Specialized State ──────────────────────────────────────
+  
+  const [recipientEmail, setRecipientEmail] = useState("");
+  const [inviteResult, setInviteResult] = useState(null);
+  const [actionDialog, setActionDialog] = useState({ open: false });
+  const [localError, setLocalError] = useState(null);
 
-  // ── Handlers ──
+  // Invite Ledger Filter State
+  const [inviteSearch, setInviteSearch] = useState("");
+  const [inviteStatusFilter, setInviteStatusFilter] = useState("ALL");
 
-  const handleInvite = async (email, sendLink) => {
-    setIsInviting(true);
-    setActionMsg(null);
-    try {
-      // Note: Backend currently always sends email, but we pass sendLink for future-proofing
-      const data = await createAdminInvite(email);
-      setShowInviteModal({
-        email,
-        code: data.invite_code,
-        activationUrl: data.activation_url,
-        expiresAt: data.expires_at
+  // ── 3. Mutations ──────────────────────────────────────────────
+  
+  const inviteMutation = useMutation({
+    mutationFn: (email) => createAdminInvite(email),
+    onSuccess: (data) => {
+      setInviteResult({
+        visible: true,
+        recipientIdentifier: data.invite.recipient_identifier,
+        expiresAt: data.invite.expires_at,
+        inviteCode: data.activation_details?.invite_code,
+        activationUrl: data.activation_details?.activation_url,
+        message: data.message,
       });
-      loadAll();
-    } catch (error) {
-      setActionMsg({ type: "error", text: error.message });
-    } finally {
-      setIsInviting(false);
+      setRecipientEmail("");
+      queryClient.invalidateQueries({ queryKey: ["invited-admins"] });
+    },
+    onError: (err) => {
+      setLocalError(err.message || "An unknown error occurred.");
+    }
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: (id) => approvePendingAdmin(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pending-admins"] });
+      queryClient.invalidateQueries({ queryKey: ["active-admins"] });
+    }
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: ({ id, reason }) => rejectPendingAdmin(id, reason),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["pending-admins"] })
+  });
+
+  const disableMutation = useMutation({
+    mutationFn: ({ userId, reason }) => disableActiveAdmin(userId, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["active-admins"] });
+      queryClient.invalidateQueries({ queryKey: ["pending-admins"] });
+    },
+  });
+
+  const revokeMutation = useMutation({
+    mutationFn: ({ inviteId, reason }) => revokeAdminInvite({ inviteId, reason }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["invited-admins"] })
+  });
+
+  const deleteInviteMutation = useMutation({
+    mutationFn: (inviteId) => deleteAdminInvite(inviteId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["invited-admins"] })
+  });
+
+  const approveRecoveryMutation = useMutation({
+    mutationFn: (requestId) => approveTotpRecovery(requestId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["recovery-queue"] });
+    }
+  });
+
+  const rejectRecoveryMutation = useMutation({
+    mutationFn: ({ requestId, reason }) => rejectTotpRecovery(requestId, reason),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["recovery-queue"] })
+  });
+
+  // ── 4. Handlers ────────────────────────────────────────────────
+  
+  const handleInviteSubmit = (e) => {
+    e.preventDefault();
+    setLocalError(null);
+    if (recipientEmail) {
+      inviteMutation.mutate(recipientEmail);
     }
   };
 
-  const handleApproveAdmin = async (id, name) => {
-    try {
-      await approvePendingAdmin(id);
-      setActionMsg({ type: "success", text: `Admin ${name} approved successfully.` });
-      loadAll();
-    } catch (error) {
-      setActionMsg({ type: "error", text: error.message });
+  const handleDisableRequest = (admin) => {
+    setActionDialog({
+      open: true,
+      title: "Disable Administrative Access",
+      description: `This will immediately invalidate all active sessions for ${admin.full_name} (${admin.email}) and move them to a 'Disabled' state. This action is reversible but requires re-approval.`,
+      isDestructive: true,
+      confirmLabel: "Disable Access",
+      requiresReason: true,
+      reasonLabel: "Reason for Disabling Access",
+      onConfirm: (reason) => {
+        disableMutation.mutate({ userId: admin.id, reason });
+        setActionDialog({ open: false });
+      }
+    });
+  };
+
+  const handleRevokeRequest = (invite) => {
+    setActionDialog({
+      open: true,
+      title: "Revoke Invitation",
+      description: `Are you sure you want to revoke the invitation for ${invite.recipient_identifier}? This action is irreversible and will prevent the invite link from being used.`,
+      isDestructive: true,
+      confirmLabel: "Revoke Now",
+      requiresReason: true,
+      reasonLabel: "Reason for Revocation (for audit log)",
+      onConfirm: (reason) => {
+        revokeMutation.mutate({ inviteId: invite.id, reason });
+        setActionDialog({ open: false });
+      }
+    });
+  };
+
+  const handleDeleteInviteRequest = (invite) => {
+    setActionDialog({
+      open: true,
+      title: "Remove Ledger Record",
+      description: `This is a cleanup action for the expired/revoked invite to ${invite.recipient_identifier}. Are you sure you want to permanently remove this record from the ledger?`,
+      isDestructive: true,
+      confirmLabel: "Confirm Removal",
+      onConfirm: () => {
+        deleteInviteMutation.mutate(invite.id);
+        setActionDialog({ open: false });
+      }
+    });
+  };
+
+  const handleRejectAdminRequest = (admin) => {
+    setActionDialog({
+      open: true,
+      title: "Reject Enrollment",
+      description: `You are about to reject the enrollment request for ${admin.full_name}. The user will be notified, and their pending record will be removed.`,
+      isDestructive: true,
+      confirmLabel: "Reject Enrollment",
+      requiresReason: true,
+      reasonLabel: "Reason for Rejection",
+      onConfirm: (reason) => {
+        rejectMutation.mutate({ id: admin.id, reason });
+        setActionDialog({ open: false });
+      }
+    });
+  };
+
+  const handleApproveRequest = (admin) => {
+    setActionDialog({
+      open: true,
+      title: "Approve Admin Enrollment",
+      description: `Are you sure you want to grant full administrative privileges to ${admin.full_name}? They will be immediately converted to an active administrator.`,
+      isDestructive: false,
+      confirmLabel: "Approve Administrator",
+      onConfirm: () => {
+        approveMutation.mutate(admin.id);
+        setActionDialog({ open: false });
+      }
+    });
+  };
+
+  const handleRecoveryApprove = (item) => {
+    setActionDialog({
+      open: true,
+      title: "Approve MFA Recovery",
+      description: `You are approving the MFA reset request for ${item.name}. They will be prompted to set up a new MFA device on their next login.`,
+      isDestructive: false,
+      confirmLabel: "Approve Recovery",
+      onConfirm: () => {
+        approveRecoveryMutation.mutate(item.id);
+        setActionDialog({ open: false });
+      }
+    });
+  };
+
+  const handleRecoveryReject = (item) => {
+    setActionDialog({
+      open: true,
+      title: "Reject MFA Recovery",
+      description: `You are rejecting the MFA reset request for ${item.name}. The request will be closed.`,
+      isDestructive: true,
+      confirmLabel: "Reject Recovery",
+      requiresReason: true,
+      reasonLabel: "Reason for Rejection",
+      onConfirm: (reason) => {
+        rejectRecoveryMutation.mutate({ requestId: item.id, reason });
+        setActionDialog({ open: false });
+      }
+    });
+  };
+
+  const handleJumpToQueue = () => {
+    const queueElement = document.getElementById('recovery-queue');
+    if (queueElement) {
+      queueElement.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
-  const handleRejectAdmin = async (id, name) => {
-    const reason = prompt(`Reason for rejecting ${name}:`);
-    if (!reason) return;
-    try {
-      await rejectPendingAdmin(id, reason);
-      setActionMsg({ type: "success", text: `Admin ${name} rejected.` });
-      loadAll();
-    } catch (error) {
-      setActionMsg({ type: "error", text: error.message });
-    }
-  };
+  // ── 5. Render Logic ───────────────────────────────────────────
 
-  const handleDeleteAdmin = async (id, identifier) => {
-    if (!window.confirm(`Are you sure you want to remove access for ${identifier}?`)) return;
-    try {
-      await deleteActiveAdmin(id);
-      setActionMsg({ type: "success", text: `Admin access revoked.` });
-      loadAll();
-    } catch (error) {
-      setActionMsg({ type: "error", text: error.message });
-    }
-  };
-
-  const handleApproveRecovery = async (requestId, email) => {
-    try {
-      await approveTotpRecovery(requestId);
-      setActionMsg({ type: "success", text: `2FA reset for ${email}. User must re-enroll.` });
-      loadAll();
-    } catch (error) {
-      setActionMsg({ type: "error", text: error.message });
-    }
-  };
-
-  const handleResetTotp = async (userId, email) => {
-    if (!window.confirm(`Are you sure you want to force-reset TOTP for ${email}?`)) return;
-    try {
-      await resetAdminTotp(userId);
-      setActionMsg({ type: "success", text: `TOTP reset for ${email}.` });
-      loadAll();
-    } catch (error) {
-      setActionMsg({ type: "error", text: error.message });
-    }
-  };
-
-  const handleRevokeInvite = async (inviteId) => {
-    if (!window.confirm("Are you sure you want to revoke this invitation?")) return;
-    try {
-      await revokeAdminInvite(inviteId);
-      setActionMsg({ type: "success", text: "Invitation revoked." });
-      loadAll();
-    } catch (error) {
-      setActionMsg({ type: "error", text: error.message });
-    }
-  };
-
-  const handleRejectRecovery = async (requestId, email) => {
-    const reason = prompt(`Reason for rejecting 2FA recovery for ${email}:`) || "Rejected by super admin";
-    try {
-      await rejectTotpRecovery(requestId, reason);
-      setActionMsg({ type: "success", text: `Recovery request rejected.` });
-      loadAll();
-    } catch (error) {
-      setActionMsg({ type: "error", text: error.message });
-    }
-  };
-
-  // ── Render ──
-
-  if (role === null) return null;
-
-  if (role !== "super_admin") {
+  if (authLoading) return <div style={{ padding: 40, textAlign: "center" }}>Initializing Security Context...</div>;
+  
+  if (!isSuperAdmin) {
     return (
-      <div style={{ padding: 40, textAlign: "center" }}>
-        <h2 style={{ color: PALETTE.danger }}>Access Denied</h2>
-        <p>Only super administrators can access this portal.</p>
-        <button onClick={() => navigate("/dashboard")} style={{ background: PALETTE.primary, color: "#FFF", padding: "10px 20px", border: "none", borderRadius: 8, cursor: "pointer" }}>
-          Back to Dashboard
+      <div style={{ padding: "80px 40px", textAlign: "center" }}>
+        <h2 style={{ color: tokens.status.danger.text }}>Access Prohibited</h2>
+        <p style={{ color: tokens.text.secondary }}>This console requires super_admin clearance level.</p>
+        <button 
+          onClick={() => navigate("/dashboard")} 
+          style={{ 
+            marginTop: 24, padding: "12px 24px", background: tokens.button.primary.background, 
+            color: "#FFF", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 600 
+          }}
+        >
+          Return to Secure Dashboard
         </button>
       </div>
     );
   }
 
+  const issuedInvites = invitesQuery.data?.filter(i => i.status === 'SENT' || i.status === 'ISSUED').length || 0;
+
   return (
-    <div style={{ padding: "32px", maxWidth: "1600px", margin: "0 auto", minHeight: "100vh", background: PALETTE.bg }}>
-      
-      {/* Header Area */}
-      <div style={{ marginBottom: 32 }}>
-        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, color: PALETTE.textMain, letterSpacing: "-0.02em" }}>
-          Manage Administrators
-        </h1>
-        <p style={{ margin: "8px 0 0", fontSize: 16, color: PALETTE.textMuted }}>
-          Control access, verify identities, and manage security protocols for the election system.
-        </p>
-      </div>
+    <ManageAdminsPageShell>
+      <SecurityWorkflowBanner 
+        count={recoveryQuery.data?.length || 0} 
+        onJumpToQueue={handleJumpToQueue}
+      />
+      <GovernanceSummaryStrip 
+        activeAdminCount={activeQuery.data?.length || 0}
+        issuedInviteCount={issuedInvites}
+        pendingRecoveryCount={recoveryQuery.data?.length || 0}
+      />
 
-      {/* Global Notifications */}
-      {actionMsg && (
-        <div style={{ 
-          marginBottom: 24, 
-          padding: "16px 20px", 
-          borderRadius: 12, 
-          border: `1px solid ${actionMsg.type === "success" ? "#BBF7D0" : "#FECACA"}`,
-          background: actionMsg.type === "success" ? "#F0FDF4" : "#FEF2F2",
-          color: actionMsg.type === "success" ? "#166534" : "#991B1B",
-          fontSize: 14,
-          fontWeight: 600,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center"
-        }}>
-          <span>{actionMsg.text}</span>
-          <button onClick={() => setActionMsg(null)} style={{ background: "transparent", border: "none", color: "inherit", cursor: "pointer", fontWeight: 800 }}>✕</button>
-        </div>
-      )}
-
-      {/* Grid Layout */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: 32, alignItems: "start" }}>
-        
-        {/* Left Column: Invite & Stats */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-          <InviteAdminForm onInvite={handleInvite} isLoading={isInviting} />
-          
-          <div style={{ 
-            background: PALETTE.surface, 
-            borderRadius: 16, 
-            padding: 24, 
-            border: `1px solid ${PALETTE.border}`,
-            display: "flex",
-            justifyContent: "space-around",
-            textAlign: "center"
-          }}>
-            <div>
-              <div style={{ fontSize: 24, fontWeight: 800, color: PALETTE.primary }}>{activeAdmins.length}</div>
-              <div style={{ fontSize: 13, color: PALETTE.textMuted, fontWeight: 600 }}>Active Admins</div>
-            </div>
-            <div style={{ borderLeft: `1px solid ${PALETTE.border}` }}></div>
-            <div>
-              <div style={{ fontSize: 24, fontWeight: 800, color: "#D97706" }}>{pendingAdmins.length}</div>
-              <div style={{ fontSize: 13, color: PALETTE.textMuted, fontWeight: 600 }}>Awaiting Approval</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column: Recovery Queue */}
-        <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-           <RecoveryQueueTable 
-             requests={recoveryQueue} 
-             onApprove={handleApproveRecovery} 
-             onReject={handleRejectRecovery} 
-             isLoading={isLoading} 
-           />
-        </div>
-
-      </div>
-
-      {/* Full Width Table: Active Admins */}
-      <div style={{ marginTop: 32 }}>
-        <AdminListTable 
-          admins={activeAdmins} 
-          onDelete={handleDeleteAdmin} 
-          onReset2FA={handleResetTotp}
-          isLoading={isLoading} 
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: tokens.spacing.xxxl, alignItems: "start" }}>
+        <InviteAdminComposer 
+          recipientEmail={recipientEmail}
+          onRecipientEmailChange={setRecipientEmail}
+          onSubmit={handleInviteSubmit}
+          submitting={inviteMutation.isPending}
+          error={localError}
+          resultProps={inviteResult}
+        />
+        <TotpRecoveryQueueTable 
+          items={recoveryQuery.data || []}
+          onApprove={handleRecoveryApprove}
+          onReject={handleRecoveryReject}
+          isLoading={recoveryQuery.isLoading}
+          onRefresh={() => recoveryQuery.refetch()}
+          id="recovery-queue"
+          error={recoveryQuery.error?.message}
         />
       </div>
 
-      {/* Full Width Table: Open Invitations */}
-      <div style={{ marginTop: 32 }}>
-        <InvitesListTable 
-          invites={invitedAdmins} 
-          onRevoke={handleRevokeInvite} 
-          isLoading={isLoading} 
-        />
-      </div>
+      <ActiveAdminsTable 
+        items={activeQuery.data || []}
+        onDisableAdmin={handleDisableRequest}
+        onRefresh={() => activeQuery.refetch()}
+        isLoading={activeQuery.isLoading}
+        error={activeQuery.error?.message}
+      />
 
-      {/* Bottom Section: Pending Requests */}
-      <div style={{ marginTop: 32 }}>
-        <PendingAdminsTable 
-          pendingAdmins={pendingAdmins} 
-          onApprove={handleApproveAdmin} 
-          onReject={handleRejectAdmin} 
-          onDelete={(id, ident) => handleDeleteAdmin(id, ident)}
-          isLoading={isLoading} 
-        />
-      </div>
+      <PendingAdminsTable 
+        pendingAdmins={pendingQuery.data || []}
+        onApprove={handleApproveRequest}
+        onReject={handleRejectAdminRequest}
+        onRefresh={() => pendingQuery.refetch()}
+        isLoading={pendingQuery.isLoading}
+        error={pendingQuery.error?.message}
+      />
 
-      {/* Modals */}
-      {showInviteModal && (
-        <AdminActivationCodeModal 
-          inviteData={showInviteModal} 
-          onClose={() => setShowInviteModal(null)} 
-        />
-      )}
-    </div>
+      <InvitationLedgerTable 
+        items={invitesQuery.data?.filter(i => {
+          const matchesSearch = i.recipient_identifier.toLowerCase().includes(inviteSearch.toLowerCase());
+          const matchesStatus = inviteStatusFilter === "ALL" || i.status === inviteStatusFilter;
+          return matchesSearch && matchesStatus;
+        }) || []}
+        searchValue={inviteSearch}
+        onSearchChange={setInviteSearch}
+        statusFilter={inviteStatusFilter}
+        onStatusFilterChange={setInviteStatusFilter}
+        onClearFilters={() => { setInviteSearch(""); setInviteStatusFilter("ALL"); }}
+        onRevoke={handleRevokeRequest}
+        onDelete={handleDeleteInviteRequest}
+        onRefresh={() => invitesQuery.refetch()}
+        isLoading={invitesQuery.isLoading}
+        error={invitesQuery.error?.message}
+      />
+
+      <ConfirmActionDialog 
+        {...actionDialog}
+        onCancel={() => setActionDialog({ open: false })}
+      />
+    </ManageAdminsPageShell>
   );
 }

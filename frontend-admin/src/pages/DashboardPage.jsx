@@ -60,6 +60,16 @@ export default function DashboardPage() {
     },
   ];
 
+  const token = localStorage.getItem("access_token");
+  let userRole = null;
+  if (token) {
+    try {
+      const payloadBase64 = token.split(".")[1];
+      const payloadJson = atob(payloadBase64.replace(/-/g, "+").replace(/_/g, "/"));
+      userRole = JSON.parse(payloadJson).role;
+    } catch (e) { }
+  }
+
   const coreAdministrationItems = [
     {
       id: "core-manage-voters",
@@ -88,7 +98,7 @@ export default function DashboardPage() {
       tone: "warning",
       badgeText: pendingVerifications > 0 ? pendingVerifications.toLocaleString("en-US") : "",
     },
-    {
+    ...(userRole === "super_admin" ? [{
       id: "core-admin-staff",
       title: "Admin Staff",
       description: "Administrative access and governance",
@@ -96,24 +106,24 @@ export default function DashboardPage() {
       icon: <ShieldUser size={18} strokeWidth={2.2} />,
       tone: "neutral",
       badgeText: "",
-    },
+    }] : []),
   ];
 
   const coreAdministrationAlert = pendingVerifications > 0
     ? {
-        title: "Security Alert",
-        message: "There are pending verification or review items requiring administrator attention.",
-        tone: "danger",
-        actionLabel: "Open Review Queue",
-        actionHref: "/admin/voter-verifications",
-      }
+      title: "Security Alert",
+      message: "There are pending verification or review items requiring administrator attention.",
+      tone: "danger",
+      actionLabel: "Open Review Queue",
+      actionHref: "/admin/voter-verifications",
+    }
     : {
-        title: "Operational Status",
-        message: "No active security or review alerts at this time.",
-        tone: "success",
-        actionLabel: "Open Audit Logs",
-        actionHref: "/admin/audit-logs",
-      };
+      title: "Operational Status",
+      message: "No active security or review alerts at this time.",
+      tone: "success",
+      actionLabel: "Open Audit Logs",
+      actionHref: "/admin/audit-logs",
+    };
 
   return (
     <div className="dashboard-page-shell">
