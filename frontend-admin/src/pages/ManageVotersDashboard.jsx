@@ -56,8 +56,15 @@ function ActionMenu({ voterId, onAction }) {
 
   return (
     <div className="action-menu">
-      <button className="ghost-button action-trigger" onClick={() => setOpen((v) => !v)}>
-        Actions ▾
+      <button
+        className="ghost-button action-trigger"
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen((v) => !v);
+        }}
+      >
+        Actions
+        <span style={{ marginLeft: "8px", opacity: 0.5, fontSize: "10px" }}>▼</span>
       </button>
       {open && (
         <div className="action-menu__panel">
@@ -77,7 +84,10 @@ function ActionMenu({ voterId, onAction }) {
             <button
               key={label}
               className={label === "Delete voter" ? "delete-action" : undefined}
-              onClick={() => handleSelect(label)}
+              onMouseDown={(e) => {
+                e.preventDefault(); // Prevents blur before click
+                handleSelect(label);
+              }}
             >
               {label}
             </button>
@@ -182,15 +192,22 @@ function DetailPanel({
   onSaveEdit,
 }) {
   return (
-    <div className="overlay" role="dialog" aria-modal="true">
+    <div
+      className="overlay"
+      role="dialog"
+      aria-modal="true"
+      onClick={(e) => {
+        if (e.target.className === "overlay") onClose();
+      }}
+    >
       <div className="drawer">
         <div className="drawer-header">
           <div>
-            <p className="eyebrow">Voter details</p>
-            <h2>{detail?.full_name || "Loading"}</h2>
-            <p className="drawer-sub">Review identity, verification, and account status.</p>
+            <p className="eyebrow" style={{ color: "#2F6FED" }}>Administrative Control</p>
+            <h2 style={{ fontSize: "22px", fontWeight: "800", color: "#0F172A", margin: "4px 0" }}>{detail?.full_name || "Voter Profile"}</h2>
+            <p className="drawer-sub" style={{ fontSize: "13.5px", color: "#64748B" }}>Comprehensive identity and verification record.</p>
           </div>
-          <button className="icon-button" onClick={onClose} aria-label="Close panel">
+          <button className="icon-button close-drawer" onClick={onClose} aria-label="Close panel">
             ×
           </button>
         </div>
@@ -268,39 +285,27 @@ function DetailPanel({
               </div>
             </div>
 
-            <div className="action-bar">
+            <div className="action-bar header-actions">
               <div className="action-bar__left">
                 <button className="ghost-button" onClick={() => onEditStart(detail)}>
-                  Edit basic info
+                  Edit
                 </button>
                 <button className="ghost-button" onClick={() => onResendVerification(detail)}>
-                  Resend verification
+                  Resend Email
                 </button>
                 <button className="ghost-button" onClick={() => onResetPassword(detail)}>
-                  Send reset password
+                  Reset PW
                 </button>
                 <button className="ghost-button" onClick={() => onResetTotp(detail)}>
                   Reset TOTP
                 </button>
               </div>
               <div className="action-bar__right">
-                <button className="ghost-button" onClick={() => onSuspend(detail)}>
-                  Suspend
-                </button>
-                <button className="ghost-button" onClick={() => onDeactivate(detail)}>
-                  Deactivate
-                </button>
-                <button className="ghost-button" onClick={() => onReactivate(detail)}>
-                  Reactivate
-                </button>
-                <button className="ghost-button" onClick={() => onDelete(detail)}>
-                  Delete voter
-                </button>
-                <button className="ghost-button" onClick={() => onReject(detail)}>
+                <button className="ghost-button" onClick={() => onReject(detail)} style={{ color: "#DC2626" }}>
                   Reject
                 </button>
                 <button className="primary-button" onClick={() => onApprove(detail)}>
-                  Approve
+                  Approve Voter
                 </button>
               </div>
             </div>
@@ -822,15 +827,14 @@ export default function ManageVotersDashboard() {
   return (
     <div className="manage-voters-page">
       <div className="manage-voters-container">
-        <div className="page-header card-surface">
+        <div className="page-header">
           <div>
-            <p className="eyebrow">Voter operations</p>
-            <h1>Manage Voters</h1>
-            <p className="subtitle">Review, verify, and manage voter accounts.</p>
+            <h1>Voters Registry</h1>
+            <p className="subtitle">Search, review, and manage official registered voter profiles.</p>
           </div>
           <div className="header-actions">
             <button className="ghost-button" onClick={handleRefresh}>
-              Refresh
+              Refresh Data
             </button>
           </div>
         </div>
@@ -838,37 +842,33 @@ export default function ManageVotersDashboard() {
         <div className="stats-grid">
           {stats.map((card) => (
             <div key={card.label} className={`stat-card tone-${card.tone}`}>
-              <p className="stat-label">{card.label}</p>
-              <p className="stat-value">{card.value}</p>
+              <span className="stat-label">{card.label}</span>
+              <span className="stat-value">{card.value.toLocaleString()}</span>
             </div>
           ))}
         </div>
 
         <div className="toolbar card-surface">
           <div className="toolbar-head">
-            <div>
-              <p className="toolbar-kicker">Search & Filters</p>
-              <p className="toolbar-sub">Refine voter data by approval, verification, status, and timeline.</p>
+            <div className="search-box">
+              <input
+                type="search"
+                placeholder="Search by name, email, or citizenship ID..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+              />
             </div>
             <button className="ghost-button" onClick={handleResetFilters}>
               Reset Filters
             </button>
           </div>
 
-          <div className="search-box">
-            <input
-              type="search"
-              placeholder="Search name, email, or citizenship ID"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-            />
-          </div>
           <div className="filters">
-            <label>
-              Approval
+            <div className="filter-group">
+              <label>Approval</label>
               <select
                 value={approval}
                 onChange={(e) => {
@@ -876,28 +876,14 @@ export default function ManageVotersDashboard() {
                   setPage(1);
                 }}
               >
-                <option value="all">All</option>
+                <option value="all">All Statuses</option>
                 <option value="Pending">Pending</option>
                 <option value="Approved">Approved</option>
                 <option value="Rejected">Rejected</option>
               </select>
-            </label>
-            <label>
-              Email
-              <select
-                value={emailStatus}
-                onChange={(e) => {
-                  setEmailStatus(e.target.value);
-                  setPage(1);
-                }}
-              >
-                <option value="all">All</option>
-                <option value="verified">Verified</option>
-                <option value="unverified">Unverified</option>
-              </select>
-            </label>
-            <label>
-              Face
+            </div>
+            <div className="filter-group">
+              <label>Identity</label>
               <select
                 value={faceStatus}
                 onChange={(e) => {
@@ -905,27 +891,27 @@ export default function ManageVotersDashboard() {
                   setPage(1);
                 }}
               >
-                <option value="all">All</option>
+                <option value="all">Face Status</option>
                 <option value="verified">Verified</option>
                 <option value="unverified">Unverified</option>
               </select>
-            </label>
-            <label>
-              Voting
+            </div>
+            <div className="filter-group">
+              <label>Email</label>
               <select
-                value={voteStatus}
+                value={emailStatus}
                 onChange={(e) => {
-                  setVoteStatus(e.target.value);
+                  setEmailStatus(e.target.value);
                   setPage(1);
                 }}
               >
-                <option value="all">All</option>
-                <option value="Voted">Voted</option>
-                <option value="Not Voted">Not Voted</option>
+                <option value="all">Email Status</option>
+                <option value="verified">Verified</option>
+                <option value="unverified">Unverified</option>
               </select>
-            </label>
-            <label>
-              Account
+            </div>
+            <div className="filter-group">
+              <label>Account</label>
               <select
                 value={accountStatus}
                 onChange={(e) => {
@@ -933,27 +919,20 @@ export default function ManageVotersDashboard() {
                   setPage(1);
                 }}
               >
-                <option value="all">All</option>
+                <option value="all">Account Status</option>
                 <option value="Active">Active</option>
                 <option value="Suspended">Suspended</option>
                 <option value="Rejected">Rejected</option>
                 <option value="Pending">Pending</option>
               </select>
-            </label>
-            <label>
-              Sort
+            </div>
+            <div className="filter-group">
+              <label>Sort By</label>
               <select value={sortKey} onChange={(e) => setSortKey(e.target.value)}>
-                <option value="registeredAt">Registration date</option>
-                <option value="name">Name</option>
+                <option value="registeredAt">Registration Date</option>
+                <option value="name">Full Name</option>
               </select>
-            </label>
-            <label>
-              Order
-              <select value={sortDir} onChange={(e) => setSortDir(e.target.value)}>
-                <option value="desc">Newest first</option>
-                <option value="asc">Oldest first</option>
-              </select>
-            </label>
+            </div>
           </div>
         </div>
 
