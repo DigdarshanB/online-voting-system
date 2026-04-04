@@ -53,10 +53,12 @@ def _get_admin_or_404(user_id: int, db: Session) -> User:
 
 class PendingAdminItem(BaseModel):
     id: int
+    email: Optional[str]
     full_name: Optional[str]
     phone_number: Optional[str]
     citizenship_no_normalized: Optional[str]
     status: str
+    role: str
     totp_enabled_at: Optional[datetime]
     approved_at: Optional[datetime]
     rejection_reason: Optional[str]
@@ -192,10 +194,13 @@ def delete_pending_admin(
 
 class ActiveAdminItem(BaseModel):
     id: int
+    email: Optional[str]
     full_name: Optional[str]
     phone_number: Optional[str]
     citizenship_no_normalized: Optional[str]
+    role: str
     approved_at: Optional[datetime]
+    totp_enabled_at: Optional[datetime]
 
     class Config:
         from_attributes = True
