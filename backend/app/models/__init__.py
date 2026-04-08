@@ -10,3 +10,8 @@ from app.models.district import District
 from app.models.constituency import Constituency
 from app.models.voter_constituency_assignment import VoterConstituencyAssignment
 from app.models.election_contest import ElectionContest
+from app.models.party import Party
+from app.models.candidate_profile import CandidateProfile
+from app.models.fptp_candidate_nomination import FptpCandidateNomination
+from app.models.pr_party_submission import PrPartySubmission
+from app.models.pr_party_list_entry import PrPartyListEntry

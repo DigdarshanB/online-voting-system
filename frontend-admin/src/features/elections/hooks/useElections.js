@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import apiClient from "../../lib/apiClient";
+import apiClient from "../../../lib/apiClient";
 
 export default function useElections() {
   const [elections, setElections] = useState([]);

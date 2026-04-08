@@ -26,6 +26,7 @@ import PendingApprovalPage from "./pages/PendingApprovalPage";
 import DashboardPageView from "./pages/DashboardPage";
 import AccountCenterPage from "./pages/AccountCenterPage";
 import ManageElectionsPage from "./pages/ManageElectionsPage";
+import ManageCandidatesPage from "./pages/ManageCandidatesPage";
 
 import {
   RequireDashboardMfa,
@@ -114,6 +115,17 @@ export default function App() {
           <RequireAdminOrSuperAdmin>
             <AdminShell title="Manage Elections" subtitle="Create and configure federal election structures">
               <ManageElectionsPage />
+            </AdminShell>
+          </RequireAdminOrSuperAdmin>
+        }
+      />
+      {/* Manage Candidates — admin + super_admin */}
+      <Route
+        path="/admin/manage-candidates"
+        element={
+          <RequireAdminOrSuperAdmin>
+            <AdminShell title="Manage Candidates" subtitle="Manage parties, candidate profiles, nominations, and PR lists">
+              <ManageCandidatesPage />
             </AdminShell>
           </RequireAdminOrSuperAdmin>
         }
