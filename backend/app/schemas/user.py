@@ -1,6 +1,7 @@
-from pydantic import BaseModel, EmailStr, constr
+from datetime import datetime
+from typing import Optional
 
-from app.models.user import UserRole
+from pydantic import BaseModel, EmailStr
 
 
 # Shared properties
@@ -24,7 +25,7 @@ class UserUpdate(UserBase):
 # Properties shared by models stored in DB
 class UserInDBBase(UserBase):
     id: int
-    role: UserRole
+    role: str
     email: Optional[EmailStr]
     full_name: Optional[str]
     created_at: datetime
@@ -47,7 +48,7 @@ class UserRead(BaseModel):
     id: int
     full_name: Optional[str] = None
     email: Optional[EmailStr] = None
-    role: UserRole
+    role: str
     phone_number: Optional[str] = None
     citizenship_no_normalized: Optional[str] = None
     approved_at: Optional[datetime] = None

@@ -1,6 +1,9 @@
 import React, { useMemo, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
+import { setToken } from "../lib/authStorage";
+import { extractError } from "../lib/token";
+import { login, register, fetchMe } from "../features/auth/api/authApi";
+import { uploadCitizenship } from "../features/verification/api/verificationApi";
 import "./VoterAuthPage.css";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -153,22 +156,12 @@ export default function VoterAuthPage() {
     setUploadMessage("");
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const token = localStorage.getItem("access_token");
-      await axios.post(
-        "http://localhost:8000/verification/citizenship/upload",
-        formData,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await uploadCitizenship(file);
       setUploadStatus("success");
       setUploadMessage("Document uploaded successfully.");
     } catch (err) {
-      const detail = err?.response?.data?.detail;
       setUploadStatus("error");
-      setUploadMessage(
-        typeof detail === "string" ? detail : "Upload failed. Please try again."
-      );
+      setUploadMessage(extractError(err, "Upload failed. Please try again."));
     } finally {
       // Reset file input so the same file can be re-selected after an error.
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -193,14 +186,9 @@ export default function VoterAuthPage() {
 
     try {
       if (mode === "login") {
-        const { data } = await axios.post("http://localhost:8000/auth/login", {
-          citizenship_number: loginForm.citizenshipId,
-          password: loginForm.password,
-        });
-        localStorage.setItem("access_token", data.access_token);
-        const { data: me } = await axios.get("http://localhost:8000/auth/me", {
-          headers: { Authorization: `Bearer ${data.access_token}` },
-        });
+        const data = await login(loginForm.citizenshipId, loginForm.password);
+        setToken(data.access_token);
+        const me = await fetchMe();
         if (!me.email_verified) {
           navigate("/verify-email");
         } else if (me.status === "ACTIVE" && me.totp_enabled) {
@@ -213,7 +201,7 @@ export default function VoterAuthPage() {
           navigate("/status");
         }
       } else {
-        await axios.post("http://localhost:8000/auth/register", {
+        await register({
           email: registerForm.email.trim().toLowerCase(),
           full_name: registerForm.fullName,
           phone_number: registerForm.phoneNumber,

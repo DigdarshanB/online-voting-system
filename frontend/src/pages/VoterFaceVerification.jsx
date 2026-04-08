@@ -1,15 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { getToken, clearToken } from "../lib/authStorage";
+import { extractError } from "../lib/token";
+import { fetchMe } from "../features/auth/api/authApi";
+import { uploadFace } from "../features/verification/api/verificationApi";
 import "./VoterAuthPage.css";
 import "./VoterFaceVerification.css";
-
-const API = "http://localhost:8000";
-
-function authHeaders() {
-  const token = localStorage.getItem("access_token");
-  return { Authorization: `Bearer ${token}` };
-}
 
 /**
  * Camera states:
@@ -36,14 +32,12 @@ export default function VoterFaceVerification() {
 
   // ── Auth check on mount ────────────────────────────────────
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
+    if (!getToken()) {
       navigate("/");
       return;
     }
-    axios
-      .get(`${API}/auth/me`, { headers: authHeaders() })
-      .then(({ data }) => {
+    fetchMe()
+      .then((data) => {
         if (data.status === "ACTIVE" && data.totp_enabled) {
           navigate("/home");
         } else if (data.status === "PENDING_REVIEW") {
@@ -54,7 +48,7 @@ export default function VoterFaceVerification() {
         // PENDING_FACE is the expected state — stay on this page
       })
       .catch(() => {
-        localStorage.removeItem("access_token");
+        clearToken();
         navigate("/");
       });
   }, [navigate]);
@@ -244,35 +238,17 @@ export default function VoterFaceVerification() {
     setUploadMsg({ type: "", text: "" });
 
     try {
-      // Wrap in File to ensure explicit MIME type is sent in the multipart request
-      const file = new File([capturedBlob], "face-capture.jpg", { type: "image/jpeg" });
-      console.log(
-        "[FaceVerify] File object — name:",
-        file.name,
-        "size:",
-        file.size,
-        "type:",
-        file.type
-      );
+      const resp = await uploadFace(capturedBlob);
 
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const resp = await axios.post(`${API}/verification/face/upload`, formData, {
-        headers: authHeaders(),
-        // Do NOT manually set Content-Type — browser must add the multipart boundary
-      });
-
-      console.log("[FaceVerify] Upload success:", resp.data);
+      console.log("[FaceVerify] Upload success:", resp);
       setUploadMsg({ type: "success", text: "Face photo submitted successfully!" });
       setTimeout(() => navigate("/status"), 1500);
     } catch (err) {
-      const detail = err?.response?.data?.detail;
       const status = err?.response?.status;
-      console.error("[FaceVerify] Upload failed — status:", status, "detail:", detail);
+      console.error("[FaceVerify] Upload failed — status:", status);
       setUploadMsg({
         type: "error",
-        text: typeof detail === "string" ? detail : "Upload failed. Please try again.",
+        text: extractError(err, "Upload failed. Please try again."),
       });
     } finally {
       setUploading(false);
@@ -544,7 +520,7 @@ export default function VoterFaceVerification() {
             className="fv-signout-btn"
             onClick={() => {
               stopCamera();
-              localStorage.removeItem("access_token");
+              clearToken();
               navigate("/");
             }}
           >

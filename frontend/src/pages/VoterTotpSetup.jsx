@@ -1,15 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { QRCodeSVG } from "qrcode.react";
+import { extractError } from "../lib/token";
+import { totpSetup, totpVerify } from "../features/verification/api/verificationApi";
 import "./VoterAuthPage.css";
-
-const API = "http://localhost:8000";
-
-function authHeaders() {
-  const token = localStorage.getItem("access_token");
-  return { Authorization: `Bearer ${token}` };
-}
 
 function extractSecret(uri) {
   try {
@@ -31,21 +25,15 @@ export default function VoterTotpSetup() {
     setError("");
     setStep("pending");
     try {
-      const { data } = await axios.post(
-        `${API}/verification/totp/setup`,
-        {},
-        { headers: authHeaders() }
-      );
+      const data = await totpSetup();
       setOtpauthUri(data.otpauth_uri);
       setStep("scan");
     } catch (err) {
       if (err?.response?.status === 400) {
-        // TOTP already set up — jump straight to challenge
         setStep("challenge");
         setError("TOTP is already set up. Enter your 6-digit code to continue.");
       } else {
-        const detail = err?.response?.data?.detail;
-        setError(typeof detail === "string" ? detail : "Setup failed. Please try again.");
+        setError(extractError(err, "Setup failed. Please try again."));
         setStep("idle");
       }
     }
@@ -56,16 +44,11 @@ export default function VoterTotpSetup() {
     setError("");
     setStep("verifying");
     try {
-      await axios.post(
-        `${API}/verification/totp/verify`,
-        { code },
-        { headers: authHeaders() }
-      );
+      await totpVerify(code);
       setStep("done");
       navigate("/home");
     } catch (err) {
-      const detail = err?.response?.data?.detail;
-      setError(typeof detail === "string" ? detail : "Verification failed. Try again.");
+      setError(extractError(err, "Verification failed. Try again."));
       setStep(otpauthUri ? "scan" : "challenge");
     }
   }

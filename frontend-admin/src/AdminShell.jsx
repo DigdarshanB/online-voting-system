@@ -5,16 +5,10 @@ import {
   ShieldCheck,
   BadgeCheck,
   Users,
-  Landmark,
-  UserCircle,
-  LockKeyhole,
   Menu,
-  LifeBuoy,
-  BarChart3,
-  ClipboardList,
-  FileBarChart,
   UserCircle2
 } from "lucide-react";
+import { getToken, getTokenRole } from "./lib/auth";
 import "./AdminShell.css";
 import ecnLogo from "./assets/ECN.png";
 
@@ -42,11 +36,6 @@ const MAIN_NAV_ITEMS = [
   { label: "Manage Admins", to: "/superadmin/manage-admins", icon: ShieldCheck },
   { label: "Voter Verifications", to: "/admin/voter-verifications", icon: BadgeCheck },
   { label: "Manage Voters", to: "/admin/manage-voters", icon: Users },
-  { label: "Manage Elections", to: "/admin/elections", icon: Landmark },
-  { label: "Manage Candidates", to: "/admin/candidates", icon: UserCircle },
-  { label: "Results", to: "/admin/results", icon: BarChart3 },
-  { label: "Audit Logs", to: "/admin/audit-logs", icon: ClipboardList },
-  { label: "Reports", to: "/admin/reports", icon: FileBarChart },
 ];
 
 const ACCOUNT_NAV_ITEMS = [
@@ -74,26 +63,6 @@ export default function AdminShell({ children, title, subtitle }) {
       title: "Manage Voters",
       subtitle: "Search, review, and manage voter profiles",
     },
-    "/admin/elections": {
-      title: "Manage Elections",
-      subtitle: "Configure, schedule, and monitor electoral events",
-    },
-    "/admin/candidates": {
-      title: "Manage Candidates",
-      subtitle: "Add, review, and organize electoral candidates",
-    },
-    "/admin/results": {
-      title: "Results",
-      subtitle: "View election outcomes, turnout, and summaries",
-    },
-    "/admin/audit-logs": {
-      title: "Audit Logs",
-      subtitle: "Review administrative actions and system activity",
-    },
-    "/admin/reports": {
-      title: "Reports",
-      subtitle: "Generate and review administrative and election reports",
-    },
     "/account-center": {
       title: "Account Center",
       subtitle: "Manage your profile, security, and current session",
@@ -115,19 +84,9 @@ export default function AdminShell({ children, title, subtitle }) {
     window.addEventListener("resize", handleResize);
 
     // Initial role check
-    const token = localStorage.getItem("access_token");
-    if (token) {
-      try {
-        const payloadBase64 = token.split(".")[1];
-        if (payloadBase64) {
-          const payloadJson = atob(payloadBase64.replace(/-/g, "+").replace(/_/g, "/"));
-          const payload = JSON.parse(payloadJson);
-          setUserRole(payload.role);
-        }
-      } catch (e) {
-        console.error("Failed to parse token for role", e);
-      }
-    }
+    const token = getToken();
+    const role = getTokenRole(token);
+    if (role) setUserRole(role);
 
     return () => window.removeEventListener("resize", handleResize);
   }, []);

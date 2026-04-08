@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
+import { forgotPassword } from "../features/auth/api/authApi";
 import "./VoterAuthPage.css";
 
-const API = "http://localhost:8000";
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function VoterForgotPassword() {
@@ -24,7 +23,7 @@ export default function VoterForgotPassword() {
 
     setLoading(true);
     try {
-      await axios.post(`${API}/auth/forgot-password`, { email: trimmed });
+      await forgotPassword(trimmed);
     } catch {
       // Always show success — never leak whether the email exists.
     } finally {

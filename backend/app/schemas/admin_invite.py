@@ -3,8 +3,6 @@ from typing import Optional
 
 from pydantic import BaseModel, EmailStr
 
-from app.models.admin_invite import InviteStatus
-
 
 class AdminInviteBase(BaseModel):
     recipient_identifier: EmailStr
@@ -15,7 +13,7 @@ class AdminInviteCreate(AdminInviteBase):
 
 
 class AdminInviteUpdate(BaseModel):
-    status: Optional[InviteStatus] = None
+    status: Optional[str] = None
 
 
 class AdminInviteRead(BaseModel):
@@ -23,7 +21,7 @@ class AdminInviteRead(BaseModel):
     recipient_identifier: EmailStr
     invite_code: str
     activation_url: str
-    status: InviteStatus
+    status: str
     expires_at: datetime
     created_at: datetime
     used_at: Optional[datetime] = None

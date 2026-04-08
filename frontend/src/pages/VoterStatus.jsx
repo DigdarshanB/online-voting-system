@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { getToken, clearToken } from "../lib/authStorage";
+import { extractError } from "../lib/token";
+import { fetchMe } from "../features/auth/api/authApi";
+import { uploadCitizenship } from "../features/verification/api/verificationApi";
 import "./VoterAuthPage.css";
 import "./VoterStatus.css";
-
-const API = "http://localhost:8000";
 
 const STATUS_CONFIG = {
   PENDING_DOCUMENT: {
@@ -91,18 +92,14 @@ export default function VoterStatus() {
   }, [previewUrl]);
 
   // ── Load voter status on mount ────────────────────────────────
-  const fetchMe = () => {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
+  const loadStatus = () => {
+    if (!getToken()) {
       navigate("/");
       return;
     }
     setLoading(true);
-    axios
-      .get(`${API}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then(({ data }) => {
+    fetchMe()
+      .then((data) => {
         if (data.status === "ACTIVE" && data.totp_enabled) {
           navigate("/home");
           return;
@@ -119,14 +116,13 @@ export default function VoterStatus() {
         setLoading(false);
       })
       .catch((err) => {
-        const detail = err?.response?.data?.detail;
-        setError(typeof detail === "string" ? detail : "Failed to load status.");
+        setError(extractError(err, "Failed to load status."));
         setLoading(false);
       });
   };
 
   useEffect(() => {
-    fetchMe();
+    loadStatus();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── FILE SELECTION — stores file in state ONLY, no upload ─────
@@ -187,8 +183,7 @@ export default function VoterStatus() {
   async function handleUpload() {
     if (!selectedFile) return;
 
-    const token = localStorage.getItem("access_token");
-    if (!token) {
+    if (!getToken()) {
       navigate("/");
       return;
     }
@@ -196,13 +191,8 @@ export default function VoterStatus() {
     setUploadStatus("uploading");
     setUploadMessage("");
 
-    const form = new FormData();
-    form.append("file", selectedFile);
-
     try {
-      await axios.post(`${API}/verification/citizenship/upload`, form, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await uploadCitizenship(selectedFile);
 
       // Clear the selected file after a successful upload
       if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -215,12 +205,9 @@ export default function VoterStatus() {
       );
       setTimeout(() => navigate("/face-verification"), 1400);
     } catch (err) {
-      const detail = err?.response?.data?.detail;
       setUploadStatus("error");
       // Keep `selectedFile` so the user can retry or change the file
-      setUploadMessage(
-        typeof detail === "string" ? detail : "Upload failed. Please try again."
-      );
+      setUploadMessage(extractError(err, "Upload failed. Please try again."));
     }
   }
 
@@ -473,7 +460,7 @@ export default function VoterStatus() {
               type="button"
               className="vs-signout-btn"
               onClick={() => {
-                localStorage.removeItem("access_token");
+                clearToken();
                 navigate("/");
               }}
             >

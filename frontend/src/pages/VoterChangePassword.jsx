@@ -1,13 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import { getToken, clearToken } from "../lib/authStorage";
+import { extractError } from "../lib/token";
+import { changePassword } from "../features/auth/api/authApi";
 import "./VoterAuthPage.css";
-
-const API = "http://localhost:8000";
-
-function authHeaders() {
-  return { Authorization: `Bearer ${localStorage.getItem("access_token")}` };
-}
 
 export default function VoterChangePassword() {
   const navigate = useNavigate();
@@ -28,7 +24,7 @@ export default function VoterChangePassword() {
 
   // Guard: redirect unauthenticated visitors to login.
   useEffect(() => {
-    if (!localStorage.getItem("access_token")) {
+    if (!getToken()) {
       navigate("/", { replace: true });
     }
   }, [navigate]);
@@ -64,27 +60,20 @@ export default function VoterChangePassword() {
 
     setLoading(true);
     try {
-      await axios.post(
-        `${API}/auth/change-password`,
-        {
-          current_password: form.currentPassword,
-          new_password: form.newPassword,
-          confirm_new_password: form.confirmNewPassword,
-        },
-        { headers: authHeaders() }
-      );
+      await changePassword({
+        current_password: form.currentPassword,
+        new_password: form.newPassword,
+        confirm_new_password: form.confirmNewPassword,
+      });
       setSuccess(true);
       // Token version was incremented — the current JWT is now invalid.
       // Clear credentials and redirect to login after a brief confirmation.
       setTimeout(() => {
-        localStorage.removeItem("access_token");
+        clearToken();
         navigate("/", { replace: true });
       }, 3000);
     } catch (err) {
-      const detail = err?.response?.data?.detail;
-      setError(
-        typeof detail === "string" ? detail : "Something went wrong. Please try again."
-      );
+      setError(extractError(err, "Something went wrong. Please try again."));
     } finally {
       setLoading(false);
     }

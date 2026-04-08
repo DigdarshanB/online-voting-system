@@ -1,13 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.jwt import get_current_user
 from app.db.deps import get_db
-from app.models.election import Election
 from app.models.user import User
-from app.models.vote import Vote
+from app.services.dashboard_service import get_dashboard_summary
 
 router = APIRouter(prefix="/admin/dashboard", tags=["admin-dashboard"])
 
@@ -27,39 +25,9 @@ def _require_admin(current_user: User = Depends(get_current_user)) -> User:
 
 
 @router.get("/summary", response_model=DashboardSummaryResponse)
-def get_dashboard_summary(
+def dashboard_summary(
     db: Session = Depends(get_db),
     current_user: User = Depends(_require_admin),
 ) -> DashboardSummaryResponse:
-    _ = current_user
-
-    active_elections = db.execute(
-        select(func.count()).select_from(Election).where(Election.status == "OPEN")
-    ).scalar_one()
-
-    scheduled_elections = db.execute(
-        select(func.count()).select_from(Election).where(Election.status == "SCHEDULED")
-    ).scalar_one()
-
-    registered_voters = db.execute(
-        select(func.count()).select_from(User).where(User.role == "voter")
-    ).scalar_one()
-
-    pending_verifications = db.execute(
-        select(func.count()).select_from(User).where(
-            User.role == "voter",
-            User.status == "PENDING_REVIEW",
-        )
-    ).scalar_one()
-
-    total_votes_cast = db.execute(
-        select(func.count()).select_from(Vote)
-    ).scalar_one()
-
-    return DashboardSummaryResponse(
-        active_elections=int(active_elections or 0),
-        scheduled_elections=int(scheduled_elections or 0),
-        registered_voters=int(registered_voters or 0),
-        pending_verifications=int(pending_verifications or 0),
-        total_votes_cast=int(total_votes_cast or 0),
-    )
+    data = get_dashboard_summary(db)
+    return DashboardSummaryResponse(**data)

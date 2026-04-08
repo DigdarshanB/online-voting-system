@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import { extractError } from "../lib/token";
+import { requestTotpRecovery, completeTotpRecovery } from "../features/auth/api/authApi";
 import "./VoterAuthPage.css";
 
-const API = "http://localhost:8000";
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function VoterTotpRecovery() {
@@ -29,7 +29,7 @@ export default function VoterTotpRecovery() {
 
     setLoadingRequest(true);
     try {
-      await axios.post(`${API}/auth/totp-recovery/request`, { email: normalized });
+      await requestTotpRecovery(normalized);
       setRequested(true);
       setSuccess("If the account is eligible, a recovery code has been sent.");
     } catch {
@@ -57,15 +57,11 @@ export default function VoterTotpRecovery() {
 
     setLoadingComplete(true);
     try {
-      const { data } = await axios.post(`${API}/auth/totp-recovery/complete`, {
-        email: normalized,
-        code: code.trim(),
-      });
+      const data = await completeTotpRecovery(normalized, code.trim());
       setSuccess(data?.detail || "TOTP reset completed.");
       setTimeout(() => navigate("/", { replace: true }), 3000);
     } catch (err) {
-      const detail = err?.response?.data?.detail;
-      setError(typeof detail === "string" ? detail : "Failed to complete recovery.");
+      setError(extractError(err, "Failed to complete recovery."));
     } finally {
       setLoadingComplete(false);
     }

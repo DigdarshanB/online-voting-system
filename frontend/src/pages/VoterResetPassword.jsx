@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import axios from "axios";
+import { extractError } from "../lib/token";
+import { resetPassword } from "../features/auth/api/authApi";
 import "./VoterAuthPage.css";
 
-const API = "http://localhost:8000";
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function VoterResetPassword() {
@@ -50,7 +50,7 @@ export default function VoterResetPassword() {
 
     setLoading(true);
     try {
-      await axios.post(`${API}/auth/reset-password`, {
+      await resetPassword({
         email: emailTrimmed,
         code: form.code.trim(),
         new_password: form.newPassword,
@@ -59,10 +59,7 @@ export default function VoterResetPassword() {
       setSuccess(true);
       setTimeout(() => navigate("/", { replace: true }), 3000);
     } catch (err) {
-      const detail = err?.response?.data?.detail;
-      setError(
-        typeof detail === "string" ? detail : "Something went wrong. Please try again."
-      );
+      setError(extractError(err, "Something went wrong. Please try again."));
     } finally {
       setLoading(false);
     }

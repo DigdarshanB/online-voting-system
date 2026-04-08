@@ -3,8 +3,6 @@ from typing import Optional
 
 from pydantic import BaseModel, EmailStr
 
-from app.models.totp_recovery_request import RecoveryRequestStatus
-
 
 class TOTPRecoveryRequestBase(BaseModel):
     user_id: int
@@ -16,7 +14,7 @@ class TOTPRecoveryRequestCreate(TOTPRecoveryRequestBase):
 
 
 class TOTPRecoveryRequestUpdate(BaseModel):
-    status: Optional[RecoveryRequestStatus] = None
+    status: Optional[str] = None
     rejection_reason: Optional[str] = None
 
 
@@ -25,7 +23,7 @@ class TOTPRecoveryRequestRead(BaseModel):
     email: EmailStr
     full_name: str
     requested_at: datetime
-    status: RecoveryRequestStatus
+    status: str
     reason: Optional[str] = None
     last_login_at: Optional[datetime] = None
 

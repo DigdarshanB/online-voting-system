@@ -1,14 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import axios from "axios";
+import { getToken, clearToken } from "../lib/authStorage";
+import { extractError } from "../lib/token";
+import { fetchMe, verifyEmail, resendEmailVerification } from "../features/auth/api/authApi";
 import "./VoterAuthPage.css";
 
-const API = "http://localhost:8000";
 const RESEND_COOLDOWN = 60;
-
-function authHeaders() {
-  return { Authorization: `Bearer ${localStorage.getItem("access_token")}` };
-}
 
 /** Show the first 2 chars of the local part, mask the rest. */
 function maskEmail(email) {
@@ -48,23 +45,12 @@ export default function VoterEmailVerification() {
     setError("");
     setStep("verifying");
     try {
-      await axios.post(
-        `${API}/auth/verify-email`,
-        { token },
-        { headers: authHeaders() }
-      );
-      const { data: me } = await axios.get(`${API}/auth/me`, {
-        headers: authHeaders(),
-      });
+      await verifyEmail(token);
+      const me = await fetchMe();
       setStep("done");
       setTimeout(() => navigate(resolveNextRoute(me), { replace: true }), 2500);
     } catch (err) {
-      const detail = err?.response?.data?.detail;
-      setError(
-        typeof detail === "string"
-          ? detail
-          : "Verification failed. Please try again."
-      );
+      setError(extractError(err, "Verification failed. Please try again."));
       setInputToken("");
       setStep("idle");
     }
@@ -72,14 +58,12 @@ export default function VoterEmailVerification() {
 
   // Bootstrap: verify auth, check if already verified, auto-submit URL token.
   useEffect(() => {
-    const jwt = localStorage.getItem("access_token");
-    if (!jwt) {
+    if (!getToken()) {
       navigate("/", { replace: true });
       return;
     }
-    axios
-      .get(`${API}/auth/me`, { headers: authHeaders() })
-      .then(({ data }) => {
+    fetchMe()
+      .then((data) => {
         if (data.email_verified) {
           navigate(resolveNextRoute(data), { replace: true });
           return;
@@ -92,7 +76,7 @@ export default function VoterEmailVerification() {
         }
       })
       .catch(() => {
-        localStorage.removeItem("access_token");
+        clearToken();
         navigate("/", { replace: true });
       });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -110,11 +94,7 @@ export default function VoterEmailVerification() {
   async function handleResend() {
     if (resendCooldown > 0) return;
     try {
-      await axios.post(
-        `${API}/auth/resend-email-verification`,
-        {},
-        { headers: authHeaders() }
-      );
+      await resendEmailVerification();
     } catch {
       // Generic safe response — display nothing on error.
     }

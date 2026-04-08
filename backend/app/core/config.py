@@ -22,6 +22,13 @@ class Settings(BaseSettings):
     SMTP_FROM_EMAIL: str | None = None
     SMTP_FROM_NAME: str = "Online Voting System"
 
+    # Token / code TTLs (minutes)
+    EMAIL_VERIFICATION_TTL_MINUTES: int = 15
+    PASSWORD_RESET_TTL_MINUTES: int = 15
+
+    # Runtime environment tag (used to gate dev-only helpers)
+    ENVIRONMENT: str = "development"
+
     # Development-only helpers
     EMAIL_DEV_FALLBACK: bool = True
     EMAIL_DEV_FALLBACK_EXPOSE_TOKEN: bool = True

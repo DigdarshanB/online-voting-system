@@ -28,36 +28,6 @@ export default function DashboardPage() {
   });
 
   const scheduledElectionItems = [
-    {
-      id: "scheduled-2026-federal-general",
-      title: "2026 Federal General",
-      governmentLevel: "Federal",
-      dateLabel: "Nov 04, 2026",
-      status: "ACTIVE",
-      statusLabel: "ACTIVE",
-      relativeLabel: "",
-      href: "/admin/elections",
-    },
-    {
-      id: "scheduled-provincial-bagmati",
-      title: "Provincial Assembly (Bagmati)",
-      governmentLevel: "Provincial",
-      dateLabel: "Dec 12, 2026",
-      status: "DRAFT",
-      statusLabel: "DRAFT",
-      relativeLabel: "",
-      href: "/admin/elections",
-    },
-    {
-      id: "scheduled-local-kathmandu",
-      title: "Local Government (Kathmandu)",
-      governmentLevel: "Local",
-      dateLabel: "Jan 15, 2027",
-      status: "SCHEDULED",
-      statusLabel: "SCHEDULED",
-      relativeLabel: "",
-      href: "/admin/elections",
-    },
   ];
 
   const token = localStorage.getItem("access_token");
@@ -79,15 +49,6 @@ export default function DashboardPage() {
       icon: <Users size={18} strokeWidth={2.2} />,
       tone: "info",
       badgeText: registeredVoters > 0 ? registeredVoters.toLocaleString("en-US") : "",
-    },
-    {
-      id: "core-manage-candidates",
-      title: "Manage Candidates",
-      description: "Candidate records, review, and election assignment",
-      href: "/admin/candidates",
-      icon: <UserRoundCheck size={18} strokeWidth={2.2} />,
-      tone: "success",
-      badgeText: "",
     },
     {
       id: "core-review-queue",
@@ -121,8 +82,8 @@ export default function DashboardPage() {
       title: "Operational Status",
       message: "No active security or review alerts at this time.",
       tone: "success",
-      actionLabel: "Open Audit Logs",
-      actionHref: "/admin/audit-logs",
+      actionLabel: "View Dashboard",
+      actionHref: "/dashboard",
     };
 
   return (
@@ -154,7 +115,7 @@ export default function DashboardPage() {
 
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <Link
-            to="/admin/elections"
+            to="/admin/voter-verifications"
             style={{
               padding: "10px 18px",
               borderRadius: 10,
@@ -168,25 +129,6 @@ export default function DashboardPage() {
             }}
             onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-1px)")}
             onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
-          >
-            Create Election
-          </Link>
-          <Link
-            to="/admin/voter-verifications"
-            style={{
-              padding: "10px 18px",
-              borderRadius: 10,
-              background: "#FFF",
-              color: "var(--dashboard-text)",
-              border: "1px solid var(--dashboard-border)",
-              textDecoration: "none",
-              fontSize: 14,
-              fontWeight: 600,
-              boxShadow: "0 2px 6px rgba(15, 23, 42, 0.04)",
-              transition: "all 0.2s ease",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--dashboard-accent-soft)")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "#FFF")}
           >
             Review Queue
           </Link>
@@ -348,7 +290,7 @@ export default function DashboardPage() {
         <div style={{ minWidth: 0, maxWidth: "100%", display: "flex" }}>
           <ScheduledElectionsPanel
             items={scheduledElectionItems}
-            viewAllHref="/admin/elections"
+            viewAllHref="#"
           />
         </div>
 

@@ -37,15 +37,8 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
-    op.create_table('candidates',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('election_id', sa.Integer(), nullable=False),
-    sa.Column('name', sa.String(length=255), nullable=False),
-    sa.Column('party', sa.String(length=255), nullable=False),
-    sa.ForeignKeyConstraint(['election_id'], ['elections.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_candidates_election_id'), 'candidates', ['election_id'], unique=False)
+    # NOTE: candidates table was removed from the project scope.
+    # Original candidates CREATE TABLE was here but is no longer needed.
     op.create_table('votes',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('election_id', sa.Integer(), nullable=False),
@@ -68,8 +61,7 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_votes_voter_id'), table_name='votes')
     op.drop_index(op.f('ix_votes_election_id'), table_name='votes')
     op.drop_table('votes')
-    op.drop_index(op.f('ix_candidates_election_id'), table_name='candidates')
-    op.drop_table('candidates')
+    # NOTE: candidates table removal — see upgrade() comment.
     op.drop_index(op.f('ix_users_email'), table_name='users')
     op.drop_table('users')
     op.drop_table('elections')
