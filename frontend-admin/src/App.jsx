@@ -25,6 +25,7 @@ import AdminTotpRecovery from "./pages/AdminTotpRecovery";
 import PendingApprovalPage from "./pages/PendingApprovalPage";
 import DashboardPageView from "./pages/DashboardPage";
 import AccountCenterPage from "./pages/AccountCenterPage";
+import ManageElectionsPage from "./pages/ManageElectionsPage";
 
 import {
   RequireDashboardMfa,
@@ -104,6 +105,17 @@ export default function App() {
           <RequireDashboardMfa>
             <AdminChangePassword />
           </RequireDashboardMfa>
+        }
+      />
+      {/* Manage Elections — admin + super_admin */}
+      <Route
+        path="/admin/manage-elections"
+        element={
+          <RequireAdminOrSuperAdmin>
+            <AdminShell title="Manage Elections" subtitle="Create and configure federal election structures">
+              <ManageElectionsPage />
+            </AdminShell>
+          </RequireAdminOrSuperAdmin>
         }
       />
       {/* Voter verification queue — admin + super_admin */}

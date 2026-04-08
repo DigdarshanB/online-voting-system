@@ -5,6 +5,7 @@ import {
   ShieldCheck,
   BadgeCheck,
   Users,
+  Vote,
   Menu,
   UserCircle2
 } from "lucide-react";
@@ -33,6 +34,7 @@ const PALETTE = {
 
 const MAIN_NAV_ITEMS = [
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
+  { label: "Manage Elections", to: "/admin/manage-elections", icon: Vote },
   { label: "Manage Admins", to: "/superadmin/manage-admins", icon: ShieldCheck },
   { label: "Voter Verifications", to: "/admin/voter-verifications", icon: BadgeCheck },
   { label: "Manage Voters", to: "/admin/manage-voters", icon: Users },
@@ -54,6 +56,10 @@ export default function AdminShell({ children, title, subtitle }) {
     "/superadmin/manage-admins": {
       title: "Manage Admins",
       subtitle: "Review, manage, and oversee administrator accounts",
+    },
+    "/admin/manage-elections": {
+      title: "Manage Elections",
+      subtitle: "Create and configure federal election structures",
     },
     "/admin/voter-verifications": {
       title: "Voter Verifications",

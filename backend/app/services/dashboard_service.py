@@ -13,8 +13,8 @@ from app.repositories import election_repository, vote_repository
 
 
 def get_dashboard_summary(db: Session) -> dict:
-    active_elections = election_repository.count_by_status(db, "OPEN")
-    scheduled_elections = election_repository.count_by_status(db, "SCHEDULED")
+    active_elections = election_repository.count_by_status(db, "POLLING_OPEN")
+    scheduled_elections = election_repository.count_by_status(db, "CONFIGURED")
 
     registered_voters = db.execute(
         select(func.count()).select_from(User).where(User.role == "voter")
@@ -42,9 +42,15 @@ def get_election_status_distribution(db: Session) -> dict:
 
     status_meta = [
         ("DRAFT", "Draft", "#94A3B8"),
-        ("SCHEDULED", "Scheduled", "#3B82F6"),
-        ("OPEN", "Open", "#16A34A"),
-        ("CLOSED", "Closed", "#F59E0B"),
+        ("CONFIGURED", "Configured", "#8B5CF6"),
+        ("NOMINATIONS_OPEN", "Nominations Open", "#06B6D4"),
+        ("NOMINATIONS_CLOSED", "Nominations Closed", "#0EA5E9"),
+        ("CANDIDATE_LIST_PUBLISHED", "Candidates Published", "#2563EB"),
+        ("POLLING_OPEN", "Polling Open", "#16A34A"),
+        ("POLLING_CLOSED", "Polling Closed", "#F59E0B"),
+        ("COUNTING", "Counting", "#EA580C"),
+        ("FINALIZED", "Finalized", "#059669"),
+        ("ARCHIVED", "Archived", "#6B7280"),
     ]
 
     items = [
