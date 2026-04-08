@@ -36,6 +36,10 @@ class Settings(BaseSettings):
     EMAIL_DEV_FALLBACK: bool = True
     EMAIL_DEV_FALLBACK_EXPOSE_TOKEN: bool = True
 
+    # AES-256 key for encrypting ballot choices (hex-encoded 32 bytes = 64 hex chars).
+    # MUST be overridden with a securely-generated key in production.
+    BALLOT_ENCRYPTION_KEY: str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+
     @model_validator(mode="after")
     def _strip_and_validate(cls, values: "Settings") -> "Settings":
         # Strip incidental whitespace from string settings to avoid subtle auth failures.

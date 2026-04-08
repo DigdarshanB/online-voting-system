@@ -11,6 +11,9 @@ import VoterResetPassword from "./pages/VoterResetPassword";
 import VoterChangePassword from "./pages/VoterChangePassword";
 import VoterTotpRecovery from "./pages/VoterTotpRecovery";
 import VoterHome from "./pages/VoterHome";
+import VoterElections from "./pages/VoterElections";
+import VoterBallot from "./pages/VoterBallot";
+import VoterResults from "./pages/VoterResults";
 
 /**
  * File: App.jsx
@@ -34,6 +37,9 @@ export default function App() {
         <Route path="/totp-recovery" element={<VoterTotpRecovery />} />
         <Route path="/change-password" element={<VoterChangePassword />} />
         <Route path="/home" element={<VoterHome />} />
+        <Route path="/elections" element={<VoterElections />} />
+        <Route path="/elections/:electionId/ballot" element={<VoterBallot />} />
+        <Route path="/elections/:electionId/results" element={<VoterResults />} />
       </Routes>
     </BrowserRouter>
   );

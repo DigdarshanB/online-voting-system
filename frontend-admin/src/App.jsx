@@ -27,6 +27,7 @@ import DashboardPageView from "./pages/DashboardPage";
 import AccountCenterPage from "./pages/AccountCenterPage";
 import ManageElectionsPage from "./pages/ManageElectionsPage";
 import ManageCandidatesPage from "./pages/ManageCandidatesPage";
+import ResultsPage from "./pages/ResultsPage";
 
 import {
   RequireDashboardMfa,
@@ -126,6 +127,17 @@ export default function App() {
           <RequireAdminOrSuperAdmin>
             <AdminShell title="Manage Candidates" subtitle="Manage parties, candidate profiles, nominations, and PR lists">
               <ManageCandidatesPage />
+            </AdminShell>
+          </RequireAdminOrSuperAdmin>
+        }
+      />
+      {/* Results — admin + super_admin */}
+      <Route
+        path="/admin/results"
+        element={
+          <RequireAdminOrSuperAdmin>
+            <AdminShell title="Election Results" subtitle="Count ballots, view results, finalize and lock elections">
+              <ResultsPage />
             </AdminShell>
           </RequireAdminOrSuperAdmin>
         }

@@ -8,7 +8,8 @@ import {
   Vote,
   Menu,
   UserCircle2,
-  UserCheck
+  UserCheck,
+  BarChart3,
 } from "lucide-react";
 import { getToken, getTokenRole } from "./lib/auth";
 import "./AdminShell.css";
@@ -37,6 +38,7 @@ const MAIN_NAV_ITEMS = [
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
   { label: "Manage Elections", to: "/admin/manage-elections", icon: Vote },
   { label: "Manage Candidates", to: "/admin/manage-candidates", icon: UserCheck },
+  { label: "Results", to: "/admin/results", icon: BarChart3 },
   { label: "Manage Admins", to: "/superadmin/manage-admins", icon: ShieldCheck },
   { label: "Voter Verifications", to: "/admin/voter-verifications", icon: BadgeCheck },
   { label: "Manage Voters", to: "/admin/manage-voters", icon: Users },
@@ -66,6 +68,10 @@ export default function AdminShell({ children, title, subtitle }) {
     "/admin/manage-candidates": {
       title: "Manage Candidates",
       subtitle: "Manage parties, candidate profiles, nominations, and PR lists",
+    },
+    "/admin/results": {
+      title: "Election Results",
+      subtitle: "Count ballots, view results, finalize and lock elections",
     },
     "/admin/voter-verifications": {
       title: "Voter Verifications",

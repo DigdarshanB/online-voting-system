@@ -22,6 +22,12 @@ export default function VoterHome() {
       <h1 style={{ marginBottom: 16 }}>Welcome, voter!</h1>
       <nav style={{ display: "flex", gap: 12 }}>
         <a
+          href="/elections"
+          style={{ color: "#1e56c7", fontWeight: 700, textDecoration: "none" }}
+        >
+          Elections & Voting
+        </a>
+        <a
           href="/change-password"
           style={{ color: "#1e56c7", fontWeight: 700, textDecoration: "none" }}
         >

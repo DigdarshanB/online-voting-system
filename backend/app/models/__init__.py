@@ -16,3 +16,8 @@ from app.models.candidate_profile import CandidateProfile
 from app.models.fptp_candidate_nomination import FptpCandidateNomination
 from app.models.pr_party_submission import PrPartySubmission
 from app.models.pr_party_list_entry import PrPartyListEntry
+from app.models.ballot import Ballot
+from app.models.ballot_entry import BallotEntry
+from app.models.count_run import CountRun
+from app.models.fptp_result_row import FptpResultRow
+from app.models.pr_result_row import PrResultRow
