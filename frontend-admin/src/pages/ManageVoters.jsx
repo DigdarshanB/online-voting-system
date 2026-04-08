@@ -13,6 +13,26 @@ function authHeaders() {
   return { Authorization: `Bearer ${token}` };
 }
 
+class VerificationErrorBoundary extends React.Component {
+  state = { error: null };
+  static getDerivedStateFromError(error) { return { error }; }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ padding: 32, textAlign: "center", color: "#b91c1c" }}>
+          <h3>Something went wrong loading Voter Verifications.</h3>
+          <pre style={{ fontSize: 12, marginTop: 8, whiteSpace: "pre-wrap" }}>{this.state.error.message}</pre>
+          <button onClick={() => { this.setState({ error: null }); window.location.reload(); }}
+            style={{ marginTop: 16, padding: "8px 20px", borderRadius: 6, border: "1px solid #e2e8f0", cursor: "pointer" }}>
+            Reload
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function ManageVoters() {
   const [voters, setVoters] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +62,7 @@ export default function ManageVoters() {
     setIsProcessing(true);
     setStatusMessage(null);
     try {
-      await axios.post(`${API}/admin/voters/${userId}/verify`, { status: "ACTIVE" }, { headers: authHeaders() });
+      await axios.post(`${API}/admin/voters/${userId}/approve`, {}, { headers: authHeaders() });
       setStatusMessage({ type: "success", text: "Voter verified successfully." });
       setSelectedVoter(null);
       fetchVoters();
@@ -57,7 +77,7 @@ export default function ManageVoters() {
     setIsProcessing(true);
     setStatusMessage(null);
     try {
-      await axios.post(`${API}/admin/voters/${userId}/verify`, { status: "REJECTED", reason }, { headers: authHeaders() });
+      await axios.post(`${API}/admin/voters/${userId}/reject`, { reason }, { headers: authHeaders() });
       setStatusMessage({ type: "success", text: "Voter submission rejected." });
       setSelectedVoter(null);
       fetchVoters();
@@ -81,6 +101,7 @@ export default function ManageVoters() {
   };
 
   return (
+    <VerificationErrorBoundary>
     <div style={{ maxWidth: "1200px", margin: "0 auto", padding: tokens.spacing.lg }}>
       <VerificationSummaryStrip metrics={metrics} />
 
@@ -131,5 +152,6 @@ export default function ManageVoters() {
         />
       )}
     </div>
+    </VerificationErrorBoundary>
   );
 }

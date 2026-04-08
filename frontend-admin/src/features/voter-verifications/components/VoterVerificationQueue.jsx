@@ -1,6 +1,6 @@
 import React from "react";
 import { tokens } from "./tokens";
-import { Search, Filter, ArrowRight, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Search, Filter, ArrowRight, CheckCircle, XCircle, Clock, FileText, Users } from "lucide-react";
 import StatusPill from "./StatusPill"; // Assuming we can reuse it, or we'll create a local one
 
 export default function VoterVerificationQueue({ 

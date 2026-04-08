@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     # Admin-portal base URL used to build invite activation links.
     ADMIN_FRONTEND_URL: str = "http://localhost:5174"
 
+    # Voter-portal base URL used to build voter verification links.
+    VOTER_FRONTEND_URL: str = "http://localhost:5173"
+
     # SMTP config for transactional email delivery.
     SMTP_HOST: str | None = None
     SMTP_PORT: int = 587
@@ -43,6 +46,7 @@ class Settings(BaseSettings):
             "SMTP_FROM_EMAIL",
             "SMTP_FROM_NAME",
             "ADMIN_FRONTEND_URL",
+            "VOTER_FRONTEND_URL",
         ]:
             val = getattr(values, field, None)
             if isinstance(val, str):

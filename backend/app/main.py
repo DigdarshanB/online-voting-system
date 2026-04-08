@@ -9,6 +9,7 @@ from app.routes.admin_elections import router as admin_elections_router
 from app.routes.admin_parties import router as admin_parties_router
 from app.routes.admin_candidates import router as admin_candidates_router
 from app.routes.verification import router as verification_router
+from app.routes.registration import router as registration_router
 from app.routes.admin_verifications import router as admin_verifications_router
 from app.routes.admin_voter_verifications import router as admin_voter_verifications_router
 
@@ -55,6 +56,7 @@ app.include_router(admin_elections_router)
 app.include_router(admin_parties_router)
 app.include_router(admin_candidates_router)
 app.include_router(verification_router)
+app.include_router(registration_router)
 app.include_router(admin_verifications_router)
 app.include_router(admin_voter_verifications_router)
 

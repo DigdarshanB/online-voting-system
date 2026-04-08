@@ -2,7 +2,7 @@ import React, { useMemo, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { setToken } from "../lib/authStorage";
 import { extractError } from "../lib/token";
-import { login, register, fetchMe } from "../features/auth/api/authApi";
+import { login, fetchMe, submitRegistration } from "../features/auth/api/authApi";
 import { uploadCitizenship } from "../features/verification/api/verificationApi";
 import "./VoterAuthPage.css";
 
@@ -49,6 +49,9 @@ export default function VoterAuthPage() {
 
   /* UI-level error messaging for immediate feedback (does not replace server validation). */
   const [formError, setFormError] = useState("");
+
+  /* Success banner shown after registration completes. */
+  const [successMessage, setSuccessMessage] = useState("");
 
   /* Loading flag to disable submit during in-flight requests. */
   const [loading, setLoading] = useState(false);
@@ -182,6 +185,7 @@ export default function VoterAuthPage() {
     }
 
     setFormError("");
+    setSuccessMessage("");
     setLoading(true);
 
     try {
@@ -189,9 +193,7 @@ export default function VoterAuthPage() {
         const data = await login(loginForm.citizenshipId, loginForm.password);
         setToken(data.access_token);
         const me = await fetchMe();
-        if (!me.email_verified) {
-          navigate("/verify-email");
-        } else if (me.status === "ACTIVE" && me.totp_enabled) {
+        if (me.status === "ACTIVE" && me.totp_enabled) {
           navigate("/home");
         } else if (me.status === "ACTIVE" && !me.totp_enabled) {
           navigate("/totp-setup");
@@ -201,14 +203,16 @@ export default function VoterAuthPage() {
           navigate("/status");
         }
       } else {
-        await register({
+        const result = await submitRegistration({
           email: registerForm.email.trim().toLowerCase(),
           full_name: registerForm.fullName,
           phone_number: registerForm.phoneNumber,
           citizenship_number: registerForm.citizenshipId,
           password: registerForm.password,
         });
-        setMode("login");
+        // Store registration ID for the verification flow
+        localStorage.setItem("pending_registration_id", String(result.registration_id));
+        navigate("/registration-verify");
       }
     } catch (err) {
       setFormError(getApiErrorMessage(err));
@@ -234,6 +238,7 @@ export default function VoterAuthPage() {
             className={`voter-tab ${mode === "login" ? "active" : ""}`}
             onClick={() => {
               setFormError("");
+              setSuccessMessage("");
               setMode("login");
             }}
           >
@@ -247,6 +252,7 @@ export default function VoterAuthPage() {
             className={`voter-tab ${mode === "register" ? "active" : ""}`}
             onClick={() => {
               setFormError("");
+              setSuccessMessage("");
               setMode("register");
             }}
           >
@@ -257,6 +263,12 @@ export default function VoterAuthPage() {
         {formError ? (
           <div className="voter-error" role="alert" aria-live="polite">
             {formError}
+          </div>
+        ) : null}
+
+        {successMessage ? (
+          <div className="voter-success" role="status" aria-live="polite">
+            {successMessage}
           </div>
         ) : null}
 

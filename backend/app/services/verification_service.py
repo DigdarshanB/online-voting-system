@@ -3,7 +3,9 @@
 import hashlib
 import logging
 import secrets
+import shutil
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 from fastapi import HTTPException, Request
 from sqlalchemy import func, select, update
@@ -12,10 +14,11 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.models.email_verification import EmailVerification
 from app.models.password_reset_code import PasswordResetCode
+from app.models.pending_voter_registration import PendingVoterRegistration
 from app.models.totp_recovery_request import TotpRecoveryRequest
 from app.models.user import User
 from app.models.vote import Vote
-from app.repositories import totp_recovery_repository, user_repository
+from app.repositories import pending_registration_repository, totp_recovery_repository, user_repository
 from app.services.auth_audit import audit_auth_event
 from app.services.email_delivery import EmailDeliveryError
 from app.services.email_verification_delivery import send_email_verification_with_fallback
@@ -241,38 +244,140 @@ def reject_totp_recovery(request_id: int, reason: str | None, actor: User, db: S
 
 # ── Voter verification ─────────────────────────────────────────
 
-def approve_voter(user_id: int, actor: User, db: Session) -> dict:
-    voter = get_voter_or_404(user_id, db)
-    if not voter.citizenship_image_path:
+# Upload base paths – must match the paths used in registration_service.py
+_PENDING_CITIZENSHIP_BASE = Path(__file__).resolve().parents[2] / "uploads" / "pending_citizenship"
+_PENDING_FACES_BASE = Path(__file__).resolve().parents[2] / "uploads" / "pending_faces"
+_FINAL_CITIZENSHIP_BASE = Path(__file__).resolve().parents[2] / "uploads" / "citizenship"
+_FINAL_FACES_BASE = Path(__file__).resolve().parents[2] / "uploads" / "faces"
+
+
+def _get_pending_reg_or_404(reg_id: int, db: Session) -> PendingVoterRegistration:
+    reg = pending_registration_repository.get_by_id(db, reg_id)
+    if not reg:
+        raise HTTPException(status_code=404, detail="Pending registration not found")
+    return reg
+
+
+def approve_voter(reg_id: int, actor: User, db: Session) -> dict:
+    """Approve a pending voter registration → create the final User row."""
+    reg = _get_pending_reg_or_404(reg_id, db)
+    if reg.status != "PENDING_REVIEW":
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot approve: registration status is '{reg.status}', expected 'PENDING_REVIEW'",
+        )
+    if not reg.citizenship_image_path:
         raise HTTPException(status_code=400, detail="Cannot approve: citizenship document not uploaded")
-    if not voter.face_image_path:
+    if not reg.face_image_path:
         raise HTTPException(status_code=400, detail="Cannot approve: face photo not uploaded")
 
-    voter.status = "ACTIVE"
-    voter.approved_at = datetime.now(timezone.utc)
-    voter.rejection_reason = None
+    now = datetime.now(timezone.utc)
+
+    # ── Copy uploaded files from pending dirs to final dirs ──────
+    final_doc_path = reg.citizenship_image_path
+    final_face_path = reg.face_image_path
+    try:
+        src_doc_dir = _PENDING_CITIZENSHIP_BASE / str(reg.id)
+        src_face_dir = _PENDING_FACES_BASE / str(reg.id)
+
+        # We'll use the pending reg ID as a temporary placeholder;
+        # after user creation we'll rename to the real user ID.
+    except Exception:
+        pass  # file ops are best-effort; paths stay as-is
+
+    # ── Create the final User row ───────────────────────────────
+    user = user_repository.create_user(
+        db,
+        email=reg.email,
+        full_name=reg.full_name,
+        phone_number=reg.phone_number,
+        citizenship_no_raw=reg.citizenship_no_raw,
+        citizenship_no_normalized=reg.citizenship_no_normalized,
+        hashed_password=reg.hashed_password,
+        role="voter",
+        status="ACTIVE",
+    )
+    user.email_verified_at = reg.email_verified_at
+    user.citizenship_image_path = reg.citizenship_image_path
+    user.document_uploaded_at = reg.document_uploaded_at
+    user.face_image_path = reg.face_image_path
+    user.face_uploaded_at = reg.face_uploaded_at
+    user.approved_at = now
+
+    # Copy TOTP secret from pending registration so the voter can
+    # authenticate with their existing authenticator app immediately.
+    if reg.totp_secret:
+        user.totp_secret = reg.totp_secret
+        user.totp_enabled_at = now
+
+    # ── Move uploaded files to user-id-based directories ────────
+    try:
+        pending_doc_dir = _PENDING_CITIZENSHIP_BASE / str(reg.id)
+        if pending_doc_dir.is_dir():
+            dest_doc_dir = _FINAL_CITIZENSHIP_BASE / str(user.id)
+            dest_doc_dir.mkdir(parents=True, exist_ok=True)
+            for f in pending_doc_dir.iterdir():
+                shutil.copy2(str(f), str(dest_doc_dir / f.name))
+            # Update user path to point to final location
+            if reg.citizenship_image_path:
+                fname = Path(reg.citizenship_image_path).name
+                user.citizenship_image_path = f"uploads/citizenship/{user.id}/{fname}"
+
+        pending_face_dir = _PENDING_FACES_BASE / str(reg.id)
+        if pending_face_dir.is_dir():
+            dest_face_dir = _FINAL_FACES_BASE / str(user.id)
+            dest_face_dir.mkdir(parents=True, exist_ok=True)
+            for f in pending_face_dir.iterdir():
+                shutil.copy2(str(f), str(dest_face_dir / f.name))
+            if reg.face_image_path:
+                fname = Path(reg.face_image_path).name
+                user.face_image_path = f"uploads/faces/{user.id}/{fname}"
+    except Exception:
+        logger.exception("Failed to copy pending uploads for reg_id=%s to user_id=%s", reg.id, user.id)
+        # Non-fatal: paths may point to pending dirs but images are still on disk
+
+    # ── Mark pending registration as approved ───────────────────
+    reg.status = "APPROVED"
+    reg.approved_at = now
+    reg.approved_by_user_id = actor.id
+    reg.converted_user_id = user.id
+    reg.rejection_reason = None
+
     db.commit()
+
     audit_auth_event(
         action="ACCOUNT_APPROVED",
         actor_user_id=actor.id,
-        target_user_id=voter.id,
-        metadata={"target_role": voter.role, "new_status": voter.status},
+        target_user_id=user.id,
+        metadata={
+            "target_role": user.role,
+            "new_status": user.status,
+            "source_registration_id": reg.id,
+        },
     )
-    return {"success": True, "status": voter.status}
+    return {"success": True, "status": user.status, "user_id": user.id}
 
 
-def reject_voter(user_id: int, reason: str, actor: User, db: Session) -> dict:
-    voter = get_voter_or_404(user_id, db)
-    voter.status = "REJECTED"
-    voter.rejection_reason = reason
+def reject_voter(reg_id: int, reason: str, actor: User, db: Session) -> dict:
+    """Reject a pending voter registration."""
+    reg = _get_pending_reg_or_404(reg_id, db)
+    if reg.status not in ("PENDING_REVIEW", "PENDING_FACE", "PENDING_DOCUMENT"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot reject: registration status is '{reg.status}'",
+        )
+    reg.status = "REJECTED"
+    reg.rejection_reason = reason
     db.commit()
     audit_auth_event(
         action="ACCOUNT_REJECTED",
         actor_user_id=actor.id,
-        target_user_id=voter.id,
-        metadata={"target_role": voter.role, "reason": reason},
+        metadata={
+            "source_registration_id": reg.id,
+            "reason": reason,
+        },
     )
-    return {"success": True, "status": voter.status, "reason": voter.rejection_reason}
+    return {"success": True, "status": reg.status, "reason": reg.rejection_reason}
 
 
 # ── Voter status management ─────────────────────────────────────
@@ -534,39 +639,61 @@ def reset_voter_password(user_id: int, actor: User, db: Session, request: Reques
 
 # ── Voter listing / detail ──────────────────────────────────────
 
-def _serialize_pending_voter(user: User) -> dict:
-    timestamps = [dt for dt in (user.document_uploaded_at, user.face_uploaded_at) if dt]
-    submitted_at = max(timestamps) if timestamps else None
+def _serialize_pending_voter(reg: PendingVoterRegistration) -> dict:
+    return {
+        "id": reg.id,
+        "full_name": reg.full_name,
+        "phone_number": reg.phone_number,
+        "citizenship_no_raw": reg.citizenship_no_raw,
+        "citizenship_no_normalized": reg.citizenship_no_normalized,
+        "document_uploaded_at": reg.document_uploaded_at,
+        "face_uploaded_at": reg.face_uploaded_at,
+        "submitted_at": reg.submitted_at,
+        "email": reg.email,
+        "email_verified": bool(reg.email_verified_at),
+        "status": reg.status,
+    }
+
+
+def _serialize_pending_voter_detail(reg: PendingVoterRegistration) -> dict:
+    data = _serialize_pending_voter(reg)
+    data.update({
+        "approved_at": reg.approved_at,
+        "rejection_reason": reg.rejection_reason,
+        "email_verified_at": reg.email_verified_at,
+        "face_uploaded_at": reg.face_uploaded_at,
+        "document_uploaded_at": reg.document_uploaded_at,
+        "created_at": reg.submitted_at,
+        "status": reg.status,
+        "account_status": reg.status,
+        "citizenship_image_available": bool(reg.citizenship_image_path),
+        "face_image_available": bool(reg.face_image_path),
+        "voting_status": "Not Voted",
+        "vote_count": 0,
+    })
+    return data
+
+
+def _serialize_voter_detail(user: User) -> dict:
     return {
         "id": user.id,
         "full_name": user.full_name,
         "phone_number": user.phone_number,
         "citizenship_no_raw": user.citizenship_no_raw,
         "citizenship_no_normalized": user.citizenship_no_normalized,
-        "document_uploaded_at": user.document_uploaded_at,
-        "face_uploaded_at": user.face_uploaded_at,
-        "submitted_at": submitted_at,
         "email": user.email,
         "email_verified": bool(user.email_verified_at),
+        "email_verified_at": user.email_verified_at,
         "status": user.status,
-    }
-
-
-def _serialize_voter_detail(user: User) -> dict:
-    data = _serialize_pending_voter(user)
-    data.update({
+        "account_status": user.status,
         "approved_at": user.approved_at,
         "rejection_reason": user.rejection_reason,
-        "email_verified_at": user.email_verified_at,
         "face_uploaded_at": user.face_uploaded_at,
         "document_uploaded_at": user.document_uploaded_at,
         "created_at": user.created_at,
-        "status": user.status,
-        "account_status": user.status,
         "citizenship_image_available": bool(user.citizenship_image_path),
         "face_image_available": bool(user.face_image_path),
-    })
-    return data
+    }
 
 
 def _serialize_list_item(user: User, vote_count: int | None) -> dict:
@@ -587,23 +714,35 @@ def _serialize_list_item(user: User, vote_count: int | None) -> dict:
 
 
 def list_pending_voters(db: Session) -> list[dict]:
-    rows = db.execute(
-        select(User).where(User.role == "voter", User.status == "PENDING_REVIEW")
-    ).scalars().all()
+    rows = pending_registration_repository.list_pending_review(db)
     return [_serialize_pending_voter(row) for row in rows]
 
 
 def get_voter_detail(user_id: int, db: Session) -> dict:
-    voter = get_voter_or_404(user_id, db)
-    vote_count = db.execute(
-        select(func.count(Vote.id)).where(Vote.voter_id == voter.id)
-    ).scalar() or 0
-    detail = _serialize_voter_detail(voter)
-    detail.update({
-        "voting_status": "Voted" if vote_count > 0 else "Not Voted",
-        "vote_count": vote_count,
-    })
-    return detail
+    """Return detail for either a real voter (user) or a pending registration.
+
+    The admin frontend uses voter IDs. For approved voters these are user IDs
+    in the users table. For the pending queue they are pending_voter_registration IDs.
+    We try users first, then fall back to pending registrations.
+    """
+    user = user_repository.get_user_by_id(db, user_id)
+    if user and user.role == "voter":
+        vote_count = db.execute(
+            select(func.count(Vote.id)).where(Vote.voter_id == user.id)
+        ).scalar() or 0
+        detail = _serialize_voter_detail(user)
+        detail.update({
+            "voting_status": "Voted" if vote_count > 0 else "Not Voted",
+            "vote_count": vote_count,
+        })
+        return detail
+
+    # Try pending registration
+    reg = pending_registration_repository.get_by_id(db, user_id)
+    if reg:
+        return _serialize_pending_voter_detail(reg)
+
+    raise HTTPException(status_code=404, detail="Voter not found")
 
 
 def list_voters(
@@ -725,21 +864,39 @@ def bulk_voter_actions(
 
     for uid in user_ids:
         try:
-            voter = get_voter_or_404(uid, db)
             if action == "approve":
+                # Try as pending registration first
+                reg = pending_registration_repository.get_by_id(db, uid)
+                if reg and reg.status == "PENDING_REVIEW":
+                    result = approve_voter(uid, actor, db)
+                    successes.append(uid)
+                    continue
+                # Fall back to existing user
+                voter = get_voter_or_404(uid, db)
                 if not voter.citizenship_image_path or not voter.face_image_path:
                     raise HTTPException(status_code=400, detail="Missing required uploads")
                 voter.status = "ACTIVE"
                 voter.approved_at = datetime.now(timezone.utc)
                 voter.rejection_reason = None
+                successes.append(uid)
             elif action == "reject":
+                reg = pending_registration_repository.get_by_id(db, uid)
+                if reg and reg.status in ("PENDING_REVIEW", "PENDING_FACE", "PENDING_DOCUMENT"):
+                    result = reject_voter(uid, reason or "Rejected via bulk action", actor, db)
+                    successes.append(uid)
+                    continue
+                voter = get_voter_or_404(uid, db)
                 voter.status = "REJECTED"
                 voter.rejection_reason = reason
+                successes.append(uid)
             elif action in ("suspend", "deactivate"):
+                voter = get_voter_or_404(uid, db)
                 voter.status = "SUSPENDED"
+                successes.append(uid)
             elif action == "reactivate":
+                voter = get_voter_or_404(uid, db)
                 voter.status = "ACTIVE"
-            successes.append(uid)
+                successes.append(uid)
         except HTTPException as exc:
             failures.append({"id": uid, "error": exc.detail})
         except Exception:

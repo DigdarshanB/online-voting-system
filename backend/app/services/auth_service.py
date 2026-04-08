@@ -150,55 +150,25 @@ def register_voter(
     request: Request,
     db: Session,
 ) -> dict:
+    """Delegate voter registration to the pending-registration service.
+
+    This function no longer creates a ``users`` row. It creates a
+    ``pending_voter_registrations`` row instead. The real user is only
+    created when admin approval completes the verification pipeline.
+    """
     if role and role.lower() in ("admin", "super_admin"):
         raise HTTPException(status_code=403, detail="Public registration cannot create admin accounts")
 
-    normalized = normalize_citizenship_number(citizenship_number)
-    validate_password_policy(password)
-
-    try:
-        if user_repository.get_user_by_citizenship_normalized(db, normalized):
-            raise HTTPException(status_code=400, detail="Citizenship number already registered")
-        if user_repository.get_user_by_email(db, email):
-            raise HTTPException(status_code=400, detail="Email already registered")
-
-        user = user_repository.create_user(
-            db,
-            email=email,
-            full_name=full_name,
-            phone_number=phone_number,
-            citizenship_no_raw=citizenship_number,
-            citizenship_no_normalized=normalized,
-            hashed_password=hash_password(password),
-            role="voter",
-            status="PENDING_DOCUMENT",
-        )
-        issue_email_verification_token(user=user, db=db, request=request)
-        return {
-            "id": user.id,
-            "email": user.email,
-            "citizenship_no": user.citizenship_no_normalized,
-            "role": user.role,
-        }
-    except HTTPException:
-        raise
-    except OperationalError:
-        db.rollback()
-        logger.exception(
-            "Registration failed due to database connectivity issue for email=%s ip=%s",
-            email, get_client_ip(request),
-        )
-        raise HTTPException(
-            status_code=503,
-            detail="Database connection failed. Please verify backend database configuration.",
-        )
-    except SQLAlchemyError:
-        db.rollback()
-        logger.exception(
-            "Registration failed due to database error for email=%s ip=%s",
-            email, get_client_ip(request),
-        )
-        raise HTTPException(status_code=500, detail="Registration failed due to a server error")
+    from app.services.registration_service import submit_registration
+    return submit_registration(
+        email=email,
+        full_name=full_name,
+        phone_number=phone_number,
+        citizenship_number=citizenship_number,
+        password=password,
+        request=request,
+        db=db,
+    )
 
 
 # ── Email verification ──────────────────────────────────────────

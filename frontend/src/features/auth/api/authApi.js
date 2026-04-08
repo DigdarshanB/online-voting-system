@@ -24,6 +24,47 @@ export function register(payload) {
   return apiClient.post("/auth/register", payload).then((r) => r.data);
 }
 
+/* ── pending registration lifecycle (unauthenticated) ──────── */
+
+export function submitRegistration(payload) {
+  return apiClient.post("/registration/submit", payload).then((r) => r.data);
+}
+
+export function registrationTotpSetup(registrationId) {
+  return apiClient
+    .post(`/registration/${registrationId}/totp/setup`)
+    .then((r) => r.data);
+}
+
+export function registrationTotpVerify(registrationId, code) {
+  return apiClient
+    .post(`/registration/${registrationId}/totp/verify`, { code })
+    .then((r) => r.data);
+}
+
+export function getRegistrationStatus(registrationId) {
+  return apiClient
+    .get(`/registration/${registrationId}/status`)
+    .then((r) => r.data);
+}
+
+export function uploadRegistrationDocument(registrationId, file) {
+  const form = new FormData();
+  form.append("file", file);
+  return apiClient
+    .post(`/registration/${registrationId}/document`, form)
+    .then((r) => r.data);
+}
+
+export function uploadRegistrationFace(registrationId, blob) {
+  const file = new File([blob], "face-capture.jpg", { type: "image/jpeg" });
+  const form = new FormData();
+  form.append("file", file);
+  return apiClient
+    .post(`/registration/${registrationId}/face`, form)
+    .then((r) => r.data);
+}
+
 /* ── email verification ────────────────────────────────────── */
 
 export function verifyEmail(token) {

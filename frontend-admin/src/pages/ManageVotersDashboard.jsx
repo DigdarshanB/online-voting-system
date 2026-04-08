@@ -392,6 +392,27 @@ export default function ManageVotersDashboard() {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkDialog, setBulkDialog] = useState(null);
 
+  // ── Pending registrations ──────────────────────────────────
+  const [pendingRegs, setPendingRegs] = useState([]);
+  const [pendingLoading, setPendingLoading] = useState(false);
+
+  const fetchPendingRegs = useCallback(async () => {
+    setPendingLoading(true);
+    try {
+      const token = localStorage.getItem("access_token");
+      const { data } = await axios.get(`${API}/admin/voters/pending`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPendingRegs(data || []);
+    } catch {
+      setPendingRegs([]);
+    } finally {
+      setPendingLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchPendingRegs(); }, [fetchPendingRegs]);
+
   const pushToast = useCallback((title, tone = "success", body = "") => {
     const id = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
     setToasts((prev) => [...prev, { id, title, tone, body }]);
@@ -543,12 +564,12 @@ export default function ManageVotersDashboard() {
     const suspended = items.filter((v) => v.accountStatus === "Suspended").length;
     return [
       { label: "Total voters", value: total, tone: "primary" },
-      { label: "Pending review", value: pending, tone: "amber" },
+      { label: "Pending registrations", value: pendingRegs.length, tone: "amber" },
       { label: "Approved", value: approved, tone: "success" },
       { label: "Rejected", value: rejected, tone: "danger" },
       { label: "Suspended", value: suspended, tone: "indigo" },
     ];
-  }, [items, total]);
+  }, [items, total, pendingRegs]);
 
   const selectedCount = selectedIds.size;
   const allOnPageSelected = items.length > 0 && items.every((v) => selectedIds.has(v.id));
@@ -687,6 +708,7 @@ export default function ManageVotersDashboard() {
 
   function handleRefresh() {
     setRefreshTick((t) => t + 1);
+    fetchPendingRegs();
   }
 
   function handleResetFilters() {
@@ -721,6 +743,7 @@ export default function ManageVotersDashboard() {
     const { data } = await axios[method](url, payload, { headers: { Authorization: `Bearer ${token}` } });
     pushToast(data?.detail || `${kind[0].toUpperCase()}${kind.slice(1)} successful`, "success");
     handleRefresh();
+    fetchPendingRegs();
     if (detailId === voterId) {
       await loadDetails(voterId);
     }
@@ -847,6 +870,73 @@ export default function ManageVotersDashboard() {
             </div>
           ))}
         </div>
+
+        {/* ── Pending Registrations Section ───────────────────── */}
+        {pendingRegs.length > 0 && (
+          <div className="card-surface" style={{ marginBottom: "20px", borderRadius: "10px", border: "1px solid #fbbf24", overflow: "hidden" }}>
+            <div style={{ background: "#fffbeb", padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #fde68a" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <span style={{ fontSize: "18px" }}>⏳</span>
+                <div>
+                  <span style={{ fontWeight: 700, fontSize: "14px", color: "#92400e" }}>Pending Registrations</span>
+                  <span style={{ marginLeft: "8px", fontSize: "12px", fontWeight: 600, background: "#fde68a", color: "#92400e", padding: "2px 8px", borderRadius: "9999px" }}>{pendingRegs.length}</span>
+                </div>
+              </div>
+              <button className="ghost-button" onClick={fetchPendingRegs} disabled={pendingLoading} style={{ fontSize: "12px" }}>
+                {pendingLoading ? "Loading…" : "Refresh"}
+              </button>
+            </div>
+            <table className="voters-table" style={{ marginBottom: 0 }}>
+              <thead>
+                <tr>
+                  <th>Voter</th>
+                  <th>Citizenship ID</th>
+                  <th>Documents</th>
+                  <th>Submitted</th>
+                  <th>Status</th>
+                  <th style={{ textAlign: "right" }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pendingRegs.map((reg) => (
+                  <tr key={`pending-${reg.id}`}>
+                    <td>
+                      <div className="cell-primary">{reg.full_name}</div>
+                      <div className="cell-sub">{reg.email}</div>
+                    </td>
+                    <td>{reg.citizenship_no_normalized || reg.citizenship_no_raw || "—"}</td>
+                    <td>
+                      <div className="pill-stack">
+                        <Badge label={reg.document_uploaded_at ? "Doc ✓" : "Doc ✗"} />
+                        <Badge label={reg.face_uploaded_at ? "Face ✓" : "Face ✗"} />
+                      </div>
+                    </td>
+                    <td>{fmtDate(reg.submitted_at)}</td>
+                    <td><Badge label="Pending" /></td>
+                    <td style={{ textAlign: "right" }}>
+                      <div style={{ display: "flex", gap: "6px", justifyContent: "flex-end" }}>
+                        <button className="ghost-button" style={{ fontSize: "12px", padding: "4px 10px" }}
+                          onClick={() => loadDetails(reg.id)}>
+                          Review
+                        </button>
+                        {reg.document_uploaded_at && reg.face_uploaded_at && (
+                          <button className="primary-button" style={{ fontSize: "12px", padding: "4px 10px" }}
+                            onClick={() => handleAction("Approve", reg.id)}>
+                            Approve
+                          </button>
+                        )}
+                        <button className="ghost-button" style={{ fontSize: "12px", padding: "4px 10px", color: "#DC2626" }}
+                          onClick={() => handleAction("Reject", reg.id)}>
+                          Reject
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         <div className="toolbar card-surface">
           <div className="toolbar-head">

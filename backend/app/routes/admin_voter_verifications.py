@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session
 from app.db.deps import get_db
 from app.core.jwt import get_current_user
 from app.models.user import User
+from app.repositories import pending_registration_repository
 from app.services.verification_service import (
     approve_voter,
     reject_voter,
@@ -45,6 +46,8 @@ router = APIRouter(prefix="/admin/voters", tags=["admin-voter-verifications"])
 
 _UPLOAD_BASE = Path(__file__).resolve().parents[2] / "uploads" / "citizenship"
 _UPLOAD_BASE_FACES = Path(__file__).resolve().parents[2] / "uploads" / "faces"
+_UPLOAD_BASE_PENDING_DOC = Path(__file__).resolve().parents[2] / "uploads" / "pending_citizenship"
+_UPLOAD_BASE_PENDING_FACES = Path(__file__).resolve().parents[2] / "uploads" / "pending_faces"
 
 
 # ── Helpers ─────────────────────────────────────────────────────
@@ -217,21 +220,35 @@ def get_voter_document(
     db: Session = Depends(get_db),
     _admin: User = Depends(_require_admin),
 ):
-    voter = get_voter_or_404(user_id, db)
-    if not voter.citizenship_image_path:
-        raise HTTPException(status_code=404, detail="No document uploaded")
+    # Try real voter first, then pending registration
+    from app.repositories import user_repository
+    user = user_repository.get_user_by_id(db, user_id)
+    if user and user.role == "voter":
+        if not user.citizenship_image_path:
+            raise HTTPException(status_code=404, detail="No document uploaded")
+        file_path = _UPLOAD_BASE / str(user.id)
+        filename = Path(user.citizenship_image_path).name
+        full_path = file_path / filename
+        if not full_path.is_file():
+            raise HTTPException(status_code=404, detail="Document file not found on disk")
+        suffix = full_path.suffix.lower()
+        media_type = _MEDIA_TYPES.get(suffix, "application/octet-stream")
+        return FileResponse(full_path, media_type=media_type)
 
-    file_path = _UPLOAD_BASE / str(voter.id)
-    # citizenship_image_path is like "uploads/citizenship/1/citizenship.jpg"
-    filename = Path(voter.citizenship_image_path).name
-    full_path = file_path / filename
+    reg = pending_registration_repository.get_by_id(db, user_id)
+    if reg:
+        if not reg.citizenship_image_path:
+            raise HTTPException(status_code=404, detail="No document uploaded")
+        file_path = _UPLOAD_BASE_PENDING_DOC / str(reg.id)
+        filename = Path(reg.citizenship_image_path).name
+        full_path = file_path / filename
+        if not full_path.is_file():
+            raise HTTPException(status_code=404, detail="Document file not found on disk")
+        suffix = full_path.suffix.lower()
+        media_type = _MEDIA_TYPES.get(suffix, "application/octet-stream")
+        return FileResponse(full_path, media_type=media_type)
 
-    if not full_path.is_file():
-        raise HTTPException(status_code=404, detail="Document file not found on disk")
-
-    suffix = full_path.suffix.lower()
-    media_type = _MEDIA_TYPES.get(suffix, "application/octet-stream")
-    return FileResponse(full_path, media_type=media_type)
+    raise HTTPException(status_code=404, detail="Voter not found")
 
 
 # ── GET /admin/voters/{user_id}/face ──────────────────────────
@@ -242,20 +259,34 @@ def get_voter_face(
     db: Session = Depends(get_db),
     _admin: User = Depends(_require_admin),
 ):
-    voter = get_voter_or_404(user_id, db)
-    if not voter.face_image_path:
-        raise HTTPException(status_code=404, detail="No face photo uploaded")
+    from app.repositories import user_repository
+    user = user_repository.get_user_by_id(db, user_id)
+    if user and user.role == "voter":
+        if not user.face_image_path:
+            raise HTTPException(status_code=404, detail="No face photo uploaded")
+        file_path = _UPLOAD_BASE_FACES / str(user.id)
+        filename = Path(user.face_image_path).name
+        full_path = file_path / filename
+        if not full_path.is_file():
+            raise HTTPException(status_code=404, detail="Face photo file not found on disk")
+        suffix = full_path.suffix.lower()
+        media_type = _MEDIA_TYPES.get(suffix, "application/octet-stream")
+        return FileResponse(full_path, media_type=media_type)
 
-    file_path = _UPLOAD_BASE_FACES / str(voter.id)
-    filename = Path(voter.face_image_path).name
-    full_path = file_path / filename
+    reg = pending_registration_repository.get_by_id(db, user_id)
+    if reg:
+        if not reg.face_image_path:
+            raise HTTPException(status_code=404, detail="No face photo uploaded")
+        file_path = _UPLOAD_BASE_PENDING_FACES / str(reg.id)
+        filename = Path(reg.face_image_path).name
+        full_path = file_path / filename
+        if not full_path.is_file():
+            raise HTTPException(status_code=404, detail="Face photo file not found on disk")
+        suffix = full_path.suffix.lower()
+        media_type = _MEDIA_TYPES.get(suffix, "application/octet-stream")
+        return FileResponse(full_path, media_type=media_type)
 
-    if not full_path.is_file():
-        raise HTTPException(status_code=404, detail="Face photo file not found on disk")
-
-    suffix = full_path.suffix.lower()
-    media_type = _MEDIA_TYPES.get(suffix, "application/octet-stream")
-    return FileResponse(full_path, media_type=media_type)
+    raise HTTPException(status_code=404, detail="Voter not found")
 
 
 # ── POST /admin/voters/{user_id}/approve ────────────────────────

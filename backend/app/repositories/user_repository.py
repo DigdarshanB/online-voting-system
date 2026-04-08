@@ -23,6 +23,12 @@ def get_user_by_citizenship_normalized(db: Session, normalized: str) -> User | N
 def create_user(db: Session, *, email: str | None, full_name: str, phone_number: str,
                 citizenship_no_raw: str, citizenship_no_normalized: str,
                 hashed_password: str, role: str, status: str) -> User:
+    """Insert a new user row and flush (assign PK) without committing.
+
+    The caller is responsible for calling ``db.commit()`` once all related
+    rows (e.g. email-verification tokens) are ready, so everything is
+    committed atomically.
+    """
     user = User(
         email=email,
         full_name=full_name,
@@ -34,7 +40,7 @@ def create_user(db: Session, *, email: str | None, full_name: str, phone_number:
         status=status,
     )
     db.add(user)
-    db.commit()
+    db.flush()
     db.refresh(user)
     return user
 

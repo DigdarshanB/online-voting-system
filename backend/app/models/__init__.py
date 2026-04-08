@@ -6,6 +6,7 @@ from app.models.email_verification import EmailVerification
 from app.models.password_reset_code import PasswordResetCode
 from app.models.totp_recovery_request import TotpRecoveryRequest
 from app.models.auth_audit_log import AuthAuditLog
+from app.models.pending_voter_registration import PendingVoterRegistration
 from app.models.district import District
 from app.models.constituency import Constituency
 from app.models.voter_constituency_assignment import VoterConstituencyAssignment

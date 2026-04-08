@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import VoterAuthPage from "./pages/VoterAuthPage";
+import VoterRegistrationVerify from "./pages/VoterRegistrationVerify";
 import VoterTotpSetup from "./pages/VoterTotpSetup";
 import VoterStatus from "./pages/VoterStatus";
 import VoterFaceVerification from "./pages/VoterFaceVerification";
@@ -23,6 +24,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<VoterAuthPage />} />
+        <Route path="/registration-verify" element={<VoterRegistrationVerify />} />
         <Route path="/totp-setup" element={<VoterTotpSetup />} />
         <Route path="/status" element={<VoterStatus />} />
         <Route path="/face-verification" element={<VoterFaceVerification />} />
