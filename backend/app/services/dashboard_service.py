@@ -6,10 +6,10 @@ from fastapi import HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.models.ballot import Ballot
 from app.models.election import Election
 from app.models.user import User
-from app.models.vote import Vote
-from app.repositories import election_repository, vote_repository
+from app.repositories import ballot_repository, election_repository
 
 
 def get_dashboard_summary(db: Session) -> dict:
@@ -26,7 +26,9 @@ def get_dashboard_summary(db: Session) -> dict:
         )
     ).scalar_one()
 
-    total_votes_cast = vote_repository.count_all(db)
+    total_votes_cast = db.execute(
+        select(func.count()).select_from(Ballot)
+    ).scalar_one()
 
     return {
         "active_elections": int(active_elections or 0),

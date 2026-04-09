@@ -282,6 +282,15 @@ def get_result_summary(db: Session, count_run_id: int) -> dict:
     pr_total_seats = sum(r.allocated_seats for r in pr_rows)
     pr_adj = any(r.requires_adjudication for r in pr_rows)
 
+    # Total PR seats from election's PR contest(s)
+    pr_contests = db.execute(
+        select(ElectionContest).where(
+            ElectionContest.election_id == count_run.election_id,
+            ElectionContest.contest_type == CONTEST_TYPE_PR,
+        )
+    ).scalars().all()
+    total_pr_seats = sum(c.seat_count for c in pr_contests) if pr_contests else FEDERAL_HOR_PR_SEATS
+
     return {
         "count_run_id": count_run.id,
         "election_id": count_run.election_id,
@@ -298,6 +307,7 @@ def get_result_summary(db: Session, count_run_id: int) -> dict:
             "total_valid_votes": sum(r.valid_votes for r in pr_rows),
             "parties_qualified": len(pr_qualified),
             "seats_allocated": pr_total_seats,
+            "total_seats": total_pr_seats,
             "adjudication_required": 1 if pr_adj else 0,
         },
         "can_finalize": (
@@ -411,11 +421,26 @@ def _tally_pr(
     count_run: CountRun,
     pr_votes: list[int],
 ) -> int:
-    """Tally PR votes, apply 3 % threshold, allocate 110 seats via Sainte-Laguë.
+    """Tally PR votes, apply threshold, allocate seats via Sainte-Laguë.
+
+    Reads ``seat_count`` from the election's PR contest(s) instead of
+    hardcoding a federal constant, so this works for any election level.
 
     Returns 1 if a boundary quotient tie requires adjudication, 0 otherwise.
     Uses ``fractions.Fraction`` for exact rational arithmetic — no floats.
     """
+    election_id = count_run.election_id
+
+    # ── Determine seat count from the election's PR contest(s) ───
+    pr_contests = db.execute(
+        select(ElectionContest).where(
+            ElectionContest.election_id == election_id,
+            ElectionContest.contest_type == CONTEST_TYPE_PR,
+        )
+    ).scalars().all()
+
+    seats_to_allocate = sum(c.seat_count for c in pr_contests) if pr_contests else FEDERAL_HOR_PR_SEATS
+
     # Count votes per party
     vote_count: dict[int, int] = defaultdict(int)
     for party_id in pr_votes:
@@ -444,7 +469,6 @@ def _tally_pr(
             non_qualifying[pid] = votes
 
     # ── Sainte-Laguë allocation (exact) ──────────────────────────
-    seats_to_allocate = FEDERAL_HOR_PR_SEATS  # 110
     allocated: dict[int, int] = {pid: 0 for pid in qualifying}
     adjudication_required = 0
 

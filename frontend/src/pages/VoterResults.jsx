@@ -55,7 +55,7 @@ export default function VoterResults() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12, marginBottom: 28 }}>
             <SummaryCard label="Ballots Counted" value={summary.total_ballots_counted?.toLocaleString() ?? "—"} color="#2563eb" />
             <SummaryCard label="FPTP Winners" value={`${summary.fptp.winners_declared} / ${summary.fptp.total_contests}`} color="#059669" />
-            <SummaryCard label="PR Seats Allocated" value={`${summary.pr.seats_allocated} / 110`} color="#7c3aed" />
+            <SummaryCard label="PR Seats Allocated" value={`${summary.pr.seats_allocated} / ${summary.pr.total_seats ?? "—"}`} color="#7c3aed" />
             <SummaryCard label="PR Parties Qualified" value={summary.pr.parties_qualified} color="#ea580c" />
           </div>
 

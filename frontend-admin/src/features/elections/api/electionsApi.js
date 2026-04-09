@@ -39,6 +39,11 @@ export async function configureElection(id) {
   return res.data;
 }
 
+export async function advanceElection(id) {
+  const res = await apiClient.post(`/admin/elections/${id}/advance`);
+  return res.data;
+}
+
 export async function getMasterDataStatus() {
   const res = await apiClient.get("/admin/elections/master-data/status");
   return res.data;

@@ -427,7 +427,7 @@ function SummaryCards({ summary }) {
   const cards = [
     { icon: Users, label: "Ballots Counted", value: summary.total_ballots_counted ?? "—", color: P.accent },
     { icon: Award, label: "FPTP Winners", value: `${summary.fptp.winners_declared} / ${summary.fptp.total_contests}`, color: P.success },
-    { icon: TrendingUp, label: "PR Seats", value: `${summary.pr.seats_allocated} / 110`, color: P.purple },
+    { icon: TrendingUp, label: "PR Seats", value: `${summary.pr.seats_allocated} / ${summary.pr.total_seats ?? "—"}`, color: P.purple },
     { icon: BarChart3, label: "PR Qualified", value: `${summary.pr.parties_qualified} parties`, color: P.orange },
   ];
 

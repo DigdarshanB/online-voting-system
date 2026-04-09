@@ -21,6 +21,7 @@ import {
   generateStructure,
   getReadiness,
   configureElection,
+  advanceElection,
   getMasterDataStatus,
   getContests,
 } from "../features/elections/api/electionsApi";
@@ -233,6 +234,21 @@ export default function ManageElectionsPage() {
     }
   };
 
+  /* ── Advance lifecycle handler ─────────────────────────────── */
+  const handleAdvance = async (id, nextLabel) => {
+    clearMessages();
+    setActionLoading(`adv-${id}`);
+    try {
+      await advanceElection(id);
+      setActionSuccess(`Election advanced to ${nextLabel}`);
+      reload();
+    } catch (err) {
+      setActionError(err?.response?.data?.detail || "Failed to advance election status");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   return (
     <div style={{ padding: "32px 40px", maxWidth: 1200, margin: "0 auto" }}>
       {/* Header */}
@@ -357,6 +373,7 @@ export default function ManageElectionsPage() {
               onDelete={() => handleDelete(el.id)}
               onGenerate={() => handleGenerate(el.id)}
               onConfigure={() => handleConfigure(el.id)}
+              onAdvance={(nextLabel) => handleAdvance(el.id, nextLabel)}
               actionLoading={actionLoading}
               masterData={masterData}
             />
@@ -542,6 +559,7 @@ function ElectionCard({
   onDelete,
   onGenerate,
   onConfigure,
+  onAdvance,
   actionLoading,
   masterData,
 }) {
@@ -789,17 +807,50 @@ function ElectionCard({
                 </div>
               )}
 
-              {/* Locked elections just show info */}
-              {!isDraft && (
-                <div style={{
-                  marginTop: 16, padding: "12px 16px", borderRadius: 8,
-                  background: "#F8FAFC", fontSize: 13, color: P.muted,
-                  display: "flex", alignItems: "center", gap: 8,
-                }}>
-                  <Lock size={14} />
-                  This election is in <strong style={{ color: P.text }}>{el.status}</strong> state. Setup is locked.
-                </div>
-              )}
+              {/* Locked elections — lifecycle advance buttons */}
+              {!isDraft && (() => {
+                const TRANSITIONS = {
+                  CONFIGURED: { next: "Nominations Open", icon: ChevronRight, color: "#06B6D4" },
+                  NOMINATIONS_OPEN: { next: "Nominations Closed", icon: Lock, color: "#0EA5E9" },
+                  NOMINATIONS_CLOSED: { next: "Candidate List Published", icon: CheckCircle2, color: "#2563EB" },
+                  CANDIDATE_LIST_PUBLISHED: { next: "Polling Open", icon: ChevronRight, color: "#16A34A" },
+                  POLLING_OPEN: { next: "Polling Closed", icon: Lock, color: "#F59E0B" },
+                  FINALIZED: { next: "Archived", icon: ChevronRight, color: "#6B7280" },
+                };
+                const t = TRANSITIONS[el.status];
+                return (
+                  <div style={{
+                    marginTop: 16, padding: "12px 16px", borderRadius: 8,
+                    background: "#F8FAFC", fontSize: 13, color: P.muted,
+                    display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
+                  }}>
+                    <Lock size={14} />
+                    <span>
+                      This election is in <strong style={{ color: P.text }}>{el.status}</strong> state.
+                    </span>
+                    {t && (
+                      <button
+                        onClick={() => onAdvance(t.next)}
+                        disabled={!!actionLoading}
+                        style={{
+                          display: "flex", alignItems: "center", gap: 6,
+                          padding: "7px 16px", borderRadius: 8, border: "none",
+                          background: t.color, color: "#FFF", fontWeight: 700, fontSize: 13,
+                          cursor: actionLoading ? "not-allowed" : "pointer",
+                          opacity: actionLoading ? 0.6 : 1, marginLeft: "auto",
+                        }}
+                      >
+                        {actionLoading === `adv-${el.id}` ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <t.icon size={14} />
+                        )}
+                        Advance → {t.next}
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
             </>
           )}
         </div>

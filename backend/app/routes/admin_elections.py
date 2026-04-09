@@ -10,6 +10,7 @@ Endpoints:
   GET    /admin/elections/{id}/contests            — list contests
   GET    /admin/elections/{id}/readiness           — structure readiness check
   POST   /admin/elections/{id}/configure           — lock setup (DRAFT→CONFIGURED)
+  POST   /admin/elections/{id}/advance             — advance to next lifecycle status
   GET    /admin/elections/master-data/status        — constituency/district counts
 """
 
@@ -31,6 +32,7 @@ from app.schemas.election import (
 )
 from app.services.election_service import (
     ElectionServiceError,
+    advance_election_status,
     check_structure_readiness,
     configure_election,
     create_election,
@@ -236,6 +238,24 @@ def configure_election_endpoint(
         raise HTTPException(status_code=404, detail="Election not found")
     try:
         election = configure_election(db, election)
+    except ElectionServiceError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return election
+
+
+# ── Advance lifecycle status ────────────────────────────────────
+
+@router.post("/{election_id}/advance", response_model=ElectionRead)
+def advance_election_endpoint(
+    election_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(_require_admin),
+):
+    election = election_repository.get_by_id(db, election_id)
+    if not election:
+        raise HTTPException(status_code=404, detail="Election not found")
+    try:
+        election = advance_election_status(db, election)
     except ElectionServiceError as e:
         raise HTTPException(status_code=400, detail=str(e))
     return election

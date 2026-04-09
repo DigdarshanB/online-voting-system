@@ -80,6 +80,7 @@ class PrSummary(BaseModel):
     total_valid_votes: int
     parties_qualified: int
     seats_allocated: int
+    total_seats: int
     adjudication_required: int
 
 

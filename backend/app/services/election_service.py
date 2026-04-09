@@ -8,7 +8,10 @@ Business rules enforced here:
 - Generation blocked unless area_units master data is sufficient
 - Only DRAFT elections may have structure generated or be edited/deleted
 - Configure (DRAFT→CONFIGURED) blocked unless structure passes readiness
+- Lifecycle transitions enforced via ALLOWED_TRANSITIONS map
 """
+
+from datetime import datetime, timezone
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -426,6 +429,56 @@ def configure_election(db: Session, election: Election) -> Election:
         )
 
     election.status = "CONFIGURED"
+    db.commit()
+    db.refresh(election)
+    return election
+
+
+# ── Lifecycle transitions ───────────────────────────────────────
+
+# The following transitions are manually triggered by an admin.
+# POLLING_CLOSED→COUNTING and COUNTING→FINALIZED are automatic via count_service.
+ALLOWED_TRANSITIONS: dict[str, str] = {
+    "CONFIGURED": "NOMINATIONS_OPEN",
+    "NOMINATIONS_OPEN": "NOMINATIONS_CLOSED",
+    "NOMINATIONS_CLOSED": "CANDIDATE_LIST_PUBLISHED",
+    "CANDIDATE_LIST_PUBLISHED": "POLLING_OPEN",
+    "POLLING_OPEN": "POLLING_CLOSED",
+    "FINALIZED": "ARCHIVED",
+}
+
+# Lifecycle timestamp fields to set when entering a new status
+_TIMESTAMP_FOR_STATUS: dict[str, str] = {
+    "NOMINATIONS_OPEN": "nomination_open_at",
+    "NOMINATIONS_CLOSED": "nomination_close_at",
+    "CANDIDATE_LIST_PUBLISHED": "candidate_list_publish_at",
+    "POLLING_OPEN": "polling_start_at",
+    "POLLING_CLOSED": "polling_end_at",
+}
+
+
+def advance_election_status(db: Session, election: Election) -> Election:
+    """Advance an election to its next lifecycle status.
+
+    Uses ALLOWED_TRANSITIONS to determine the valid next state.
+    Automatically sets the corresponding lifecycle timestamp.
+    """
+    current = election.status
+    next_status = ALLOWED_TRANSITIONS.get(current)
+    if next_status is None:
+        raise ElectionServiceError(
+            f"Cannot advance: no manual transition from '{current}'. "
+            f"Allowed transitions: {list(ALLOWED_TRANSITIONS.keys())}"
+        )
+
+    now = datetime.now(timezone.utc)
+
+    # Set lifecycle timestamp if applicable
+    ts_field = _TIMESTAMP_FOR_STATUS.get(next_status)
+    if ts_field:
+        setattr(election, ts_field, now)
+
+    election.status = next_status
     db.commit()
     db.refresh(election)
     return election

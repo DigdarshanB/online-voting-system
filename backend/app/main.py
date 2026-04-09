@@ -15,6 +15,7 @@ from app.routes.admin_voter_verifications import router as admin_voter_verificat
 from app.routes.voter_elections import router as voter_elections_router
 from app.routes.admin_results import router as admin_results_router
 from app.routes.voter_results import router as voter_results_router
+from app.routes.admin_voter_assignments import router as admin_voter_assignments_router
 
 app = FastAPI(title="Online Voting System API")
 
@@ -65,6 +66,7 @@ app.include_router(admin_voter_verifications_router)
 app.include_router(voter_elections_router)
 app.include_router(admin_results_router)
 app.include_router(voter_results_router)
+app.include_router(admin_voter_assignments_router)
 
 @app.get("/health")
 def health():
