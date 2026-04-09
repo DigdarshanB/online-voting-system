@@ -264,6 +264,49 @@ def get_pr_results(db: Session, count_run_id: int) -> list[PrResultRow]:
     )
 
 
+def enrich_fptp_results(db: Session, rows: list[FptpResultRow]) -> list[dict]:
+    """Hydrate candidate_photo_path and party_symbol_path onto FPTP result rows."""
+    if not rows:
+        return []
+    nomination_ids = list({r.nomination_id for r in rows})
+    img_rows = db.execute(
+        select(
+            FptpCandidateNomination.id,
+            CandidateProfile.photo_path,
+            Party.symbol_path,
+        )
+        .join(CandidateProfile, FptpCandidateNomination.candidate_id == CandidateProfile.id)
+        .outerjoin(Party, FptpCandidateNomination.party_id == Party.id)
+        .where(FptpCandidateNomination.id.in_(nomination_ids))
+    ).all()
+    lookup = {row[0]: (row[1], row[2]) for row in img_rows}
+    enriched = []
+    for r in rows:
+        d = {c.name: getattr(r, c.name) for c in r.__table__.columns}
+        photo, symbol = lookup.get(r.nomination_id, (None, None))
+        d["candidate_photo_path"] = photo
+        d["party_symbol_path"] = symbol
+        enriched.append(d)
+    return enriched
+
+
+def enrich_pr_results(db: Session, rows: list[PrResultRow]) -> list[dict]:
+    """Hydrate party_symbol_path onto PR result rows."""
+    if not rows:
+        return []
+    party_ids = list({r.party_id for r in rows})
+    sym_rows = db.execute(
+        select(Party.id, Party.symbol_path).where(Party.id.in_(party_ids))
+    ).all()
+    lookup = {row[0]: row[1] for row in sym_rows}
+    enriched = []
+    for r in rows:
+        d = {c.name: getattr(r, c.name) for c in r.__table__.columns}
+        d["party_symbol_path"] = lookup.get(r.party_id)
+        enriched.append(d)
+    return enriched
+
+
 def get_result_summary(db: Session, count_run_id: int) -> dict:
     """Return a high-level summary of count results."""
     count_run = db.get(CountRun, count_run_id)

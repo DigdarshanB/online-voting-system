@@ -42,6 +42,8 @@ class FptpResultRowRead(BaseModel):
     rank: int = 0
     is_winner: bool = False
     requires_adjudication: bool = False
+    candidate_photo_path: str | None = None
+    party_symbol_path: str | None = None
 
     class Config:
         from_attributes = True
@@ -62,6 +64,7 @@ class PrResultRowRead(BaseModel):
     highest_quotient_numerator: int | None = None
     highest_quotient_divisor: int | None = None
     requires_adjudication: bool = False
+    party_symbol_path: str | None = None
 
     class Config:
         from_attributes = True

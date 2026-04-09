@@ -67,14 +67,30 @@ export default function VoterElections() {
 
       {/* ── states ─────────────────────────────────────── */}
       {loading && (
-        <div
-          style={{
-            textAlign: "center",
-            padding: 40,
-            color: "#64748b",
-          }}
-        >
-          Loading elections…
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              style={{
+                background: "#fff",
+                border: "1px solid #e2e8f0",
+                borderRadius: 12,
+                padding: 24,
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
+                <div style={{ width: "60%", height: 20, background: "#f1f5f9", borderRadius: 6 }} />
+                <div style={{ width: 90, height: 24, background: "#f1f5f9", borderRadius: 12 }} />
+              </div>
+              <div style={{ display: "flex", gap: 24, marginBottom: 16 }}>
+                <div style={{ width: 120, height: 14, background: "#f1f5f9", borderRadius: 4 }} />
+                <div style={{ width: 160, height: 14, background: "#f1f5f9", borderRadius: 4 }} />
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <div style={{ width: 130, height: 36, background: "#f1f5f9", borderRadius: 8 }} />
+              </div>
+            </div>
+          ))}
         </div>
       )}
 

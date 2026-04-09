@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from "react";
+import ConfirmDialog from "../components/ui/ConfirmDialog";
 import {
   Plus,
   Vote,
@@ -128,6 +129,7 @@ export default function ManageFederalElectionsPage() {
   const [actionSuccess, setActionSuccess] = useState(null);
   const [masterData, setMasterData] = useState(null);
   const [masterDataLoading, setMasterDataLoading] = useState(false);
+  const [confirmDel, setConfirmDel] = useState(null);
 
   const clearMessages = () => {
     setActionError(null);
@@ -167,9 +169,14 @@ export default function ManageFederalElectionsPage() {
   };
 
   /* ── Delete handler ──────────────────────────────────────── */
-  const handleDelete = async (id, status) => {
-    const label = status === "ARCHIVED" ? "archived" : "draft";
-    if (!window.confirm(`Delete this ${label} election and all its associated data? This cannot be undone.`)) return;
+  const requestDelete = (id, status) => {
+    setConfirmDel({ id, status });
+  };
+
+  const handleDelete = async () => {
+    if (!confirmDel) return;
+    const { id } = confirmDel;
+    setConfirmDel(null);
     clearMessages();
     setActionLoading(`delete-${id}`);
     try {
@@ -373,7 +380,7 @@ export default function ManageFederalElectionsPage() {
               election={el}
               expanded={expandedId === el.id}
               onToggle={() => setExpandedId(expandedId === el.id ? null : el.id)}
-              onDelete={() => handleDelete(el.id, el.status)}
+              onDelete={() => requestDelete(el.id, el.status)}
               onGenerate={() => handleGenerate(el.id)}
               onConfigure={() => handleConfigure(el.id)}
               onAdvance={(nextLabel) => handleAdvance(el.id, nextLabel)}
@@ -383,6 +390,15 @@ export default function ManageFederalElectionsPage() {
           ))}
         </div>
       )}
+      <ConfirmDialog
+        open={!!confirmDel}
+        onClose={() => setConfirmDel(null)}
+        onConfirm={handleDelete}
+        title="Delete Election"
+        body={`Delete this ${confirmDel?.status === "ARCHIVED" ? "archived" : "draft"} election and all its associated data? This cannot be undone.`}
+        confirmLabel="Delete"
+        variant="danger"
+      />
     </div>
   );
 }

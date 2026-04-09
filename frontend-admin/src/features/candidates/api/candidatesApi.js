@@ -174,3 +174,39 @@ export async function listContests(electionId) {
   const res = await apiClient.get(`/admin/elections/${electionId}/contests`);
   return res.data;
 }
+
+// ── Party symbol upload ─────────────────────────────────────────
+
+export async function uploadPartySymbol(partyId, file) {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await apiClient.post(`/admin/parties/${partyId}/symbol`, form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data;
+}
+
+export async function removePartySymbol(partyId) {
+  const res = await apiClient.delete(`/admin/parties/${partyId}/symbol`);
+  return res.data;
+}
+
+// ── Candidate photo upload ──────────────────────────────────────
+
+export async function uploadCandidatePhoto(profileId, file) {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await apiClient.post(
+    `/admin/candidates/profiles/${profileId}/photo`,
+    form,
+    { headers: { "Content-Type": "multipart/form-data" } },
+  );
+  return res.data;
+}
+
+export async function removeCandidatePhoto(profileId) {
+  const res = await apiClient.delete(
+    `/admin/candidates/profiles/${profileId}/photo`,
+  );
+  return res.data;
+}

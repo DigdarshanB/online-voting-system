@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import ConfirmDialog from "../components/ui/ConfirmDialog";
 import {
   MapPin,
   Search,
@@ -77,6 +78,7 @@ export default function VoterAssignmentsPage() {
   const [selectedConstituency, setSelectedConstituency] = useState("");
   const [provinceFilter, setProvinceFilter] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [confirmRemove, setConfirmRemove] = useState(null);
 
   // Pagination
   const [page, setPage] = useState(1);
@@ -139,7 +141,13 @@ export default function VoterAssignmentsPage() {
   };
 
   const handleRemove = async (voterId, voterName) => {
-    if (!window.confirm(`Remove assignment for ${voterName}?`)) return;
+    setConfirmRemove({ voterId, voterName });
+  };
+
+  const confirmRemoveAction = async () => {
+    if (!confirmRemove) return;
+    const { voterId, voterName } = confirmRemove;
+    setConfirmRemove(null);
     try {
       await removeAssignment(voterId);
       setMsg({ type: "success", text: `Assignment removed for ${voterName}` });
@@ -474,6 +482,16 @@ export default function VoterAssignmentsPage() {
           </table>
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!confirmRemove}
+        onClose={() => setConfirmRemove(null)}
+        onConfirm={confirmRemoveAction}
+        title="Remove Assignment"
+        body={`Remove constituency assignment for ${confirmRemove?.voterName}?`}
+        confirmLabel="Remove"
+        variant="danger"
+      />
     </div>
   );
 }

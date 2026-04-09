@@ -2,13 +2,16 @@
 
 Route groups:
   /admin/candidates/profiles/*                        — candidate profile CRUD
+  /admin/candidates/profiles/{id}/photo               — candidate photo upload/remove
   /admin/candidates/elections/{eid}/fptp-nominations/* — FPTP nomination management
   /admin/candidates/elections/{eid}/pr-submissions/*   — PR submission & list management
   /admin/candidates/elections/{eid}/readiness          — candidate-side readiness check
 """
 
 import json
-from fastapi import APIRouter, Depends, HTTPException, Query
+from pathlib import Path
+
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from sqlalchemy.orm import Session
 
 from app.core.jwt import get_current_user
@@ -56,6 +59,23 @@ from app.services.pr_validation_service import (
 )
 
 router = APIRouter(prefix="/admin/candidates", tags=["candidates"])
+
+_PHOTO_UPLOAD_BASE = Path(__file__).resolve().parents[2] / "uploads" / "candidate_photos"
+_MAX_FILE_SIZE = 2 * 1024 * 1024  # 2 MB
+_ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
+_EXT_MAP = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}
+
+
+def _detect_image_type(data: bytes) -> str | None:
+    if len(data) < 8:
+        return None
+    if data[:3] == b"\xff\xd8\xff":
+        return "image/jpeg"
+    if data[:8] == b"\x89PNG\r\n\x1a\n":
+        return "image/png"
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
+    return None
 
 
 # ── Auth guard ──────────────────────────────────────────────────
@@ -171,6 +191,66 @@ def delete_profile_endpoint(
         delete_profile(db, profile)
     except CandidateServiceError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/profiles/{profile_id}/photo", response_model=CandidateProfileRead)
+async def upload_candidate_photo(
+    profile_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(_require_admin),
+):
+    profile = candidate_repository.get_profile_by_id(db, profile_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Candidate profile not found")
+
+    data = await file.read()
+    if len(data) > _MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="File too large (max 2 MB)")
+    if len(data) < 100:
+        raise HTTPException(status_code=400, detail="File too small or empty")
+
+    detected = _detect_image_type(data)
+    if detected not in _ALLOWED_CONTENT_TYPES:
+        raise HTTPException(status_code=400, detail="Only JPG, PNG, and WebP images are allowed")
+
+    ext = _EXT_MAP[detected]
+    photo_dir = _PHOTO_UPLOAD_BASE / str(profile_id)
+    photo_dir.mkdir(parents=True, exist_ok=True)
+
+    # Remove old photo files
+    for old in photo_dir.glob("photo.*"):
+        old.unlink(missing_ok=True)
+
+    filename = f"photo.{ext}"
+    file_path = photo_dir / filename
+    file_path.write_bytes(data)
+
+    relative_path = f"uploads/candidate_photos/{profile_id}/{filename}"
+    profile.photo_path = relative_path
+    db.commit()
+    db.refresh(profile)
+    return profile
+
+
+@router.delete("/profiles/{profile_id}/photo", response_model=CandidateProfileRead)
+def remove_candidate_photo(
+    profile_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(_require_admin),
+):
+    profile = candidate_repository.get_profile_by_id(db, profile_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Candidate profile not found")
+
+    if profile.photo_path:
+        old_file = Path(__file__).resolve().parents[2] / profile.photo_path
+        if old_file.exists():
+            old_file.unlink(missing_ok=True)
+        profile.photo_path = None
+        db.commit()
+        db.refresh(profile)
+    return profile
 
 
 # ══════════════════════════════════════════════════════════════════

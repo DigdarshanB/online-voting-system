@@ -6,9 +6,13 @@ Endpoints:
   GET    /admin/parties/{id}      — get party detail
   PATCH  /admin/parties/{id}      — update party
   DELETE /admin/parties/{id}      — delete party
+  POST   /admin/parties/{id}/symbol — upload party election symbol
+  DELETE /admin/parties/{id}/symbol — remove party election symbol
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from pathlib import Path
+
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from sqlalchemy.orm import Session
 
 from app.core.jwt import get_current_user
@@ -19,6 +23,23 @@ from app.schemas.party import PartyCreate, PartyRead, PartyUpdate
 from app.services.party_service import PartyServiceError, create_party, delete_party, update_party
 
 router = APIRouter(prefix="/admin/parties", tags=["parties"])
+
+_UPLOAD_BASE = Path(__file__).resolve().parents[2] / "uploads" / "party_symbols"
+_MAX_FILE_SIZE = 2 * 1024 * 1024  # 2 MB
+_ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
+_EXT_MAP = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}
+
+
+def _detect_image_type(data: bytes) -> str | None:
+    if len(data) < 8:
+        return None
+    if data[:3] == b"\xff\xd8\xff":
+        return "image/jpeg"
+    if data[:8] == b"\x89PNG\r\n\x1a\n":
+        return "image/png"
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
+    return None
 
 
 def _require_admin(user: User = Depends(get_current_user)) -> User:
@@ -129,3 +150,63 @@ def delete_party_endpoint(
         delete_party(db, party)
     except PartyServiceError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/{party_id}/symbol", response_model=PartyRead)
+async def upload_party_symbol(
+    party_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(_require_admin),
+):
+    party = party_repository.get_by_id(db, party_id)
+    if not party:
+        raise HTTPException(status_code=404, detail="Party not found")
+
+    data = await file.read()
+    if len(data) > _MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="File too large (max 2 MB)")
+    if len(data) < 100:
+        raise HTTPException(status_code=400, detail="File too small or empty")
+
+    detected = _detect_image_type(data)
+    if detected not in _ALLOWED_CONTENT_TYPES:
+        raise HTTPException(status_code=400, detail="Only JPG, PNG, and WebP images are allowed")
+
+    ext = _EXT_MAP[detected]
+    party_dir = _UPLOAD_BASE / str(party_id)
+    party_dir.mkdir(parents=True, exist_ok=True)
+
+    # Remove old symbol files
+    for old in party_dir.glob("symbol.*"):
+        old.unlink(missing_ok=True)
+
+    filename = f"symbol.{ext}"
+    file_path = party_dir / filename
+    file_path.write_bytes(data)
+
+    relative_path = f"uploads/party_symbols/{party_id}/{filename}"
+    party.symbol_path = relative_path
+    db.commit()
+    db.refresh(party)
+    return party
+
+
+@router.delete("/{party_id}/symbol", response_model=PartyRead)
+def remove_party_symbol(
+    party_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(_require_admin),
+):
+    party = party_repository.get_by_id(db, party_id)
+    if not party:
+        raise HTTPException(status_code=404, detail="Party not found")
+
+    if party.symbol_path:
+        old_file = Path(__file__).resolve().parents[2] / party.symbol_path
+        if old_file.exists():
+            old_file.unlink(missing_ok=True)
+        party.symbol_path = None
+        db.commit()
+        db.refresh(party)
+    return party

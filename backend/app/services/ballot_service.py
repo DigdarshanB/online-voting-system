@@ -190,8 +190,10 @@ def get_ballot_info(db: Session, election_id: int, voter: User) -> dict:
         select(
             FptpCandidateNomination.id.label("nomination_id"),
             CandidateProfile.full_name.label("candidate_name"),
+            CandidateProfile.photo_path.label("candidate_photo_path"),
             Party.name.label("party_name"),
             Party.abbreviation.label("party_abbreviation"),
+            Party.symbol_path.label("party_symbol_path"),
         )
         .join(
             CandidateProfile,
@@ -224,6 +226,7 @@ def get_ballot_info(db: Session, election_id: int, voter: User) -> dict:
             Party.id.label("party_id"),
             Party.name.label("party_name"),
             Party.abbreviation.label("party_abbreviation"),
+            Party.symbol_path.label("party_symbol_path"),
         )
         .join(PrPartySubmission, PrPartySubmission.party_id == Party.id)
         .where(
@@ -267,8 +270,10 @@ def get_ballot_info(db: Session, election_id: int, voter: User) -> dict:
                 {
                     "nomination_id": r.nomination_id,
                     "candidate_name": r.candidate_name,
+                    "candidate_photo_path": r.candidate_photo_path,
                     "party_name": r.party_name,
                     "party_abbreviation": r.party_abbreviation,
+                    "party_symbol_path": r.party_symbol_path,
                 }
                 for r in fptp_rows
             ],
@@ -281,6 +286,7 @@ def get_ballot_info(db: Session, election_id: int, voter: User) -> dict:
                     "party_id": r.party_id,
                     "party_name": r.party_name,
                     "party_abbreviation": r.party_abbreviation,
+                    "party_symbol_path": r.party_symbol_path,
                 }
                 for r in pr_rows
             ],

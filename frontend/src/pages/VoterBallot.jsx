@@ -3,6 +3,8 @@ import { Navigate, useNavigate, useParams } from "react-router-dom";
 import useAuthGuard from "../hooks/useAuthGuard";
 import apiClient from "../lib/apiClient";
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
 export default function VoterBallot() {
   const { loading: authLoading, user } = useAuthGuard();
   const { electionId } = useParams();
@@ -400,7 +402,18 @@ export default function VoterBallot() {
                       height: 18,
                     }}
                   />
-                  <div>
+                  {c.candidate_photo_path ? (
+                    <img
+                      src={`${API_BASE}/${c.candidate_photo_path}`}
+                      alt=""
+                      style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", border: "1px solid #e2e8f0", flexShrink: 0 }}
+                    />
+                  ) : (
+                    <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 600, color: "#64748b", flexShrink: 0 }}>
+                      {c.candidate_name?.[0] || "?"}
+                    </div>
+                  )}
+                  <div style={{ flex: 1 }}>
                     <div
                       style={{
                         fontWeight: 600,
@@ -415,8 +428,14 @@ export default function VoterBallot() {
                         style={{
                           fontSize: 12,
                           color: "#64748b",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 4,
                         }}
                       >
+                        {c.party_symbol_path && (
+                          <img src={`${API_BASE}/${c.party_symbol_path}`} alt="" style={{ width: 14, height: 14, objectFit: "contain" }} />
+                        )}
                         {c.party_name}
                         {c.party_abbreviation
                           ? ` (${c.party_abbreviation})`
@@ -526,6 +545,17 @@ export default function VoterBallot() {
                       height: 18,
                     }}
                   />
+                  {p.party_symbol_path ? (
+                    <img
+                      src={`${API_BASE}/${p.party_symbol_path}`}
+                      alt=""
+                      style={{ width: 32, height: 32, objectFit: "contain", flexShrink: 0 }}
+                    />
+                  ) : (
+                    <div style={{ width: 32, height: 32, borderRadius: 6, background: "#f3e8ff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 600, color: "#7c3aed", flexShrink: 0 }}>
+                      {p.party_name?.[0] || "?"}
+                    </div>
+                  )}
                   <div>
                     <div
                       style={{
@@ -658,8 +688,14 @@ export default function VoterBallot() {
                     fontSize: 15,
                     fontWeight: 600,
                     color: "#1e40af",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
                   }}
                 >
+                  {selectedCandidate?.candidate_photo_path ? (
+                    <img src={`${API_BASE}/${selectedCandidate.candidate_photo_path}`} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} />
+                  ) : null}
                   {selectedCandidate?.candidate_name}
                   {selectedCandidate?.party_abbreviation
                     ? ` (${selectedCandidate.party_abbreviation})`
@@ -683,8 +719,14 @@ export default function VoterBallot() {
                     fontSize: 15,
                     fontWeight: 600,
                     color: "#7c3aed",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
                   }}
                 >
+                  {selectedParty?.party_symbol_path ? (
+                    <img src={`${API_BASE}/${selectedParty.party_symbol_path}`} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />
+                  ) : null}
                   {selectedParty?.party_name}
                   {selectedParty?.party_abbreviation
                     ? ` (${selectedParty.party_abbreviation})`

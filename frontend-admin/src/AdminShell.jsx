@@ -37,13 +37,13 @@ const PALETTE = {
 
 const MAIN_NAV_ITEMS = [
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
-  { label: "Manage Elections", to: "/admin/manage-elections", icon: Vote },
-  { label: "Manage Candidates", to: "/admin/manage-candidates", icon: UserCheck },
-  { label: "Voter Assignments", to: "/admin/voter-assignments", icon: MapPin },
-  { label: "Results", to: "/admin/results", icon: BarChart3 },
-  { label: "Manage Admins", to: "/superadmin/manage-admins", icon: ShieldCheck },
   { label: "Voter Verifications", to: "/admin/voter-verifications", icon: BadgeCheck },
   { label: "Manage Voters", to: "/admin/manage-voters", icon: Users },
+  { label: "Voter Assignments", to: "/admin/voter-assignments", icon: MapPin },
+  { label: "Manage Admins", to: "/superadmin/manage-admins", icon: ShieldCheck },
+  { label: "Manage Candidates", to: "/admin/manage-candidates", icon: UserCheck },
+  { label: "Manage Elections", to: "/admin/manage-elections", icon: Vote },
+  { label: "Results", to: "/admin/results", icon: BarChart3 },
 ];
 
 const ACCOUNT_NAV_ITEMS = [

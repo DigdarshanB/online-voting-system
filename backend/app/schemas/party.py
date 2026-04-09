@@ -10,6 +10,7 @@ class PartyCreate(BaseModel):
     name_ne: str | None = None
     abbreviation: str = Field(..., min_length=1, max_length=30)
     symbol_description: str | None = None
+    symbol_path: str | None = None
     registration_number: str | None = None
     address: str | None = None
     established_date: date | None = None
@@ -20,6 +21,7 @@ class PartyUpdate(BaseModel):
     name_ne: str | None = None
     abbreviation: str | None = Field(None, min_length=1, max_length=30)
     symbol_description: str | None = None
+    symbol_path: str | None = None
     registration_number: str | None = None
     address: str | None = None
     established_date: date | None = None
@@ -32,6 +34,7 @@ class PartyRead(BaseModel):
     name_ne: str | None = None
     abbreviation: str
     symbol_description: str | None = None
+    symbol_path: str | None = None
     registration_number: str | None = None
     address: str | None = None
     established_date: date | None = None

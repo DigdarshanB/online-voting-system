@@ -28,6 +28,8 @@ from app.services.count_service import (
     get_fptp_results,
     get_pr_results,
     get_result_summary,
+    enrich_fptp_results,
+    enrich_pr_results,
 )
 
 router = APIRouter(prefix="/voter/results", tags=["voter-results"])
@@ -86,7 +88,8 @@ def voter_fptp_results(
 ):
     _require_voter(current_user)
     run = _get_final_count_run(db, election_id)
-    return get_fptp_results(db, run.id)
+    rows = get_fptp_results(db, run.id)
+    return enrich_fptp_results(db, rows)
 
 
 @router.get("/{election_id}/pr", response_model=list[PrResultRowRead])
@@ -97,4 +100,5 @@ def voter_pr_results(
 ):
     _require_voter(current_user)
     run = _get_final_count_run(db, election_id)
-    return get_pr_results(db, run.id)
+    rows = get_pr_results(db, run.id)
+    return enrich_pr_results(db, rows)

@@ -3,6 +3,8 @@ import { Navigate, useParams, Link } from "react-router-dom";
 import useAuthGuard from "../hooks/useAuthGuard";
 import apiClient from "../lib/apiClient";
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
 export default function VoterResults() {
   const { electionId } = useParams();
   const { loading: authLoading, user } = useAuthGuard();
@@ -129,8 +131,24 @@ function FptpTable({ rows }) {
             {cRows.map((r) => (
               <tr key={r.id} style={{ background: r.is_winner ? "#f0fdf4" : r.requires_adjudication ? "#fffbeb" : "transparent" }}>
                 <Td>{r.rank}</Td>
-                <Td bold={r.is_winner}>{r.candidate_name}</Td>
-                <Td>{r.party_name || "Independent"}</Td>
+                <Td bold={r.is_winner}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    {r.candidate_photo_path ? (
+                      <img src={`${API_BASE}/${r.candidate_photo_path}`} alt="" style={{ width: 26, height: 26, borderRadius: "50%", objectFit: "cover", border: "1px solid #e2e8f0" }} />
+                    ) : (
+                      <div style={{ width: 26, height: 26, borderRadius: "50%", background: "#e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 600, color: "#64748b", flexShrink: 0 }}>
+                        {r.candidate_name?.[0] || "?"}
+                      </div>
+                    )}
+                    {r.candidate_name}
+                  </div>
+                </Td>
+                <Td>
+                  <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                    {r.party_symbol_path && <img src={`${API_BASE}/${r.party_symbol_path}`} alt="" style={{ width: 16, height: 16, objectFit: "contain" }} />}
+                    {r.party_name || "Independent"}
+                  </div>
+                </Td>
                 <Td align="right" bold>{r.vote_count.toLocaleString()}</Td>
                 <Td>
                   {r.is_winner && <span style={{ color: "#059669", fontWeight: 600 }}>✓ Winner</span>}
@@ -162,7 +180,12 @@ function PrTable({ rows }) {
         <tbody>
           {sorted.map((r) => (
             <tr key={r.id} style={{ background: !r.meets_threshold ? "#f9fafb" : "transparent" }}>
-              <Td bold>{r.party_name}</Td>
+              <Td bold>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  {r.party_symbol_path && <img src={`${API_BASE}/${r.party_symbol_path}`} alt="" style={{ width: 20, height: 20, objectFit: "contain" }} />}
+                  {r.party_name}
+                </div>
+              </Td>
               <Td align="right">{r.valid_votes.toLocaleString()}</Td>
               <Td align="right">{r.vote_share_pct.toFixed(2)}%</Td>
               <Td>

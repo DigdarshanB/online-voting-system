@@ -10,6 +10,8 @@ import {
   finalizeCountRun, lockCountRun,
 } from "../features/results/api/resultsApi";
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
 /* ── Palette (matches project convention) ── */
 const P = {
   navy: "#173B72", accent: "#2F6FED", surface: "#FFFFFF", bg: "#F5F7FB",
@@ -493,8 +495,34 @@ function FptpResultsTable({ rows }) {
                     background: r.is_winner ? "#F0FDF4" : r.requires_adjudication ? "#FFFBEB" : "transparent",
                   }}>
                     <td style={tdStyle}>{r.rank}</td>
-                    <td style={{ ...tdStyle, fontWeight: r.is_winner ? 700 : 400 }}>{r.candidate_name}</td>
-                    <td style={tdStyle}>{r.party_name || "Independent"}</td>
+                    <td style={{ ...tdStyle, fontWeight: r.is_winner ? 700 : 400 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        {r.candidate_photo_path ? (
+                          <img
+                            src={`${API_BASE}/${r.candidate_photo_path}`}
+                            alt=""
+                            style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", border: `1px solid ${P.border}` }}
+                          />
+                        ) : (
+                          <div style={{ width: 28, height: 28, borderRadius: "50%", background: P.bg, border: `1px solid ${P.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: P.muted }}>
+                            {r.candidate_name?.[0] || "?"}
+                          </div>
+                        )}
+                        {r.candidate_name}
+                      </div>
+                    </td>
+                    <td style={tdStyle}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        {r.party_symbol_path && (
+                          <img
+                            src={`${API_BASE}/${r.party_symbol_path}`}
+                            alt=""
+                            style={{ width: 20, height: 20, objectFit: "contain" }}
+                          />
+                        )}
+                        {r.party_name || "Independent"}
+                      </div>
+                    </td>
                     <td style={{ ...tdStyle, textAlign: "right", fontWeight: 600 }}>
                       {r.vote_count.toLocaleString()}
                     </td>
@@ -555,7 +583,18 @@ function PrResultsTable({ rows }) {
               <tr key={r.id} style={{
                 background: r.requires_adjudication ? "#FFFBEB" : !r.meets_threshold ? "#F9FAFB" : "transparent",
               }}>
-                <td style={{ ...tdStyle, fontWeight: 600 }}>{r.party_name}</td>
+                <td style={{ ...tdStyle, fontWeight: 600 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        {r.party_symbol_path && (
+                          <img
+                            src={`${API_BASE}/${r.party_symbol_path}`}
+                            alt=""
+                            style={{ width: 22, height: 22, objectFit: "contain" }}
+                          />
+                        )}
+                        {r.party_name}
+                      </div>
+                    </td>
                 <td style={{ ...tdStyle, textAlign: "right" }}>{r.valid_votes.toLocaleString()}</td>
                 <td style={{ ...tdStyle, textAlign: "right" }}>{r.vote_share_pct.toFixed(2)}%</td>
                 <td style={tdStyle}>

@@ -35,6 +35,8 @@ from app.services.count_service import (
     get_result_summary,
     initiate_count,
     lock_count_run,
+    enrich_fptp_results,
+    enrich_pr_results,
 )
 
 router = APIRouter(prefix="/admin/results", tags=["admin-results"])
@@ -141,7 +143,8 @@ def get_fptp(
     current_user: User = Depends(get_current_user),
 ):
     _require_admin(current_user)
-    return get_fptp_results(db, count_run_id)
+    rows = get_fptp_results(db, count_run_id)
+    return enrich_fptp_results(db, rows)
 
 
 # ── PR results ──────────────────────────────────────────────────
@@ -154,7 +157,8 @@ def get_pr(
     current_user: User = Depends(get_current_user),
 ):
     _require_admin(current_user)
-    return get_pr_results(db, count_run_id)
+    rows = get_pr_results(db, count_run_id)
+    return enrich_pr_results(db, rows)
 
 
 # ── Finalize ────────────────────────────────────────────────────
