@@ -4,13 +4,11 @@ import useAuthGuard from "../hooks/useAuthGuard";
 import apiClient from "../lib/apiClient";
 
 const STATUS_DISPLAY = {
-  CANDIDATE_LIST_PUBLISHED: {
-    bg: "#dbeafe",
-    text: "#1e40af",
-    label: "Candidates Published",
-  },
   POLLING_OPEN: { bg: "#dcfce7", text: "#166534", label: "Polling Open" },
   POLLING_CLOSED: { bg: "#fef3c7", text: "#92400e", label: "Polling Closed" },
+  COUNTING: { bg: "#dbeafe", text: "#1e40af", label: "Counting in Progress" },
+  FINALIZED: { bg: "#f0fdf4", text: "#166534", label: "Results Published" },
+  ARCHIVED: { bg: "#f1f5f9", text: "#475569", label: "Archived" },
 };
 
 export default function VoterElections() {
@@ -247,10 +245,10 @@ export default function VoterElections() {
                   >
                     Cast Your Vote
                   </button>
-                ) : e.status === "CANDIDATE_LIST_PUBLISHED" ? (
+                ) : e.status === "FINALIZED" || e.status === "ARCHIVED" ? (
                   <button
                     onClick={() =>
-                      navigate(`/elections/${e.id}/ballot`)
+                      navigate(`/elections/${e.id}/results`)
                     }
                     style={{
                       padding: "8px 20px",
@@ -263,7 +261,7 @@ export default function VoterElections() {
                       cursor: "pointer",
                     }}
                   >
-                    Preview Candidates
+                    View Results
                   </button>
                 ) : (
                   <span
@@ -273,7 +271,7 @@ export default function VoterElections() {
                       color: "#94a3b8",
                     }}
                   >
-                    Polling Closed
+                    {e.status === "COUNTING" ? "Counting in Progress" : "Polling Closed"}
                   </span>
                 )}
               </div>

@@ -27,6 +27,7 @@ import DashboardPageView from "./pages/DashboardPage";
 import AccountCenterPage from "./pages/AccountCenterPage";
 import ManageElectionsPage from "./pages/ManageElectionsPage";
 import ManageCandidatesPage from "./pages/ManageCandidatesPage";
+import VoterAssignmentsPage from "./pages/VoterAssignmentsPage";
 import ResultsPage from "./pages/ResultsPage";
 
 import {
@@ -127,6 +128,17 @@ export default function App() {
           <RequireAdminOrSuperAdmin>
             <AdminShell title="Manage Candidates" subtitle="Manage parties, candidate profiles, nominations, and PR lists">
               <ManageCandidatesPage />
+            </AdminShell>
+          </RequireAdminOrSuperAdmin>
+        }
+      />
+      {/* Voter Assignments — admin + super_admin */}
+      <Route
+        path="/admin/voter-assignments"
+        element={
+          <RequireAdminOrSuperAdmin>
+            <AdminShell title="Voter Assignments" subtitle="Assign voters to federal constituencies for election eligibility">
+              <VoterAssignmentsPage />
             </AdminShell>
           </RequireAdminOrSuperAdmin>
         }

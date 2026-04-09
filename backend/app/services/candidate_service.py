@@ -1,7 +1,7 @@
 """Candidate profile + FPTP nomination service.
 
 Business rules:
-- Candidates may be nominated for FPTP only in CONFIGURED / NOMINATIONS_OPEN elections
+- Candidates may be nominated for FPTP only in NOMINATIONS_OPEN elections
 - One nomination per candidate per contest (enforced by unique constraint)
 - Only PENDING / WITHDRAWN nominations may be deleted
 - Approve/reject transitions require admin review
@@ -26,7 +26,7 @@ class CandidateServiceError(Exception):
 
 # ── Election status gates ───────────────────────────────────────
 
-NOMINATION_ALLOWED_STATUSES = ("CONFIGURED", "NOMINATIONS_OPEN")
+NOMINATION_ALLOWED_STATUSES = ("NOMINATIONS_OPEN",)
 
 
 def _require_nomination_status(election: Election) -> None:

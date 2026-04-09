@@ -403,7 +403,7 @@ function FptpPanel({ setMsg, clearMsg }) {
   const profileMap = Object.fromEntries(profiles.map(c => [c.id, c]));
   const contestMap = Object.fromEntries(contests.map(c => [c.id, c]));
 
-  const eligibleElections = elections.filter(e => ["CONFIGURED", "NOMINATIONS_OPEN", "NOMINATIONS_CLOSED", "CANDIDATE_LIST_PUBLISHED"].includes(e.status));
+  const eligibleElections = elections.filter(e => ["NOMINATIONS_OPEN", "NOMINATIONS_CLOSED", "CANDIDATE_LIST_PUBLISHED"].includes(e.status));
 
   return (
     <div>
@@ -623,7 +623,7 @@ function PrPanel({ setMsg, clearMsg }) {
 
   const partyMap = Object.fromEntries(parties.map(p => [p.id, p]));
   const profileMap = Object.fromEntries(profiles.map(c => [c.id, c]));
-  const eligibleElections = elections.filter(e => ["CONFIGURED", "NOMINATIONS_OPEN", "NOMINATIONS_CLOSED", "CANDIDATE_LIST_PUBLISHED"].includes(e.status));
+  const eligibleElections = elections.filter(e => ["NOMINATIONS_OPEN", "NOMINATIONS_CLOSED", "CANDIDATE_LIST_PUBLISHED"].includes(e.status));
   // Only show elections that have PR contests
   const prEligibleElections = eligibleElections.filter(e =>
     e.contest_counts ? e.contest_counts["PR"] > 0 : (e.government_level === "FEDERAL" || e.government_level === "PROVINCIAL")

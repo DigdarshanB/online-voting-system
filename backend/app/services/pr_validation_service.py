@@ -33,7 +33,7 @@ class PrValidationError(Exception):
 
 # ── Allowed election statuses ───────────────────────────────────
 
-PR_ALLOWED_STATUSES = ("CONFIGURED", "NOMINATIONS_OPEN")
+PR_ALLOWED_STATUSES = ("NOMINATIONS_OPEN",)
 PR_EDITABLE_SUBMISSION_STATUSES = ("DRAFT", "INVALID")
 
 

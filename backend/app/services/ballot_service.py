@@ -43,15 +43,57 @@ def _encrypt_choice(payload: dict) -> tuple[bytes, bytes]:
 
 
 # ── Voter-visible election statuses ─────────────────────────────
+# Elections only become visible to voters AFTER polling opens.
+# CANDIDATE_LIST_PUBLISHED is intentionally excluded — voters must not
+# see elections until the admin starts voting.
 
 VOTER_VISIBLE_STATUSES = (
-    "CANDIDATE_LIST_PUBLISHED",
     "POLLING_OPEN",
     "POLLING_CLOSED",
+    "COUNTING",
+    "FINALIZED",
+    "ARCHIVED",
 )
 
 
 # ── List elections available to a voter ──────────────────────────
+
+
+def _get_voter_constituency_id(db: Session, voter_id: int) -> int | None:
+    """Return the voter's assigned constituency_id, or None."""
+    row = db.execute(
+        select(VoterConstituencyAssignment.constituency_id).where(
+            VoterConstituencyAssignment.voter_id == voter_id
+        )
+    ).scalar_one_or_none()
+    return row
+
+
+def _is_eligible_for_election(
+    db: Session, election: Election, voter_constituency_id: int | None
+) -> bool:
+    """Check whether a voter is eligible for a specific election.
+
+    Federal elections require that the voter has a constituency assignment
+    AND that the election contains an FPTP contest for that constituency.
+    Non-federal election types are not yet implemented; they pass through
+    for now (future phases will add provincial/local eligibility).
+    """
+    if election.government_level == "FEDERAL":
+        if voter_constituency_id is None:
+            return False
+        # Voter must have a matching FPTP contest in this election
+        match = db.execute(
+            select(ElectionContest.id).where(
+                ElectionContest.election_id == election.id,
+                ElectionContest.contest_type == CONTEST_TYPE_FPTP,
+                ElectionContest.constituency_id == voter_constituency_id,
+            )
+        ).scalar_one_or_none()
+        return match is not None
+
+    # Provincial / Local — not yet implemented; pass through
+    return True
 
 
 def list_voter_elections(db: Session, voter: User) -> list[dict]:
@@ -72,6 +114,7 @@ def list_voter_elections(db: Session, voter: User) -> list[dict]:
         .all()
     )
 
+    voter_constituency_id = _get_voter_constituency_id(db, voter.id)
     voted_ids = ballot_repository.get_voted_election_ids(db, voter.id)
 
     return [
@@ -91,6 +134,7 @@ def list_voter_elections(db: Session, voter: User) -> list[dict]:
             "has_voted": e.id in voted_ids,
         }
         for e in elections
+        if _is_eligible_for_election(db, e, voter_constituency_id)
     ]
 
 

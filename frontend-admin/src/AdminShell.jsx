@@ -10,6 +10,7 @@ import {
   UserCircle2,
   UserCheck,
   BarChart3,
+  MapPin,
 } from "lucide-react";
 import { getToken, getTokenRole } from "./lib/auth";
 import "./AdminShell.css";
@@ -38,6 +39,7 @@ const MAIN_NAV_ITEMS = [
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
   { label: "Manage Elections", to: "/admin/manage-elections", icon: Vote },
   { label: "Manage Candidates", to: "/admin/manage-candidates", icon: UserCheck },
+  { label: "Voter Assignments", to: "/admin/voter-assignments", icon: MapPin },
   { label: "Results", to: "/admin/results", icon: BarChart3 },
   { label: "Manage Admins", to: "/superadmin/manage-admins", icon: ShieldCheck },
   { label: "Voter Verifications", to: "/admin/voter-verifications", icon: BadgeCheck },
@@ -68,6 +70,10 @@ export default function AdminShell({ children, title, subtitle }) {
     "/admin/manage-candidates": {
       title: "Manage Candidates",
       subtitle: "Manage parties, candidate profiles, nominations, and PR lists",
+    },
+    "/admin/voter-assignments": {
+      title: "Voter Assignments",
+      subtitle: "Assign voters to federal constituencies for election eligibility",
     },
     "/admin/results": {
       title: "Election Results",
