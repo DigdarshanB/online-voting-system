@@ -42,6 +42,7 @@ class AssignmentRead(BaseModel):
     constituency_id: int
     constituency_name: str | None = None
     voter_name: str | None = None
+    citizenship_no: str | None = None
 
     class Config:
         from_attributes = True
@@ -62,10 +63,10 @@ def list_constituencies(
             Constituency.name,
             Constituency.code,
             District.name.label("district_name"),
-            District.province_id,
+            District.province_number.label("province_id"),
         )
         .join(District, Constituency.district_id == District.id)
-        .order_by(District.province_id, District.name, Constituency.name)
+        .order_by(District.province_number, District.name, Constituency.name)
     ).all()
     return [
         {
@@ -85,37 +86,49 @@ def list_assignable_voters(
     db: Session = Depends(get_db),
     user: User = Depends(_require_admin),
 ):
-    """List active voters for assignment dropdown. Optionally search by name."""
+    """Search voters by citizenship ID (normalized). Returns voter card data."""
     q = select(
         User.id,
         User.full_name,
-        User.citizenship_number,
-    ).where(User.role == "voter", User.status == "ACTIVE")
+        User.citizenship_no_raw,
+        User.citizenship_no_normalized,
+        User.status,
+    ).where(User.role == "voter")
 
     if search.strip():
-        q = q.where(User.full_name.ilike(f"%{search.strip()}%"))
+        q = q.where(User.citizenship_no_normalized.like(f"%{search.strip()}%"))
+    else:
+        # Require a search term — don't dump all voters
+        return []
 
-    q = q.order_by(User.full_name).limit(200)
+    q = q.order_by(User.citizenship_no_normalized).limit(50)
     rows = db.execute(q).all()
 
     # Also fetch existing assignments so UI can show who's already assigned
-    assigned_map = dict(
-        db.execute(
-            select(
-                VoterConstituencyAssignment.voter_id,
-                Constituency.name,
-            ).join(
-                Constituency,
-                VoterConstituencyAssignment.constituency_id == Constituency.id,
-            )
-        ).all()
-    )
+    assigned_ids = [r.id for r in rows]
+    assigned_map = {}
+    if assigned_ids:
+        assigned_map = dict(
+            db.execute(
+                select(
+                    VoterConstituencyAssignment.voter_id,
+                    Constituency.name,
+                )
+                .join(
+                    Constituency,
+                    VoterConstituencyAssignment.constituency_id == Constituency.id,
+                )
+                .where(VoterConstituencyAssignment.voter_id.in_(assigned_ids))
+            ).all()
+        )
 
     return [
         {
             "id": r.id,
             "full_name": r.full_name,
-            "citizenship_number": r.citizenship_number,
+            "citizenship_no_raw": r.citizenship_no_raw,
+            "citizenship_no_normalized": r.citizenship_no_normalized,
+            "status": r.status,
             "assigned_constituency": assigned_map.get(r.id),
         }
         for r in rows
@@ -137,6 +150,7 @@ def list_assignments(
             VoterConstituencyAssignment.voter_id,
             VoterConstituencyAssignment.constituency_id,
             User.full_name.label("voter_name"),
+            User.citizenship_no_normalized.label("citizenship_no"),
             Constituency.name.label("constituency_name"),
         )
         .join(User, VoterConstituencyAssignment.voter_id == User.id)
@@ -155,6 +169,7 @@ def list_assignments(
             constituency_id=r.constituency_id,
             constituency_name=r.constituency_name,
             voter_name=r.voter_name,
+            citizenship_no=r.citizenship_no,
         )
         for r in rows
     ]
@@ -181,6 +196,7 @@ def get_assignment(
         constituency_id=row.constituency_id,
         constituency_name=constituency.name if constituency else None,
         voter_name=voter.full_name if voter else None,
+        citizenship_no=voter.citizenship_no_normalized if voter else None,
     )
 
 
@@ -228,6 +244,7 @@ def assign_voter(
         constituency_id=assignment.constituency_id,
         constituency_name=constituency.name,
         voter_name=voter.full_name,
+        citizenship_no=voter.citizenship_no_normalized,
     )
 
 

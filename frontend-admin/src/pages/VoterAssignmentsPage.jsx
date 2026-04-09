@@ -7,6 +7,8 @@ import {
   CheckCircle2,
   AlertTriangle,
   Users,
+  User,
+  CreditCard,
 } from "lucide-react";
 import {
   listAssignments,
@@ -124,7 +126,7 @@ export default function VoterAssignmentsPage() {
     setSubmitting(true);
     try {
       await assignVoter(selectedVoter.id, parseInt(selectedConstituency, 10));
-      setMsg({ type: "success", text: `Assigned ${selectedVoter.full_name} successfully` });
+      setMsg({ type: "success", text: `Assigned ${selectedVoter.citizenship_no_normalized || selectedVoter.full_name} successfully` });
       setSelectedVoter(null);
       setSelectedConstituency("");
       loadAssignments();
@@ -200,15 +202,15 @@ export default function VoterAssignmentsPage() {
           <MapPin size={18} /> Assign Voter to Federal Constituency
         </h3>
 
-        {/* Step 1: Search voter */}
+        {/* Step 1: Search voter by citizenship ID */}
         <div style={{ marginBottom: 16 }}>
           <label style={{ fontSize: 13, fontWeight: 600, color: P.text, display: "block", marginBottom: 4 }}>
-            1. Search Voter
+            1. Search Voter by Citizenship ID
           </label>
           <div style={{ display: "flex", gap: 8 }}>
             <input
               style={{ ...inp, maxWidth: 350 }}
-              placeholder="Search by name…"
+              placeholder="Enter citizenship number…"
               value={voterSearch}
               onChange={(e) => setVoterSearch(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -217,11 +219,11 @@ export default function VoterAssignmentsPage() {
               <Search size={14} /> Search
             </button>
           </div>
-          {voters.length > 0 && (
+          {voters.length > 0 && !selectedVoter && (
             <div
               style={{
                 marginTop: 8,
-                maxHeight: 200,
+                maxHeight: 220,
                 overflowY: "auto",
                 border: `1px solid ${P.border}`,
                 borderRadius: 8,
@@ -233,50 +235,133 @@ export default function VoterAssignmentsPage() {
                   key={v.id}
                   onClick={() => setSelectedVoter(v)}
                   style={{
-                    padding: "8px 12px",
+                    padding: "10px 14px",
                     cursor: "pointer",
                     borderBottom: `1px solid ${P.border}`,
-                    background: selectedVoter?.id === v.id ? "#EAF2FF" : "transparent",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
+                    background: "transparent",
                     fontSize: 13,
                   }}
                 >
-                  <div>
-                    <strong>{v.full_name}</strong>
-                    {v.citizenship_number && (
-                      <span style={{ color: P.muted, marginLeft: 8 }}>
-                        ID: {v.citizenship_number}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <span style={{ fontWeight: 600, color: P.navy }}>{v.citizenship_no_normalized || v.citizenship_no_raw}</span>
+                      <span style={{ color: P.muted, marginLeft: 10 }}>{v.full_name}</span>
+                    </div>
+                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                      <span
+                        style={{
+                          fontSize: 11,
+                          padding: "2px 8px",
+                          borderRadius: 9999,
+                          background: v.status === "ACTIVE" ? "#ECFDF5" : "#FEF2F2",
+                          color: v.status === "ACTIVE" ? "#059669" : "#DC2626",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {v.status}
                       </span>
-                    )}
+                      {v.assigned_constituency && (
+                        <span
+                          style={{
+                            fontSize: 11,
+                            padding: "2px 8px",
+                            borderRadius: 9999,
+                            background: "#DBEAFE",
+                            color: "#1E40AF",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {v.assigned_constituency}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  {v.assigned_constituency && (
-                    <span
-                      style={{
-                        fontSize: 11,
-                        padding: "2px 8px",
-                        borderRadius: 9999,
-                        background: "#DBEAFE",
-                        color: "#1E40AF",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {v.assigned_constituency}
-                    </span>
-                  )}
                 </div>
               ))}
             </div>
           )}
+          {voters.length === 0 && voterSearch.trim() && !selectedVoter && (
+            <div style={{ marginTop: 8, fontSize: 13, color: P.muted }}>
+              No voters found for "{voterSearch}"
+            </div>
+          )}
+          {/* ── Voter Card ──────────────────────────────── */}
           {selectedVoter && (
-            <div style={{ marginTop: 8, fontSize: 13, color: P.navy, fontWeight: 600 }}>
-              Selected: {selectedVoter.full_name} (ID: {selectedVoter.id})
-              {selectedVoter.assigned_constituency && (
-                <span style={{ color: P.muted, fontWeight: 400 }}>
-                  {" "}— currently: {selectedVoter.assigned_constituency}
-                </span>
-              )}
+            <div
+              style={{
+                marginTop: 12,
+                padding: 16,
+                border: `2px solid ${P.accent}`,
+                borderRadius: 10,
+                background: "#F0F6FF",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
+                <div
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: "50%",
+                    background: P.accent,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#fff",
+                    fontWeight: 700,
+                    fontSize: 18,
+                  }}
+                >
+                  {(selectedVoter.full_name || "?")[0].toUpperCase()}
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 15, color: P.navy }}>
+                    {selectedVoter.full_name}
+                  </div>
+                  <div style={{ fontSize: 12, color: P.muted, marginTop: 2, display: "flex", gap: 14, alignItems: "center" }}>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                      <CreditCard size={12} /> {selectedVoter.citizenship_no_normalized || selectedVoter.citizenship_no_raw}
+                    </span>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                      <User size={12} /> Voter #{selectedVoter.id}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        padding: "1px 7px",
+                        borderRadius: 9999,
+                        background: selectedVoter.status === "ACTIVE" ? "#ECFDF5" : "#FEF2F2",
+                        color: selectedVoter.status === "ACTIVE" ? "#059669" : "#DC2626",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {selectedVoter.status}
+                    </span>
+                  </div>
+                  {selectedVoter.assigned_constituency && (
+                    <div style={{ fontSize: 12, color: "#1E40AF", marginTop: 4, fontWeight: 600 }}>
+                      Currently assigned: {selectedVoter.assigned_constituency}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedVoter(null)}
+                style={{
+                  background: "none",
+                  border: `1px solid ${P.border}`,
+                  borderRadius: 6,
+                  padding: "4px 10px",
+                  cursor: "pointer",
+                  fontSize: 12,
+                  color: P.muted,
+                  fontWeight: 600,
+                }}
+              >
+                Clear
+              </button>
             </div>
           )}
         </div>
@@ -364,7 +449,7 @@ export default function VoterAssignmentsPage() {
             <thead>
               <tr style={{ textAlign: "left", borderBottom: `2px solid ${P.border}` }}>
                 <th style={{ padding: "8px 12px", color: P.muted, fontWeight: 600 }}>Voter</th>
-                <th style={{ padding: "8px 12px", color: P.muted, fontWeight: 600 }}>Voter ID</th>
+                <th style={{ padding: "8px 12px", color: P.muted, fontWeight: 600 }}>Citizenship ID</th>
                 <th style={{ padding: "8px 12px", color: P.muted, fontWeight: 600 }}>Constituency</th>
                 <th style={{ padding: "8px 12px", color: P.muted, fontWeight: 600, textAlign: "center" }}>Actions</th>
               </tr>
@@ -373,7 +458,7 @@ export default function VoterAssignmentsPage() {
               {assignments.map((a) => (
                 <tr key={a.id} style={{ borderBottom: `1px solid ${P.border}` }}>
                   <td style={{ padding: "10px 12px", fontWeight: 500 }}>{a.voter_name || "—"}</td>
-                  <td style={{ padding: "10px 12px", color: P.muted }}>{a.voter_id}</td>
+                  <td style={{ padding: "10px 12px", color: P.muted, fontFamily: "monospace" }}>{a.citizenship_no || "—"}</td>
                   <td style={{ padding: "10px 12px" }}>{a.constituency_name || "Unknown"}</td>
                   <td style={{ padding: "10px 12px", textAlign: "center" }}>
                     <button
