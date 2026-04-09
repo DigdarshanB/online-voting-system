@@ -171,8 +171,13 @@ export default function ManageElectionsPage() {
     setActionLoading(`gen-${id}`);
     try {
       const result = await generateStructure(id);
+      const parts = [];
+      if (result.fptp_contests_created) parts.push(`${result.fptp_contests_created} FPTP`);
+      if (result.pr_contests_created) parts.push(`${result.pr_contests_created} PR`);
+      if (result.mayor_contests_created) parts.push(`${result.mayor_contests_created} Mayor/Chair`);
+      if (result.deputy_mayor_contests_created) parts.push(`${result.deputy_mayor_contests_created} Deputy/Vice`);
       setActionSuccess(
-        `Structure generated: ${result.fptp_contests_created} FPTP + ${result.pr_contests_created} PR = ${result.total_contests} contests`
+        `Structure generated: ${parts.join(" + ")} = ${result.total_contests} contests`
       );
       reload();
     } catch (err) {
@@ -631,7 +636,10 @@ function ElectionCard({
                     </ul>
                   )}
                   <div style={{ marginTop: 8, fontSize: 13, color: P.muted }}>
-                    FPTP contests: {readiness.fptp_contests} · PR contests: {readiness.pr_contests} · Total constituencies: {readiness.total_constituencies}
+                    Total contests: {readiness.total_contests}
+                    {readiness.fptp_contests > 0 && ` · FPTP: ${readiness.fptp_contests}`}
+                    {readiness.pr_contests > 0 && ` · PR: ${readiness.pr_contests}`}
+                    {readiness.total_constituencies > 0 && ` · Constituencies: ${readiness.total_constituencies}`}
                   </div>
                 </div>
               )}

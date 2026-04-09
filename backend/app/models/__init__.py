@@ -9,6 +9,7 @@ from app.models.auth_audit_log import AuthAuditLog
 from app.models.pending_voter_registration import PendingVoterRegistration
 from app.models.district import District
 from app.models.constituency import Constituency
+from app.models.area_unit import AreaUnit
 from app.models.voter_constituency_assignment import VoterConstituencyAssignment
 from app.models.election_contest import ElectionContest
 from app.models.party import Party

@@ -1,8 +1,11 @@
 """Election management service — CRUD, structure generation, readiness checks.
 
 Business rules enforced here:
-- Federal HoR elections expand to 165 FPTP + 1 PR contest atomically
-- Generation blocked unless constituency master data is sufficient
+- Structure generation dispatches by (government_level, election_subtype)
+- Federal HoR: 165 FPTP + 1 PR contest atomically
+- Provincial Assembly: FPTP + PR per province (placeholder)
+- Local: Mayor + Deputy Mayor per local body
+- Generation blocked unless area_units master data is sufficient
 - Only DRAFT elections may have structure generated or be edited/deleted
 - Configure (DRAFT→CONFIGURED) blocked unless structure passes readiness
 """
@@ -17,8 +20,13 @@ from app.core.federal_constants import (
     FEDERAL_HOR_PR_SEATS,
     FPTP_SEATS_PER_CONSTITUENCY,
 )
+from app.core.election_constants import (
+    LOCAL_BODY_CATEGORIES,
+    get_structure_def,
+)
+from app.models.area_unit import AreaUnit
 from app.models.constituency import Constituency
-from app.models.election import Election, ELECTION_STATUS_VALUES
+from app.models.election import Election
 from app.models.election_contest import ElectionContest
 from app.repositories import election_repository
 
@@ -57,6 +65,13 @@ def create_election(
 ) -> Election:
     if end_time <= start_time:
         raise ElectionServiceError("end_time must be after start_time")
+
+    # Validate that we have a known structure definition
+    struct_def = get_structure_def(government_level, election_subtype)
+    if struct_def is None:
+        raise ElectionServiceError(
+            f"Unsupported election type: {government_level}/{election_subtype}"
+        )
 
     election = Election(
         title=title,
@@ -112,24 +127,16 @@ def delete_election(db: Session, election: Election) -> None:
     db.commit()
 
 
-# ── Federal structure generation ────────────────────────────────
+# ── Universal structure generation (dispatches by level/subtype) ──
 
-def generate_federal_hor_structure(db: Session, election: Election) -> dict:
-    """Atomically generate 165 FPTP + 1 PR contests for a federal HoR election.
 
-    Pre-conditions:
-    * election.status must be DRAFT
-    * election.government_level must be FEDERAL
-    * election.election_subtype must be HOR_DIRECT
-    * no contests must already exist for this election
-    * exactly 165 constituencies must exist in the districts/constituencies tables
+def generate_election_structure(db: Session, election: Election) -> dict:
+    """Generate contest structure for any supported election type.
+
+    Dispatches to the correct generator based on government_level + election_subtype.
+    This is the new universal entry point.
     """
     _require_status(election, STRUCTURE_GEN_STATUSES, "generate structure")
-
-    if election.government_level != "FEDERAL" or election.election_subtype != "HOR_DIRECT":
-        raise ElectionServiceError(
-            "Structure generation is only supported for FEDERAL / HOR_DIRECT elections"
-        )
 
     existing = election_repository.count_contests(db, election.id)
     if sum(existing.values()) > 0:
@@ -137,6 +144,39 @@ def generate_federal_hor_structure(db: Session, election: Election) -> dict:
             "Contests already exist for this election. Delete them first or create a new election."
         )
 
+    struct_def = get_structure_def(election.government_level, election.election_subtype)
+    if struct_def is None:
+        raise ElectionServiceError(
+            f"Structure generation not supported for "
+            f"{election.government_level}/{election.election_subtype}"
+        )
+
+    # Dispatch to level-specific generators
+    key = (election.government_level, election.election_subtype)
+    if key == ("FEDERAL", "HOR_DIRECT"):
+        return _generate_federal_hor(db, election)
+    elif key == ("PROVINCIAL", "PROVINCIAL_ASSEMBLY"):
+        return _generate_provincial_assembly(db, election)
+    elif key[0] == "LOCAL":
+        return _generate_local(db, election)
+    else:
+        raise ElectionServiceError(
+            f"No generator implemented for {election.government_level}/{election.election_subtype}"
+        )
+
+
+# ── Backward-compatible alias ───────────────────────────────────
+
+def generate_federal_hor_structure(db: Session, election: Election) -> dict:
+    """Backward-compatible: delegates to the universal generator."""
+    return generate_election_structure(db, election)
+
+
+# ── Federal HoR generator ──────────────────────────────────────
+
+
+def _generate_federal_hor(db: Session, election: Election) -> dict:
+    """Generate 165 FPTP + 1 PR contests for a Federal HoR election."""
     # Verify constituency master data
     constituency_count = db.execute(
         select(func.count()).select_from(Constituency)
@@ -144,18 +184,20 @@ def generate_federal_hor_structure(db: Session, election: Election) -> dict:
 
     if constituency_count < FEDERAL_HOR_FPTP_CONSTITUENCY_COUNT:
         raise ElectionServiceError(
-            f"Need exactly {FEDERAL_HOR_FPTP_CONSTITUENCY_COUNT} constituencies in master data, "
-            f"found {constituency_count}. Seed district/constituency data first."
+            f"Need {FEDERAL_HOR_FPTP_CONSTITUENCY_COUNT} constituencies, "
+            f"found {constituency_count}. Seed geography data first."
         )
 
+    # Load constituencies + their matching area_units
     constituencies = list(
         db.execute(
             select(Constituency).order_by(Constituency.id)
         ).scalars().all()
     )
-
-    # Take exactly the first 165 constituencies for FPTP
     fptp_constituencies = constituencies[:FEDERAL_HOR_FPTP_CONSTITUENCY_COUNT]
+
+    # Build code → area_unit.id mapping
+    area_map = _get_area_map(db, "CONSTITUENCY")
 
     # Create FPTP contests
     for c in fptp_constituencies:
@@ -165,16 +207,19 @@ def generate_federal_hor_structure(db: Session, election: Election) -> dict:
             title=f"FPTP – {c.name}",
             seat_count=FPTP_SEATS_PER_CONSTITUENCY,
             constituency_id=c.id,
+            area_id=area_map.get(c.code),
         )
         db.add(contest)
 
-    # Create single PR national contest
+    # PR national contest
+    np_area = _get_area_by_code(db, "NP")
     pr_contest = ElectionContest(
         election_id=election.id,
         contest_type=CONTEST_TYPE_PR,
         title="PR – National Proportional Representation",
         seat_count=FEDERAL_HOR_PR_SEATS,
         constituency_id=None,
+        area_id=np_area.id if np_area else None,
     )
     db.add(pr_contest)
 
@@ -187,37 +232,183 @@ def generate_federal_hor_structure(db: Session, election: Election) -> dict:
     }
 
 
-# ── Readiness checks ───────────────────────────────────────────
+# ── Provincial Assembly generator ──────────────────────────────
+
+
+def _generate_provincial_assembly(db: Session, election: Election) -> dict:
+    """Generate PR contests per province for a Provincial Assembly election.
+
+    Provincial constituency FPTP data is not yet available in the canonical JSON.
+    For now, generates 1 PR contest per province (7 total).
+    FPTP generation will be added when provincial constituency data is available.
+    """
+    provinces = list(
+        db.execute(
+            select(AreaUnit)
+            .where(AreaUnit.category == "PROVINCE")
+            .order_by(AreaUnit.code)
+        ).scalars().all()
+    )
+
+    if len(provinces) != 7:
+        raise ElectionServiceError(
+            f"Expected 7 provinces in area_units, found {len(provinces)}. "
+            "Seed area unit data first."
+        )
+
+    pr_created = 0
+    for prov in provinces:
+        contest = ElectionContest(
+            election_id=election.id,
+            contest_type=CONTEST_TYPE_PR,
+            title=f"Provincial PR – {prov.name}",
+            seat_count=0,  # seat counts vary by province; set later
+            area_id=prov.id,
+        )
+        db.add(contest)
+        pr_created += 1
+
+    db.commit()
+
+    return {
+        "fptp_contests_created": 0,
+        "pr_contests_created": pr_created,
+        "total_contests": pr_created,
+    }
+
+
+# ── Local election generator ───────────────────────────────────
+
+
+def _generate_local(db: Session, election: Election) -> dict:
+    """Generate Mayor + Deputy Mayor contests for local body elections.
+
+    Creates one MAYOR and one DEPUTY_MAYOR contest per local body
+    (municipality, rural municipality, metropolitan, sub-metropolitan).
+    """
+    from app.core.election_constants import CONTEST_TYPE_MAYOR, CONTEST_TYPE_DEPUTY_MAYOR
+
+    # Determine which local body categories to target
+    if election.election_subtype == "LOCAL_RURAL":
+        target_categories = ("RURAL_MUNICIPALITY",)
+    else:
+        # LOCAL_MUNICIPAL: all local body types
+        target_categories = LOCAL_BODY_CATEGORIES
+
+    local_bodies = list(
+        db.execute(
+            select(AreaUnit)
+            .where(AreaUnit.category.in_(target_categories))
+            .order_by(AreaUnit.code)
+        ).scalars().all()
+    )
+
+    if not local_bodies:
+        raise ElectionServiceError(
+            f"No local bodies found in area_units for categories {target_categories}. "
+            "Seed area unit data first."
+        )
+
+    mayor_created = 0
+    deputy_created = 0
+
+    for lb in local_bodies:
+        # Mayor / Chair
+        db.add(ElectionContest(
+            election_id=election.id,
+            contest_type=CONTEST_TYPE_MAYOR,
+            title=f"Mayor – {lb.name}" if lb.category != "RURAL_MUNICIPALITY" else f"Chair – {lb.name}",
+            seat_count=1,
+            area_id=lb.id,
+        ))
+        mayor_created += 1
+
+        # Deputy Mayor / Vice Chair
+        db.add(ElectionContest(
+            election_id=election.id,
+            contest_type=CONTEST_TYPE_DEPUTY_MAYOR,
+            title=f"Deputy Mayor – {lb.name}" if lb.category != "RURAL_MUNICIPALITY" else f"Vice Chair – {lb.name}",
+            seat_count=1,
+            area_id=lb.id,
+        ))
+        deputy_created += 1
+
+    db.commit()
+
+    return {
+        "fptp_contests_created": 0,
+        "pr_contests_created": 0,
+        "mayor_contests_created": mayor_created,
+        "deputy_mayor_contests_created": deputy_created,
+        "total_contests": mayor_created + deputy_created,
+    }
+
+
+# ── Readiness checks (multi-level) ─────────────────────────────
+
 
 def check_structure_readiness(db: Session, election: Election) -> dict:
-    """Check if a federal HoR election's structure is ready for configuration."""
+    """Check if an election's structure is ready for configuration.
+
+    Dispatches readiness checks by (government_level, election_subtype).
+    """
     issues: list[str] = []
 
     contest_counts = election_repository.count_contests(db, election.id)
+    total_contests = sum(contest_counts.values())
     fptp = contest_counts.get(CONTEST_TYPE_FPTP, 0)
     pr = contest_counts.get(CONTEST_TYPE_PR, 0)
 
-    constituency_count = db.execute(
-        select(func.count()).select_from(Constituency)
-    ).scalar_one()
+    key = (election.government_level, election.election_subtype)
 
-    if election.government_level != "FEDERAL" or election.election_subtype != "HOR_DIRECT":
-        issues.append("Only FEDERAL/HOR_DIRECT elections support structure readiness checks currently")
-    else:
-        if fptp != FEDERAL_HOR_FPTP_CONSTITUENCY_COUNT:
+    if key == ("FEDERAL", "HOR_DIRECT"):
+        issues.extend(_check_federal_hor_readiness(db, fptp, pr))
+    elif key == ("PROVINCIAL", "PROVINCIAL_ASSEMBLY"):
+        if pr < 7:
+            issues.append(f"Expected at least 7 provincial PR contests, found {pr}")
+    elif key[0] == "LOCAL":
+        from app.core.election_constants import CONTEST_TYPE_MAYOR, CONTEST_TYPE_DEPUTY_MAYOR
+        mayor_count = contest_counts.get(CONTEST_TYPE_MAYOR, 0)
+        deputy_count = contest_counts.get(CONTEST_TYPE_DEPUTY_MAYOR, 0)
+        if mayor_count == 0:
+            issues.append("No Mayor/Chair contests generated")
+        if deputy_count == 0:
+            issues.append("No Deputy Mayor/Vice Chair contests generated")
+        if mayor_count != deputy_count:
             issues.append(
-                f"Expected {FEDERAL_HOR_FPTP_CONSTITUENCY_COUNT} FPTP contests, found {fptp}"
+                f"Mayor ({mayor_count}) and Deputy Mayor ({deputy_count}) contest counts don't match"
             )
-        if pr != 1:
-            issues.append(f"Expected 1 PR contest, found {pr}")
+    else:
+        struct_def = get_structure_def(election.government_level, election.election_subtype)
+        if struct_def is None:
+            issues.append(
+                f"Unknown election type: {election.government_level}/{election.election_subtype}"
+            )
+        elif total_contests == 0:
+            issues.append("No contests have been generated")
 
     return {
         "ready": len(issues) == 0,
         "issues": issues,
         "fptp_contests": fptp,
         "pr_contests": pr,
-        "total_constituencies": constituency_count,
+        "total_contests": total_contests,
+        "total_constituencies": db.execute(
+            select(func.count()).select_from(Constituency)
+        ).scalar_one(),
     }
+
+
+def _check_federal_hor_readiness(db: Session, fptp: int, pr: int) -> list[str]:
+    """Federal HoR specific readiness checks."""
+    issues = []
+    if fptp != FEDERAL_HOR_FPTP_CONSTITUENCY_COUNT:
+        issues.append(
+            f"Expected {FEDERAL_HOR_FPTP_CONSTITUENCY_COUNT} FPTP contests, found {fptp}"
+        )
+    if pr != 1:
+        issues.append(f"Expected 1 PR contest, found {pr}")
+    return issues
 
 
 # ── Configure / lock setup ─────────────────────────────────────
@@ -237,3 +428,63 @@ def configure_election(db: Session, election: Election) -> Election:
     db.commit()
     db.refresh(election)
     return election
+
+
+# ── Area unit helpers ───────────────────────────────────────────
+
+
+def _get_area_map(db: Session, category: str) -> dict[str, int]:
+    """Return {code: area_unit.id} for all area_units of a given category."""
+    rows = db.execute(
+        select(AreaUnit.code, AreaUnit.id).where(AreaUnit.category == category)
+    ).all()
+    return {code: aid for code, aid in rows}
+
+
+def _get_area_by_code(db: Session, code: str) -> AreaUnit | None:
+    """Get a single area_unit by its code."""
+    return db.execute(
+        select(AreaUnit).where(AreaUnit.code == code)
+    ).scalar_one_or_none()
+
+
+# ── Master data status (multi-level) ───────────────────────────
+
+
+def get_master_data_status(db: Session) -> dict:
+    """Return geography master data counts for all levels."""
+    from app.models.district import District
+
+    district_count = db.execute(
+        select(func.count()).select_from(District)
+    ).scalar_one()
+    constituency_count = db.execute(
+        select(func.count()).select_from(Constituency)
+    ).scalar_one()
+
+    # Area unit counts by category
+    area_counts_rows = db.execute(
+        select(AreaUnit.category, func.count(AreaUnit.id))
+        .group_by(AreaUnit.category)
+    ).all()
+    area_counts = {cat: cnt for cat, cnt in area_counts_rows}
+
+    total_local = sum(
+        area_counts.get(c, 0) for c in LOCAL_BODY_CATEGORIES
+    )
+
+    return {
+        # Backward-compatible fields (used by frontend-admin)
+        "districts": district_count,
+        "constituencies": constituency_count,
+        "required_constituencies": FEDERAL_HOR_FPTP_CONSTITUENCY_COUNT,
+        "ready": constituency_count >= FEDERAL_HOR_FPTP_CONSTITUENCY_COUNT,
+        # New multi-level fields
+        "provinces": area_counts.get("PROVINCE", 0),
+        "local_bodies": total_local,
+        "area_units_total": sum(area_counts.values()),
+        "area_counts": area_counts,
+        "federal_ready": constituency_count >= FEDERAL_HOR_FPTP_CONSTITUENCY_COUNT,
+        "provincial_ready": area_counts.get("PROVINCE", 0) == 7,
+        "local_ready": total_local > 0,
+    }

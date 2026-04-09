@@ -1,0 +1,7037 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2761
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;
+  }
+{\colortbl;\red255\green255\blue255;
+  }
+{\*\expandedcolortbl;;
+  }
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+Constituencies, Provinces and municipalities\
+\
+[\
+  \{\
+    "name": "Nepal",\
+    "code": "NP",\
+    "category": "COUNTRY",\
+    "parent_code": null\
+  \
+    },\
+  \{\
+    "name": "Koshi Province",\
+    "code": "P1",\
+    "category": "PROVINCE",\
+    "parent_code": "NP"\
+  \
+    },\
+  \{\
+    "name": "Madhesh Province",\
+    "code": "P2",\
+    "category": "PROVINCE",\
+    "parent_code": "NP"\
+  \
+    },\
+  \{\
+    "name": "Bagmati Province",\
+    "code": "P3",\
+    "category": "PROVINCE",\
+    "parent_code": "NP"\
+  \
+    },\
+  \{\
+    "name": "Gandaki Province",\
+    "code": "P4",\
+    "category": "PROVINCE",\
+    "parent_code": "NP"\
+  \
+    },\
+  \{\
+    "name": "Lumbini Province",\
+    "code": "P5",\
+    "category": "PROVINCE",\
+    "parent_code": "NP"\
+  \
+    },\
+  \{\
+    "name": "Karnali Province",\
+    "code": "P6",\
+    "category": "PROVINCE",\
+    "parent_code": "NP"\
+  \
+    },\
+  \{\
+    "name": "Sudurpashchim Province",\
+    "code": "P7",\
+    "category": "PROVINCE",\
+    "parent_code": "NP"\
+  \
+    },\
+  \{\
+    "name": "Taplejung",\
+    "code": "D01",\
+    "category": "DISTRICT",\
+    "parent_code": "P1"\
+  \
+    },\
+  \{\
+    "name": "Panchthar",\
+    "code": "D02",\
+    "category": "DISTRICT",\
+    "parent_code": "P1"\
+  \
+    },\
+  \{\
+    "name": "Ilam",\
+    "code": "D03",\
+    "category": "DISTRICT",\
+    "parent_code": "P1"\
+  \
+    },\
+  \{\
+    "name": "Jhapa",\
+    "code": "D04",\
+    "category": "DISTRICT",\
+    "parent_code": "P1"\
+  \
+    },\
+  \{\
+    "name": "Morang",\
+    "code": "D05",\
+    "category": "DISTRICT",\
+    "parent_code": "P1"\
+  \
+    },\
+  \{\
+    "name": "Sunsari",\
+    "code": "D06",\
+    "category": "DISTRICT",\
+    "parent_code": "P1"\
+  \
+    },\
+  \{\
+    "name": "Dhankuta",\
+    "code": "D07",\
+    "category": "DISTRICT",\
+    "parent_code": "P1"\
+  \
+    },\
+  \{\
+    "name": "Terhathum",\
+    "code": "D08",\
+    "category": "DISTRICT",\
+    "parent_code": "P1"\
+  \
+    },\
+  \{\
+    "name": "Sankhuwasabha",\
+    "code": "D09",\
+    "category": "DISTRICT",\
+    "parent_code": "P1"\
+  \
+    },\
+  \{\
+    "name": "Bhojpur",\
+    "code": "D10",\
+    "category": "DISTRICT",\
+    "parent_code": "P1"\
+  \
+    },\
+  \{\
+    "name": "Solukhumbu",\
+    "code": "D11",\
+    "category": "DISTRICT",\
+    "parent_code": "P1"\
+  \
+    },\
+  \{\
+    "name": "Okhaldhunga",\
+    "code": "D12",\
+    "category": "DISTRICT",\
+    "parent_code": "P1"\
+  \
+    },\
+  \{\
+    "name": "Khotang",\
+    "code": "D13",\
+    "category": "DISTRICT",\
+    "parent_code": "P1"\
+  \
+    },\
+  \{\
+    "name": "Udayapur",\
+    "code": "D14",\
+    "category": "DISTRICT",\
+    "parent_code": "P1"\
+  \
+    },\
+  \{\
+    "name": "Saptari",\
+    "code": "D15",\
+    "category": "DISTRICT",\
+    "parent_code": "P2"\
+  \
+    },\
+  \{\
+    "name": "Siraha",\
+    "code": "D16",\
+    "category": "DISTRICT",\
+    "parent_code": "P2"\
+  \
+    },\
+  \{\
+    "name": "Dhanusha",\
+    "code": "D17",\
+    "category": "DISTRICT",\
+    "parent_code": "P2"\
+  \
+    },\
+  \{\
+    "name": "Mahottari",\
+    "code": "D18",\
+    "category": "DISTRICT",\
+    "parent_code": "P2"\
+  \
+    },\
+  \{\
+    "name": "Sarlahi",\
+    "code": "D19",\
+    "category": "DISTRICT",\
+    "parent_code": "P2"\
+  \
+    },\
+  \{\
+    "name": "Rautahat",\
+    "code": "D20",\
+    "category": "DISTRICT",\
+    "parent_code": "P2"\
+  \
+    },\
+  \{\
+    "name": "Bara",\
+    "code": "D21",\
+    "category": "DISTRICT",\
+    "parent_code": "P2"\
+  \
+    },\
+  \{\
+    "name": "Parsa",\
+    "code": "D22",\
+    "category": "DISTRICT",\
+    "parent_code": "P2"\
+  \
+    },\
+  \{\
+    "name": "Dolakha",\
+    "code": "D23",\
+    "category": "DISTRICT",\
+    "parent_code": "P3"\
+  \
+    },\
+  \{\
+    "name": "Sindhupalchok",\
+    "code": "D24",\
+    "category": "DISTRICT",\
+    "parent_code": "P3"\
+  \
+    },\
+  \{\
+    "name": "Rasuwa",\
+    "code": "D25",\
+    "category": "DISTRICT",\
+    "parent_code": "P3"\
+  \
+    },\
+  \{\
+    "name": "Nuwakot",\
+    "code": "D26",\
+    "category": "DISTRICT",\
+    "parent_code": "P3"\
+  \
+    },\
+  \{\
+    "name": "Dhading",\
+    "code": "D27",\
+    "category": "DISTRICT",\
+    "parent_code": "P3"\
+  \
+    },\
+  \{\
+    "name": "Kathmandu",\
+    "code": "D28",\
+    "category": "DISTRICT",\
+    "parent_code": "P3"\
+  \
+    },\
+  \{\
+    "name": "Bhaktapur",\
+    "code": "D29",\
+    "category": "DISTRICT",\
+    "parent_code": "P3"\
+  \
+    },\
+  \{\
+    "name": "Lalitpur",\
+    "code": "D30",\
+    "category": "DISTRICT",\
+    "parent_code": "P3"\
+  \
+    },\
+  \{\
+    "name": "Kavrepalanchok",\
+    "code": "D31",\
+    "category": "DISTRICT",\
+    "parent_code": "P3"\
+  \
+    },\
+  \{\
+    "name": "Ramechhap",\
+    "code": "D32",\
+    "category": "DISTRICT",\
+    "parent_code": "P3"\
+  \
+    },\
+  \{\
+    "name": "Sindhuli",\
+    "code": "D33",\
+    "category": "DISTRICT",\
+    "parent_code": "P3"\
+  \
+    },\
+  \{\
+    "name": "Makwanpur",\
+    "code": "D34",\
+    "category": "DISTRICT",\
+    "parent_code": "P3"\
+  \
+    },\
+  \{\
+    "name": "Chitwan",\
+    "code": "D35",\
+    "category": "DISTRICT",\
+    "parent_code": "P3"\
+  \
+    },\
+  \{\
+    "name": "Gorkha",\
+    "code": "D36",\
+    "category": "DISTRICT",\
+    "parent_code": "P4"\
+  \
+    },\
+  \{\
+    "name": "Manang",\
+    "code": "D37",\
+    "category": "DISTRICT",\
+    "parent_code": "P4"\
+  \
+    },\
+  \{\
+    "name": "Mustang",\
+    "code": "D38",\
+    "category": "DISTRICT",\
+    "parent_code": "P4"\
+  \
+    },\
+  \{\
+    "name": "Myagdi",\
+    "code": "D39",\
+    "category": "DISTRICT",\
+    "parent_code": "P4"\
+  \
+    },\
+  \{\
+    "name": "Kaski",\
+    "code": "D40",\
+    "category": "DISTRICT",\
+    "parent_code": "P4"\
+  \
+    },\
+  \{\
+    "name": "Lamjung",\
+    "code": "D41",\
+    "category": "DISTRICT",\
+    "parent_code": "P4"\
+  \
+    },\
+  \{\
+    "name": "Tanahun",\
+    "code": "D42",\
+    "category": "DISTRICT",\
+    "parent_code": "P4"\
+  \
+    },\
+  \{\
+    "name": "Nawalpur",\
+    "code": "D43",\
+    "category": "DISTRICT",\
+    "parent_code": "P4"\
+  \
+    },\
+  \{\
+    "name": "Syangja",\
+    "code": "D44",\
+    "category": "DISTRICT",\
+    "parent_code": "P4"\
+  \
+    },\
+  \{\
+    "name": "Parbat",\
+    "code": "D45",\
+    "category": "DISTRICT",\
+    "parent_code": "P4"\
+  \
+    },\
+  \{\
+    "name": "Baglung",\
+    "code": "D46",\
+    "category": "DISTRICT",\
+    "parent_code": "P4"\
+  \
+    },\
+  \{\
+    "name": "Parasi",\
+    "code": "D47",\
+    "category": "DISTRICT",\
+    "parent_code": "P5"\
+  \
+    },\
+  \{\
+    "name": "Rupandehi",\
+    "code": "D48",\
+    "category": "DISTRICT",\
+    "parent_code": "P5"\
+  \
+    },\
+  \{\
+    "name": "Kapilvastu",\
+    "code": "D49",\
+    "category": "DISTRICT",\
+    "parent_code": "P5"\
+  \
+    },\
+  \{\
+    "name": "Palpa",\
+    "code": "D50",\
+    "category": "DISTRICT",\
+    "parent_code": "P5"\
+  \
+    },\
+  \{\
+    "name": "Arghakhanchi",\
+    "code": "D51",\
+    "category": "DISTRICT",\
+    "parent_code": "P5"\
+  \
+    },\
+  \{\
+    "name": "Gulmi",\
+    "code": "D52",\
+    "category": "DISTRICT",\
+    "parent_code": "P5"\
+  \
+    },\
+  \{\
+    "name": "Rukum East",\
+    "code": "D53",\
+    "category": "DISTRICT",\
+    "parent_code": "P5"\
+  \
+    },\
+  \{\
+    "name": "Rolpa",\
+    "code": "D54",\
+    "category": "DISTRICT",\
+    "parent_code": "P5"\
+  \
+    },\
+  \{\
+    "name": "Pyuthan",\
+    "code": "D55",\
+    "category": "DISTRICT",\
+    "parent_code": "P5"\
+  \
+    },\
+  \{\
+    "name": "Dang",\
+    "code": "D56",\
+    "category": "DISTRICT",\
+    "parent_code": "P5"\
+  \
+    },\
+  \{\
+    "name": "Banke",\
+    "code": "D57",\
+    "category": "DISTRICT",\
+    "parent_code": "P5"\
+  \
+    },\
+  \{\
+    "name": "Bardiya",\
+    "code": "D58",\
+    "category": "DISTRICT",\
+    "parent_code": "P5"\
+  \
+    },\
+  \{\
+    "name": "Rukum West",\
+    "code": "D59",\
+    "category": "DISTRICT",\
+    "parent_code": "P6"\
+  \
+    },\
+  \{\
+    "name": "Salyan",\
+    "code": "D60",\
+    "category": "DISTRICT",\
+    "parent_code": "P6"\
+  \
+    },\
+  \{\
+    "name": "Dolpa",\
+    "code": "D61",\
+    "category": "DISTRICT",\
+    "parent_code": "P6"\
+  \
+    },\
+  \{\
+    "name": "Jumla",\
+    "code": "D62",\
+    "category": "DISTRICT",\
+    "parent_code": "P6"\
+  \
+    },\
+  \{\
+    "name": "Mugu",\
+    "code": "D63",\
+    "category": "DISTRICT",\
+    "parent_code": "P6"\
+  \
+    },\
+  \{\
+    "name": "Humla",\
+    "code": "D64",\
+    "category": "DISTRICT",\
+    "parent_code": "P6"\
+  \
+    },\
+  \{\
+    "name": "Kalikot",\
+    "code": "D65",\
+    "category": "DISTRICT",\
+    "parent_code": "P6"\
+  \
+    },\
+  \{\
+    "name": "Jajarkot",\
+    "code": "D66",\
+    "category": "DISTRICT",\
+    "parent_code": "P6"\
+  \
+    },\
+  \{\
+    "name": "Dailekh",\
+    "code": "D67",\
+    "category": "DISTRICT",\
+    "parent_code": "P6"\
+  \
+    },\
+  \{\
+    "name": "Surkhet",\
+    "code": "D68",\
+    "category": "DISTRICT",\
+    "parent_code": "P6"\
+  \
+    },\
+  \{\
+    "name": "Bajura",\
+    "code": "D69",\
+    "category": "DISTRICT",\
+    "parent_code": "P7"\
+  \
+    },\
+  \{\
+    "name": "Bajhang",\
+    "code": "D70",\
+    "category": "DISTRICT",\
+    "parent_code": "P7"\
+  \
+    },\
+  \{\
+    "name": "Doti",\
+    "code": "D71",\
+    "category": "DISTRICT",\
+    "parent_code": "P7"\
+  \
+    },\
+  \{\
+    "name": "Achham",\
+    "code": "D72",\
+    "category": "DISTRICT",\
+    "parent_code": "P7"\
+  \
+    },\
+  \{\
+    "name": "Kailali",\
+    "code": "D73",\
+    "category": "DISTRICT",\
+    "parent_code": "P7"\
+  \
+    },\
+  \{\
+    "name": "Kanchanpur",\
+    "code": "D74",\
+    "category": "DISTRICT",\
+    "parent_code": "P7"\
+  \
+    },\
+  \{\
+    "name": "Dadeldhura",\
+    "code": "D75",\
+    "category": "DISTRICT",\
+    "parent_code": "P7"\
+  \
+    },\
+  \{\
+    "name": "Baitadi",\
+    "code": "D76",\
+    "category": "DISTRICT",\
+    "parent_code": "P7"\
+  \
+    },\
+  \{\
+    "name": "Darchula",\
+    "code": "D77",\
+    "category": "DISTRICT",\
+    "parent_code": "P7"\
+  \
+    },\
+  \{\
+    "name": "Taplejung-1",\
+    "code": "FC001",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D01"\
+  \
+    },\
+  \{\
+    "name": "Panchthar-1",\
+    "code": "FC002",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D02"\
+  \
+    },\
+  \{\
+    "name": "Ilam-1",\
+    "code": "FC003",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D03"\
+  \
+    },\
+  \{\
+    "name": "Ilam-2",\
+    "code": "FC004",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D03"\
+  \
+    },\
+  \{\
+    "name": "Jhapa-1",\
+    "code": "FC005",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D04"\
+  \
+    },\
+  \{\
+    "name": "Jhapa-2",\
+    "code": "FC006",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D04"\
+  \
+    },\
+  \{\
+    "name": "Jhapa-3",\
+    "code": "FC007",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D04"\
+  \
+    },\
+  \{\
+    "name": "Jhapa-4",\
+    "code": "FC008",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D04"\
+  \
+    },\
+  \{\
+    "name": "Jhapa-5",\
+    "code": "FC009",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D04"\
+  \
+    },\
+  \{\
+    "name": "Morang-1",\
+    "code": "FC010",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D05"\
+  \
+    },\
+  \{\
+    "name": "Morang-2",\
+    "code": "FC011",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D05"\
+  \
+    },\
+  \{\
+    "name": "Morang-3",\
+    "code": "FC012",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D05"\
+  \
+    },\
+  \{\
+    "name": "Morang-4",\
+    "code": "FC013",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D05"\
+  \
+    },\
+  \{\
+    "name": "Morang-5",\
+    "code": "FC014",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D05"\
+  \
+    },\
+  \{\
+    "name": "Morang-6",\
+    "code": "FC015",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D05"\
+  \
+    },\
+  \{\
+    "name": "Sunsari-1",\
+    "code": "FC016",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D06"\
+  \
+    },\
+  \{\
+    "name": "Sunsari-2",\
+    "code": "FC017",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D06"\
+  \
+    },\
+  \{\
+    "name": "Sunsari-3",\
+    "code": "FC018",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D06"\
+  \
+    },\
+  \{\
+    "name": "Sunsari-4",\
+    "code": "FC019",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D06"\
+  \
+    },\
+  \{\
+    "name": "Dhankuta-1",\
+    "code": "FC020",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D07"\
+  \
+    },\
+  \{\
+    "name": "Terhathum-1",\
+    "code": "FC021",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D08"\
+  \
+    },\
+  \{\
+    "name": "Sankhuwasabha-1",\
+    "code": "FC022",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D09"\
+  \
+    },\
+  \{\
+    "name": "Bhojpur-1",\
+    "code": "FC023",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D10"\
+  \
+    },\
+  \{\
+    "name": "Solukhumbu-1",\
+    "code": "FC024",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D11"\
+  \
+    },\
+  \{\
+    "name": "Okhaldhunga-1",\
+    "code": "FC025",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D12"\
+  \
+    },\
+  \{\
+    "name": "Khotang-1",\
+    "code": "FC026",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D13"\
+  \
+    },\
+  \{\
+    "name": "Udayapur-1",\
+    "code": "FC027",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D14"\
+  \
+    },\
+  \{\
+    "name": "Udayapur-2",\
+    "code": "FC028",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D14"\
+  \
+    },\
+  \{\
+    "name": "Saptari-1",\
+    "code": "FC029",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D15"\
+  \
+    },\
+  \{\
+    "name": "Saptari-2",\
+    "code": "FC030",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D15"\
+  \
+    },\
+  \{\
+    "name": "Saptari-3",\
+    "code": "FC031",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D15"\
+  \
+    },\
+  \{\
+    "name": "Saptari-4",\
+    "code": "FC032",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D15"\
+  \
+    },\
+  \{\
+    "name": "Siraha-1",\
+    "code": "FC033",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D16"\
+  \
+    },\
+  \{\
+    "name": "Siraha-2",\
+    "code": "FC034",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D16"\
+  \
+    },\
+  \{\
+    "name": "Siraha-3",\
+    "code": "FC035",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D16"\
+  \
+    },\
+  \{\
+    "name": "Siraha-4",\
+    "code": "FC036",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D16"\
+  \
+    },\
+  \{\
+    "name": "Dhanusha-1",\
+    "code": "FC037",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D17"\
+  \
+    },\
+  \{\
+    "name": "Dhanusha-2",\
+    "code": "FC038",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D17"\
+  \
+    },\
+  \{\
+    "name": "Dhanusha-3",\
+    "code": "FC039",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D17"\
+  \
+    },\
+  \{\
+    "name": "Dhanusha-4",\
+    "code": "FC040",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D17"\
+  \
+    },\
+  \{\
+    "name": "Mahottari-1",\
+    "code": "FC041",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D18"\
+  \
+    },\
+  \{\
+    "name": "Mahottari-2",\
+    "code": "FC042",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D18"\
+  \
+    },\
+  \{\
+    "name": "Mahottari-3",\
+    "code": "FC043",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D18"\
+  \
+    },\
+  \{\
+    "name": "Mahottari-4",\
+    "code": "FC044",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D18"\
+  \
+    },\
+  \{\
+    "name": "Sarlahi-1",\
+    "code": "FC045",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D19"\
+  \
+    },\
+  \{\
+    "name": "Sarlahi-2",\
+    "code": "FC046",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D19"\
+  \
+    },\
+  \{\
+    "name": "Sarlahi-3",\
+    "code": "FC047",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D19"\
+  \
+    },\
+  \{\
+    "name": "Sarlahi-4",\
+    "code": "FC048",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D19"\
+  \
+    },\
+  \{\
+    "name": "Rautahat-1",\
+    "code": "FC049",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D20"\
+  \
+    },\
+  \{\
+    "name": "Rautahat-2",\
+    "code": "FC050",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D20"\
+  \
+    },\
+  \{\
+    "name": "Rautahat-3",\
+    "code": "FC051",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D20"\
+  \
+    },\
+  \{\
+    "name": "Rautahat-4",\
+    "code": "FC052",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D20"\
+  \
+    },\
+  \{\
+    "name": "Bara-1",\
+    "code": "FC053",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D21"\
+  \
+    },\
+  \{\
+    "name": "Bara-2",\
+    "code": "FC054",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D21"\
+  \
+    },\
+  \{\
+    "name": "Bara-3",\
+    "code": "FC055",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D21"\
+  \
+    },\
+  \{\
+    "name": "Bara-4",\
+    "code": "FC056",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D21"\
+  \
+    },\
+  \{\
+    "name": "Parsa-1",\
+    "code": "FC057",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D22"\
+  \
+    },\
+  \{\
+    "name": "Parsa-2",\
+    "code": "FC058",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D22"\
+  \
+    },\
+  \{\
+    "name": "Parsa-3",\
+    "code": "FC059",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D22"\
+  \
+    },\
+  \{\
+    "name": "Parsa-4",\
+    "code": "FC060",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D22"\
+  \
+    },\
+  \{\
+    "name": "Dolakha-1",\
+    "code": "FC061",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D23"\
+  \
+    },\
+  \{\
+    "name": "Sindhupalchok-1",\
+    "code": "FC062",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D24"\
+  \
+    },\
+  \{\
+    "name": "Sindhupalchok-2",\
+    "code": "FC063",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D24"\
+  \
+    },\
+  \{\
+    "name": "Rasuwa-1",\
+    "code": "FC064",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D25"\
+  \
+    },\
+  \{\
+    "name": "Nuwakot-1",\
+    "code": "FC065",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D26"\
+  \
+    },\
+  \{\
+    "name": "Nuwakot-2",\
+    "code": "FC066",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D26"\
+  \
+    },\
+  \{\
+    "name": "Dhading-1",\
+    "code": "FC067",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D27"\
+  \
+    },\
+  \{\
+    "name": "Dhading-2",\
+    "code": "FC068",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D27"\
+  \
+    },\
+  \{\
+    "name": "Kathmandu-1",\
+    "code": "FC069",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D28"\
+  \
+    },\
+  \{\
+    "name": "Kathmandu-2",\
+    "code": "FC070",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D28"\
+  \
+    },\
+  \{\
+    "name": "Kathmandu-3",\
+    "code": "FC071",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D28"\
+  \
+    },\
+  \{\
+    "name": "Kathmandu-4",\
+    "code": "FC072",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D28"\
+  \
+    },\
+  \{\
+    "name": "Kathmandu-5",\
+    "code": "FC073",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D28"\
+  \
+    },\
+  \{\
+    "name": "Kathmandu-6",\
+    "code": "FC074",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D28"\
+  \
+    },\
+  \{\
+    "name": "Kathmandu-7",\
+    "code": "FC075",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D28"\
+  \
+    },\
+  \{\
+    "name": "Kathmandu-8",\
+    "code": "FC076",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D28"\
+  \
+    },\
+  \{\
+    "name": "Kathmandu-9",\
+    "code": "FC077",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D28"\
+  \
+    },\
+  \{\
+    "name": "Kathmandu-10",\
+    "code": "FC078",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D28"\
+  \
+    },\
+  \{\
+    "name": "Bhaktapur-1",\
+    "code": "FC079",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D29"\
+  \
+    },\
+  \{\
+    "name": "Bhaktapur-2",\
+    "code": "FC080",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D29"\
+  \
+    },\
+  \{\
+    "name": "Lalitpur-1",\
+    "code": "FC081",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D30"\
+  \
+    },\
+  \{\
+    "name": "Lalitpur-2",\
+    "code": "FC082",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D30"\
+  \
+    },\
+  \{\
+    "name": "Lalitpur-3",\
+    "code": "FC083",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D30"\
+  \
+    },\
+  \{\
+    "name": "Kavrepalanchok-1",\
+    "code": "FC084",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D31"\
+  \
+    },\
+  \{\
+    "name": "Kavrepalanchok-2",\
+    "code": "FC085",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D31"\
+  \
+    },\
+  \{\
+    "name": "Ramechhap-1",\
+    "code": "FC086",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D32"\
+  \
+    },\
+  \{\
+    "name": "Sindhuli-1",\
+    "code": "FC087",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D33"\
+  \
+    },\
+  \{\
+    "name": "Sindhuli-2",\
+    "code": "FC088",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D33"\
+  \
+    },\
+  \{\
+    "name": "Makwanpur-1",\
+    "code": "FC089",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D34"\
+  \
+    },\
+  \{\
+    "name": "Makwanpur-2",\
+    "code": "FC090",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D34"\
+  \
+    },\
+  \{\
+    "name": "Chitwan-1",\
+    "code": "FC091",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D35"\
+  \
+    },\
+  \{\
+    "name": "Chitwan-2",\
+    "code": "FC092",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D35"\
+  \
+    },\
+  \{\
+    "name": "Chitwan-3",\
+    "code": "FC093",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D35"\
+  \
+    },\
+  \{\
+    "name": "Gorkha-1",\
+    "code": "FC094",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D36"\
+  \
+    },\
+  \{\
+    "name": "Gorkha-2",\
+    "code": "FC095",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D36"\
+  \
+    },\
+  \{\
+    "name": "Manang-1",\
+    "code": "FC096",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D37"\
+  \
+    },\
+  \{\
+    "name": "Mustang-1",\
+    "code": "FC097",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D38"\
+  \
+    },\
+  \{\
+    "name": "Myagdi-1",\
+    "code": "FC098",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D39"\
+  \
+    },\
+  \{\
+    "name": "Kaski-1",\
+    "code": "FC099",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D40"\
+  \
+    },\
+  \{\
+    "name": "Kaski-2",\
+    "code": "FC100",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D40"\
+  \
+    },\
+  \{\
+    "name": "Kaski-3",\
+    "code": "FC101",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D40"\
+  \
+    },\
+  \{\
+    "name": "Lamjung-1",\
+    "code": "FC102",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D41"\
+  \
+    },\
+  \{\
+    "name": "Tanahun-1",\
+    "code": "FC103",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D42"\
+  \
+    },\
+  \{\
+    "name": "Tanahun-2",\
+    "code": "FC104",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D42"\
+  \
+    },\
+  \{\
+    "name": "Nawalpur-1",\
+    "code": "FC105",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D43"\
+  \
+    },\
+  \{\
+    "name": "Nawalpur-2",\
+    "code": "FC106",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D43"\
+  \
+    },\
+  \{\
+    "name": "Syangja-1",\
+    "code": "FC107",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D44"\
+  \
+    },\
+  \{\
+    "name": "Syangja-2",\
+    "code": "FC108",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D44"\
+  \
+    },\
+  \{\
+    "name": "Parbat-1",\
+    "code": "FC109",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D45"\
+  \
+    },\
+  \{\
+    "name": "Baglung-1",\
+    "code": "FC110",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D46"\
+  \
+    },\
+  \{\
+    "name": "Baglung-2",\
+    "code": "FC111",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D46"\
+  \
+    },\
+  \{\
+    "name": "Parasi-1",\
+    "code": "FC112",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D47"\
+  \
+    },\
+  \{\
+    "name": "Parasi-2",\
+    "code": "FC113",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D47"\
+  \
+    },\
+  \{\
+    "name": "Rupandehi-1",\
+    "code": "FC114",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D48"\
+  \
+    },\
+  \{\
+    "name": "Rupandehi-2",\
+    "code": "FC115",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D48"\
+  \
+    },\
+  \{\
+    "name": "Rupandehi-3",\
+    "code": "FC116",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D48"\
+  \
+    },\
+  \{\
+    "name": "Rupandehi-4",\
+    "code": "FC117",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D48"\
+  \
+    },\
+  \{\
+    "name": "Rupandehi-5",\
+    "code": "FC118",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D48"\
+  \
+    },\
+  \{\
+    "name": "Kapilvastu-1",\
+    "code": "FC119",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D49"\
+  \
+    },\
+  \{\
+    "name": "Kapilvastu-2",\
+    "code": "FC120",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D49"\
+  \
+    },\
+  \{\
+    "name": "Kapilvastu-3",\
+    "code": "FC121",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D49"\
+  \
+    },\
+  \{\
+    "name": "Palpa-1",\
+    "code": "FC122",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D50"\
+  \
+    },\
+  \{\
+    "name": "Palpa-2",\
+    "code": "FC123",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D50"\
+  \
+    },\
+  \{\
+    "name": "Arghakhanchi-1",\
+    "code": "FC124",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D51"\
+  \
+    },\
+  \{\
+    "name": "Gulmi-1",\
+    "code": "FC125",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D52"\
+  \
+    },\
+  \{\
+    "name": "Gulmi-2",\
+    "code": "FC126",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D52"\
+  \
+    },\
+  \{\
+    "name": "Rukum East-1",\
+    "code": "FC127",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D53"\
+  \
+    },\
+  \{\
+    "name": "Rolpa-1",\
+    "code": "FC128",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D54"\
+  \
+    },\
+  \{\
+    "name": "Pyuthan-1",\
+    "code": "FC129",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D55"\
+  \
+    },\
+  \{\
+    "name": "Dang-1",\
+    "code": "FC130",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D56"\
+  \
+    },\
+  \{\
+    "name": "Dang-2",\
+    "code": "FC131",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D56"\
+  \
+    },\
+  \{\
+    "name": "Dang-3",\
+    "code": "FC132",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D56"\
+  \
+    },\
+  \{\
+    "name": "Banke-1",\
+    "code": "FC133",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D57"\
+  \
+    },\
+  \{\
+    "name": "Banke-2",\
+    "code": "FC134",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D57"\
+  \
+    },\
+  \{\
+    "name": "Banke-3",\
+    "code": "FC135",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D57"\
+  \
+    },\
+  \{\
+    "name": "Bardiya-1",\
+    "code": "FC136",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D58"\
+  \
+    },\
+  \{\
+    "name": "Bardiya-2",\
+    "code": "FC137",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D58"\
+  \
+    },\
+  \{\
+    "name": "Rukum West-1",\
+    "code": "FC138",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D59"\
+  \
+    },\
+  \{\
+    "name": "Salyan-1",\
+    "code": "FC139",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D60"\
+  \
+    },\
+  \{\
+    "name": "Dolpa-1",\
+    "code": "FC140",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D61"\
+  \
+    },\
+  \{\
+    "name": "Jumla-1",\
+    "code": "FC141",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D62"\
+  \
+    },\
+  \{\
+    "name": "Mugu-1",\
+    "code": "FC142",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D63"\
+  \
+    },\
+  \{\
+    "name": "Humla-1",\
+    "code": "FC143",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D64"\
+  \
+    },\
+  \{\
+    "name": "Kalikot-1",\
+    "code": "FC144",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D65"\
+  \
+    },\
+  \{\
+    "name": "Jajarkot-1",\
+    "code": "FC145",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D66"\
+  \
+    },\
+  \{\
+    "name": "Dailekh-1",\
+    "code": "FC146",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D67"\
+  \
+    },\
+  \{\
+    "name": "Dailekh-2",\
+    "code": "FC147",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D67"\
+  \
+    },\
+  \{\
+    "name": "Surkhet-1",\
+    "code": "FC148",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D68"\
+  \
+    },\
+  \{\
+    "name": "Surkhet-2",\
+    "code": "FC149",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D68"\
+  \
+    },\
+  \{\
+    "name": "Bajura-1",\
+    "code": "FC150",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D69"\
+  \
+    },\
+  \{\
+    "name": "Bajhang-1",\
+    "code": "FC151",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D70"\
+  \
+    },\
+  \{\
+    "name": "Doti-1",\
+    "code": "FC152",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D71"\
+  \
+    },\
+  \{\
+    "name": "Achham-1",\
+    "code": "FC153",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D72"\
+  \
+    },\
+  \{\
+    "name": "Achham-2",\
+    "code": "FC154",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D72"\
+  \
+    },\
+  \{\
+    "name": "Kailali-1",\
+    "code": "FC155",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D73"\
+  \
+    },\
+  \{\
+    "name": "Kailali-2",\
+    "code": "FC156",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D73"\
+  \
+    },\
+  \{\
+    "name": "Kailali-3",\
+    "code": "FC157",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D73"\
+  \
+    },\
+  \{\
+    "name": "Kailali-4",\
+    "code": "FC158",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D73"\
+  \
+    },\
+  \{\
+    "name": "Kailali-5",\
+    "code": "FC159",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D73"\
+  \
+    },\
+  \{\
+    "name": "Kanchanpur-1",\
+    "code": "FC160",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D74"\
+  \
+    },\
+  \{\
+    "name": "Kanchanpur-2",\
+    "code": "FC161",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D74"\
+  \
+    },\
+  \{\
+    "name": "Kanchanpur-3",\
+    "code": "FC162",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D74"\
+  \
+    },\
+  \{\
+    "name": "Dadeldhura-1",\
+    "code": "FC163",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D75"\
+  \
+    },\
+  \{\
+    "name": "Baitadi-1",\
+    "code": "FC164",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D76"\
+  \
+    },\
+  \{\
+    "name": "Darchula-1",\
+    "code": "FC165",\
+    "category": "CONSTITUENCY",\
+    "parent_code": "D77"\
+  \
+    },\
+  \{\
+    "name": "Phungling",\
+    "code": "LB0001",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D01"\
+  \
+    },\
+  \{\
+    "name": "Sidingba",\
+    "code": "LB0002",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D01"\
+  \
+    },\
+  \{\
+    "name": "Meringden",\
+    "code": "LB0003",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D01"\
+  \
+    },\
+  \{\
+    "name": "Aathrai Tribeni",\
+    "code": "LB0004",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D01"\
+  \
+    },\
+  \{\
+    "name": "Sirijangha",\
+    "code": "LB0005",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D01"\
+  \
+    },\
+  \{\
+    "name": "Phaktanglung",\
+    "code": "LB0006",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D01"\
+  \
+    },\
+  \{\
+    "name": "Mikwakhola",\
+    "code": "LB0007",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D01"\
+  \
+    },\
+  \{\
+    "name": "Maiwakhola",\
+    "code": "LB0008",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D01"\
+  \
+    },\
+  \{\
+    "name": "Pathivara Yangwarak",\
+    "code": "LB0009",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D01"\
+  \
+    },\
+  \{\
+    "name": "Phidim",\
+    "code": "LB0010",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D02"\
+  \
+    },\
+  \{\
+    "name": "Hilihang",\
+    "code": "LB0011",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D02"\
+  \
+    },\
+  \{\
+    "name": "Kummayak",\
+    "code": "LB0012",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D02"\
+  \
+    },\
+  \{\
+    "name": "Falgunanda",\
+    "code": "LB0013",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D02"\
+  \
+    },\
+  \{\
+    "name": "Tumbewa",\
+    "code": "LB0014",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D02"\
+  \
+    },\
+  \{\
+    "name": "Miklajung",\
+    "code": "LB0015",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D02"\
+  \
+    },\
+  \{\
+    "name": "Yangwarak",\
+    "code": "LB0016",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D02"\
+  \
+    },\
+  \{\
+    "name": "Phalelung",\
+    "code": "LB0017",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D02"\
+  \
+    },\
+  \{\
+    "name": "Ilam",\
+    "code": "LB0018",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D03"\
+  \
+    },\
+  \{\
+    "name": "Deumai",\
+    "code": "LB0019",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D03"\
+  \
+    },\
+  \{\
+    "name": "Mai",\
+    "code": "LB0020",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D03"\
+  \
+    },\
+  \{\
+    "name": "Suryodaya",\
+    "code": "LB0021",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D03"\
+  \
+    },\
+  \{\
+    "name": "Fakphokthum",\
+    "code": "LB0022",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D03"\
+  \
+    },\
+  \{\
+    "name": "Chulachuli",\
+    "code": "LB0023",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D03"\
+  \
+    },\
+  \{\
+    "name": "Rong",\
+    "code": "LB0024",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D03"\
+  \
+    },\
+  \{\
+    "name": "Mangsebung",\
+    "code": "LB0025",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D03"\
+  \
+    },\
+  \{\
+    "name": "Maijogmai",\
+    "code": "LB0026",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D03"\
+  \
+    },\
+  \{\
+    "name": "Sandakpur",\
+    "code": "LB0027",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D03"\
+  \
+    },\
+  \{\
+    "name": "Mechinagar",\
+    "code": "LB0028",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D04"\
+  \
+    },\
+  \{\
+    "name": "Bhadrapur",\
+    "code": "LB0029",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D04"\
+  \
+    },\
+  \{\
+    "name": "Birtamod",\
+    "code": "LB0030",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D04"\
+  \
+    },\
+  \{\
+    "name": "Damak",\
+    "code": "LB0031",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D04"\
+  \
+    },\
+  \{\
+    "name": "Kankai",\
+    "code": "LB0032",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D04"\
+  \
+    },\
+  \{\
+    "name": "Arjundhara",\
+    "code": "LB0033",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D04"\
+  \
+    },\
+  \{\
+    "name": "Shivasatakshi",\
+    "code": "LB0034",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D04"\
+  \
+    },\
+  \{\
+    "name": "Buddhashanti",\
+    "code": "LB0035",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D04"\
+  \
+    },\
+  \{\
+    "name": "Haldibari",\
+    "code": "LB0036",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D04"\
+  \
+    },\
+  \{\
+    "name": "Jhapa",\
+    "code": "LB0037",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D04"\
+  \
+    },\
+  \{\
+    "name": "Barhadashi",\
+    "code": "LB0038",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D04"\
+  \
+    },\
+  \{\
+    "name": "Gauriganj",\
+    "code": "LB0039",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D04"\
+  \
+    },\
+  \{\
+    "name": "Kamal",\
+    "code": "LB0040",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D04"\
+  \
+    },\
+  \{\
+    "name": "Kachankawal",\
+    "code": "LB0041",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D04"\
+  \
+    },\
+  \{\
+    "name": "Gauradhaha",\
+    "code": "LB0042",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D04"\
+  \
+    },\
+  \{\
+    "name": "Biratnagar",\
+    "code": "LB0043",\
+    "category": "METROPOLITAN",\
+    "parent_code": "D05"\
+  \
+    },\
+  \{\
+    "name": "Sundar Haraicha",\
+    "code": "LB0044",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D05"\
+  \
+    },\
+  \{\
+    "name": "Belbari",\
+    "code": "LB0045",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D05"\
+  \
+    },\
+  \{\
+    "name": "Urlabari",\
+    "code": "LB0046",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D05"\
+  \
+    },\
+  \{\
+    "name": "Pathari Shanischare",\
+    "code": "LB0047",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D05"\
+  \
+    },\
+  \{\
+    "name": "Rangeli",\
+    "code": "LB0048",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D05"\
+  \
+    },\
+  \{\
+    "name": "Letang Bhogateni",\
+    "code": "LB0049",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D05"\
+  \
+    },\
+  \{\
+    "name": "Ratuwamai",\
+    "code": "LB0050",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D05"\
+  \
+    },\
+  \{\
+    "name": "Sunwarshi",\
+    "code": "LB0051",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D05"\
+  \
+    },\
+  \{\
+    "name": "Gramthan",\
+    "code": "LB0052",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D05"\
+  \
+    },\
+  \{\
+    "name": "Jahada",\
+    "code": "LB0053",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D05"\
+  \
+    },\
+  \{\
+    "name": "Dhanpalthan",\
+    "code": "LB0054",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D05"\
+  \
+    },\
+  \{\
+    "name": "Kerabari",\
+    "code": "LB0055",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D05"\
+  \
+    },\
+  \{\
+    "name": "Budhiganga",\
+    "code": "LB0056",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D05"\
+  \
+    },\
+  \{\
+    "name": "Kanepokhari",\
+    "code": "LB0057",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D05"\
+  \
+    },\
+  \{\
+    "name": "Miklajung",\
+    "code": "LB0058",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D05"\
+  \
+    },\
+  \{\
+    "name": "Katahari",\
+    "code": "LB0059",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D05"\
+  \
+    },\
+  \{\
+    "name": "Dharan",\
+    "code": "LB0060",\
+    "category": "SUB_METROPOLITAN",\
+    "parent_code": "D06"\
+  \
+    },\
+  \{\
+    "name": "Itahari",\
+    "code": "LB0061",\
+    "category": "SUB_METROPOLITAN",\
+    "parent_code": "D06"\
+  \
+    },\
+  \{\
+    "name": "Inaruwa",\
+    "code": "LB0062",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D06"\
+  \
+    },\
+  \{\
+    "name": "Duhabi",\
+    "code": "LB0063",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D06"\
+  \
+    },\
+  \{\
+    "name": "Ramdhuni",\
+    "code": "LB0064",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D06"\
+  \
+    },\
+  \{\
+    "name": "Barahachhetra",\
+    "code": "LB0065",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D06"\
+  \
+    },\
+  \{\
+    "name": "Dewanganj",\
+    "code": "LB0066",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D06"\
+  \
+    },\
+  \{\
+    "name": "Koshi",\
+    "code": "LB0067",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D06"\
+  \
+    },\
+  \{\
+    "name": "Gadhi",\
+    "code": "LB0068",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D06"\
+  \
+    },\
+  \{\
+    "name": "Barju",\
+    "code": "LB0069",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D06"\
+  \
+    },\
+  \{\
+    "name": "Bhokraha Narsingh",\
+    "code": "LB0070",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D06"\
+  \
+    },\
+  \{\
+    "name": "Harinagar",\
+    "code": "LB0071",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D06"\
+  \
+    },\
+  \{\
+    "name": "Dhankuta",\
+    "code": "LB0072",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D07"\
+  \
+    },\
+  \{\
+    "name": "Pakhribas",\
+    "code": "LB0073",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D07"\
+  \
+    },\
+  \{\
+    "name": "Mahalaxmi",\
+    "code": "LB0074",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D07"\
+  \
+    },\
+  \{\
+    "name": "Chhathar Jorpati",\
+    "code": "LB0075",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D07"\
+  \
+    },\
+  \{\
+    "name": "Sangurigadhi",\
+    "code": "LB0076",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D07"\
+  \
+    },\
+  \{\
+    "name": "Sahidbhumi",\
+    "code": "LB0077",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D07"\
+  \
+    },\
+  \{\
+    "name": "Khalsa Chhintang Sahidbhumi",\
+    "code": "LB0078",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D07"\
+  \
+    },\
+  \{\
+    "name": "Myanglung",\
+    "code": "LB0079",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D08"\
+  \
+    },\
+  \{\
+    "name": "Laligurans",\
+    "code": "LB0080",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D08"\
+  \
+    },\
+  \{\
+    "name": "Aathrai",\
+    "code": "LB0081",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D08"\
+  \
+    },\
+  \{\
+    "name": "Chhathar",\
+    "code": "LB0082",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D08"\
+  \
+    },\
+  \{\
+    "name": "Phedap",\
+    "code": "LB0083",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D08"\
+  \
+    },\
+  \{\
+    "name": "Menchayam",\
+    "code": "LB0084",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D08"\
+  \
+    },\
+  \{\
+    "name": "Khandbari",\
+    "code": "LB0085",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D09"\
+  \
+    },\
+  \{\
+    "name": "Chainpur",\
+    "code": "LB0086",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D09"\
+  \
+    },\
+  \{\
+    "name": "Dharmadevi",\
+    "code": "LB0087",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D09"\
+  \
+    },\
+  \{\
+    "name": "Panchkhapan",\
+    "code": "LB0088",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D09"\
+  \
+    },\
+  \{\
+    "name": "Madi",\
+    "code": "LB0089",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D09"\
+  \
+    },\
+  \{\
+    "name": "Makalu",\
+    "code": "LB0090",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D09"\
+  \
+    },\
+  \{\
+    "name": "Chichila",\
+    "code": "LB0091",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D09"\
+  \
+    },\
+  \{\
+    "name": "Bhotkhola",\
+    "code": "LB0092",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D09"\
+  \
+    },\
+  \{\
+    "name": "Sabhapokhari",\
+    "code": "LB0093",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D09"\
+  \
+    },\
+  \{\
+    "name": "Silichong",\
+    "code": "LB0094",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D09"\
+  \
+    },\
+  \{\
+    "name": "Bhojpur",\
+    "code": "LB0095",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D10"\
+  \
+    },\
+  \{\
+    "name": "Shadanand",\
+    "code": "LB0096",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D10"\
+  \
+    },\
+  \{\
+    "name": "Tyamke Maiyunm",\
+    "code": "LB0097",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D10"\
+  \
+    },\
+  \{\
+    "name": "Ramprasad Rai",\
+    "code": "LB0098",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D10"\
+  \
+    },\
+  \{\
+    "name": "Aamchok",\
+    "code": "LB0099",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D10"\
+  \
+    },\
+  \{\
+    "name": "Hatuwagadhi",\
+    "code": "LB0100",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D10"\
+  \
+    },\
+  \{\
+    "name": "Pauwadungma",\
+    "code": "LB0101",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D10"\
+  \
+    },\
+  \{\
+    "name": "Salpasilichho",\
+    "code": "LB0102",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D10"\
+  \
+    },\
+  \{\
+    "name": "Temkemaiyung",\
+    "code": "LB0103",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D10"\
+  \
+    },\
+  \{\
+    "name": "Solududhkunda",\
+    "code": "LB0104",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D11"\
+  \
+    },\
+  \{\
+    "name": "Necha Salyan",\
+    "code": "LB0105",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D11"\
+  \
+    },\
+  \{\
+    "name": "Dudhkoshi",\
+    "code": "LB0106",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D11"\
+  \
+    },\
+  \{\
+    "name": "Mahakulung",\
+    "code": "LB0107",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D11"\
+  \
+    },\
+  \{\
+    "name": "Sotang",\
+    "code": "LB0108",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D11"\
+  \
+    },\
+  \{\
+    "name": "Thulung Dudhkoshi",\
+    "code": "LB0109",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D11"\
+  \
+    },\
+  \{\
+    "name": "Mapya Dudhkoshi",\
+    "code": "LB0110",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D11"\
+  \
+    },\
+  \{\
+    "name": "Khumbu Pasang Lhamu",\
+    "code": "LB0111",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D11"\
+  \
+    },\
+  \{\
+    "name": "Siddhicharan",\
+    "code": "LB0112",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D12"\
+  \
+    },\
+  \{\
+    "name": "Manebhanjyang",\
+    "code": "LB0113",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D12"\
+  \
+    },\
+  \{\
+    "name": "Champadevi",\
+    "code": "LB0114",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D12"\
+  \
+    },\
+  \{\
+    "name": "Sunkoshi",\
+    "code": "LB0115",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D12"\
+  \
+    },\
+  \{\
+    "name": "Molung",\
+    "code": "LB0116",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D12"\
+  \
+    },\
+  \{\
+    "name": "Likhu",\
+    "code": "LB0117",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D12"\
+  \
+    },\
+  \{\
+    "name": "Chisankhugadhi",\
+    "code": "LB0118",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D12"\
+  \
+    },\
+  \{\
+    "name": "Khijidemba",\
+    "code": "LB0119",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D12"\
+  \
+    },\
+  \{\
+    "name": "Diktel Rupakot Majhuwagadhi",\
+    "code": "LB0120",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D13"\
+  \
+    },\
+  \{\
+    "name": "Halesi Tuwachung",\
+    "code": "LB0121",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D13"\
+  \
+    },\
+  \{\
+    "name": "Khotehang",\
+    "code": "LB0122",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D13"\
+  \
+    },\
+  \{\
+    "name": "Diprung Chuichumma",\
+    "code": "LB0123",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D13"\
+  \
+    },\
+  \{\
+    "name": "Ainselukhark",\
+    "code": "LB0124",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D13"\
+  \
+    },\
+  \{\
+    "name": "Rawa Besi",\
+    "code": "LB0125",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D13"\
+  \
+    },\
+  \{\
+    "name": "Sakela",\
+    "code": "LB0126",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D13"\
+  \
+    },\
+  \{\
+    "name": "Barahapokhari",\
+    "code": "LB0127",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D13"\
+  \
+    },\
+  \{\
+    "name": "Jantedhunga",\
+    "code": "LB0128",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D13"\
+  \
+    },\
+  \{\
+    "name": "Kepilasgadhi",\
+    "code": "LB0129",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D13"\
+  \
+    },\
+  \{\
+    "name": "Triyuga",\
+    "code": "LB0130",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D14"\
+  \
+    },\
+  \{\
+    "name": "Katari",\
+    "code": "LB0131",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D14"\
+  \
+    },\
+  \{\
+    "name": "Chaudandigadhi",\
+    "code": "LB0132",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D14"\
+  \
+    },\
+  \{\
+    "name": "Belaka",\
+    "code": "LB0133",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D14"\
+  \
+    },\
+  \{\
+    "name": "Rautamai",\
+    "code": "LB0134",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D14"\
+  \
+    },\
+  \{\
+    "name": "Tapli",\
+    "code": "LB0135",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D14"\
+  \
+    },\
+  \{\
+    "name": "Limchungbung",\
+    "code": "LB0136",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D14"\
+  \
+    },\
+  \{\
+    "name": "Udayapurgadhi",\
+    "code": "LB0137",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D14"\
+  \
+    },\
+  \{\
+    "name": "Rajbiraj",\
+    "code": "LB0138",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D15"\
+  \
+    },\
+  \{\
+    "name": "Kanchanrup",\
+    "code": "LB0139",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D15"\
+  \
+    },\
+  \{\
+    "name": "Dakneshwori",\
+    "code": "LB0140",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D15"\
+  \
+    },\
+  \{\
+    "name": "Bodebarsain",\
+    "code": "LB0141",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D15"\
+  \
+    },\
+  \{\
+    "name": "Shambhunath",\
+    "code": "LB0142",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D15"\
+  \
+    },\
+  \{\
+    "name": "Surunga",\
+    "code": "LB0143",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D15"\
+  \
+    },\
+  \{\
+    "name": "Hanumannagar Kankalini",\
+    "code": "LB0144",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D15"\
+  \
+    },\
+  \{\
+    "name": "Khadak",\
+    "code": "LB0145",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D15"\
+  \
+    },\
+  \{\
+    "name": "Saptakoshi",\
+    "code": "LB0146",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D15"\
+  \
+    },\
+  \{\
+    "name": "Agnisaira Krishnasavaran",\
+    "code": "LB0147",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D15"\
+  \
+    },\
+  \{\
+    "name": "Balan Bihul",\
+    "code": "LB0148",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D15"\
+  \
+    },\
+  \{\
+    "name": "Bishnupur",\
+    "code": "LB0149",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D15"\
+  \
+    },\
+  \{\
+    "name": "Chhinnamasta",\
+    "code": "LB0150",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D15"\
+  \
+    },\
+  \{\
+    "name": "Mahadeva",\
+    "code": "LB0151",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D15"\
+  \
+    },\
+  \{\
+    "name": "Rupani",\
+    "code": "LB0152",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D15"\
+  \
+    },\
+  \{\
+    "name": "Rajgadh",\
+    "code": "LB0153",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D15"\
+  \
+    },\
+  \{\
+    "name": "Tilathi Koiladi",\
+    "code": "LB0154",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D15"\
+  \
+    },\
+  \{\
+    "name": "Siraha",\
+    "code": "LB0155",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D16"\
+  \
+    },\
+  \{\
+    "name": "Lahan",\
+    "code": "LB0156",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D16"\
+  \
+    },\
+  \{\
+    "name": "Mirchaiya",\
+    "code": "LB0157",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D16"\
+  \
+    },\
+  \{\
+    "name": "Golbazar",\
+    "code": "LB0158",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D16"\
+  \
+    },\
+  \{\
+    "name": "Dhangadhimai",\
+    "code": "LB0159",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D16"\
+  \
+    },\
+  \{\
+    "name": "Kalyanpur",\
+    "code": "LB0160",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D16"\
+  \
+    },\
+  \{\
+    "name": "Sukhipur",\
+    "code": "LB0161",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D16"\
+  \
+    },\
+  \{\
+    "name": "Arnama",\
+    "code": "LB0162",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D16"\
+  \
+    },\
+  \{\
+    "name": "Aurahi",\
+    "code": "LB0163",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D16"\
+  \
+    },\
+  \{\
+    "name": "Bariyarpatti",\
+    "code": "LB0164",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D16"\
+  \
+    },\
+  \{\
+    "name": "Bhagwanpur",\
+    "code": "LB0165",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D16"\
+  \
+    },\
+  \{\
+    "name": "Bishnupur",\
+    "code": "LB0166",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D16"\
+  \
+    },\
+  \{\
+    "name": "Karjanha",\
+    "code": "LB0167",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D16"\
+  \
+    },\
+  \{\
+    "name": "Lakshmipur Patari",\
+    "code": "LB0168",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D16"\
+  \
+    },\
+  \{\
+    "name": "Naraha",\
+    "code": "LB0169",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D16"\
+  \
+    },\
+  \{\
+    "name": "Nawarajpur",\
+    "code": "LB0170",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D16"\
+  \
+    },\
+  \{\
+    "name": "Sakhuwanankarkatti",\
+    "code": "LB0171",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D16"\
+  \
+    },\
+  \{\
+    "name": "Janakpur",\
+    "code": "LB0172",\
+    "category": "SUB_METROPOLITAN",\
+    "parent_code": "D17"\
+  \
+    },\
+  \{\
+    "name": "Chhireshwornath",\
+    "code": "LB0173",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D17"\
+  \
+    },\
+  \{\
+    "name": "Ganeshman Charnath",\
+    "code": "LB0174",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D17"\
+  \
+    },\
+  \{\
+    "name": "Dhanushadham",\
+    "code": "LB0175",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D17"\
+  \
+    },\
+  \{\
+    "name": "Nagarain",\
+    "code": "LB0176",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D17"\
+  \
+    },\
+  \{\
+    "name": "Mithila",\
+    "code": "LB0177",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D17"\
+  \
+    },\
+  \{\
+    "name": "Sahidnagar",\
+    "code": "LB0178",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D17"\
+  \
+    },\
+  \{\
+    "name": "Sabaila",\
+    "code": "LB0179",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D17"\
+  \
+    },\
+  \{\
+    "name": "Kamala",\
+    "code": "LB0180",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D17"\
+  \
+    },\
+  \{\
+    "name": "Mithila Bihari",\
+    "code": "LB0181",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D17"\
+  \
+    },\
+  \{\
+    "name": "Hansapur",\
+    "code": "LB0182",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D17"\
+  \
+    },\
+  \{\
+    "name": "Janaknandini",\
+    "code": "LB0183",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D17"\
+  \
+    },\
+  \{\
+    "name": "Bateshwar",\
+    "code": "LB0184",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D17"\
+  \
+    },\
+  \{\
+    "name": "Mukhiyapatti Musaharmiya",\
+    "code": "LB0185",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D17"\
+  \
+    },\
+  \{\
+    "name": "Lakshminiya",\
+    "code": "LB0186",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D17"\
+  \
+    },\
+  \{\
+    "name": "Aaurahi",\
+    "code": "LB0187",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D17"\
+  \
+    },\
+  \{\
+    "name": "Dhanauji",\
+    "code": "LB0188",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D17"\
+  \
+    },\
+  \{\
+    "name": "Jaleshwar",\
+    "code": "LB0189",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D18"\
+  \
+    },\
+  \{\
+    "name": "Bardibas",\
+    "code": "LB0190",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D18"\
+  \
+    },\
+  \{\
+    "name": "Gaushala",\
+    "code": "LB0191",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D18"\
+  \
+    },\
+  \{\
+    "name": "Loharpatti",\
+    "code": "LB0192",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D18"\
+  \
+    },\
+  \{\
+    "name": "Ramgopalpur",\
+    "code": "LB0193",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D18"\
+  \
+    },\
+  \{\
+    "name": "Aurahi",\
+    "code": "LB0194",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D18"\
+  \
+    },\
+  \{\
+    "name": "Balwa",\
+    "code": "LB0195",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D18"\
+  \
+    },\
+  \{\
+    "name": "Bhangaha",\
+    "code": "LB0196",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D18"\
+  \
+    },\
+  \{\
+    "name": "Matihani",\
+    "code": "LB0197",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D18"\
+  \
+    },\
+  \{\
+    "name": "Manara Siswa",\
+    "code": "LB0198",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D18"\
+  \
+    },\
+  \{\
+    "name": "Ekdanra",\
+    "code": "LB0199",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D18"\
+  \
+    },\
+  \{\
+    "name": "Samsi",\
+    "code": "LB0200",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D18"\
+  \
+    },\
+  \{\
+    "name": "Sonama",\
+    "code": "LB0201",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D18"\
+  \
+    },\
+  \{\
+    "name": "Pipra",\
+    "code": "LB0202",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D18"\
+  \
+    },\
+  \{\
+    "name": "Mahottari",\
+    "code": "LB0203",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D18"\
+  \
+    },\
+  \{\
+    "name": "Gaushala",\
+    "code": "LB0204",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D18"\
+  \
+    },\
+  \{\
+    "name": "Bateshwar",\
+    "code": "LB0205",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D18"\
+  \
+    },\
+  \{\
+    "name": "Malangwa",\
+    "code": "LB0206",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D19"\
+  \
+    },\
+  \{\
+    "name": "Hariwan",\
+    "code": "LB0207",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D19"\
+  \
+    },\
+  \{\
+    "name": "Lalbandi",\
+    "code": "LB0208",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D19"\
+  \
+    },\
+  \{\
+    "name": "Barahathwa",\
+    "code": "LB0209",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D19"\
+  \
+    },\
+  \{\
+    "name": "Ishworpur",\
+    "code": "LB0210",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D19"\
+  \
+    },\
+  \{\
+    "name": "Godaita",\
+    "code": "LB0211",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D19"\
+  \
+    },\
+  \{\
+    "name": "Bagmati",\
+    "code": "LB0212",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D19"\
+  \
+    },\
+  \{\
+    "name": "Haripur",\
+    "code": "LB0213",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D19"\
+  \
+    },\
+  \{\
+    "name": "Balara",\
+    "code": "LB0214",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D19"\
+  \
+    },\
+  \{\
+    "name": "Kabilasi",\
+    "code": "LB0215",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D19"\
+  \
+    },\
+  \{\
+    "name": "Chandranagar",\
+    "code": "LB0216",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D19"\
+  \
+    },\
+  \{\
+    "name": "Dhankaul",\
+    "code": "LB0217",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D19"\
+  \
+    },\
+  \{\
+    "name": "Parsa",\
+    "code": "LB0218",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D19"\
+  \
+    },\
+  \{\
+    "name": "Brahmpuri",\
+    "code": "LB0219",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D19"\
+  \
+    },\
+  \{\
+    "name": "Ramnagar",\
+    "code": "LB0220",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D19"\
+  \
+    },\
+  \{\
+    "name": "Chakraghatta",\
+    "code": "LB0221",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D19"\
+  \
+    },\
+  \{\
+    "name": "Bishnu",\
+    "code": "LB0222",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D19"\
+  \
+    },\
+  \{\
+    "name": "Gaur",\
+    "code": "LB0223",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D20"\
+  \
+    },\
+  \{\
+    "name": "Chandrapur",\
+    "code": "LB0224",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D20"\
+  \
+    },\
+  \{\
+    "name": "Garuda",\
+    "code": "LB0225",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D20"\
+  \
+    },\
+  \{\
+    "name": "Brindaban",\
+    "code": "LB0226",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D20"\
+  \
+    },\
+  \{\
+    "name": "Gujara",\
+    "code": "LB0227",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D20"\
+  \
+    },\
+  \{\
+    "name": "Katahariya",\
+    "code": "LB0228",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D20"\
+  \
+    },\
+  \{\
+    "name": "Maulapur",\
+    "code": "LB0229",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D20"\
+  \
+    },\
+  \{\
+    "name": "Madhav Narayan",\
+    "code": "LB0230",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D20"\
+  \
+    },\
+  \{\
+    "name": "Baudhimai",\
+    "code": "LB0231",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D20"\
+  \
+    },\
+  \{\
+    "name": "Dewahhi Gonahi",\
+    "code": "LB0232",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D20"\
+  \
+    },\
+  \{\
+    "name": "Gadhimai",\
+    "code": "LB0233",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D20"\
+  \
+    },\
+  \{\
+    "name": "Ishnath",\
+    "code": "LB0234",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D20"\
+  \
+    },\
+  \{\
+    "name": "Paroha",\
+    "code": "LB0235",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D20"\
+  \
+    },\
+  \{\
+    "name": "Phatuwa Bijayapur",\
+    "code": "LB0236",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D20"\
+  \
+    },\
+  \{\
+    "name": "Rajpur",\
+    "code": "LB0237",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D20"\
+  \
+    },\
+  \{\
+    "name": "Rajdevi",\
+    "code": "LB0238",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D20"\
+  \
+    },\
+  \{\
+    "name": "Yamunamai",\
+    "code": "LB0239",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D20"\
+  \
+    },\
+  \{\
+    "name": "Durga Bhagwati",\
+    "code": "LB0240",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D20"\
+  \
+    },\
+  \{\
+    "name": "Kalaiya",\
+    "code": "LB0241",\
+    "category": "SUB_METROPOLITAN",\
+    "parent_code": "D21"\
+  \
+    },\
+  \{\
+    "name": "Jeetpur Simara",\
+    "code": "LB0242",\
+    "category": "SUB_METROPOLITAN",\
+    "parent_code": "D21"\
+  \
+    },\
+  \{\
+    "name": "Kolhabi",\
+    "code": "LB0243",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D21"\
+  \
+    },\
+  \{\
+    "name": "Nijgadh",\
+    "code": "LB0244",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D21"\
+  \
+    },\
+  \{\
+    "name": "Mahagadhimai",\
+    "code": "LB0245",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D21"\
+  \
+    },\
+  \{\
+    "name": "Simraungadh",\
+    "code": "LB0246",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D21"\
+  \
+    },\
+  \{\
+    "name": "Pacharauta",\
+    "code": "LB0247",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D21"\
+  \
+    },\
+  \{\
+    "name": "Adarsha Kotwal",\
+    "code": "LB0248",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D21"\
+  \
+    },\
+  \{\
+    "name": "Baragadhi",\
+    "code": "LB0249",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D21"\
+  \
+    },\
+  \{\
+    "name": "Devtal",\
+    "code": "LB0250",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D21"\
+  \
+    },\
+  \{\
+    "name": "Karaiyamai",\
+    "code": "LB0251",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D21"\
+  \
+    },\
+  \{\
+    "name": "Parwanipur",\
+    "code": "LB0252",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D21"\
+  \
+    },\
+  \{\
+    "name": "Pheta",\
+    "code": "LB0253",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D21"\
+  \
+    },\
+  \{\
+    "name": "Prasauni",\
+    "code": "LB0254",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D21"\
+  \
+    },\
+  \{\
+    "name": "Suwarna",\
+    "code": "LB0255",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D21"\
+  \
+    },\
+  \{\
+    "name": "Bishrampur",\
+    "code": "LB0256",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D21"\
+  \
+    },\
+  \{\
+    "name": "Birgunj",\
+    "code": "LB0257",\
+    "category": "METROPOLITAN",\
+    "parent_code": "D22"\
+  \
+    },\
+  \{\
+    "name": "Pokhariya",\
+    "code": "LB0258",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D22"\
+  \
+    },\
+  \{\
+    "name": "Bahudarmai",\
+    "code": "LB0259",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D22"\
+  \
+    },\
+  \{\
+    "name": "Parsagadhi",\
+    "code": "LB0260",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D22"\
+  \
+    },\
+  \{\
+    "name": "Bindabasini",\
+    "code": "LB0261",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D22"\
+  \
+    },\
+  \{\
+    "name": "Chhipaharmai",\
+    "code": "LB0262",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D22"\
+  \
+    },\
+  \{\
+    "name": "Dhobini",\
+    "code": "LB0263",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D22"\
+  \
+    },\
+  \{\
+    "name": "Jagarnathpur",\
+    "code": "LB0264",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D22"\
+  \
+    },\
+  \{\
+    "name": "Jirabhawani",\
+    "code": "LB0265",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D22"\
+  \
+    },\
+  \{\
+    "name": "Kalikamai",\
+    "code": "LB0266",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D22"\
+  \
+    },\
+  \{\
+    "name": "Pakahamainpur",\
+    "code": "LB0267",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D22"\
+  \
+    },\
+  \{\
+    "name": "Paterwa Sugauli",\
+    "code": "LB0268",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D22"\
+  \
+    },\
+  \{\
+    "name": "Sakhuwa Prasauni",\
+    "code": "LB0269",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D22"\
+  \
+    },\
+  \{\
+    "name": "Sakhuwanankarkatti",\
+    "code": "LB0270",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D22"\
+  \
+    },\
+  \{\
+    "name": "Thori",\
+    "code": "LB0271",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D22"\
+  \
+    },\
+  \{\
+    "name": "Birgunj",\
+    "code": "LB0272",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D22"\
+  \
+    },\
+  \{\
+    "name": "Vishrampur",\
+    "code": "LB0273",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D22"\
+  \
+    },\
+  \{\
+    "name": "Bhimeshwar",\
+    "code": "LB0274",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D23"\
+  \
+    },\
+  \{\
+    "name": "Jiri",\
+    "code": "LB0275",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D23"\
+  \
+    },\
+  \{\
+    "name": "Kalinchok",\
+    "code": "LB0276",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D23"\
+  \
+    },\
+  \{\
+    "name": "Melung",\
+    "code": "LB0277",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D23"\
+  \
+    },\
+  \{\
+    "name": "Bigu",\
+    "code": "LB0278",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D23"\
+  \
+    },\
+  \{\
+    "name": "Gaurishankar",\
+    "code": "LB0279",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D23"\
+  \
+    },\
+  \{\
+    "name": "Baiteshwar",\
+    "code": "LB0280",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D23"\
+  \
+    },\
+  \{\
+    "name": "Sailung",\
+    "code": "LB0281",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D23"\
+  \
+    },\
+  \{\
+    "name": "Tamakoshi",\
+    "code": "LB0282",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D23"\
+  \
+    },\
+  \{\
+    "name": "Chautara Sangachokgadhi",\
+    "code": "LB0283",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D24"\
+  \
+    },\
+  \{\
+    "name": "Melamchi",\
+    "code": "LB0284",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D24"\
+  \
+    },\
+  \{\
+    "name": "Bahrabise",\
+    "code": "LB0285",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D24"\
+  \
+    },\
+  \{\
+    "name": "Panchpokhari Thangpal",\
+    "code": "LB0286",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D24"\
+  \
+    },\
+  \{\
+    "name": "Helambu",\
+    "code": "LB0287",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D24"\
+  \
+    },\
+  \{\
+    "name": "Balefi",\
+    "code": "LB0288",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D24"\
+  \
+    },\
+  \{\
+    "name": "Sunkoshi",\
+    "code": "LB0289",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D24"\
+  \
+    },\
+  \{\
+    "name": "Indrawati",\
+    "code": "LB0290",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D24"\
+  \
+    },\
+  \{\
+    "name": "Jugal",\
+    "code": "LB0291",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D24"\
+  \
+    },\
+  \{\
+    "name": "Lisankhu Pakhar",\
+    "code": "LB0292",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D24"\
+  \
+    },\
+  \{\
+    "name": "Tripurasundari",\
+    "code": "LB0293",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D24"\
+  \
+    },\
+  \{\
+    "name": "Barhabise",\
+    "code": "LB0294",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D24"\
+  \
+    },\
+  \{\
+    "name": "Uttargaya",\
+    "code": "LB0295",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D25"\
+  \
+    },\
+  \{\
+    "name": "Kalika",\
+    "code": "LB0296",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D25"\
+  \
+    },\
+  \{\
+    "name": "Naukunda",\
+    "code": "LB0297",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D25"\
+  \
+    },\
+  \{\
+    "name": "Parbati Kunda",\
+    "code": "LB0298",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D25"\
+  \
+    },\
+  \{\
+    "name": "Aamachhodingmo",\
+    "code": "LB0299",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D25"\
+  \
+    },\
+  \{\
+    "name": "Bidur",\
+    "code": "LB0300",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D26"\
+  \
+    },\
+  \{\
+    "name": "Belkotgadhi",\
+    "code": "LB0301",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D26"\
+  \
+    },\
+  \{\
+    "name": "Kakani",\
+    "code": "LB0302",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D26"\
+  \
+    },\
+  \{\
+    "name": "Dupcheshwar",\
+    "code": "LB0303",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D26"\
+  \
+    },\
+  \{\
+    "name": "Shivapuri",\
+    "code": "LB0304",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D26"\
+  \
+    },\
+  \{\
+    "name": "Kispang",\
+    "code": "LB0305",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D26"\
+  \
+    },\
+  \{\
+    "name": "Tadi",\
+    "code": "LB0306",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D26"\
+  \
+    },\
+  \{\
+    "name": "Likhu",\
+    "code": "LB0307",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D26"\
+  \
+    },\
+  \{\
+    "name": "Meghang",\
+    "code": "LB0308",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D26"\
+  \
+    },\
+  \{\
+    "name": "Tarkeshwar",\
+    "code": "LB0309",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D26"\
+  \
+    },\
+  \{\
+    "name": "Panchakanya",\
+    "code": "LB0310",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D26"\
+  \
+    },\
+  \{\
+    "name": "Suryagadhi",\
+    "code": "LB0311",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D26"\
+  \
+    },\
+  \{\
+    "name": "Dhunibeshi",\
+    "code": "LB0312",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D27"\
+  \
+    },\
+  \{\
+    "name": "Nilkantha",\
+    "code": "LB0313",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D27"\
+  \
+    },\
+  \{\
+    "name": "Benighat Rorang",\
+    "code": "LB0314",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D27"\
+  \
+    },\
+  \{\
+    "name": "Gangajamuna",\
+    "code": "LB0315",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D27"\
+  \
+    },\
+  \{\
+    "name": "Galchhi",\
+    "code": "LB0316",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D27"\
+  \
+    },\
+  \{\
+    "name": "Gajuri",\
+    "code": "LB0317",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D27"\
+  \
+    },\
+  \{\
+    "name": "Jwalamukhi",\
+    "code": "LB0318",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D27"\
+  \
+    },\
+  \{\
+    "name": "Khaniyabas",\
+    "code": "LB0319",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D27"\
+  \
+    },\
+  \{\
+    "name": "Netrawati Dabjong",\
+    "code": "LB0320",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D27"\
+  \
+    },\
+  \{\
+    "name": "Rubi Valley",\
+    "code": "LB0321",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D27"\
+  \
+    },\
+  \{\
+    "name": "Siddhalek",\
+    "code": "LB0322",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D27"\
+  \
+    },\
+  \{\
+    "name": "Thakre",\
+    "code": "LB0323",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D27"\
+  \
+    },\
+  \{\
+    "name": "Kathmandu",\
+    "code": "LB0324",\
+    "category": "METROPOLITAN",\
+    "parent_code": "D28"\
+  \
+    },\
+  \{\
+    "name": "Kageshwori Manohara",\
+    "code": "LB0325",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D28"\
+  \
+    },\
+  \{\
+    "name": "Kirtipur",\
+    "code": "LB0326",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D28"\
+  \
+    },\
+  \{\
+    "name": "Gokarneshwar",\
+    "code": "LB0327",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D28"\
+  \
+    },\
+  \{\
+    "name": "Chanragiri",\
+    "code": "LB0328",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D28"\
+  \
+    },\
+  \{\
+    "name": "Tokha",\
+    "code": "LB0329",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D28"\
+  \
+    },\
+  \{\
+    "name": "Tarkeshwar",\
+    "code": "LB0330",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D28"\
+  \
+    },\
+  \{\
+    "name": "Nagarjun",\
+    "code": "LB0331",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D28"\
+  \
+    },\
+  \{\
+    "name": "Budhanilkantha",\
+    "code": "LB0332",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D28"\
+  \
+    },\
+  \{\
+    "name": "Tarakeshwar",\
+    "code": "LB0333",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D28"\
+  \
+    },\
+  \{\
+    "name": "Dakshinkali",\
+    "code": "LB0334",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D28"\
+  \
+    },\
+  \{\
+    "name": "Bhaktapur",\
+    "code": "LB0335",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D29"\
+  \
+    },\
+  \{\
+    "name": "Madhyapur Thimi",\
+    "code": "LB0336",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D29"\
+  \
+    },\
+  \{\
+    "name": "Suryabinayak",\
+    "code": "LB0337",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D29"\
+  \
+    },\
+  \{\
+    "name": "Changunarayan",\
+    "code": "LB0338",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D29"\
+  \
+    },\
+  \{\
+    "name": "Lalitpur",\
+    "code": "LB0339",\
+    "category": "METROPOLITAN",\
+    "parent_code": "D30"\
+  \
+    },\
+  \{\
+    "name": "Godawari",\
+    "code": "LB0340",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D30"\
+  \
+    },\
+  \{\
+    "name": "Mahalaxmi",\
+    "code": "LB0341",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D30"\
+  \
+    },\
+  \{\
+    "name": "Konjyosom",\
+    "code": "LB0342",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D30"\
+  \
+    },\
+  \{\
+    "name": "Bagmati",\
+    "code": "LB0343",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D30"\
+  \
+    },\
+  \{\
+    "name": "Mahankal",\
+    "code": "LB0344",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D30"\
+  \
+    },\
+  \{\
+    "name": "Dhulikhel",\
+    "code": "LB0345",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D31"\
+  \
+    },\
+  \{\
+    "name": "Banepa",\
+    "code": "LB0346",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D31"\
+  \
+    },\
+  \{\
+    "name": "Panauti",\
+    "code": "LB0347",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D31"\
+  \
+    },\
+  \{\
+    "name": "Panchkhal",\
+    "code": "LB0348",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D31"\
+  \
+    },\
+  \{\
+    "name": "Namobuddha",\
+    "code": "LB0349",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D31"\
+  \
+    },\
+  \{\
+    "name": "Mandandeupur",\
+    "code": "LB0350",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D31"\
+  \
+    },\
+  \{\
+    "name": "Khanikhola",\
+    "code": "LB0351",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D31"\
+  \
+    },\
+  \{\
+    "name": "Chaunri Deurali",\
+    "code": "LB0352",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D31"\
+  \
+    },\
+  \{\
+    "name": "Temal",\
+    "code": "LB0353",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D31"\
+  \
+    },\
+  \{\
+    "name": "Bethanchowk",\
+    "code": "LB0354",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D31"\
+  \
+    },\
+  \{\
+    "name": "Bhumlu",\
+    "code": "LB0355",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D31"\
+  \
+    },\
+  \{\
+    "name": "Mahabharat",\
+    "code": "LB0356",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D31"\
+  \
+    },\
+  \{\
+    "name": "Roshi",\
+    "code": "LB0357",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D31"\
+  \
+    },\
+  \{\
+    "name": "Manthali",\
+    "code": "LB0358",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D32"\
+  \
+    },\
+  \{\
+    "name": "Ramechhap",\
+    "code": "LB0359",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D32"\
+  \
+    },\
+  \{\
+    "name": "Umakunda",\
+    "code": "LB0360",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D32"\
+  \
+    },\
+  \{\
+    "name": "Khandadevi",\
+    "code": "LB0361",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D32"\
+  \
+    },\
+  \{\
+    "name": "Gokulganga",\
+    "code": "LB0362",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D32"\
+  \
+    },\
+  \{\
+    "name": "Doramba",\
+    "code": "LB0363",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D32"\
+  \
+    },\
+  \{\
+    "name": "Sunapati",\
+    "code": "LB0364",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D32"\
+  \
+    },\
+  \{\
+    "name": "Likhu Tamakoshi",\
+    "code": "LB0365",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D32"\
+  \
+    },\
+  \{\
+    "name": "Kamalamai",\
+    "code": "LB0366",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D33"\
+  \
+    },\
+  \{\
+    "name": "Dudhauli",\
+    "code": "LB0367",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D33"\
+  \
+    },\
+  \{\
+    "name": "Sunkoshi",\
+    "code": "LB0368",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D33"\
+  \
+    },\
+  \{\
+    "name": "Hariharpurgadhi",\
+    "code": "LB0369",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D33"\
+  \
+    },\
+  \{\
+    "name": "Tinpatan",\
+    "code": "LB0370",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D33"\
+  \
+    },\
+  \{\
+    "name": "Marin",\
+    "code": "LB0371",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D33"\
+  \
+    },\
+  \{\
+    "name": "Golanjor",\
+    "code": "LB0372",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D33"\
+  \
+    },\
+  \{\
+    "name": "Phikkal",\
+    "code": "LB0373",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D33"\
+  \
+    },\
+  \{\
+    "name": "Ghyanglekh",\
+    "code": "LB0374",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D33"\
+  \
+    },\
+  \{\
+    "name": "Ratnapark",\
+    "code": "LB0375",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D33"\
+  \
+    },\
+  \{\
+    "name": "Hetauda",\
+    "code": "LB0376",\
+    "category": "SUB_METROPOLITAN",\
+    "parent_code": "D34"\
+  \
+    },\
+  \{\
+    "name": "Thaha",\
+    "code": "LB0377",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D34"\
+  \
+    },\
+  \{\
+    "name": "Bhimphedi",\
+    "code": "LB0378",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D34"\
+  \
+    },\
+  \{\
+    "name": "Makwanpurgadhi",\
+    "code": "LB0379",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D34"\
+  \
+    },\
+  \{\
+    "name": "Manahari",\
+    "code": "LB0380",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D34"\
+  \
+    },\
+  \{\
+    "name": "Raksirang",\
+    "code": "LB0381",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D34"\
+  \
+    },\
+  \{\
+    "name": "Bakaiya",\
+    "code": "LB0382",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D34"\
+  \
+    },\
+  \{\
+    "name": "Bagmati",\
+    "code": "LB0383",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D34"\
+  \
+    },\
+  \{\
+    "name": "Indrasarowar",\
+    "code": "LB0384",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D34"\
+  \
+    },\
+  \{\
+    "name": "Kailash",\
+    "code": "LB0385",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D34"\
+  \
+    },\
+  \{\
+    "name": "Bharatpur",\
+    "code": "LB0386",\
+    "category": "METROPOLITAN",\
+    "parent_code": "D35"\
+  \
+    },\
+  \{\
+    "name": "Ratnanagar",\
+    "code": "LB0387",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D35"\
+  \
+    },\
+  \{\
+    "name": "Khairahani",\
+    "code": "LB0388",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D35"\
+  \
+    },\
+  \{\
+    "name": "Rapti",\
+    "code": "LB0389",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D35"\
+  \
+    },\
+  \{\
+    "name": "Kalika",\
+    "code": "LB0390",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D35"\
+  \
+    },\
+  \{\
+    "name": "Madi",\
+    "code": "LB0391",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D35"\
+  \
+    },\
+  \{\
+    "name": "Ichchhakamana",\
+    "code": "LB0392",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D35"\
+  \
+    },\
+  \{\
+    "name": "Gorkha",\
+    "code": "LB0393",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D36"\
+  \
+    },\
+  \{\
+    "name": "Palungtar",\
+    "code": "LB0394",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D36"\
+  \
+    },\
+  \{\
+    "name": "Sulikot",\
+    "code": "LB0395",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D36"\
+  \
+    },\
+  \{\
+    "name": "Siranchok",\
+    "code": "LB0396",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D36"\
+  \
+    },\
+  \{\
+    "name": "Ajirkot",\
+    "code": "LB0397",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D36"\
+  \
+    },\
+  \{\
+    "name": "Aarughat",\
+    "code": "LB0398",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D36"\
+  \
+    },\
+  \{\
+    "name": "Barpak Sulikot",\
+    "code": "LB0399",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D36"\
+  \
+    },\
+  \{\
+    "name": "Dharche",\
+    "code": "LB0400",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D36"\
+  \
+    },\
+  \{\
+    "name": "Bhimsen",\
+    "code": "LB0401",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D36"\
+  \
+    },\
+  \{\
+    "name": "Shahid Lakhan",\
+    "code": "LB0402",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D36"\
+  \
+    },\
+  \{\
+    "name": "Chum Nubri",\
+    "code": "LB0403",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D36"\
+  \
+    },\
+  \{\
+    "name": "Chame",\
+    "code": "LB0404",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D37"\
+  \
+    },\
+  \{\
+    "name": "Nason",\
+    "code": "LB0405",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D37"\
+  \
+    },\
+  \{\
+    "name": "Narpa Bhumi",\
+    "code": "LB0406",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D37"\
+  \
+    },\
+  \{\
+    "name": "Manang Ngisyang",\
+    "code": "LB0407",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D37"\
+  \
+    },\
+  \{\
+    "name": "Gharapjhong",\
+    "code": "LB0408",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D38"\
+  \
+    },\
+  \{\
+    "name": "Thasang",\
+    "code": "LB0409",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D38"\
+  \
+    },\
+  \{\
+    "name": "Barhagaun Muktichhetra",\
+    "code": "LB0410",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D38"\
+  \
+    },\
+  \{\
+    "name": "Lo Ghekar Damodarkunda",\
+    "code": "LB0411",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D38"\
+  \
+    },\
+  \{\
+    "name": "Dalome",\
+    "code": "LB0412",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D38"\
+  \
+    },\
+  \{\
+    "name": "Beni",\
+    "code": "LB0413",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D39"\
+  \
+    },\
+  \{\
+    "name": "Annapurna",\
+    "code": "LB0414",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D39"\
+  \
+    },\
+  \{\
+    "name": "Dhaulagiri",\
+    "code": "LB0415",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D39"\
+  \
+    },\
+  \{\
+    "name": "Mangala",\
+    "code": "LB0416",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D39"\
+  \
+    },\
+  \{\
+    "name": "Malika",\
+    "code": "LB0417",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D39"\
+  \
+    },\
+  \{\
+    "name": "Raghuganga",\
+    "code": "LB0418",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D39"\
+  \
+    },\
+  \{\
+    "name": "Pokhara",\
+    "code": "LB0419",\
+    "category": "METROPOLITAN",\
+    "parent_code": "D40"\
+  \
+    },\
+  \{\
+    "name": "Annapurna",\
+    "code": "LB0420",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D40"\
+  \
+    },\
+  \{\
+    "name": "Machhapuchchhre",\
+    "code": "LB0421",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D40"\
+  \
+    },\
+  \{\
+    "name": "Madi",\
+    "code": "LB0422",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D40"\
+  \
+    },\
+  \{\
+    "name": "Rupa",\
+    "code": "LB0423",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D40"\
+  \
+    },\
+  \{\
+    "name": "Besisahar",\
+    "code": "LB0424",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D41"\
+  \
+    },\
+  \{\
+    "name": "Sundarbazar",\
+    "code": "LB0425",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D41"\
+  \
+    },\
+  \{\
+    "name": "Madhya Nepal",\
+    "code": "LB0426",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D41"\
+  \
+    },\
+  \{\
+    "name": "Rainas",\
+    "code": "LB0427",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D41"\
+  \
+    },\
+  \{\
+    "name": "Dordi",\
+    "code": "LB0428",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D41"\
+  \
+    },\
+  \{\
+    "name": "Dudhpokhari",\
+    "code": "LB0429",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D41"\
+  \
+    },\
+  \{\
+    "name": "Marsyangdi",\
+    "code": "LB0430",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D41"\
+  \
+    },\
+  \{\
+    "name": "Kwholasothar",\
+    "code": "LB0431",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D41"\
+  \
+    },\
+  \{\
+    "name": "Bhanu",\
+    "code": "LB0432",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D42"\
+  \
+    },\
+  \{\
+    "name": "Bhimad",\
+    "code": "LB0433",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D42"\
+  \
+    },\
+  \{\
+    "name": "Byas",\
+    "code": "LB0434",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D42"\
+  \
+    },\
+  \{\
+    "name": "Shuklagandaki",\
+    "code": "LB0435",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D42"\
+  \
+    },\
+  \{\
+    "name": "Anbukhaireni",\
+    "code": "LB0436",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D42"\
+  \
+    },\
+  \{\
+    "name": "Bandipur",\
+    "code": "LB0437",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D42"\
+  \
+    },\
+  \{\
+    "name": "Devghat",\
+    "code": "LB0438",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D42"\
+  \
+    },\
+  \{\
+    "name": "Ghiring",\
+    "code": "LB0439",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D42"\
+  \
+    },\
+  \{\
+    "name": "Myagde",\
+    "code": "LB0440",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D42"\
+  \
+    },\
+  \{\
+    "name": "Rishing",\
+    "code": "LB0441",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D42"\
+  \
+    },\
+  \{\
+    "name": "Kawasoti",\
+    "code": "LB0442",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D43"\
+  \
+    },\
+  \{\
+    "name": "Gaindakot",\
+    "code": "LB0443",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D43"\
+  \
+    },\
+  \{\
+    "name": "Madhyabindu",\
+    "code": "LB0444",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D43"\
+  \
+    },\
+  \{\
+    "name": "Devchuli",\
+    "code": "LB0445",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D43"\
+  \
+    },\
+  \{\
+    "name": "Hupsekot",\
+    "code": "LB0446",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D43"\
+  \
+    },\
+  \{\
+    "name": "Binayi Tribeni",\
+    "code": "LB0447",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D43"\
+  \
+    },\
+  \{\
+    "name": "Bulingtar",\
+    "code": "LB0448",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D43"\
+  \
+    },\
+  \{\
+    "name": "Baudikali",\
+    "code": "LB0449",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D43"\
+  \
+    },\
+  \{\
+    "name": "Putalibazar",\
+    "code": "LB0450",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D44"\
+  \
+    },\
+  \{\
+    "name": "Galyang",\
+    "code": "LB0451",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D44"\
+  \
+    },\
+  \{\
+    "name": "Chapakot",\
+    "code": "LB0452",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D44"\
+  \
+    },\
+  \{\
+    "name": "Bhirkot",\
+    "code": "LB0453",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D44"\
+  \
+    },\
+  \{\
+    "name": "Waling",\
+    "code": "LB0454",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D44"\
+  \
+    },\
+  \{\
+    "name": "Arjunchaupari",\
+    "code": "LB0455",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D44"\
+  \
+    },\
+  \{\
+    "name": "Aandhikhola",\
+    "code": "LB0456",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D44"\
+  \
+    },\
+  \{\
+    "name": "Kaligandaki",\
+    "code": "LB0457",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D44"\
+  \
+    },\
+  \{\
+    "name": "Phedikhola",\
+    "code": "LB0458",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D44"\
+  \
+    },\
+  \{\
+    "name": "Harinas",\
+    "code": "LB0459",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D44"\
+  \
+    },\
+  \{\
+    "name": "Biruwa",\
+    "code": "LB0460",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D44"\
+  \
+    },\
+  \{\
+    "name": "Kushma",\
+    "code": "LB0461",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D45"\
+  \
+    },\
+  \{\
+    "name": "Phalewas",\
+    "code": "LB0462",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D45"\
+  \
+    },\
+  \{\
+    "name": "Jaljala",\
+    "code": "LB0463",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D45"\
+  \
+    },\
+  \{\
+    "name": "Modi",\
+    "code": "LB0464",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D45"\
+  \
+    },\
+  \{\
+    "name": "Mahashila",\
+    "code": "LB0465",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D45"\
+  \
+    },\
+  \{\
+    "name": "Bihadi",\
+    "code": "LB0466",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D45"\
+  \
+    },\
+  \{\
+    "name": "Painyu",\
+    "code": "LB0467",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D45"\
+  \
+    },\
+  \{\
+    "name": "Baglung",\
+    "code": "LB0468",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D46"\
+  \
+    },\
+  \{\
+    "name": "Galkot",\
+    "code": "LB0469",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D46"\
+  \
+    },\
+  \{\
+    "name": "Jaimini",\
+    "code": "LB0470",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D46"\
+  \
+    },\
+  \{\
+    "name": "Dhorpatan",\
+    "code": "LB0471",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D46"\
+  \
+    },\
+  \{\
+    "name": "Bareng",\
+    "code": "LB0472",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D46"\
+  \
+    },\
+  \{\
+    "name": "Kanthekhola",\
+    "code": "LB0473",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D46"\
+  \
+    },\
+  \{\
+    "name": "Taman Khola",\
+    "code": "LB0474",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D46"\
+  \
+    },\
+  \{\
+    "name": "Tara Khola",\
+    "code": "LB0475",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D46"\
+  \
+    },\
+  \{\
+    "name": "Nisikhola",\
+    "code": "LB0476",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D46"\
+  \
+    },\
+  \{\
+    "name": "Badigad",\
+    "code": "LB0477",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D46"\
+  \
+    },\
+  \{\
+    "name": "Bardaghat",\
+    "code": "LB0478",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D47"\
+  \
+    },\
+  \{\
+    "name": "Ramgram",\
+    "code": "LB0479",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D47"\
+  \
+    },\
+  \{\
+    "name": "Sunwal",\
+    "code": "LB0480",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D47"\
+  \
+    },\
+  \{\
+    "name": "Susta",\
+    "code": "LB0481",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D47"\
+  \
+    },\
+  \{\
+    "name": "Pratappur",\
+    "code": "LB0482",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D47"\
+  \
+    },\
+  \{\
+    "name": "Palhinandan",\
+    "code": "LB0483",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D47"\
+  \
+    },\
+  \{\
+    "name": "Sarawal",\
+    "code": "LB0484",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D47"\
+  \
+    },\
+  \{\
+    "name": "Butwal",\
+    "code": "LB0485",\
+    "category": "SUB_METROPOLITAN",\
+    "parent_code": "D48"\
+  \
+    },\
+  \{\
+    "name": "Siddharthanagar",\
+    "code": "LB0486",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D48"\
+  \
+    },\
+  \{\
+    "name": "Tilottama",\
+    "code": "LB0487",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D48"\
+  \
+    },\
+  \{\
+    "name": "Lumbini Sanskritik",\
+    "code": "LB0488",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D48"\
+  \
+    },\
+  \{\
+    "name": "Devdaha",\
+    "code": "LB0489",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D48"\
+  \
+    },\
+  \{\
+    "name": "Sainamaina",\
+    "code": "LB0490",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D48"\
+  \
+    },\
+  \{\
+    "name": "Rohini",\
+    "code": "LB0491",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D48"\
+  \
+    },\
+  \{\
+    "name": "Gaidahawa",\
+    "code": "LB0492",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D48"\
+  \
+    },\
+  \{\
+    "name": "Marchawari",\
+    "code": "LB0493",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D48"\
+  \
+    },\
+  \{\
+    "name": "Kanchan",\
+    "code": "LB0494",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D48"\
+  \
+    },\
+  \{\
+    "name": "Siyari",\
+    "code": "LB0495",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D48"\
+  \
+    },\
+  \{\
+    "name": "Sammarimai",\
+    "code": "LB0496",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D48"\
+  \
+    },\
+  \{\
+    "name": "Mayadevi",\
+    "code": "LB0497",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D48"\
+  \
+    },\
+  \{\
+    "name": "Kotahimai",\
+    "code": "LB0498",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D48"\
+  \
+    },\
+  \{\
+    "name": "Omsatiya",\
+    "code": "LB0499",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D48"\
+  \
+    },\
+  \{\
+    "name": "Suddhodhan",\
+    "code": "LB0500",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D48"\
+  \
+    },\
+  \{\
+    "name": "Kapilvastu",\
+    "code": "LB0501",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D49"\
+  \
+    },\
+  \{\
+    "name": "Taulihawa",\
+    "code": "LB0502",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D49"\
+  \
+    },\
+  \{\
+    "name": "Buddhabhumi",\
+    "code": "LB0503",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D49"\
+  \
+    },\
+  \{\
+    "name": "Shivaraj",\
+    "code": "LB0504",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D49"\
+  \
+    },\
+  \{\
+    "name": "Maharajgunj",\
+    "code": "LB0505",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D49"\
+  \
+    },\
+  \{\
+    "name": "Krishnanagar",\
+    "code": "LB0506",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D49"\
+  \
+    },\
+  \{\
+    "name": "Banganga",\
+    "code": "LB0507",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D49"\
+  \
+    },\
+  \{\
+    "name": "Bijaynagar",\
+    "code": "LB0508",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D49"\
+  \
+    },\
+  \{\
+    "name": "Mayadevi",\
+    "code": "LB0509",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D49"\
+  \
+    },\
+  \{\
+    "name": "Yashodhara",\
+    "code": "LB0510",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D49"\
+  \
+    },\
+  \{\
+    "name": "Tansen",\
+    "code": "LB0511",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D50"\
+  \
+    },\
+  \{\
+    "name": "Rampur",\
+    "code": "LB0512",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D50"\
+  \
+    },\
+  \{\
+    "name": "Nisdi",\
+    "code": "LB0513",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D50"\
+  \
+    },\
+  \{\
+    "name": "Purbakhola",\
+    "code": "LB0514",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D50"\
+  \
+    },\
+  \{\
+    "name": "Rainadevi Chhahara",\
+    "code": "LB0515",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D50"\
+  \
+    },\
+  \{\
+    "name": "Rambha",\
+    "code": "LB0516",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D50"\
+  \
+    },\
+  \{\
+    "name": "Ribdikot",\
+    "code": "LB0517",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D50"\
+  \
+    },\
+  \{\
+    "name": "Bagnaskali",\
+    "code": "LB0518",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D50"\
+  \
+    },\
+  \{\
+    "name": "Mathagadhi",\
+    "code": "LB0519",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D50"\
+  \
+    },\
+  \{\
+    "name": "Tinau",\
+    "code": "LB0520",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D50"\
+  \
+    },\
+  \{\
+    "name": "Sandhikharka",\
+    "code": "LB0521",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D51"\
+  \
+    },\
+  \{\
+    "name": "Sitganga",\
+    "code": "LB0522",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D51"\
+  \
+    },\
+  \{\
+    "name": "Bhumikasthan",\
+    "code": "LB0523",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D51"\
+  \
+    },\
+  \{\
+    "name": "Chhatradev",\
+    "code": "LB0524",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D51"\
+  \
+    },\
+  \{\
+    "name": "Panini",\
+    "code": "LB0525",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D51"\
+  \
+    },\
+  \{\
+    "name": "Malarani",\
+    "code": "LB0526",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D51"\
+  \
+    },\
+  \{\
+    "name": "Resunga",\
+    "code": "LB0527",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D52"\
+  \
+    },\
+  \{\
+    "name": "Musikot",\
+    "code": "LB0528",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D52"\
+  \
+    },\
+  \{\
+    "name": "Kaligandaki",\
+    "code": "LB0529",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D52"\
+  \
+    },\
+  \{\
+    "name": "Gulmi Darbar",\
+    "code": "LB0530",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D52"\
+  \
+    },\
+  \{\
+    "name": "Satyawati",\
+    "code": "LB0531",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D52"\
+  \
+    },\
+  \{\
+    "name": "Dhurkot",\
+    "code": "LB0532",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D52"\
+  \
+    },\
+  \{\
+    "name": "Chandrakot",\
+    "code": "LB0533",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D52"\
+  \
+    },\
+  \{\
+    "name": "Malika",\
+    "code": "LB0534",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D52"\
+  \
+    },\
+  \{\
+    "name": "Madane",\
+    "code": "LB0535",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D52"\
+  \
+    },\
+  \{\
+    "name": "Chhatrakot",\
+    "code": "LB0536",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D52"\
+  \
+    },\
+  \{\
+    "name": "Isma",\
+    "code": "LB0537",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D52"\
+  \
+    },\
+  \{\
+    "name": "Ruru",\
+    "code": "LB0538",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D52"\
+  \
+    },\
+  \{\
+    "name": "Rukumkot",\
+    "code": "LB0539",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D53"\
+  \
+    },\
+  \{\
+    "name": "Bhume",\
+    "code": "LB0540",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D53"\
+  \
+    },\
+  \{\
+    "name": "Putha Uttarganga",\
+    "code": "LB0541",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D53"\
+  \
+    },\
+  \{\
+    "name": "Rolpa",\
+    "code": "LB0542",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D54"\
+  \
+    },\
+  \{\
+    "name": "Triveni",\
+    "code": "LB0543",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D54"\
+  \
+    },\
+  \{\
+    "name": "Runtigadhi",\
+    "code": "LB0544",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D54"\
+  \
+    },\
+  \{\
+    "name": "Lungri",\
+    "code": "LB0545",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D54"\
+  \
+    },\
+  \{\
+    "name": "Sunchhahari",\
+    "code": "LB0546",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D54"\
+  \
+    },\
+  \{\
+    "name": "Thawang",\
+    "code": "LB0547",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D54"\
+  \
+    },\
+  \{\
+    "name": "Madi",\
+    "code": "LB0548",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D54"\
+  \
+    },\
+  \{\
+    "name": "Gangadev",\
+    "code": "LB0549",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D54"\
+  \
+    },\
+  \{\
+    "name": "Sukidaha",\
+    "code": "LB0550",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D54"\
+  \
+    },\
+  \{\
+    "name": "Suwarnabati",\
+    "code": "LB0551",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D54"\
+  \
+    },\
+  \{\
+    "name": "Pyuthan",\
+    "code": "LB0552",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D55"\
+  \
+    },\
+  \{\
+    "name": "Sworgadwari",\
+    "code": "LB0553",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D55"\
+  \
+    },\
+  \{\
+    "name": "Mandavi",\
+    "code": "LB0554",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D55"\
+  \
+    },\
+  \{\
+    "name": "Gaumukhi",\
+    "code": "LB0555",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D55"\
+  \
+    },\
+  \{\
+    "name": "Sarumarani",\
+    "code": "LB0556",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D55"\
+  \
+    },\
+  \{\
+    "name": "Mallarani",\
+    "code": "LB0557",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D55"\
+  \
+    },\
+  \{\
+    "name": "Naubahini",\
+    "code": "LB0558",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D55"\
+  \
+    },\
+  \{\
+    "name": "Jhimruk",\
+    "code": "LB0559",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D55"\
+  \
+    },\
+  \{\
+    "name": "Airawati",\
+    "code": "LB0560",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D55"\
+  \
+    },\
+  \{\
+    "name": "Ghorahi",\
+    "code": "LB0561",\
+    "category": "SUB_METROPOLITAN",\
+    "parent_code": "D56"\
+  \
+    },\
+  \{\
+    "name": "Tulsipur",\
+    "code": "LB0562",\
+    "category": "SUB_METROPOLITAN",\
+    "parent_code": "D56"\
+  \
+    },\
+  \{\
+    "name": "Lamahi",\
+    "code": "LB0563",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D56"\
+  \
+    },\
+  \{\
+    "name": "Shantinagar",\
+    "code": "LB0564",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D56"\
+  \
+    },\
+  \{\
+    "name": "Rapti",\
+    "code": "LB0565",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D56"\
+  \
+    },\
+  \{\
+    "name": "Gadhawa",\
+    "code": "LB0566",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D56"\
+  \
+    },\
+  \{\
+    "name": "Rajpur",\
+    "code": "LB0567",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D56"\
+  \
+    },\
+  \{\
+    "name": "Banglachuli",\
+    "code": "LB0568",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D56"\
+  \
+    },\
+  \{\
+    "name": "Dangisharan",\
+    "code": "LB0569",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D56"\
+  \
+    },\
+  \{\
+    "name": "Babai",\
+    "code": "LB0570",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D56"\
+  \
+    },\
+  \{\
+    "name": "Nepalgunj",\
+    "code": "LB0571",\
+    "category": "SUB_METROPOLITAN",\
+    "parent_code": "D57"\
+  \
+    },\
+  \{\
+    "name": "Kohalpur",\
+    "code": "LB0572",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D57"\
+  \
+    },\
+  \{\
+    "name": "Narainapur",\
+    "code": "LB0573",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D57"\
+  \
+    },\
+  \{\
+    "name": "Rapti Sonari",\
+    "code": "LB0574",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D57"\
+  \
+    },\
+  \{\
+    "name": "Baijanath",\
+    "code": "LB0575",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D57"\
+  \
+    },\
+  \{\
+    "name": "Khajura",\
+    "code": "LB0576",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D57"\
+  \
+    },\
+  \{\
+    "name": "Duduwa",\
+    "code": "LB0577",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D57"\
+  \
+    },\
+  \{\
+    "name": "Janaki",\
+    "code": "LB0578",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D57"\
+  \
+    },\
+  \{\
+    "name": "Gulariya",\
+    "code": "LB0579",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D58"\
+  \
+    },\
+  \{\
+    "name": "Rajapur",\
+    "code": "LB0580",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D58"\
+  \
+    },\
+  \{\
+    "name": "Madhuwan",\
+    "code": "LB0581",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D58"\
+  \
+    },\
+  \{\
+    "name": "Thakurbaba",\
+    "code": "LB0582",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D58"\
+  \
+    },\
+  \{\
+    "name": "Bansagadhi",\
+    "code": "LB0583",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D58"\
+  \
+    },\
+  \{\
+    "name": "Barbardiya",\
+    "code": "LB0584",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D58"\
+  \
+    },\
+  \{\
+    "name": "Badhaiyatal",\
+    "code": "LB0585",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D58"\
+  \
+    },\
+  \{\
+    "name": "Geruwa",\
+    "code": "LB0586",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D58"\
+  \
+    },\
+  \{\
+    "name": "Musikot",\
+    "code": "LB0587",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D59"\
+  \
+    },\
+  \{\
+    "name": "Chaurjahari",\
+    "code": "LB0588",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D59"\
+  \
+    },\
+  \{\
+    "name": "Aathbiskot",\
+    "code": "LB0589",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D59"\
+  \
+    },\
+  \{\
+    "name": "Banphikot",\
+    "code": "LB0590",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D59"\
+  \
+    },\
+  \{\
+    "name": "Triveni",\
+    "code": "LB0591",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D59"\
+  \
+    },\
+  \{\
+    "name": "Sani Bheri",\
+    "code": "LB0592",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D59"\
+  \
+    },\
+  \{\
+    "name": "Sisne",\
+    "code": "LB0593",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D59"\
+  \
+    },\
+  \{\
+    "name": "Sharada",\
+    "code": "LB0594",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D60"\
+  \
+    },\
+  \{\
+    "name": "Bangad Kupinde",\
+    "code": "LB0595",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D60"\
+  \
+    },\
+  \{\
+    "name": "Bagchaur",\
+    "code": "LB0596",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D60"\
+  \
+    },\
+  \{\
+    "name": "Kalimati",\
+    "code": "LB0597",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D60"\
+  \
+    },\
+  \{\
+    "name": "Chhatreshwori",\
+    "code": "LB0598",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D60"\
+  \
+    },\
+  \{\
+    "name": "Darma",\
+    "code": "LB0599",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D60"\
+  \
+    },\
+  \{\
+    "name": "Kapurkot",\
+    "code": "LB0600",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D60"\
+  \
+    },\
+  \{\
+    "name": "Kumakh",\
+    "code": "LB0601",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D60"\
+  \
+    },\
+  \{\
+    "name": "Siddha Kumakh",\
+    "code": "LB0602",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D60"\
+  \
+    },\
+  \{\
+    "name": "Triveni",\
+    "code": "LB0603",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D60"\
+  \
+    },\
+  \{\
+    "name": "Thuli Bheri",\
+    "code": "LB0604",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D61"\
+  \
+    },\
+  \{\
+    "name": "Tripurasundari",\
+    "code": "LB0605",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D61"\
+  \
+    },\
+  \{\
+    "name": "Dolpo Buddha",\
+    "code": "LB0606",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D61"\
+  \
+    },\
+  \{\
+    "name": "She Phoksundo",\
+    "code": "LB0607",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D61"\
+  \
+    },\
+  \{\
+    "name": "Jagadulla",\
+    "code": "LB0608",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D61"\
+  \
+    },\
+  \{\
+    "name": "Mudkechula",\
+    "code": "LB0609",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D61"\
+  \
+    },\
+  \{\
+    "name": "Kaike",\
+    "code": "LB0610",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D61"\
+  \
+    },\
+  \{\
+    "name": "Chharka Tangsong",\
+    "code": "LB0611",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D61"\
+  \
+    },\
+  \{\
+    "name": "Chandannath",\
+    "code": "LB0612",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D62"\
+  \
+    },\
+  \{\
+    "name": "Kanaka Sundari",\
+    "code": "LB0613",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D62"\
+  \
+    },\
+  \{\
+    "name": "Sinja",\
+    "code": "LB0614",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D62"\
+  \
+    },\
+  \{\
+    "name": "Hima",\
+    "code": "LB0615",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D62"\
+  \
+    },\
+  \{\
+    "name": "Tila",\
+    "code": "LB0616",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D62"\
+  \
+    },\
+  \{\
+    "name": "Guthichaur",\
+    "code": "LB0617",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D62"\
+  \
+    },\
+  \{\
+    "name": "Tatopani",\
+    "code": "LB0618",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D62"\
+  \
+    },\
+  \{\
+    "name": "Patarasi",\
+    "code": "LB0619",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D62"\
+  \
+    },\
+  \{\
+    "name": "Chhayanath Rara",\
+    "code": "LB0620",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D63"\
+  \
+    },\
+  \{\
+    "name": "Mugum Karmarong",\
+    "code": "LB0621",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D63"\
+  \
+    },\
+  \{\
+    "name": "Soru",\
+    "code": "LB0622",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D63"\
+  \
+    },\
+  \{\
+    "name": "Khatyad",\
+    "code": "LB0623",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D63"\
+  \
+    },\
+  \{\
+    "name": "Simikot",\
+    "code": "LB0624",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D64"\
+  \
+    },\
+  \{\
+    "name": "Namkha",\
+    "code": "LB0625",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D64"\
+  \
+    },\
+  \{\
+    "name": "Kharpunath",\
+    "code": "LB0626",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D64"\
+  \
+    },\
+  \{\
+    "name": "Sarkegad",\
+    "code": "LB0627",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D64"\
+  \
+    },\
+  \{\
+    "name": "Chankheli",\
+    "code": "LB0628",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D64"\
+  \
+    },\
+  \{\
+    "name": "Adanchuli",\
+    "code": "LB0629",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D64"\
+  \
+    },\
+  \{\
+    "name": "Tanjakot",\
+    "code": "LB0630",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D64"\
+  \
+    },\
+  \{\
+    "name": "Khandachakra",\
+    "code": "LB0631",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D65"\
+  \
+    },\
+  \{\
+    "name": "Raskot",\
+    "code": "LB0632",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D65"\
+  \
+    },\
+  \{\
+    "name": "Tilagufa",\
+    "code": "LB0633",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D65"\
+  \
+    },\
+  \{\
+    "name": "Pachaljharana",\
+    "code": "LB0634",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D65"\
+  \
+    },\
+  \{\
+    "name": "Narharinath",\
+    "code": "LB0635",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D65"\
+  \
+    },\
+  \{\
+    "name": "Shubha Kalika",\
+    "code": "LB0636",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D65"\
+  \
+    },\
+  \{\
+    "name": "Sanni Triveni",\
+    "code": "LB0637",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D65"\
+  \
+    },\
+  \{\
+    "name": "Mahawai",\
+    "code": "LB0638",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D65"\
+  \
+    },\
+  \{\
+    "name": "Palata",\
+    "code": "LB0639",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D65"\
+  \
+    },\
+  \{\
+    "name": "Bheri",\
+    "code": "LB0640",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D66"\
+  \
+    },\
+  \{\
+    "name": "Chhedagad",\
+    "code": "LB0641",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D66"\
+  \
+    },\
+  \{\
+    "name": "Nalgad",\
+    "code": "LB0642",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D66"\
+  \
+    },\
+  \{\
+    "name": "Junichande",\
+    "code": "LB0643",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D66"\
+  \
+    },\
+  \{\
+    "name": "Kuse",\
+    "code": "LB0644",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D66"\
+  \
+    },\
+  \{\
+    "name": "Barekot",\
+    "code": "LB0645",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D66"\
+  \
+    },\
+  \{\
+    "name": "Shivalaya",\
+    "code": "LB0646",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D66"\
+  \
+    },\
+  \{\
+    "name": "Narayan",\
+    "code": "LB0647",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D67"\
+  \
+    },\
+  \{\
+    "name": "Dullu",\
+    "code": "LB0648",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D67"\
+  \
+    },\
+  \{\
+    "name": "Chamunda Bindrasaini",\
+    "code": "LB0649",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D67"\
+  \
+    },\
+  \{\
+    "name": "Aathbis",\
+    "code": "LB0650",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D67"\
+  \
+    },\
+  \{\
+    "name": "Bhagawatimai",\
+    "code": "LB0651",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D67"\
+  \
+    },\
+  \{\
+    "name": "Bhairabi",\
+    "code": "LB0652",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D67"\
+  \
+    },\
+  \{\
+    "name": "Dungeshwar",\
+    "code": "LB0653",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D67"\
+  \
+    },\
+  \{\
+    "name": "Gurans",\
+    "code": "LB0654",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D67"\
+  \
+    },\
+  \{\
+    "name": "Mahabu",\
+    "code": "LB0655",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D67"\
+  \
+    },\
+  \{\
+    "name": "Naumule",\
+    "code": "LB0656",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D67"\
+  \
+    },\
+  \{\
+    "name": "Thantikandh",\
+    "code": "LB0657",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D67"\
+  \
+    },\
+  \{\
+    "name": "Birendranagar",\
+    "code": "LB0658",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D68"\
+  \
+    },\
+  \{\
+    "name": "Bheriganga",\
+    "code": "LB0659",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D68"\
+  \
+    },\
+  \{\
+    "name": "Gurbhakot",\
+    "code": "LB0660",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D68"\
+  \
+    },\
+  \{\
+    "name": "Panchapuri",\
+    "code": "LB0661",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D68"\
+  \
+    },\
+  \{\
+    "name": "Lekbeshi",\
+    "code": "LB0662",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D68"\
+  \
+    },\
+  \{\
+    "name": "Barahatal",\
+    "code": "LB0663",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D68"\
+  \
+    },\
+  \{\
+    "name": "Chaukune",\
+    "code": "LB0664",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D68"\
+  \
+    },\
+  \{\
+    "name": "Simta",\
+    "code": "LB0665",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D68"\
+  \
+    },\
+  \{\
+    "name": "Badimalika",\
+    "code": "LB0666",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D69"\
+  \
+    },\
+  \{\
+    "name": "Budhiganga",\
+    "code": "LB0667",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D69"\
+  \
+    },\
+  \{\
+    "name": "Triveni",\
+    "code": "LB0668",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D69"\
+  \
+    },\
+  \{\
+    "name": "Budhinanda",\
+    "code": "LB0669",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D69"\
+  \
+    },\
+  \{\
+    "name": "Khaptad Chhededaha",\
+    "code": "LB0670",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D69"\
+  \
+    },\
+  \{\
+    "name": "Swamikartik Khapar",\
+    "code": "LB0671",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D69"\
+  \
+    },\
+  \{\
+    "name": "Jagannath",\
+    "code": "LB0672",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D69"\
+  \
+    },\
+  \{\
+    "name": "Himali",\
+    "code": "LB0673",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D69"\
+  \
+    },\
+  \{\
+    "name": "Gaumul",\
+    "code": "LB0674",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D69"\
+  \
+    },\
+  \{\
+    "name": "Jayaprithvi",\
+    "code": "LB0675",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D70"\
+  \
+    },\
+  \{\
+    "name": "Bungal",\
+    "code": "LB0676",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D70"\
+  \
+    },\
+  \{\
+    "name": "Talkot",\
+    "code": "LB0677",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D70"\
+  \
+    },\
+  \{\
+    "name": "Masta",\
+    "code": "LB0678",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D70"\
+  \
+    },\
+  \{\
+    "name": "Khaptad Chhanna",\
+    "code": "LB0679",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D70"\
+  \
+    },\
+  \{\
+    "name": "Thalara",\
+    "code": "LB0680",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D70"\
+  \
+    },\
+  \{\
+    "name": "Bitthadchir",\
+    "code": "LB0681",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D70"\
+  \
+    },\
+  \{\
+    "name": "Surma",\
+    "code": "LB0682",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D70"\
+  \
+    },\
+  \{\
+    "name": "Chhabis Pathibhera",\
+    "code": "LB0683",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D70"\
+  \
+    },\
+  \{\
+    "name": "Durgathali",\
+    "code": "LB0684",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D70"\
+  \
+    },\
+  \{\
+    "name": "Kedarsyu",\
+    "code": "LB0685",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D70"\
+  \
+    },\
+  \{\
+    "name": "Saipal",\
+    "code": "LB0686",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D70"\
+  \
+    },\
+  \{\
+    "name": "Dipayal Silgadhi",\
+    "code": "LB0687",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D71"\
+  \
+    },\
+  \{\
+    "name": "Shikhar",\
+    "code": "LB0688",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D71"\
+  \
+    },\
+  \{\
+    "name": "Purbichauki",\
+    "code": "LB0689",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D71"\
+  \
+    },\
+  \{\
+    "name": "Badikedar",\
+    "code": "LB0690",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D71"\
+  \
+    },\
+  \{\
+    "name": "Jorayal",\
+    "code": "LB0691",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D71"\
+  \
+    },\
+  \{\
+    "name": "Sayal",\
+    "code": "LB0692",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D71"\
+  \
+    },\
+  \{\
+    "name": "Aadarsha",\
+    "code": "LB0693",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D71"\
+  \
+    },\
+  \{\
+    "name": "K I Singh",\
+    "code": "LB0694",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D71"\
+  \
+    },\
+  \{\
+    "name": "Bogatan Fudsil",\
+    "code": "LB0695",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D71"\
+  \
+    },\
+  \{\
+    "name": "Mangalsen",\
+    "code": "LB0696",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D72"\
+  \
+    },\
+  \{\
+    "name": "Kamalbazar",\
+    "code": "LB0697",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D72"\
+  \
+    },\
+  \{\
+    "name": "Sanphebagar",\
+    "code": "LB0698",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D72"\
+  \
+    },\
+  \{\
+    "name": "Bannigadhi Jayagadh",\
+    "code": "LB0699",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D72"\
+  \
+    },\
+  \{\
+    "name": "Chaurpati",\
+    "code": "LB0700",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D72"\
+  \
+    },\
+  \{\
+    "name": "Dhakari",\
+    "code": "LB0701",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D72"\
+  \
+    },\
+  \{\
+    "name": "Mellekh",\
+    "code": "LB0702",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D72"\
+  \
+    },\
+  \{\
+    "name": "Panchadewal Binayak",\
+    "code": "LB0703",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D72"\
+  \
+    },\
+  \{\
+    "name": "Ramaroshan",\
+    "code": "LB0704",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D72"\
+  \
+    },\
+  \{\
+    "name": "Turmakhand",\
+    "code": "LB0705",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D72"\
+  \
+    },\
+  \{\
+    "name": "Dhangadhi",\
+    "code": "LB0706",\
+    "category": "SUB_METROPOLITAN",\
+    "parent_code": "D73"\
+  \
+    },\
+  \{\
+    "name": "Tikapur",\
+    "code": "LB0707",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D73"\
+  \
+    },\
+  \{\
+    "name": "Ghodaghodi",\
+    "code": "LB0708",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D73"\
+  \
+    },\
+  \{\
+    "name": "Lamkichuha",\
+    "code": "LB0709",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D73"\
+  \
+    },\
+  \{\
+    "name": "Bhajani",\
+    "code": "LB0710",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D73"\
+  \
+    },\
+  \{\
+    "name": "Godawari",\
+    "code": "LB0711",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D73"\
+  \
+    },\
+  \{\
+    "name": "Gauriganga",\
+    "code": "LB0712",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D73"\
+  \
+    },\
+  \{\
+    "name": "Bardagoriya",\
+    "code": "LB0713",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D73"\
+  \
+    },\
+  \{\
+    "name": "Mohanyal",\
+    "code": "LB0714",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D73"\
+  \
+    },\
+  \{\
+    "name": "Janaki",\
+    "code": "LB0715",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D73"\
+  \
+    },\
+  \{\
+    "name": "Kailari",\
+    "code": "LB0716",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D73"\
+  \
+    },\
+  \{\
+    "name": "Joshipur",\
+    "code": "LB0717",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D73"\
+  \
+    },\
+  \{\
+    "name": "Chure",\
+    "code": "LB0718",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D73"\
+  \
+    },\
+  \{\
+    "name": "Bhimdatta",\
+    "code": "LB0719",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D74"\
+  \
+    },\
+  \{\
+    "name": "Punarbas",\
+    "code": "LB0720",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D74"\
+  \
+    },\
+  \{\
+    "name": "Bedkot",\
+    "code": "LB0721",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D74"\
+  \
+    },\
+  \{\
+    "name": "Mahakali",\
+    "code": "LB0722",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D74"\
+  \
+    },\
+  \{\
+    "name": "Shuklaphanta",\
+    "code": "LB0723",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D74"\
+  \
+    },\
+  \{\
+    "name": "Belauri",\
+    "code": "LB0724",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D74"\
+  \
+    },\
+  \{\
+    "name": "Krishnapur",\
+    "code": "LB0725",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D74"\
+  \
+    },\
+  \{\
+    "name": "Beldandi",\
+    "code": "LB0726",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D74"\
+  \
+    },\
+  \{\
+    "name": "Laljhadi",\
+    "code": "LB0727",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D74"\
+  \
+    },\
+  \{\
+    "name": "Amargadhi",\
+    "code": "LB0728",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D75"\
+  \
+    },\
+  \{\
+    "name": "Parshuram",\
+    "code": "LB0729",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D75"\
+  \
+    },\
+  \{\
+    "name": "Aalitaal",\
+    "code": "LB0730",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D75"\
+  \
+    },\
+  \{\
+    "name": "Bhageshwar",\
+    "code": "LB0731",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D75"\
+  \
+    },\
+  \{\
+    "name": "Navadurga",\
+    "code": "LB0732",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D75"\
+  \
+    },\
+  \{\
+    "name": "Ajaymeru",\
+    "code": "LB0733",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D75"\
+  \
+    },\
+  \{\
+    "name": "Ganyapadhura",\
+    "code": "LB0734",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D75"\
+  \
+    },\
+  \{\
+    "name": "Dasharathchand",\
+    "code": "LB0735",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D76"\
+  \
+    },\
+  \{\
+    "name": "Patan",\
+    "code": "LB0736",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D76"\
+  \
+    },\
+  \{\
+    "name": "Melauli",\
+    "code": "LB0737",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D76"\
+  \
+    },\
+  \{\
+    "name": "Purchaudi",\
+    "code": "LB0738",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D76"\
+  \
+    },\
+  \{\
+    "name": "Dilasaini",\
+    "code": "LB0739",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D76"\
+  \
+    },\
+  \{\
+    "name": "Dogadakedar",\
+    "code": "LB0740",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D76"\
+  \
+    },\
+  \{\
+    "name": "Pancheshwar",\
+    "code": "LB0741",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D76"\
+  \
+    },\
+  \{\
+    "name": "Sigas",\
+    "code": "LB0742",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D76"\
+  \
+    },\
+  \{\
+    "name": "Shivanath",\
+    "code": "LB0743",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D76"\
+  \
+    },\
+  \{\
+    "name": "Surnaya",\
+    "code": "LB0744",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D76"\
+  \
+    },\
+  \{\
+    "name": "Mahakali",\
+    "code": "LB0745",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D77"\
+  \
+    },\
+  \{\
+    "name": "Shailyashikhar",\
+    "code": "LB0746",\
+    "category": "MUNICIPALITY",\
+    "parent_code": "D77"\
+  \
+    },\
+  \{\
+    "name": "Naugad",\
+    "code": "LB0747",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D77"\
+  \
+    },\
+  \{\
+    "name": "Malikarjun",\
+    "code": "LB0748",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D77"\
+  \
+    },\
+  \{\
+    "name": "Marma",\
+    "code": "LB0749",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D77"\
+  \
+    },\
+  \{\
+    "name": "Lekam",\
+    "code": "LB0750",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D77"\
+  \
+    },\
+  \{\
+    "name": "Duhun",\
+    "code": "LB0751",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D77"\
+  \
+    },\
+  \{\
+    "name": "Apihimal",\
+    "code": "LB0752",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D77"\
+  \
+    },\
+  \{\
+    "name": "Byans",\
+    "code": "LB0753",\
+    "category": "RURAL_MUNICIPALITY",\
+    "parent_code": "D77"\
+  \
+    }\
+  ]
+}

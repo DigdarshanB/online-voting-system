@@ -76,6 +76,7 @@ class ContestRead(BaseModel):
     title: str
     seat_count: int
     constituency_id: int | None = None
+    area_id: int | None = None
     created_at: datetime
 
     class Config:
@@ -85,8 +86,10 @@ class ContestRead(BaseModel):
 # ── Structure generation response ──────────────────────────────
 
 class StructureGenerationResult(BaseModel):
-    fptp_contests_created: int
-    pr_contests_created: int
+    fptp_contests_created: int = 0
+    pr_contests_created: int = 0
+    mayor_contests_created: int = 0
+    deputy_mayor_contests_created: int = 0
     total_contests: int
 
 
@@ -95,6 +98,7 @@ class StructureGenerationResult(BaseModel):
 class ReadinessCheck(BaseModel):
     ready: bool
     issues: list[str]
-    fptp_contests: int
-    pr_contests: int
-    total_constituencies: int
+    fptp_contests: int = 0
+    pr_contests: int = 0
+    total_contests: int = 0
+    total_constituencies: int = 0

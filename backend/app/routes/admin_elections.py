@@ -14,13 +14,10 @@ Endpoints:
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.jwt import get_current_user
 from app.db.deps import get_db
-from app.models.constituency import Constituency
-from app.models.district import District
 from app.models.user import User
 from app.repositories import election_repository
 from app.schemas.election import (
@@ -38,7 +35,8 @@ from app.services.election_service import (
     configure_election,
     create_election,
     delete_election,
-    generate_federal_hor_structure,
+    generate_election_structure,
+    get_master_data_status,
     update_election,
 )
 
@@ -89,18 +87,7 @@ def master_data_status(
     db: Session = Depends(get_db),
     user: User = Depends(_require_admin),
 ):
-    district_count = db.execute(
-        select(func.count()).select_from(District)
-    ).scalar_one()
-    constituency_count = db.execute(
-        select(func.count()).select_from(Constituency)
-    ).scalar_one()
-    return {
-        "districts": district_count,
-        "constituencies": constituency_count,
-        "required_constituencies": 165,
-        "ready": constituency_count >= 165,
-    }
+    return get_master_data_status(db)
 
 
 @router.get("/{election_id}", response_model=ElectionRead)
@@ -201,7 +188,7 @@ def generate_structure(
     if not election:
         raise HTTPException(status_code=404, detail="Election not found")
     try:
-        result = generate_federal_hor_structure(db, election)
+        result = generate_election_structure(db, election)
     except ElectionServiceError as e:
         raise HTTPException(status_code=400, detail=str(e))
     return result

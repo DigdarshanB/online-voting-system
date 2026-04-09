@@ -9,9 +9,12 @@ from app.db.base import Base
 class ElectionContest(Base):
     """A single contest within an election.
 
-    For a Federal HoR election, there will be:
-      - 165 FPTP constituency contests (one per constituency)
-      - 1   PR national contest
+    For a Federal HoR election:  165 FPTP constituency contests + 1 PR national contest.
+    For Provincial:  FPTP per province constituency + 1 PR per province.
+    For Local:  ward-level or municipality-level contests.
+
+    `area_id` points to the area_units table — the universal geography target.
+    `constituency_id` is preserved for backward compatibility with existing FKs.
     """
 
     __tablename__ = "election_contests"
@@ -24,11 +27,18 @@ class ElectionContest(Base):
     )
     contest_type: Mapped[str] = mapped_column(
         String(20), nullable=False, index=True,
-    )  # "FPTP" or "PR"
+    )  # "FPTP", "PR", "WARD", "MAYOR", etc.
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     seat_count: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    # FPTP contests link to a constituency; PR contests leave this null
+    # ── Generic area targeting (new: works for all levels) ──────
+    area_id: Mapped[int | None] = mapped_column(
+        ForeignKey("area_units.id", name="fk_ec_area_unit"),
+        nullable=True,
+        index=True,
+    )
+
+    # ── Legacy: federal constituency FK (kept for backward compat) ──
     constituency_id: Mapped[int | None] = mapped_column(
         ForeignKey("constituencies.id", name="fk_ec_constituency"),
         nullable=True,

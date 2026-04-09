@@ -10,6 +10,7 @@ class Constituency(Base):
     __tablename__ = "constituencies"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    code: Mapped[str] = mapped_column(String(10), nullable=False, unique=True, index=True)
     name: Mapped[str] = mapped_column(String(160), nullable=False)
     name_ne: Mapped[str | None] = mapped_column(String(160), nullable=True)
     constituency_number: Mapped[int] = mapped_column(Integer, nullable=False)
