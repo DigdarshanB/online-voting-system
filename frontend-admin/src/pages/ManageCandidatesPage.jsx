@@ -456,16 +456,33 @@ function FptpPanel({ setMsg, clearMsg }) {
           {showNomForm && selectedContest && (
             <div style={{ background: P.surface, border: `1px solid ${P.border}`, borderRadius: 10, padding: 16, marginBottom: 12 }}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+                <label style={lbl}>Party
+                  <select style={inp} value={nomForm.party_id} onChange={e => {
+                    const newPartyId = e.target.value;
+                    const currentCandidate = profiles.find(c => String(c.id) === nomForm.candidate_id);
+                    const candidateMatchesParty = currentCandidate && (
+                      !newPartyId
+                        ? true
+                        : String(currentCandidate.party_id) === newPartyId
+                    );
+                    setNomForm({
+                      ...nomForm,
+                      party_id: newPartyId,
+                      candidate_id: candidateMatchesParty ? nomForm.candidate_id : "",
+                    });
+                  }}>
+                    <option value="">Independent / All</option>
+                    {parties.filter(p => p.is_active).map(p => <option key={p.id} value={p.id}>{p.name} ({p.abbreviation})</option>)}
+                  </select>
+                </label>
                 <label style={lbl}>Candidate *
                   <select style={inp} value={nomForm.candidate_id} onChange={e => setNomForm({ ...nomForm, candidate_id: e.target.value })}>
                     <option value="">— Select —</option>
-                    {profiles.filter(c => c.is_active).map(c => <option key={c.id} value={c.id}>{c.full_name}{c.party_id ? ` (${partyMap[c.party_id]?.abbreviation || ""})` : ""}</option>)}
-                  </select>
-                </label>
-                <label style={lbl}>Party (optional)
-                  <select style={inp} value={nomForm.party_id} onChange={e => setNomForm({ ...nomForm, party_id: e.target.value })}>
-                    <option value="">Independent</option>
-                    {parties.filter(p => p.is_active).map(p => <option key={p.id} value={p.id}>{p.name} ({p.abbreviation})</option>)}
+                    {profiles.filter(c => c.is_active && (
+                      !nomForm.party_id
+                        ? true
+                        : String(c.party_id) === nomForm.party_id
+                    )).map(c => <option key={c.id} value={c.id}>{c.full_name}{c.party_id ? ` (${partyMap[c.party_id]?.abbreviation || ""})` : " (Independent)"}</option>)}
                   </select>
                 </label>
               </div>

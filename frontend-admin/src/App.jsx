@@ -25,7 +25,10 @@ import AdminTotpRecovery from "./pages/AdminTotpRecovery";
 import PendingApprovalPage from "./pages/PendingApprovalPage";
 import DashboardPageView from "./pages/DashboardPage";
 import AccountCenterPage from "./pages/AccountCenterPage";
-import ManageElectionsPage from "./pages/ManageElectionsPage";
+import ManageElectionsHubPage from "./pages/ManageElectionsHubPage";
+import ManageFederalElectionsPage from "./pages/ManageFederalElectionsPage";
+import ManageProvincialElectionsPage from "./pages/ManageProvincialElectionsPage";
+import ManageLocalElectionsPage from "./pages/ManageLocalElectionsPage";
 import ManageCandidatesPage from "./pages/ManageCandidatesPage";
 import VoterAssignmentsPage from "./pages/VoterAssignmentsPage";
 import ResultsPage from "./pages/ResultsPage";
@@ -110,13 +113,43 @@ export default function App() {
           </RequireDashboardMfa>
         }
       />
-      {/* Manage Elections — admin + super_admin */}
+      {/* Manage Elections — hub + level pages */}
       <Route
         path="/admin/manage-elections"
         element={
           <RequireAdminOrSuperAdmin>
-            <AdminShell title="Manage Elections" subtitle="Create and configure federal election structures">
-              <ManageElectionsPage />
+            <AdminShell title="Manage Elections" subtitle="Select a government level to manage its elections">
+              <ManageElectionsHubPage />
+            </AdminShell>
+          </RequireAdminOrSuperAdmin>
+        }
+      />
+      <Route
+        path="/admin/manage-elections/federal"
+        element={
+          <RequireAdminOrSuperAdmin>
+            <AdminShell title="Federal Elections" subtitle="Create and configure federal election structures">
+              <ManageFederalElectionsPage />
+            </AdminShell>
+          </RequireAdminOrSuperAdmin>
+        }
+      />
+      <Route
+        path="/admin/manage-elections/provincial"
+        element={
+          <RequireAdminOrSuperAdmin>
+            <AdminShell title="Provincial Elections" subtitle="Provincial Assembly election management">
+              <ManageProvincialElectionsPage />
+            </AdminShell>
+          </RequireAdminOrSuperAdmin>
+        }
+      />
+      <Route
+        path="/admin/manage-elections/local"
+        element={
+          <RequireAdminOrSuperAdmin>
+            <AdminShell title="Local Elections" subtitle="Municipal and Rural Municipal election management">
+              <ManageLocalElectionsPage />
             </AdminShell>
           </RequireAdminOrSuperAdmin>
         }

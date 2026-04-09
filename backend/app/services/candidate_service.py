@@ -176,7 +176,7 @@ def create_fptp_nomination(
         if not party or not party.is_active:
             raise CandidateServiceError("Party not found or inactive")
 
-    # check duplicate (also enforced by unique constraint)
+    # check duplicate in same contest (also enforced by unique constraint)
     existing = db.execute(
         select(FptpCandidateNomination).where(
             FptpCandidateNomination.contest_id == contest_id,
@@ -186,6 +186,28 @@ def create_fptp_nomination(
     if existing:
         raise CandidateServiceError(
             "This candidate is already nominated for this contest"
+        )
+
+    # ── Cross-constituency uniqueness ──────────────────────────
+    # A candidate may only be nominated to ONE single-seat contest
+    # of the same contest_type within the same election.
+    # e.g. one FPTP contest per election, one MAYOR contest per election.
+    existing_other = db.execute(
+        select(FptpCandidateNomination).join(
+            ElectionContest, FptpCandidateNomination.contest_id == ElectionContest.id
+        ).where(
+            FptpCandidateNomination.election_id == election.id,
+            FptpCandidateNomination.candidate_id == candidate_id,
+            ElectionContest.contest_type == contest.contest_type,
+            FptpCandidateNomination.contest_id != contest_id,
+        )
+    ).scalar_one_or_none()
+    if existing_other:
+        other_contest = db.get(ElectionContest, existing_other.contest_id)
+        raise CandidateServiceError(
+            f"This candidate is already nominated to another {contest.contest_type} "
+            f"contest in this election: '{other_contest.title if other_contest else existing_other.contest_id}'. "
+            f"Remove that nomination first."
         )
 
     nomination = FptpCandidateNomination(

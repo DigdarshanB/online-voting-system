@@ -12,11 +12,12 @@ import {
   LayoutList,
   Lock,
   RefreshCw,
+  ArrowLeft,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import useElections from "../features/elections/hooks/useElections";
 import {
   createElection,
-  updateElection,
   deleteElection,
   generateStructure,
   getReadiness,
@@ -96,15 +97,6 @@ const SUBTYPE_LABELS = {
   LOCAL_RURAL: "Local – Rural Municipal",
 };
 
-const LEVEL_SUBTYPES = {
-  FEDERAL: [{ value: "HOR_DIRECT", label: "House of Representatives (Direct)" }],
-  PROVINCIAL: [{ value: "PROVINCIAL_ASSEMBLY", label: "Provincial Assembly" }],
-  LOCAL: [
-    { value: "LOCAL_MUNICIPAL", label: "Local – Municipal" },
-    { value: "LOCAL_RURAL", label: "Local – Rural Municipal" },
-  ],
-};
-
 const CONTEST_TYPE_COLORS = {
   FPTP:         { bg: "#DBEAFE", color: "#2563EB" },
   PR:           { bg: "#F5F3FF", color: "#7C3AED" },
@@ -120,21 +112,15 @@ function formatContestCounts(el) {
   return parts.length > 0 ? parts.join(" + ") : `${el.contest_count} contests`;
 }
 
-/** Check if master data is ready for a given election level */
-function isMasterDataReadyForLevel(masterData, level) {
-  if (!masterData) return false;
-  if (level === "FEDERAL") return masterData.federal_ready;
-  if (level === "PROVINCIAL") return masterData.provincial_ready;
-  if (level === "LOCAL") return masterData.local_ready;
-  return false;
-}
-
 /* ══════════════════════════════════════════════════════════════ */
-/*  MAIN PAGE COMPONENT                                         */
+/*  MAIN PAGE COMPONENT — FEDERAL ELECTIONS                     */
 /* ══════════════════════════════════════════════════════════════ */
 
-export default function ManageElectionsPage() {
-  const { elections, loading, error, reload } = useElections();
+export default function ManageFederalElectionsPage() {
+  const navigate = useNavigate();
+  const { elections: allElections, loading, error, reload } = useElections();
+  const elections = allElections.filter((el) => el.government_level === "FEDERAL");
+
   const [showCreate, setShowCreate] = useState(false);
   const [expandedId, setExpandedId] = useState(null);
   const [actionLoading, setActionLoading] = useState(null);
@@ -252,15 +238,35 @@ export default function ManageElectionsPage() {
 
   return (
     <div style={{ padding: "32px 40px", maxWidth: 1200, margin: "0 auto" }}>
+      {/* Back link */}
+      <button
+        onClick={() => navigate("/admin/manage-elections")}
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 6,
+          marginBottom: 20,
+          padding: 0,
+          border: "none",
+          background: "transparent",
+          color: P.muted,
+          fontSize: 13,
+          fontWeight: 600,
+          cursor: "pointer",
+        }}
+      >
+        <ArrowLeft size={15} /> Back to Election Hub
+      </button>
+
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
         <div>
           <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: P.text, display: "flex", alignItems: "center", gap: 10 }}>
-            <Vote size={22} strokeWidth={2.2} color={P.accent} />
-            Manage Elections
+            <Landmark size={22} strokeWidth={2.2} color={P.accent} />
+            Federal Elections
           </h2>
           <p style={{ margin: "4px 0 0", fontSize: 14, color: P.muted }}>
-            Create elections, generate contest structures, and manage setup lifecycle
+            Create federal elections, generate contest structures, and manage setup lifecycle
           </p>
         </div>
         <button
@@ -273,12 +279,12 @@ export default function ManageElectionsPage() {
           }}
         >
           <Plus size={18} strokeWidth={2.5} />
-          New Election
+          New Federal Election
         </button>
       </div>
 
-      {/* Master Data Banner */}
-      {masterData && (!masterData.federal_ready || !masterData.provincial_ready || !masterData.local_ready) && (
+      {/* Master Data Banner — federal only */}
+      {masterData && !masterData.federal_ready && (
         <div style={{
           padding: "14px 20px", borderRadius: 10, marginBottom: 20,
           background: P.warnBg, border: `1px solid ${P.warn}30`,
@@ -288,11 +294,7 @@ export default function ManageElectionsPage() {
           <div style={{ flex: 1 }}>
             <span style={{ fontWeight: 700, fontSize: 14, color: P.warn }}>Master Data Status</span>
             <span style={{ fontSize: 13, color: P.muted, marginLeft: 8 }}>
-              Federal: {masterData.federal_ready ? "✓" : "✗"}
-              {" · "}
-              Provincial: {masterData.provincial_ready ? "✓" : "✗"}
-              {" · "}
-              Local: {masterData.local_ready ? "✓" : `✗ (${masterData.local_bodies || 0} bodies)`}
+              Federal geography data: {masterData.federal_ready ? "✓ Ready" : "✗ Not seeded"}
             </span>
           </div>
           <button
@@ -335,7 +337,7 @@ export default function ManageElectionsPage() {
 
       {/* Create Form */}
       {showCreate && (
-        <CreateElectionForm
+        <CreateFederalElectionForm
           onSubmit={handleCreate}
           onCancel={() => setShowCreate(false)}
           submitting={actionLoading === "create"}
@@ -357,10 +359,10 @@ export default function ManageElectionsPage() {
         }}>
           <Landmark size={40} color={P.muted} style={{ margin: "0 auto 16px", opacity: 0.4 }} />
           <p style={{ fontSize: 16, fontWeight: 700, color: P.text, margin: "0 0 6px" }}>
-            No elections yet
+            No federal elections yet
           </p>
           <p style={{ fontSize: 14, color: P.muted }}>
-            Create a new election to get started.
+            Create a new federal election to get started.
           </p>
         </div>
       ) : (
@@ -387,31 +389,22 @@ export default function ManageElectionsPage() {
 
 
 /* ══════════════════════════════════════════════════════════════ */
-/*  CREATE FORM                                                 */
+/*  CREATE FORM — FEDERAL ONLY                                  */
 /* ══════════════════════════════════════════════════════════════ */
 
-function CreateElectionForm({ onSubmit, onCancel, submitting }) {
+function CreateFederalElectionForm({ onSubmit, onCancel, submitting }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [governmentLevel, setGovernmentLevel] = useState("FEDERAL");
-  const [electionSubtype, setElectionSubtype] = useState("HOR_DIRECT");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
-
-  const handleLevelChange = (level) => {
-    setGovernmentLevel(level);
-    // Auto-select first valid subtype for the new level
-    const subtypes = LEVEL_SUBTYPES[level] || [];
-    setElectionSubtype(subtypes[0]?.value || "");
-  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit({
       title: title.trim(),
       description: description.trim() || null,
-      government_level: governmentLevel,
-      election_subtype: electionSubtype,
+      government_level: "FEDERAL",
+      election_subtype: "HOR_DIRECT",
       start_time: new Date(startTime).toISOString(),
       end_time: new Date(endTime).toISOString(),
     });
@@ -449,7 +442,7 @@ function CreateElectionForm({ onSubmit, onCancel, submitting }) {
       }}
     >
       <h3 style={{ margin: "0 0 20px", fontSize: 17, fontWeight: 800, color: P.navy }}>
-        New Election
+        New Federal Election
       </h3>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
@@ -478,20 +471,12 @@ function CreateElectionForm({ onSubmit, onCancel, submitting }) {
 
         <div>
           <label style={labelStyle}>Government Level</label>
-          <select style={inputStyle} value={governmentLevel} onChange={(e) => handleLevelChange(e.target.value)}>
-            <option value="FEDERAL">Federal</option>
-            <option value="PROVINCIAL">Provincial</option>
-            <option value="LOCAL">Local</option>
-          </select>
+          <input style={{ ...inputStyle, background: "#F8FAFC", color: P.muted }} value="Federal" disabled />
         </div>
 
         <div>
           <label style={labelStyle}>Election Type</label>
-          <select style={inputStyle} value={electionSubtype} onChange={(e) => setElectionSubtype(e.target.value)}>
-            {(LEVEL_SUBTYPES[governmentLevel] || []).map((st) => (
-              <option key={st.value} value={st.value}>{st.label}</option>
-            ))}
-          </select>
+          <input style={{ ...inputStyle, background: "#F8FAFC", color: P.muted }} value="House of Representatives (Direct)" disabled />
         </div>
 
         <div>
@@ -564,7 +549,7 @@ function ElectionCard({
   actionLoading,
   masterData,
 }) {
-  const masterDataReady = isMasterDataReadyForLevel(masterData, el.government_level);
+  const masterDataReady = masterData?.federal_ready ?? false;
   const [readiness, setReadiness] = useState(null);
   const [contests, setContests] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);

@@ -65,7 +65,19 @@ export default function AdminShell({ children, title, subtitle }) {
     },
     "/admin/manage-elections": {
       title: "Manage Elections",
+      subtitle: "Select a government level to manage its elections",
+    },
+    "/admin/manage-elections/federal": {
+      title: "Federal Elections",
       subtitle: "Create and configure federal election structures",
+    },
+    "/admin/manage-elections/provincial": {
+      title: "Provincial Elections",
+      subtitle: "Provincial Assembly election management",
+    },
+    "/admin/manage-elections/local": {
+      title: "Local Elections",
+      subtitle: "Municipal and Rural Municipal election management",
     },
     "/admin/manage-candidates": {
       title: "Manage Candidates",
@@ -210,7 +222,7 @@ export default function AdminShell({ children, title, subtitle }) {
           style={{ padding: "20px 12px", display: "flex", flexDirection: "column", gap: 4, flex: 1, overflowY: "auto" }}
         >
           {filteredMainItems.map((item) => {
-            const isActive = location.pathname === item.to;
+            const isActive = location.pathname === item.to || (item.to !== "/" && location.pathname.startsWith(item.to + "/"));
             const IconComp = item.icon;
             return (
               <Link

@@ -123,11 +123,103 @@ def update_election(
     return election
 
 
+DELETABLE_STATUSES = ("DRAFT", "ARCHIVED")
+
+
 def delete_election(db: Session, election: Election) -> None:
-    _require_status(election, EDITABLE_STATUSES, "delete election")
+    _require_status(election, DELETABLE_STATUSES, "delete election")
+    _cascade_delete_election_data(db, election.id)
     election_repository.delete_contests(db, election.id)
     election_repository.delete(db, election)
     db.commit()
+
+
+def _cascade_delete_election_data(db: Session, election_id: int) -> None:
+    """Remove all dependent data for an election before contests/election are deleted.
+
+    Deletion order follows FK dependency depth (deepest first):
+      pr_result_rows → fptp_result_rows → pr_party_list_entries →
+      ballot_entries → count_runs → ballots → votes →
+      fptp_candidate_nominations → pr_party_submissions
+    """
+    from app.models.ballot import Ballot
+    from app.models.ballot_entry import BallotEntry
+    from app.models.count_run import CountRun
+    from app.models.fptp_candidate_nomination import FptpCandidateNomination
+    from app.models.fptp_result_row import FptpResultRow
+    from app.models.pr_party_list_entry import PrPartyListEntry
+    from app.models.pr_party_submission import PrPartySubmission
+    from app.models.pr_result_row import PrResultRow
+
+    # 1. pr_result_rows (via count_runs)
+    count_run_ids = list(db.execute(
+        select(CountRun.id).where(CountRun.election_id == election_id)
+    ).scalars().all())
+    if count_run_ids:
+        db.execute(
+            PrResultRow.__table__.delete().where(PrResultRow.count_run_id.in_(count_run_ids))
+        )
+        db.execute(
+            FptpResultRow.__table__.delete().where(FptpResultRow.count_run_id.in_(count_run_ids))
+        )
+
+    # 2. pr_party_list_entries (via pr_party_submissions)
+    submission_ids = list(db.execute(
+        select(PrPartySubmission.id).where(PrPartySubmission.election_id == election_id)
+    ).scalars().all())
+    if submission_ids:
+        db.execute(
+            PrPartyListEntry.__table__.delete().where(
+                PrPartyListEntry.submission_id.in_(submission_ids)
+            )
+        )
+
+    # 3. ballot_entries (via ballots)
+    ballot_ids = list(db.execute(
+        select(Ballot.id).where(Ballot.election_id == election_id)
+    ).scalars().all())
+    if ballot_ids:
+        db.execute(
+            BallotEntry.__table__.delete().where(BallotEntry.ballot_id.in_(ballot_ids))
+        )
+
+    # 4. count_runs
+    if count_run_ids:
+        db.execute(
+            CountRun.__table__.delete().where(CountRun.election_id == election_id)
+        )
+
+    # 5. ballots
+    if ballot_ids:
+        db.execute(
+            Ballot.__table__.delete().where(Ballot.election_id == election_id)
+        )
+
+    # 6. legacy votes (if any)
+    try:
+        from app.models.vote import Vote
+        db.execute(
+            Vote.__table__.delete().where(Vote.election_id == election_id)
+        )
+    except Exception:
+        pass  # vote table may not exist
+
+    # 7. fptp_candidate_nominations
+    db.execute(
+        FptpCandidateNomination.__table__.delete().where(
+            FptpCandidateNomination.election_id == election_id
+        )
+    )
+
+    # 8. pr_party_submissions
+    if submission_ids:
+        db.execute(
+            PrPartySubmission.__table__.delete().where(
+                PrPartySubmission.election_id == election_id
+            )
+        )
+
+    db.flush()
 
 
 # ── Universal structure generation (dispatches by level/subtype) ──
