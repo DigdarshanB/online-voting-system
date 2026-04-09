@@ -56,7 +56,7 @@ const P = {
 const TABS = [
   { key: "parties", label: "Parties", icon: Building2 },
   { key: "candidates", label: "Candidates", icon: Users },
-  { key: "fptp", label: "FPTP Nominations", icon: UserPlus },
+  { key: "fptp", label: "Nominations", icon: UserPlus },
   { key: "pr", label: "PR Lists", icon: ListOrdered },
 ];
 
@@ -344,9 +344,11 @@ function FptpPanel({ setMsg, clearMsg }) {
 
   useEffect(() => { listElections().then(setElections).catch(() => {}); }, []);
 
+  const SINGLE_SEAT_TYPES = ["FPTP", "MAYOR", "DEPUTY_MAYOR"];
+
   useEffect(() => {
     if (!selectedElection) { setContests([]); setNominations([]); setReadiness(null); return; }
-    listContests(selectedElection).then(c => setContests(c.filter(x => x.contest_type === "FPTP"))).catch(() => {});
+    listContests(selectedElection).then(c => setContests(c.filter(x => SINGLE_SEAT_TYPES.includes(x.contest_type)))).catch(() => {});
     getCandidateReadiness(selectedElection).then(setReadiness).catch(() => {});
   }, [selectedElection]);
 
@@ -405,14 +407,14 @@ function FptpPanel({ setMsg, clearMsg }) {
 
   return (
     <div>
-      <h3 style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 800, color: P.navy }}>FPTP Nominations</h3>
+      <h3 style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 800, color: P.navy }}>Nominations</h3>
 
       {/* Election selector */}
       <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 16 }}>
         <label style={{ fontSize: 13, fontWeight: 600, color: P.text }}>Election:</label>
         <select style={{ ...inp, maxWidth: 400 }} value={selectedElection} onChange={e => { setSelectedElection(e.target.value); setSelectedContest(""); }}>
           <option value="">— Select election —</option>
-          {eligibleElections.map(e => <option key={e.id} value={e.id}>{e.title} ({e.status})</option>)}
+          {eligibleElections.map(e => <option key={e.id} value={e.id}>{e.title} [{e.government_level}] ({e.status})</option>)}
         </select>
         {selectedElection && (
           <>
@@ -427,16 +429,21 @@ function FptpPanel({ setMsg, clearMsg }) {
 
       {/* Readiness */}
       {readiness && selectedElection && (
-        <div style={{ background: readiness.ready ? P.successBg : P.warnBg, border: `1px solid ${readiness.ready ? "#A7F3D0" : "#FDE68A"}`, borderRadius: 8, padding: "10px 16px", marginBottom: 16, fontSize: 12, display: "flex", gap: 16, alignItems: "center" }}>
+        <div style={{ background: readiness.ready ? P.successBg : P.warnBg, border: `1px solid ${readiness.ready ? "#A7F3D0" : "#FDE68A"}`, borderRadius: 8, padding: "10px 16px", marginBottom: 16, fontSize: 12, display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
           {readiness.ready ? <CheckCircle2 size={16} color={P.success} /> : <AlertTriangle size={16} color={P.warn} />}
           <span style={{ fontWeight: 700 }}>Candidate Readiness:</span>
-          <span>FPTP filled: {readiness.fptp_contests_filled}/{readiness.fptp_contests_total}</span>
-          <span>PR valid: {readiness.pr_submissions_valid}/{readiness.pr_submissions_total}</span>
+          {readiness.contest_types && readiness.contest_types.filter(ct => ct !== "PR").map(ct => {
+            const key = ct.toLowerCase();
+            const total = readiness[`${key}_contests_total`];
+            const filled = readiness[`${key}_contests_filled`];
+            return total > 0 ? <span key={ct}>{ct} filled: {filled}/{total}</span> : null;
+          })}
+          {readiness.pr_submissions_total != null && <span>PR valid: {readiness.pr_submissions_valid}/{readiness.pr_submissions_total}</span>}
           {readiness.issues.length > 0 && <span style={{ color: P.warn }}>{readiness.issues.join("; ")}</span>}
         </div>
       )}
 
-      {!selectedElection && <p style={{ color: P.muted, fontSize: 13 }}>Select an election to manage FPTP nominations.</p>}
+      {!selectedElection && <p style={{ color: P.muted, fontSize: 13 }}>Select an election to manage nominations.</p>}
 
       {selectedElection && (
         <>
@@ -617,6 +624,10 @@ function PrPanel({ setMsg, clearMsg }) {
   const partyMap = Object.fromEntries(parties.map(p => [p.id, p]));
   const profileMap = Object.fromEntries(profiles.map(c => [c.id, c]));
   const eligibleElections = elections.filter(e => ["CONFIGURED", "NOMINATIONS_OPEN", "NOMINATIONS_CLOSED", "CANDIDATE_LIST_PUBLISHED"].includes(e.status));
+  // Only show elections that have PR contests
+  const prEligibleElections = eligibleElections.filter(e =>
+    e.contest_counts ? e.contest_counts["PR"] > 0 : (e.government_level === "FEDERAL" || e.government_level === "PROVINCIAL")
+  );
 
   return (
     <div>
@@ -626,7 +637,7 @@ function PrPanel({ setMsg, clearMsg }) {
         <label style={{ fontSize: 13, fontWeight: 600 }}>Election:</label>
         <select style={{ ...inp, maxWidth: 400 }} value={selectedElection} onChange={e => setSelectedElection(e.target.value)}>
           <option value="">— Select election —</option>
-          {eligibleElections.map(e => <option key={e.id} value={e.id}>{e.title} ({e.status})</option>)}
+          {prEligibleElections.map(e => <option key={e.id} value={e.id}>{e.title} [{e.government_level}] ({e.status})</option>)}
         </select>
       </div>
 

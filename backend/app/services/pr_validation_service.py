@@ -212,6 +212,18 @@ def validate_pr_list(db: Session, submission: PrPartySubmission) -> dict:
 
     entries = candidate_repository.list_entries(db, submission.id)
 
+    # Determine the max PR seats for this election.
+    # Sum up seat_count across all PR contests in the election.
+    from app.models.election_contest import ElectionContest
+    pr_seat_total = db.execute(
+        select(func.sum(ElectionContest.seat_count))
+        .where(
+            ElectionContest.election_id == submission.election_id,
+            ElectionContest.contest_type == "PR",
+        )
+    ).scalar_one() or FEDERAL_HOR_PR_SEATS  # fallback for safety
+    max_entries = int(pr_seat_total)
+
     # 1. Non-empty
     if not entries:
         errors.append({
@@ -221,12 +233,12 @@ def validate_pr_list(db: Session, submission: PrPartySubmission) -> dict:
         return _build_result(errors, warnings, entries)
 
     # 2. Max entries
-    if len(entries) > FEDERAL_HOR_PR_SEATS:
+    if len(entries) > max_entries:
         errors.append({
             "code": "TOO_MANY_ENTRIES",
-            "message": f"PR list has {len(entries)} entries, maximum is {FEDERAL_HOR_PR_SEATS}",
+            "message": f"PR list has {len(entries)} entries, maximum is {max_entries}",
             "count": len(entries),
-            "max": FEDERAL_HOR_PR_SEATS,
+            "max": max_entries,
         })
 
     # 3. Positions sequential 1..N
@@ -420,68 +432,81 @@ def reject_submission(
 # ── Candidate-side readiness (informational) ────────────────────
 
 def check_candidate_readiness(db: Session, election: Election) -> dict:
-    """Candidate-side readiness overview. Informational only — does not block."""
-    from app.core.federal_constants import (
-        FEDERAL_HOR_FPTP_CONSTITUENCY_COUNT,
-    )
+    """Candidate-side readiness overview. Informational only — does not block.
+
+    Multi-level aware: checks FPTP/MAYOR/DEPUTY_MAYOR nominations and PR submissions
+    based on what contest types exist in this election.
+    """
     from app.models.fptp_candidate_nomination import FptpCandidateNomination
     from app.models.election_contest import ElectionContest
 
     issues: list[str] = []
+    details: dict = {}
 
-    # FPTP coverage: how many contests have at least 2 approved nominees
-    fptp_contests_total = db.execute(
-        select(func.count()).select_from(ElectionContest)
-        .where(
-            ElectionContest.election_id == election.id,
-            ElectionContest.contest_type == "FPTP",
-        )
-    ).scalar_one()
+    # Get all contest types in this election
+    contest_type_counts = dict(
+        db.execute(
+            select(ElectionContest.contest_type, func.count(ElectionContest.id))
+            .where(ElectionContest.election_id == election.id)
+            .group_by(ElectionContest.contest_type)
+        ).all()
+    )
 
-    contests_with_min_2 = db.execute(
-        select(func.count()).select_from(
-            select(FptpCandidateNomination.contest_id)
-            .where(
-                FptpCandidateNomination.election_id == election.id,
-                FptpCandidateNomination.status == "APPROVED",
+    # Check nomination fill for all single-seat contest types (FPTP, MAYOR, DEPUTY_MAYOR)
+    single_seat_types = ("FPTP", "MAYOR", "DEPUTY_MAYOR")
+    for ct in single_seat_types:
+        total = contest_type_counts.get(ct, 0)
+        if total == 0:
+            continue
+        filled = db.execute(
+            select(func.count()).select_from(
+                select(FptpCandidateNomination.contest_id)
+                .join(ElectionContest, FptpCandidateNomination.contest_id == ElectionContest.id)
+                .where(
+                    FptpCandidateNomination.election_id == election.id,
+                    ElectionContest.contest_type == ct,
+                    FptpCandidateNomination.status == "APPROVED",
+                )
+                .group_by(FptpCandidateNomination.contest_id)
+                .having(func.count(FptpCandidateNomination.id) >= 2)
+                .subquery()
             )
-            .group_by(FptpCandidateNomination.contest_id)
-            .having(func.count(FptpCandidateNomination.id) >= 2)
-            .subquery()
-        )
-    ).scalar_one()
+        ).scalar_one()
+        details[f"{ct.lower()}_contests_total"] = total
+        details[f"{ct.lower()}_contests_filled"] = filled
+        if filled < total:
+            issues.append(
+                f"Only {filled}/{total} {ct} contests have ≥2 approved candidates"
+            )
 
-    if fptp_contests_total > 0 and contests_with_min_2 < fptp_contests_total:
-        issues.append(
-            f"Only {contests_with_min_2}/{fptp_contests_total} FPTP contests "
-            f"have ≥2 approved candidates"
-        )
+    # PR submissions check (only if election has PR contests)
+    pr_total_contests = contest_type_counts.get("PR", 0)
+    if pr_total_contests > 0:
+        pr_total = db.execute(
+            select(func.count()).select_from(PrPartySubmission)
+            .where(PrPartySubmission.election_id == election.id)
+        ).scalar_one()
+        pr_submitted = db.execute(
+            select(func.count()).select_from(PrPartySubmission)
+            .where(
+                PrPartySubmission.election_id == election.id,
+                PrPartySubmission.status.in_(("SUBMITTED", "APPROVED")),
+            )
+        ).scalar_one()
 
-    # PR submissions
-    pr_total = db.execute(
-        select(func.count()).select_from(PrPartySubmission)
-        .where(PrPartySubmission.election_id == election.id)
-    ).scalar_one()
-    pr_submitted = db.execute(
-        select(func.count()).select_from(PrPartySubmission)
-        .where(
-            PrPartySubmission.election_id == election.id,
-            PrPartySubmission.status.in_(("SUBMITTED", "APPROVED")),
-        )
-    ).scalar_one()
+        details["pr_submissions_total"] = pr_total
+        details["pr_submissions_valid"] = pr_submitted
 
-    if pr_total == 0:
-        issues.append("No PR submissions exist for this election")
-    elif pr_submitted < pr_total:
-        issues.append(
-            f"Only {pr_submitted}/{pr_total} PR submissions are submitted/approved"
-        )
+        if pr_total == 0:
+            issues.append("No PR submissions exist for this election")
+        elif pr_submitted < pr_total:
+            issues.append(
+                f"Only {pr_submitted}/{pr_total} PR submissions are submitted/approved"
+            )
 
     return {
         "ready": len(issues) == 0,
         "issues": issues,
-        "fptp_contests_total": fptp_contests_total,
-        "fptp_contests_filled": contests_with_min_2,
-        "pr_submissions_total": pr_total,
-        "pr_submissions_valid": pr_submitted,
+        "contest_types": list(contest_type_counts.keys()),
+        **details,
     }

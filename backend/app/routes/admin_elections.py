@@ -76,6 +76,7 @@ def list_elections(
                 contest_count=sum(counts.values()),
                 fptp_count=counts.get("FPTP", 0),
                 pr_count=counts.get("PR", 0),
+                contest_counts=counts,
                 created_at=e.created_at,
             )
         )

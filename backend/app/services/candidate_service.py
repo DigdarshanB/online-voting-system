@@ -138,7 +138,11 @@ def delete_profile(db: Session, profile: CandidateProfile) -> None:
     db.commit()
 
 
-# ── FPTP nominations ────────────────────────────────────────────
+# ── FPTP / single-seat nominations ────────────────────────────────
+
+# Contest types that use the FPTP nomination table (one candidate per seat)
+SINGLE_SEAT_CONTEST_TYPES = ("FPTP", "MAYOR", "DEPUTY_MAYOR")
+
 
 def create_fptp_nomination(
     db: Session,
@@ -150,12 +154,14 @@ def create_fptp_nomination(
 ) -> FptpCandidateNomination:
     _require_nomination_status(election)
 
-    # validate contest belongs to election and is FPTP
+    # validate contest belongs to election and is a single-seat type
     contest = db.get(ElectionContest, contest_id)
     if not contest or contest.election_id != election.id:
         raise CandidateServiceError("Contest not found for this election")
-    if contest.contest_type != "FPTP":
-        raise CandidateServiceError("Can only nominate for FPTP contests via this endpoint")
+    if contest.contest_type not in SINGLE_SEAT_CONTEST_TYPES:
+        raise CandidateServiceError(
+            f"Can only nominate for {SINGLE_SEAT_CONTEST_TYPES} contests via this endpoint"
+        )
 
     # validate candidate exists and is active
     profile = db.get(CandidateProfile, candidate_id)

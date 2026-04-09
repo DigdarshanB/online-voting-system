@@ -51,7 +51,7 @@ class ElectionContest(Base):
 
     __table_args__ = (
         UniqueConstraint(
-            "election_id", "contest_type", "constituency_id",
-            name="uq_election_contest_slot",
+            "election_id", "contest_type", "area_id",
+            name="uq_election_contest_slot_v2",
         ),
     )

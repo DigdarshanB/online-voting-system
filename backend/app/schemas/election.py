@@ -1,9 +1,19 @@
 """Pydantic schemas for election management endpoints."""
 
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+
+
+# ── Valid (government_level, election_subtype) combinations ─────
+
+VALID_LEVEL_SUBTYPE_PAIRS = {
+    ("FEDERAL", "HOR_DIRECT"),
+    ("PROVINCIAL", "PROVINCIAL_ASSEMBLY"),
+    ("LOCAL", "LOCAL_MUNICIPAL"),
+    ("LOCAL", "LOCAL_RURAL"),
+}
 
 
 # ── Election CRUD ───────────────────────────────────────────────
@@ -12,9 +22,19 @@ class ElectionCreate(BaseModel):
     title: str = Field(..., min_length=3, max_length=255)
     description: str | None = None
     government_level: str = Field(..., pattern="^(FEDERAL|PROVINCIAL|LOCAL)$")
-    election_subtype: str = Field(..., pattern="^(HOR_DIRECT|PROVINCIAL_ASSEMBLY|LOCAL_MUNICIPAL|LOCAL_RURAL|NATIONAL_ASSEMBLY_INDIRECT|DISTRICT_COORDINATION_INDIRECT)$")
+    election_subtype: str = Field(..., pattern="^(HOR_DIRECT|PROVINCIAL_ASSEMBLY|LOCAL_MUNICIPAL|LOCAL_RURAL)$")
     start_time: datetime
     end_time: datetime
+
+    @model_validator(mode="after")
+    def validate_level_subtype(self) -> "ElectionCreate":
+        pair = (self.government_level, self.election_subtype)
+        if pair not in VALID_LEVEL_SUBTYPE_PAIRS:
+            raise ValueError(
+                f"Invalid combination: {self.government_level}/{self.election_subtype}. "
+                f"Valid: {', '.join(f'{l}/{s}' for l, s in sorted(VALID_LEVEL_SUBTYPE_PAIRS))}"
+            )
+        return self
 
 
 class ElectionUpdate(BaseModel):
@@ -61,6 +81,7 @@ class ElectionSummary(BaseModel):
     contest_count: int = 0
     fptp_count: int = 0
     pr_count: int = 0
+    contest_counts: dict[str, int] = {}  # {contest_type: count} for all types
     created_at: datetime
 
     class Config:
@@ -101,4 +122,5 @@ class ReadinessCheck(BaseModel):
     fptp_contests: int = 0
     pr_contests: int = 0
     total_contests: int = 0
+    contest_counts: dict[str, int] = {}
     total_constituencies: int = 0

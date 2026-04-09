@@ -393,6 +393,7 @@ def check_structure_readiness(db: Session, election: Election) -> dict:
         "fptp_contests": fptp,
         "pr_contests": pr,
         "total_contests": total_contests,
+        "contest_counts": contest_counts,
         "total_constituencies": db.execute(
             select(func.count()).select_from(Constituency)
         ).scalar_one(),

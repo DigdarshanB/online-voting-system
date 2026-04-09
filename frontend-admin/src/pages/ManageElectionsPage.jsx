@@ -93,9 +93,40 @@ const SUBTYPE_LABELS = {
   PROVINCIAL_ASSEMBLY: "Provincial Assembly",
   LOCAL_MUNICIPAL: "Local – Municipal",
   LOCAL_RURAL: "Local – Rural Municipal",
-  NATIONAL_ASSEMBLY_INDIRECT: "National Assembly (Indirect)",
-  DISTRICT_COORDINATION_INDIRECT: "District Coordination (Indirect)",
 };
+
+const LEVEL_SUBTYPES = {
+  FEDERAL: [{ value: "HOR_DIRECT", label: "House of Representatives (Direct)" }],
+  PROVINCIAL: [{ value: "PROVINCIAL_ASSEMBLY", label: "Provincial Assembly" }],
+  LOCAL: [
+    { value: "LOCAL_MUNICIPAL", label: "Local – Municipal" },
+    { value: "LOCAL_RURAL", label: "Local – Rural Municipal" },
+  ],
+};
+
+const CONTEST_TYPE_COLORS = {
+  FPTP:         { bg: "#DBEAFE", color: "#2563EB" },
+  PR:           { bg: "#F5F3FF", color: "#7C3AED" },
+  MAYOR:        { bg: "#ECFDF5", color: "#059669" },
+  DEPUTY_MAYOR: { bg: "#FFF7ED", color: "#EA580C" },
+};
+
+function formatContestCounts(el) {
+  const cc = el.contest_counts || {};
+  const parts = Object.entries(cc)
+    .filter(([, v]) => v > 0)
+    .map(([k, v]) => `${v} ${k}`);
+  return parts.length > 0 ? parts.join(" + ") : `${el.contest_count} contests`;
+}
+
+/** Check if master data is ready for a given election level */
+function isMasterDataReadyForLevel(masterData, level) {
+  if (!masterData) return false;
+  if (level === "FEDERAL") return masterData.federal_ready;
+  if (level === "PROVINCIAL") return masterData.provincial_ready;
+  if (level === "LOCAL") return masterData.local_ready;
+  return false;
+}
 
 /* ══════════════════════════════════════════════════════════════ */
 /*  MAIN PAGE COMPONENT                                         */
@@ -212,7 +243,7 @@ export default function ManageElectionsPage() {
             Manage Elections
           </h2>
           <p style={{ margin: "4px 0 0", fontSize: 14, color: P.muted }}>
-            Create federal elections, generate contest structures, and manage setup lifecycle
+            Create elections, generate contest structures, and manage setup lifecycle
           </p>
         </div>
         <button
@@ -230,7 +261,7 @@ export default function ManageElectionsPage() {
       </div>
 
       {/* Master Data Banner */}
-      {masterData && !masterData.ready && (
+      {masterData && (!masterData.federal_ready || !masterData.provincial_ready || !masterData.local_ready) && (
         <div style={{
           padding: "14px 20px", borderRadius: 10, marginBottom: 20,
           background: P.warnBg, border: `1px solid ${P.warn}30`,
@@ -238,10 +269,13 @@ export default function ManageElectionsPage() {
         }}>
           <AlertTriangle size={20} color={P.warn} />
           <div style={{ flex: 1 }}>
-            <span style={{ fontWeight: 700, fontSize: 14, color: P.warn }}>Master Data Incomplete</span>
+            <span style={{ fontWeight: 700, fontSize: 14, color: P.warn }}>Master Data Status</span>
             <span style={{ fontSize: 13, color: P.muted, marginLeft: 8 }}>
-              {masterData.constituencies}/{masterData.required_constituencies} constituencies seeded.
-              Structure generation requires all 165 constituencies.
+              Federal: {masterData.federal_ready ? "✓" : "✗"}
+              {" · "}
+              Provincial: {masterData.provincial_ready ? "✓" : "✗"}
+              {" · "}
+              Local: {masterData.local_ready ? "✓" : `✗ (${masterData.local_bodies || 0} bodies)`}
             </span>
           </div>
           <button
@@ -309,7 +343,7 @@ export default function ManageElectionsPage() {
             No elections yet
           </p>
           <p style={{ fontSize: 14, color: P.muted }}>
-            Create a new federal election to get started.
+            Create a new election to get started.
           </p>
         </div>
       ) : (
@@ -324,7 +358,7 @@ export default function ManageElectionsPage() {
               onGenerate={() => handleGenerate(el.id)}
               onConfigure={() => handleConfigure(el.id)}
               actionLoading={actionLoading}
-              masterDataReady={masterData?.ready}
+              masterData={masterData}
             />
           ))}
         </div>
@@ -345,6 +379,13 @@ function CreateElectionForm({ onSubmit, onCancel, submitting }) {
   const [electionSubtype, setElectionSubtype] = useState("HOR_DIRECT");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
+
+  const handleLevelChange = (level) => {
+    setGovernmentLevel(level);
+    // Auto-select first valid subtype for the new level
+    const subtypes = LEVEL_SUBTYPES[level] || [];
+    setElectionSubtype(subtypes[0]?.value || "");
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -419,17 +460,19 @@ function CreateElectionForm({ onSubmit, onCancel, submitting }) {
 
         <div>
           <label style={labelStyle}>Government Level</label>
-          <select style={inputStyle} value={governmentLevel} onChange={(e) => setGovernmentLevel(e.target.value)}>
+          <select style={inputStyle} value={governmentLevel} onChange={(e) => handleLevelChange(e.target.value)}>
             <option value="FEDERAL">Federal</option>
-            <option value="PROVINCIAL" disabled>Provincial (coming soon)</option>
-            <option value="LOCAL" disabled>Local (coming soon)</option>
+            <option value="PROVINCIAL">Provincial</option>
+            <option value="LOCAL">Local</option>
           </select>
         </div>
 
         <div>
           <label style={labelStyle}>Election Type</label>
           <select style={inputStyle} value={electionSubtype} onChange={(e) => setElectionSubtype(e.target.value)}>
-            <option value="HOR_DIRECT">House of Representatives (Direct)</option>
+            {(LEVEL_SUBTYPES[governmentLevel] || []).map((st) => (
+              <option key={st.value} value={st.value}>{st.label}</option>
+            ))}
           </select>
         </div>
 
@@ -500,8 +543,9 @@ function ElectionCard({
   onGenerate,
   onConfigure,
   actionLoading,
-  masterDataReady,
+  masterData,
 }) {
+  const masterDataReady = isMasterDataReadyForLevel(masterData, el.government_level);
   const [readiness, setReadiness] = useState(null);
   const [contests, setContests] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -587,7 +631,7 @@ function ElectionCard({
               background: P.successBg, color: P.success,
             }}>
               <LayoutList size={13} style={{ verticalAlign: "-2px", marginRight: 4 }} />
-              {el.fptp_count} FPTP + {el.pr_count} PR
+              {formatContestCounts(el)}
             </span>
           ) : isDraft ? (
             <span style={{
@@ -637,8 +681,10 @@ function ElectionCard({
                   )}
                   <div style={{ marginTop: 8, fontSize: 13, color: P.muted }}>
                     Total contests: {readiness.total_contests}
-                    {readiness.fptp_contests > 0 && ` · FPTP: ${readiness.fptp_contests}`}
-                    {readiness.pr_contests > 0 && ` · PR: ${readiness.pr_contests}`}
+                    {readiness.contest_counts && Object.entries(readiness.contest_counts)
+                      .filter(([, v]) => v > 0)
+                      .map(([k, v]) => ` · ${k}: ${v}`)
+                    }
                     {readiness.total_constituencies > 0 && ` · Constituencies: ${readiness.total_constituencies}`}
                   </div>
                 </div>
@@ -670,8 +716,8 @@ function ElectionCard({
                               <span style={{
                                 display: "inline-block", padding: "2px 8px", borderRadius: 4,
                                 fontSize: 11, fontWeight: 700,
-                                background: c.contest_type === "FPTP" ? "#DBEAFE" : P.purpleBg,
-                                color: c.contest_type === "FPTP" ? "#2563EB" : P.purple,
+                                background: (CONTEST_TYPE_COLORS[c.contest_type] || { bg: "#F1F5F9" }).bg,
+                                color: (CONTEST_TYPE_COLORS[c.contest_type] || { color: "#475569" }).color,
                               }}>
                                 {c.contest_type}
                               </span>
@@ -696,7 +742,7 @@ function ElectionCard({
                     <button
                       onClick={onGenerate}
                       disabled={actionLoading === `gen-${el.id}` || !masterDataReady}
-                      title={!masterDataReady ? "Seed 165 constituencies first" : "Generate 165 FPTP + 1 PR contests"}
+                      title={!masterDataReady ? "Required geography data not yet seeded" : "Generate contest structure"}
                       style={{
                         display: "flex", alignItems: "center", gap: 7,
                         padding: "9px 18px", borderRadius: 8, border: "none",
