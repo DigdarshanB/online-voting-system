@@ -50,6 +50,7 @@ from app.services.pr_validation_service import (
     check_candidate_readiness,
     create_submission,
     delete_submission,
+    get_pr_eligible_candidates,
     reject_submission,
     remove_entry,
     reopen_submission,
@@ -339,6 +340,26 @@ def delete_fptp_nomination_endpoint(
         delete_fptp_nomination(db, nomination)
     except CandidateServiceError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+# ══════════════════════════════════════════════════════════════════
+#  PR ELIGIBLE CANDIDATES
+# ══════════════════════════════════════════════════════════════════
+
+@router.get(
+    "/elections/{election_id}/pr-eligible-candidates",
+    response_model=list[CandidateProfileRead],
+)
+def list_pr_eligible_candidates(
+    election_id: int,
+    party_id: int = Query(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(_require_admin),
+):
+    _get_election_or_404(db, election_id)
+    return get_pr_eligible_candidates(
+        db, election_id=election_id, party_id=party_id,
+    )
 
 
 # ══════════════════════════════════════════════════════════════════

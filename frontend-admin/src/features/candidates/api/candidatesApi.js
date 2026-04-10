@@ -80,6 +80,14 @@ export async function deleteFptpNomination(nominationId) {
 
 // ── PR submissions ──────────────────────────────────────────────
 
+export async function listPrEligibleCandidates(electionId, partyId) {
+  const res = await apiClient.get(
+    `/admin/candidates/elections/${electionId}/pr-eligible-candidates`,
+    { params: { party_id: partyId } },
+  );
+  return res.data;
+}
+
 export async function listPrSubmissions(electionId) {
   const res = await apiClient.get(
     `/admin/candidates/elections/${electionId}/pr-submissions`,

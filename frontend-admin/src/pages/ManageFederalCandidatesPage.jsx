@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback, useId } from "react";
+import React, { useState, useMemo, useEffect, useCallback, useId, Component } from "react";
 import {
   Users, UserPlus, ListOrdered, Plus, Trash2, Check, X,
   ChevronDown, ChevronUp, AlertTriangle, Shield, RotateCcw,
@@ -21,6 +21,7 @@ import {
   listPrEntries, addPrEntry, removePrEntry,
   validatePrList, submitPrList,
   getCandidateReadiness,
+  listPrEligibleCandidates,
 } from "../features/candidates/api/candidatesApi";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import ProfileMediaMenu from "../components/ui/ProfileMediaMenu";
@@ -770,9 +771,13 @@ function PRListsPanel({ setMsg }) {
   const [validation, setValidation] = useState(null);
   const [confirmDel, setConfirmDel] = useState(null);
   const [confirmSubmit, setConfirmSubmit] = useState(null);
+  const [eligibleCandidates, setEligibleCandidates] = useState({});
 
   const partyMap = useMemo(() => Object.fromEntries((parties || []).map(p => [p.id, p])), [parties]);
   const profileMap = useMemo(() => Object.fromEntries((profiles || []).map(p => [p.id, p])), [profiles]);
+
+  // Parties that already have a submission for this election
+  const usedPartyIds = useMemo(() => new Set(submissions.map(s => s.party_id)), [submissions]);
 
   useEffect(() => {
     (async () => { try { const d = await listElections(); setElections(d || []); } catch {} })();
@@ -789,8 +794,18 @@ function PRListsPanel({ setMsg }) {
   useEffect(() => { loadSubmissions(); }, [loadSubmissions]);
 
   const loadEntries = async (subId) => {
-    try { const data = await listPrEntries(subId); setEntries(prev => ({ ...prev, [subId]: data || [] })); }
+    try { const data = await listPrEntries(subId); setEntries(prev => ({ ...prev, [subId]: Array.isArray(data) ? data : [] })); }
     catch { setEntries(prev => ({ ...prev, [subId]: [] })); }
+  };
+
+  const loadEligible = async (subId, partyId) => {
+    if (!selectedElection || !partyId) return;
+    try {
+      const data = await listPrEligibleCandidates(selectedElection, partyId);
+      setEligibleCandidates(prev => ({ ...prev, [subId]: Array.isArray(data) ? data : [] }));
+    } catch {
+      setEligibleCandidates(prev => ({ ...prev, [subId]: [] }));
+    }
   };
 
   const handleExpand = (sub) => {
@@ -798,13 +813,21 @@ function PRListsPanel({ setMsg }) {
       setExpandedSub(null); setValidation(null); return;
     }
     setExpandedSub(sub.id);
-    setValidation(sub.validation_snapshot ? (() => { try { return JSON.parse(sub.validation_snapshot); } catch { return null; } })() : null);
+    let parsed = null;
+    if (sub.validation_snapshot) {
+      try { parsed = JSON.parse(sub.validation_snapshot); } catch { parsed = null; }
+    }
+    setValidation(parsed);
     loadEntries(sub.id);
+    loadEligible(sub.id, sub.party_id);
   };
 
   const handleCreateList = async () => {
     if (!listForm.party_id) {
       setMsg({ type: "error", text: "Party is required" }); return;
+    }
+    if (usedPartyIds.has(Number(listForm.party_id))) {
+      setMsg({ type: "error", text: "This party already has a PR submission for the selected election" }); return;
     }
     setSaving(true);
     try {
@@ -817,19 +840,42 @@ function PRListsPanel({ setMsg }) {
 
   const handleAddEntry = async (subId) => {
     const f = entryForm[subId] || {};
-    if (!f.candidate_id || !f.list_position) {
-      setMsg({ type: "error", text: "Candidate and position are required" }); return;
+    if (!f.candidate_id) {
+      setMsg({ type: "error", text: "Candidate is required" }); return;
+    }
+    if (!f.list_position) {
+      setMsg({ type: "error", text: "Position is required" }); return;
+    }
+    const pos = Number(f.list_position);
+    if (!Number.isInteger(pos) || pos < 1) {
+      setMsg({ type: "error", text: "Position must be a positive integer" }); return;
+    }
+    const subEntries = entries[subId] || [];
+    if (subEntries.some(e => e.list_position === pos)) {
+      setMsg({ type: "error", text: `Position ${pos} is already occupied` }); return;
+    }
+    if (subEntries.some(e => String(e.candidate_id) === String(f.candidate_id))) {
+      setMsg({ type: "error", text: "Candidate is already in this list" }); return;
     }
     try {
-      await addPrEntry(subId, { candidate_id: Number(f.candidate_id), list_position: Number(f.list_position) });
+      await addPrEntry(subId, { candidate_id: Number(f.candidate_id), list_position: pos });
       setMsg({ type: "success", text: "Entry added" });
       setEntryForm(p => ({ ...p, [subId]: {} }));
       loadEntries(subId); loadSubmissions();
+      // Reload eligible list to reflect usage
+      const sub = submissions.find(s => s.id === subId);
+      if (sub) loadEligible(subId, sub.party_id);
     } catch (err) { setMsg({ type: "error", text: errMsg(err) }); }
   };
 
   const handleRemoveEntry = async (subId, entryId) => {
-    try { await removePrEntry(subId, entryId); setMsg({ type: "success", text: "Entry removed" }); loadEntries(subId); loadSubmissions(); }
+    try {
+      await removePrEntry(subId, entryId);
+      setMsg({ type: "success", text: "Entry removed" });
+      loadEntries(subId); loadSubmissions();
+      const sub = submissions.find(s => s.id === subId);
+      if (sub) loadEligible(subId, sub.party_id);
+    }
     catch (err) { setMsg({ type: "error", text: errMsg(err) }); }
   };
 
@@ -837,7 +883,7 @@ function PRListsPanel({ setMsg }) {
     try {
       const res = await validatePrList(sub.id);
       setValidation(res);
-      setMsg({ type: res.is_valid ? "success" : "error", text: res.is_valid ? "List is valid" : "Validation failed" });
+      setMsg({ type: res.valid ? "success" : "error", text: res.valid ? "List is valid" : "Validation failed — see details below" });
       loadSubmissions();
     } catch (err) { setMsg({ type: "error", text: errMsg(err) }); }
   };
@@ -846,7 +892,7 @@ function PRListsPanel({ setMsg }) {
     if (!confirmSubmit) return;
     try {
       await submitPrList(confirmSubmit.id);
-      setMsg({ type: "success", text: "PR list submitted" });
+      setMsg({ type: "success", text: "PR list submitted for review" });
       loadSubmissions();
     } catch (err) { setMsg({ type: "error", text: errMsg(err) }); }
     finally { setConfirmSubmit(null); }
@@ -920,11 +966,14 @@ function PRListsPanel({ setMsg }) {
               <label style={{ ...lbl, minWidth: 200, flex: 1 }}>Party *
                 <select style={sel} value={listForm.party_id} onChange={e => setListForm({ ...listForm, party_id: e.target.value })}>
                   <option value="">Select party</option>
-                  {parties.map(p => <option key={p.id} value={p.id}>{p.name} ({p.abbreviation})</option>)}
+                  {(parties || []).filter(p => !usedPartyIds.has(p.id)).map(p => <option key={p.id} value={p.id}>{p.name} ({p.abbreviation})</option>)}
                 </select>
               </label>
               <Btn onClick={handleCreateList} loading={saving}>Create submission</Btn>
             </div>
+            {(parties || []).length > 0 && (parties || []).filter(p => !usedPartyIds.has(p.id)).length === 0 && (
+              <p style={{ margin: "8px 0 0", fontSize: 12, color: T.warn }}>All parties already have a PR submission for this election.</p>
+            )}
           </div>
         )}
 
@@ -945,7 +994,13 @@ function PRListsPanel({ setMsg }) {
               const party = partyMap[sub.party_id];
               const isOpen = expandedSub === sub.id;
               const ef = entryForm[sub.id] || {};
-              const subEntries = entries[sub.id] || [];
+              const subEntries = Array.isArray(entries[sub.id]) ? entries[sub.id] : [];
+              const isEditable = sub.status === "DRAFT" || sub.status === "INVALID";
+
+              // Eligible candidates: from backend, minus those already in this submission
+              const subEntryIds = new Set(subEntries.map(e => e.candidate_id));
+              const availableCandidates = (eligibleCandidates[sub.id] || []).filter(c => !subEntryIds.has(c.id));
+
               return (
                 <div key={sub.id} style={{
                   border: `1px solid ${isOpen ? T.accent + "40" : T.borderLight}`,
@@ -963,107 +1018,28 @@ function PRListsPanel({ setMsg }) {
                     </span>
                     <AdminBadge map={PR_MAP} status={sub.status} />
                     <span style={{ fontSize: 11, fontWeight: 700, background: T.accentLight, color: T.accent, padding: "2px 8px", borderRadius: 6 }}>
-                      {sub.entry_count ?? subEntries.length} entries
+                      {subEntries.length} entries
                     </span>
                   </button>
 
                   {isOpen && (
-                    <div style={{ padding: "4px 18px 18px", borderTop: `1px solid ${T.borderLight}` }}>
-                      {/* Entries table */}
-                      {subEntries.length > 0 ? (
-                        <div style={{ overflowX: "auto", marginBottom: 12 }}>
-                          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                            <thead>
-                              <tr style={{ background: T.surfaceAlt }}>
-                                <th style={thStyle}>Pos</th>
-                                <th style={thStyle}>Candidate</th>
-                                <th style={thStyle}>Gender</th>
-                                <th style={thStyle}>DOB</th>
-                                <th style={{ ...thStyle, width: 50 }} />
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {[...subEntries].sort((a, b) => a.list_position - b.list_position).map(entry => {
-                                const prof = profileMap[entry.candidate_id];
-                                return (
-                                  <tr key={entry.id}>
-                                    <td style={{ ...tdStyle, fontFamily: "monospace", fontWeight: 700, color: T.accent }}>{entry.list_position}</td>
-                                    <td style={{ ...tdStyle, fontWeight: 600, color: T.text }}>{prof?.full_name || `#${entry.candidate_id}`}</td>
-                                    <td style={{ ...tdStyle, fontSize: 12, color: T.muted }}>{prof?.gender || "—"}</td>
-                                    <td style={{ ...tdStyle, fontSize: 12, color: T.muted }}>{prof?.date_of_birth || "—"}</td>
-                                    <td style={tdStyle}>
-                                      <Btn variant="ghost" small onClick={() => handleRemoveEntry(sub.id, entry.id)} style={{ color: T.error }}>
-                                        <Trash2 size={13} />
-                                      </Btn>
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        </div>
-                      ) : (
-                        <p style={{ margin: "8px 0 12px", fontSize: 12, color: T.muted, fontStyle: "italic" }}>No entries yet</p>
-                      )}
-
-                      {/* Add entry */}
-                      <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap", marginBottom: 14 }}>
-                        <label style={{ ...lbl, flex: 1, minWidth: 140 }}>Candidate
-                          <select style={sel} value={ef.candidate_id || ""} onChange={e => setEntryForm(p => ({ ...p, [sub.id]: { ...ef, candidate_id: e.target.value } }))}>
-                            <option value="">Select</option>
-                            {profiles.filter(p => p.is_active).map(p => <option key={p.id} value={p.id}>{p.full_name}</option>)}
-                          </select>
-                        </label>
-                        <label style={{ ...lbl, width: 90 }}>Position
-                          <input style={inp} type="number" min={1} value={ef.list_position || ""} onChange={e => setEntryForm(p => ({ ...p, [sub.id]: { ...ef, list_position: e.target.value } }))} />
-                        </label>
-                        <Btn small onClick={() => handleAddEntry(sub.id)}><Plus size={13} /> Add</Btn>
-                      </div>
-
-                      {/* Validation results */}
-                      {validation && expandedSub === sub.id && (
-                        <div style={{
-                          padding: "12px 14px", borderRadius: T.radius.md, marginBottom: 12,
-                          background: validation.is_valid ? T.successBg : T.errorBg,
-                          border: `1px solid ${validation.is_valid ? T.successBorder : T.errorBorder}`,
-                        }}>
-                          <div style={{ fontWeight: 700, fontSize: 12, color: validation.is_valid ? T.success : T.error, marginBottom: 4 }}>
-                            {validation.is_valid ? "✓ List is valid" : "✗ Validation failed"}
-                          </div>
-                          {validation.errors?.length > 0 && (
-                            <ul style={{ margin: "4px 0 0", paddingLeft: 18, fontSize: 12, color: T.error }}>
-                              {validation.errors.map((e, i) => <li key={i}>{e}</li>)}
-                            </ul>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Actions */}
-                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                        <Btn variant="secondary" small onClick={() => handleValidate(sub)}>
-                          <Shield size={13} /> Validate
-                        </Btn>
-                        {(sub.status === "DRAFT" || sub.status === "VALID") && (
-                          <Btn variant="primary" small onClick={() => setConfirmSubmit(sub)}>Submit for review</Btn>
-                        )}
-                        {sub.status === "SUBMITTED" && (
-                          <>
-                            <Btn variant="success" small onClick={() => handleReview(sub, "approve")}><Check size={12} /> Approve</Btn>
-                            <Btn variant="danger" small onClick={() => handleReview(sub, "reject")}><X size={12} /> Reject</Btn>
-                          </>
-                        )}
-                        {(sub.status === "REJECTED" || sub.status === "INVALID") && (
-                          <Btn variant="ghost" small onClick={() => handleReview(sub, "reopen")}>
-                            <RotateCcw size={12} /> Reopen
-                          </Btn>
-                        )}
-                        {(sub.status === "DRAFT" || sub.status === "INVALID") && (
-                          <Btn variant="ghost" small onClick={() => setConfirmDel(sub)} style={{ color: T.error }}>
-                            <Trash2 size={13} /> Delete
-                          </Btn>
-                        )}
-                      </div>
-                    </div>
+                    <PRSubmissionDetail
+                      sub={sub}
+                      subEntries={subEntries}
+                      ef={ef}
+                      isEditable={isEditable}
+                      availableCandidates={availableCandidates}
+                      profileMap={profileMap}
+                      validation={validation}
+                      expandedSub={expandedSub}
+                      setEntryForm={setEntryForm}
+                      handleAddEntry={handleAddEntry}
+                      handleRemoveEntry={handleRemoveEntry}
+                      handleValidate={handleValidate}
+                      handleReview={handleReview}
+                      setConfirmSubmit={setConfirmSubmit}
+                      setConfirmDel={setConfirmDel}
+                    />
                   )}
                 </div>
               );
@@ -1077,6 +1053,166 @@ function PRListsPanel({ setMsg }) {
       <ConfirmDialog open={!!confirmSubmit} onClose={() => setConfirmSubmit(null)} onConfirm={handleSubmit}
         title="Submit PR list" body="Validate and submit this PR list for review? It cannot be edited once submitted." confirmLabel="Submit" />
     </>
+  );
+}
+
+
+/* ── Error Boundary for PR Submission accordion ── */
+class PRSubmissionErrorBoundary extends Component {
+  constructor(props) { super(props); this.state = { hasError: false }; }
+  static getDerivedStateFromError() { return { hasError: true }; }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{
+          padding: "14px 18px", borderTop: `1px solid ${T.borderLight}`,
+          background: T.errorBg, borderRadius: `0 0 ${T.radius.lg} ${T.radius.lg}`,
+        }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
+            <AlertTriangle size={14} color={T.error} />
+            <span style={{ fontWeight: 700, fontSize: 13, color: T.error }}>Unable to render submission details</span>
+          </div>
+          <p style={{ fontSize: 12, color: T.muted, margin: 0 }}>
+            This submission may contain invalid or corrupted data. Try reopening or deleting it.
+          </p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+/* ── Safe PR Submission Detail (crash-proof rendering via Error Boundary) ── */
+function PRSubmissionDetail({
+  sub, subEntries, ef, isEditable, availableCandidates, profileMap,
+  validation, expandedSub, setEntryForm, handleAddEntry, handleRemoveEntry,
+  handleValidate, handleReview, setConfirmSubmit, setConfirmDel,
+}) {
+  const safeEntries = Array.isArray(subEntries) ? subEntries : [];
+  const noCandidatesAvailable = availableCandidates.length === 0;
+
+  return (
+    <PRSubmissionErrorBoundary>
+      <div style={{ padding: "4px 18px 18px", borderTop: `1px solid ${T.borderLight}` }}>
+        {/* Entries table */}
+        {safeEntries.length > 0 ? (
+          <div style={{ overflowX: "auto", marginBottom: 12 }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ background: T.surfaceAlt }}>
+                  <th style={thStyle}>Pos</th>
+                  <th style={thStyle}>Candidate</th>
+                  <th style={thStyle}>Gender</th>
+                  <th style={thStyle}>DOB</th>
+                  <th style={{ ...thStyle, width: 50 }} />
+                </tr>
+              </thead>
+              <tbody>
+                {[...safeEntries].sort((a, b) => (a.list_position || 0) - (b.list_position || 0)).map(entry => {
+                  if (!entry || !entry.id) return null;
+                  const prof = profileMap[entry.candidate_id];
+                  return (
+                    <tr key={entry.id}>
+                      <td style={{ ...tdStyle, fontFamily: "monospace", fontWeight: 700, color: T.accent }}>{entry.list_position ?? "—"}</td>
+                      <td style={{ ...tdStyle, fontWeight: 600, color: T.text }}>{prof?.full_name || `#${entry.candidate_id}`}</td>
+                      <td style={{ ...tdStyle, fontSize: 12, color: T.muted }}>{prof?.gender || "—"}</td>
+                      <td style={{ ...tdStyle, fontSize: 12, color: T.muted }}>{prof?.date_of_birth || "—"}</td>
+                      <td style={tdStyle}>
+                        {isEditable && (
+                          <Btn variant="ghost" small onClick={() => handleRemoveEntry(sub.id, entry.id)} style={{ color: T.error }}>
+                            <Trash2 size={13} />
+                          </Btn>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p style={{ margin: "8px 0 12px", fontSize: 12, color: T.muted, fontStyle: "italic" }}>No entries yet</p>
+        )}
+
+        {/* Add entry — only for editable submissions */}
+        {isEditable && (
+          <div style={{ marginBottom: 14 }}>
+            {noCandidatesAvailable ? (
+              <div style={{
+                padding: "10px 14px", borderRadius: T.radius.md,
+                background: T.warnBg, border: `1px solid ${T.warn}20`,
+                fontSize: 12, color: T.warn,
+              }}>
+                <AlertTriangle size={13} style={{ verticalAlign: "middle", marginRight: 6 }} />
+                No eligible candidates available for this party. Candidates already assigned to FPTP or another PR list cannot be reused.
+              </div>
+            ) : (
+              <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
+                <label style={{ ...lbl, flex: 1, minWidth: 140 }}>Candidate
+                  <select style={sel} value={ef.candidate_id || ""} onChange={e => setEntryForm(p => ({ ...p, [sub.id]: { ...ef, candidate_id: e.target.value } }))}>
+                    <option value="">Select candidate</option>
+                    {availableCandidates.map(p => <option key={p.id} value={p.id}>{p.full_name}</option>)}
+                  </select>
+                </label>
+                <label style={{ ...lbl, width: 90 }}>Position
+                  <input style={inp} type="number" min={1} value={ef.list_position || ""} onChange={e => setEntryForm(p => ({ ...p, [sub.id]: { ...ef, list_position: e.target.value } }))} />
+                </label>
+                <Btn small onClick={() => handleAddEntry(sub.id)}><Plus size={13} /> Add</Btn>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Validation results */}
+        {validation && expandedSub === sub.id && (
+          <div style={{
+            padding: "12px 14px", borderRadius: T.radius.md, marginBottom: 12,
+            background: validation.valid ? T.successBg : T.errorBg,
+            border: `1px solid ${validation.valid ? (T.successBorder || T.success + "30") : (T.errorBorder || T.error + "30")}`,
+          }}>
+            <div style={{ fontWeight: 700, fontSize: 12, color: validation.valid ? T.success : T.error, marginBottom: 4 }}>
+              {validation.valid ? "✓ List is valid" : "✗ Validation failed"}
+            </div>
+            {Array.isArray(validation.errors) && validation.errors.length > 0 && (
+              <ul style={{ margin: "4px 0 0", paddingLeft: 18, fontSize: 12, color: T.error }}>
+                {validation.errors.map((e, i) => <li key={i}>{typeof e === "string" ? e : (e?.message || JSON.stringify(e))}</li>)}
+              </ul>
+            )}
+            {Array.isArray(validation.warnings) && validation.warnings.length > 0 && (
+              <ul style={{ margin: "4px 0 0", paddingLeft: 18, fontSize: 12, color: T.warn }}>
+                {validation.warnings.map((w, i) => <li key={i}>{typeof w === "string" ? w : (w?.message || JSON.stringify(w))}</li>)}
+              </ul>
+            )}
+          </div>
+        )}
+
+        {/* Actions */}
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          <Btn variant="secondary" small onClick={() => handleValidate(sub)}>
+            <Shield size={13} /> Validate
+          </Btn>
+          {(sub.status === "DRAFT" || sub.status === "VALID" || sub.status === "INVALID") && (
+            <Btn variant="primary" small onClick={() => setConfirmSubmit(sub)}>Submit for review</Btn>
+          )}
+          {sub.status === "SUBMITTED" && (
+            <>
+              <Btn variant="success" small onClick={() => handleReview(sub, "approve")}><Check size={12} /> Approve</Btn>
+              <Btn variant="danger" small onClick={() => handleReview(sub, "reject")}><X size={12} /> Reject</Btn>
+            </>
+          )}
+          {(sub.status === "REJECTED" || sub.status === "INVALID") && (
+            <Btn variant="ghost" small onClick={() => handleReview(sub, "reopen")}>
+              <RotateCcw size={12} /> Reopen
+            </Btn>
+          )}
+          {(sub.status === "DRAFT" || sub.status === "INVALID") && (
+            <Btn variant="ghost" small onClick={() => setConfirmDel(sub)} style={{ color: T.error }}>
+              <Trash2 size={13} /> Delete
+            </Btn>
+          )}
+        </div>
+      </div>
+    </PRSubmissionErrorBoundary>
   );
 }
 

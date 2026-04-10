@@ -107,6 +107,62 @@ def reopen_submission(db: Session, submission: PrPartySubmission) -> PrPartySubm
     return submission
 
 
+# ── Eligible candidate lookup ───────────────────────────────────
+
+def get_pr_eligible_candidates(
+    db: Session,
+    *,
+    election_id: int,
+    party_id: int,
+) -> list[CandidateProfile]:
+    """Return candidates eligible for a PR list entry in this election.
+
+    Eligible means:
+    - Active and belongs to the specified party
+    - Not nominated in any FPTP contest for this election
+    - Not already in any PR entry for this election
+    """
+    from app.models.fptp_candidate_nomination import FptpCandidateNomination
+
+    candidates = list(
+        db.execute(
+            select(CandidateProfile).where(
+                CandidateProfile.party_id == party_id,
+                CandidateProfile.is_active == True,  # noqa: E712
+            )
+        ).scalars().all()
+    )
+    if not candidates:
+        return []
+
+    candidate_ids = {c.id for c in candidates}
+
+    # Candidates already in FPTP nominations for this election
+    fptp_nominated_ids = set(
+        db.execute(
+            select(FptpCandidateNomination.candidate_id).where(
+                FptpCandidateNomination.election_id == election_id,
+                FptpCandidateNomination.candidate_id.in_(candidate_ids),
+            )
+        ).scalars().all()
+    )
+
+    # Candidates already in any PR entry for this election
+    pr_used_ids = set(
+        db.execute(
+            select(PrPartyListEntry.candidate_id)
+            .join(PrPartySubmission, PrPartyListEntry.submission_id == PrPartySubmission.id)
+            .where(
+                PrPartySubmission.election_id == election_id,
+                PrPartyListEntry.candidate_id.in_(candidate_ids),
+            )
+        ).scalars().all()
+    )
+
+    excluded_ids = fptp_nominated_ids | pr_used_ids
+    return [c for c in candidates if c.id not in excluded_ids]
+
+
 # ── List entry management ───────────────────────────────────────
 
 def add_entry(
@@ -123,6 +179,41 @@ def add_entry(
         raise PrValidationError(f"Candidate profile {candidate_id} not found")
     if not profile.is_active:
         raise PrValidationError("Candidate is inactive")
+
+    # Must belong to the submission's party
+    if profile.party_id != submission.party_id:
+        raise PrValidationError(
+            "Candidate does not belong to this submission's party"
+        )
+
+    # Must not be in FPTP for this election
+    from app.models.fptp_candidate_nomination import FptpCandidateNomination
+
+    fptp_nom = db.execute(
+        select(FptpCandidateNomination).where(
+            FptpCandidateNomination.election_id == submission.election_id,
+            FptpCandidateNomination.candidate_id == candidate_id,
+        )
+    ).scalar_one_or_none()
+    if fptp_nom:
+        raise PrValidationError(
+            "Candidate is already nominated for an FPTP contest in this election"
+        )
+
+    # Must not be in another PR list for this election
+    other_pr = db.execute(
+        select(PrPartyListEntry)
+        .join(PrPartySubmission, PrPartyListEntry.submission_id == PrPartySubmission.id)
+        .where(
+            PrPartySubmission.election_id == submission.election_id,
+            PrPartySubmission.id != submission.id,
+            PrPartyListEntry.candidate_id == candidate_id,
+        )
+    ).scalar_one_or_none()
+    if other_pr:
+        raise PrValidationError(
+            "Candidate is already in another party's PR list for this election"
+        )
 
     # check duplicate candidate in this list
     existing_candidate = db.execute(
