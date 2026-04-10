@@ -1,120 +1,66 @@
 import React, { useState, useCallback } from "react";
-import ConfirmDialog from "../components/ui/ConfirmDialog";
-import {
-  Plus,
-  Vote,
-  Trash2,
-  Settings2,
-  ChevronRight,
-  AlertTriangle,
-  CheckCircle2,
-  Loader2,
-  Landmark,
-  LayoutList,
-  Lock,
-  RefreshCw,
-  ArrowLeft,
-} from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import {
+  Plus, Trash2, Settings2, ChevronRight, AlertTriangle, CheckCircle2,
+  Loader2, Landmark, LayoutList, Lock, RefreshCw, ChevronDown,
+  Vote, Users, BarChart3, FileText, Shield, Clock,
+} from "lucide-react";
 import useElections from "../features/elections/hooks/useElections";
 import {
-  createElection,
-  deleteElection,
-  generateStructure,
-  getReadiness,
-  configureElection,
-  advanceElection,
-  getMasterDataStatus,
-  getContests,
+  createElection, deleteElection, generateStructure, getReadiness,
+  configureElection, advanceElection, getMasterDataStatus, getContests,
 } from "../features/elections/api/electionsApi";
+import ConfirmDialog from "../components/ui/ConfirmDialog";
+import { T, STATUS_MAP, CONTEST_COLORS } from "../components/ui/tokens";
+import {
+  PageContainer, BackLink, SummaryStrip, SummaryMetric, StatusBanner,
+  SectionCard, SectionHeader, AdminBadge, Btn, WorkflowTimeline,
+  AdminKeyframes, formatDateTime, inputStyle, labelStyle,
+} from "../components/ui/AdminUI";
 
-/* ── Palette — matches existing admin shell design tokens ────── */
-const P = {
-  navy: "#173B72",
-  accent: "#2F6FED",
-  surface: "#FFFFFF",
-  bg: "#F5F7FB",
-  border: "#DCE3EC",
-  text: "#0F172A",
-  muted: "#64748B",
-  success: "#059669",
-  successBg: "#ECFDF5",
-  error: "#DC2626",
-  errorBg: "#FEF2F2",
-  warnBg: "#FFFBEB",
-  warn: "#D97706",
-  purple: "#7C3AED",
-  purpleBg: "#F5F3FF",
-};
-
-const STATUS_BADGES = {
-  DRAFT: { bg: "#F1F5F9", color: "#475569", label: "Draft" },
-  CONFIGURED: { bg: "#F5F3FF", color: "#7C3AED", label: "Configured" },
-  NOMINATIONS_OPEN: { bg: "#ECFEFF", color: "#0891B2", label: "Nominations Open" },
-  NOMINATIONS_CLOSED: { bg: "#E0F2FE", color: "#0284C7", label: "Nominations Closed" },
-  CANDIDATE_LIST_PUBLISHED: { bg: "#DBEAFE", color: "#2563EB", label: "Candidates Published" },
-  POLLING_OPEN: { bg: "#ECFDF5", color: "#059669", label: "Polling Open" },
-  POLLING_CLOSED: { bg: "#FFFBEB", color: "#D97706", label: "Polling Closed" },
-  COUNTING: { bg: "#FFF7ED", color: "#EA580C", label: "Counting" },
-  FINALIZED: { bg: "#ECFDF5", color: "#047857", label: "Finalized" },
-  ARCHIVED: { bg: "#F3F4F6", color: "#6B7280", label: "Archived" },
-};
-
-function StatusBadge({ status }) {
-  const meta = STATUS_BADGES[status] || { bg: "#F1F5F9", color: "#475569", label: status };
-  return (
-    <span
-      style={{
-        display: "inline-block",
-        padding: "3px 10px",
-        borderRadius: 6,
-        fontSize: 12,
-        fontWeight: 700,
-        background: meta.bg,
-        color: meta.color,
-        letterSpacing: "0.02em",
-      }}
-    >
-      {meta.label}
-    </span>
-  );
-}
-
-function formatDateTime(iso) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
+/* ── Constants ───────────────────────────────────────────────── */
 const SUBTYPE_LABELS = {
   HOR_DIRECT: "House of Representatives (Direct)",
   PROVINCIAL_ASSEMBLY: "Provincial Assembly",
-  LOCAL_MUNICIPAL: "Local – Municipal",
-  LOCAL_RURAL: "Local – Rural Municipal",
+  LOCAL_MUNICIPAL: "Local — Municipal",
+  LOCAL_RURAL: "Local — Rural Municipal",
 };
 
-const CONTEST_TYPE_COLORS = {
-  FPTP:         { bg: "#DBEAFE", color: "#2563EB" },
-  PR:           { bg: "#F5F3FF", color: "#7C3AED" },
-  MAYOR:        { bg: "#ECFDF5", color: "#059669" },
-  DEPUTY_MAYOR: { bg: "#FFF7ED", color: "#EA580C" },
-};
+const LIFECYCLE_STEPS = [
+  { key: "DRAFT", label: "Draft" },
+  { key: "CONFIGURED", label: "Configured" },
+  { key: "NOMINATIONS_OPEN", label: "Nominations open" },
+  { key: "NOMINATIONS_CLOSED", label: "Nominations closed" },
+  { key: "CANDIDATE_LIST_PUBLISHED", label: "Candidates published" },
+  { key: "POLLING_OPEN", label: "Polling open" },
+  { key: "POLLING_CLOSED", label: "Polling closed" },
+  { key: "COUNTING", label: "Counting" },
+  { key: "FINALIZED", label: "Finalized" },
+  { key: "ARCHIVED", label: "Archived" },
+];
+
+const LIFECYCLE_DETAIL = [
+  { key: "DRAFT", label: "Draft", description: "Election created, metadata defined. Structure not yet generated." },
+  { key: "STRUCTURE", label: "Structure generated", description: "Contest structure built from geography master data (165 FPTP + 1 PR)." },
+  { key: "CONFIGURED", label: "Configured", description: "Setup locked. Structure cannot be modified. Ready for nominations." },
+  { key: "NOMINATIONS_OPEN", label: "Nominations open", description: "Candidate nominations and PR list submissions can be filed." },
+  { key: "NOMINATIONS_CLOSED", label: "Nominations closed", description: "Nomination window closed. Lists under review." },
+  { key: "CANDIDATE_LIST_PUBLISHED", label: "Candidates published", description: "Official candidate lists published. Ready for polling." },
+  { key: "POLLING_OPEN", label: "Polling open", description: "Voting period active. Voters can cast ballots." },
+  { key: "POLLING_CLOSED", label: "Polling closed", description: "Voting period ended. Ballots sealed for counting." },
+  { key: "COUNTING", label: "Counting", description: "Ballot counting and result tallying in progress." },
+  { key: "FINALIZED", label: "Finalized", description: "Results certified and locked. Winners declared." },
+  { key: "ARCHIVED", label: "Archived", description: "Election record preserved for institutional audit." },
+];
 
 function formatContestCounts(el) {
   const cc = el.contest_counts || {};
-  const parts = Object.entries(cc)
-    .filter(([, v]) => v > 0)
-    .map(([k, v]) => `${v} ${k}`);
+  const parts = Object.entries(cc).filter(([, v]) => v > 0).map(([k, v]) => `${v} ${k}`);
   return parts.length > 0 ? parts.join(" + ") : `${el.contest_count} contests`;
 }
 
 /* ══════════════════════════════════════════════════════════════ */
-/*  MAIN PAGE COMPONENT — FEDERAL ELECTIONS                     */
+/*  MAIN PAGE                                                    */
 /* ══════════════════════════════════════════════════════════════ */
 
 export default function ManageFederalElectionsPage() {
@@ -131,31 +77,20 @@ export default function ManageFederalElectionsPage() {
   const [masterDataLoading, setMasterDataLoading] = useState(false);
   const [confirmDel, setConfirmDel] = useState(null);
 
-  const clearMessages = () => {
-    setActionError(null);
-    setActionSuccess(null);
-  };
+  const clearMessages = () => { setActionError(null); setActionSuccess(null); };
 
   const loadMasterData = useCallback(async () => {
     setMasterDataLoading(true);
-    try {
-      const data = await getMasterDataStatus();
-      setMasterData(data);
-    } catch {
-      /* ignore */
-    } finally {
-      setMasterDataLoading(false);
-    }
+    try { setMasterData(await getMasterDataStatus()); }
+    catch { /* ignore */ }
+    finally { setMasterDataLoading(false); }
   }, []);
 
-  React.useEffect(() => {
-    loadMasterData();
-  }, [loadMasterData]);
+  React.useEffect(() => { loadMasterData(); }, [loadMasterData]);
 
-  /* ── Create handler ──────────────────────────────────────── */
+  /* ── Handlers ─────────────────────────────────────────── */
   const handleCreate = async (formData) => {
-    clearMessages();
-    setActionLoading("create");
+    clearMessages(); setActionLoading("create");
     try {
       await createElection(formData);
       setShowCreate(false);
@@ -163,38 +98,24 @@ export default function ManageFederalElectionsPage() {
       reload();
     } catch (err) {
       setActionError(err?.response?.data?.detail || "Failed to create election");
-    } finally {
-      setActionLoading(null);
-    }
+    } finally { setActionLoading(null); }
   };
 
-  /* ── Delete handler ──────────────────────────────────────── */
-  const requestDelete = (id, status) => {
-    setConfirmDel({ id, status });
-  };
+  const requestDelete = (id, status) => setConfirmDel({ id, status });
 
   const handleDelete = async () => {
     if (!confirmDel) return;
-    const { id } = confirmDel;
-    setConfirmDel(null);
-    clearMessages();
-    setActionLoading(`delete-${id}`);
+    setConfirmDel(null); clearMessages(); setActionLoading(`delete-${confirmDel.id}`);
     try {
-      await deleteElection(id);
-      setActionSuccess("Election deleted");
-      setExpandedId(null);
-      reload();
+      await deleteElection(confirmDel.id);
+      setActionSuccess("Election deleted"); setExpandedId(null); reload();
     } catch (err) {
       setActionError(err?.response?.data?.detail || "Failed to delete election");
-    } finally {
-      setActionLoading(null);
-    }
+    } finally { setActionLoading(null); }
   };
 
-  /* ── Generate structure handler ──────────────────────────── */
   const handleGenerate = async (id) => {
-    clearMessages();
-    setActionLoading(`gen-${id}`);
+    clearMessages(); setActionLoading(`gen-${id}`);
     try {
       const result = await generateStructure(id);
       const parts = [];
@@ -202,147 +123,87 @@ export default function ManageFederalElectionsPage() {
       if (result.pr_contests_created) parts.push(`${result.pr_contests_created} PR`);
       if (result.mayor_contests_created) parts.push(`${result.mayor_contests_created} Mayor/Chair`);
       if (result.deputy_mayor_contests_created) parts.push(`${result.deputy_mayor_contests_created} Deputy/Vice`);
-      setActionSuccess(
-        `Structure generated: ${parts.join(" + ")} = ${result.total_contests} contests`
-      );
+      setActionSuccess(`Structure generated: ${parts.join(" + ")} = ${result.total_contests} contests`);
       reload();
     } catch (err) {
       setActionError(err?.response?.data?.detail || "Failed to generate structure");
-    } finally {
-      setActionLoading(null);
-    }
+    } finally { setActionLoading(null); }
   };
 
-  /* ── Configure handler ───────────────────────────────────── */
   const handleConfigure = async (id) => {
-    clearMessages();
-    setActionLoading(`cfg-${id}`);
+    clearMessages(); setActionLoading(`cfg-${id}`);
     try {
       await configureElection(id);
-      setActionSuccess("Election configured and setup locked");
-      reload();
+      setActionSuccess("Election configured and setup locked"); reload();
     } catch (err) {
       setActionError(err?.response?.data?.detail || "Configuration failed");
-    } finally {
-      setActionLoading(null);
-    }
+    } finally { setActionLoading(null); }
   };
 
-  /* ── Advance lifecycle handler ─────────────────────────────── */
   const handleAdvance = async (id, nextLabel) => {
-    clearMessages();
-    setActionLoading(`adv-${id}`);
+    clearMessages(); setActionLoading(`adv-${id}`);
     try {
       await advanceElection(id);
-      setActionSuccess(`Election advanced to ${nextLabel}`);
-      reload();
+      setActionSuccess(`Election advanced to ${nextLabel}`); reload();
     } catch (err) {
       setActionError(err?.response?.data?.detail || "Failed to advance election status");
-    } finally {
-      setActionLoading(null);
-    }
+    } finally { setActionLoading(null); }
   };
 
-  return (
-    <div style={{ padding: "32px 40px", maxWidth: 1200, margin: "0 auto" }}>
-      {/* Back link */}
-      <button
-        onClick={() => navigate("/admin/manage-elections")}
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 6,
-          marginBottom: 20,
-          padding: 0,
-          border: "none",
-          background: "transparent",
-          color: P.muted,
-          fontSize: 13,
-          fontWeight: 600,
-          cursor: "pointer",
-        }}
-      >
-        <ArrowLeft size={15} /> Back to Election Hub
-      </button>
+  /* ── Derived data ─────────────────────────────────────── */
+  const draftCount = elections.filter(e => e.status === "DRAFT").length;
+  const activeCount = elections.filter(e =>
+    ["CONFIGURED","NOMINATIONS_OPEN","NOMINATIONS_CLOSED","CANDIDATE_LIST_PUBLISHED","POLLING_OPEN","POLLING_CLOSED","COUNTING"].includes(e.status)
+  ).length;
+  const finalizedCount = elections.filter(e => ["FINALIZED","ARCHIVED"].includes(e.status)).length;
+  const masterDataReady = masterData?.federal_ready ?? false;
 
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
-        <div>
-          <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: P.text, display: "flex", alignItems: "center", gap: 10 }}>
-            <Landmark size={22} strokeWidth={2.2} color={P.accent} />
-            Federal Elections
-          </h2>
-          <p style={{ margin: "4px 0 0", fontSize: 14, color: P.muted }}>
-            Create federal elections, generate contest structures, and manage setup lifecycle
-          </p>
-        </div>
-        <button
-          onClick={() => { clearMessages(); setShowCreate(true); }}
-          style={{
-            display: "flex", alignItems: "center", gap: 8,
-            padding: "10px 20px", borderRadius: 10, border: "none",
-            background: P.navy, color: "#FFF", fontWeight: 700, fontSize: 14,
-            cursor: "pointer",
-          }}
-        >
-          <Plus size={18} strokeWidth={2.5} />
-          New Federal Election
-        </button>
+  return (
+    <PageContainer>
+      <AdminKeyframes />
+
+      {/* Back + primary CTA */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
+        <BackLink onClick={() => navigate("/admin/manage-elections")}>Election Hub</BackLink>
+        <Btn variant="navy" onClick={() => { clearMessages(); setShowCreate(true); }}>
+          <Plus size={16} strokeWidth={2.5} /> New federal election
+        </Btn>
       </div>
 
-      {/* Master Data Banner — federal only */}
+      {/* Summary strip */}
+      <SummaryStrip>
+        <SummaryMetric label="Total elections" value={elections.length} icon={Landmark} />
+        <SummaryMetric label="Active / in progress" value={activeCount} color={activeCount > 0 ? T.success : T.muted} />
+        <SummaryMetric label="Draft / setup" value={draftCount} color={draftCount > 0 ? T.warn : T.muted} />
+        <SummaryMetric label="Finalized / archived" value={finalizedCount} />
+        <SummaryMetric
+          label="Master data"
+          value={masterDataReady ? "Ready" : "Not ready"}
+          color={masterDataReady ? T.success : T.warn}
+        />
+      </SummaryStrip>
+
+      {/* Master data banner */}
       {masterData && !masterData.federal_ready && (
-        <div style={{
-          padding: "14px 20px", borderRadius: 10, marginBottom: 20,
-          background: P.warnBg, border: `1px solid ${P.warn}30`,
-          display: "flex", alignItems: "center", gap: 12,
-        }}>
-          <AlertTriangle size={20} color={P.warn} />
-          <div style={{ flex: 1 }}>
-            <span style={{ fontWeight: 700, fontSize: 14, color: P.warn }}>Master Data Status</span>
-            <span style={{ fontSize: 13, color: P.muted, marginLeft: 8 }}>
-              Federal geography data: {masterData.federal_ready ? "✓ Ready" : "✗ Not seeded"}
-            </span>
-          </div>
-          <button
-            onClick={loadMasterData}
-            disabled={masterDataLoading}
-            style={{
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "6px 14px", borderRadius: 8, border: `1px solid ${P.border}`,
-              background: P.surface, color: P.muted, fontWeight: 600, fontSize: 12,
-              cursor: "pointer",
-            }}
-          >
-            <RefreshCw size={14} className={masterDataLoading ? "animate-spin" : ""} />
-            Refresh
-          </button>
-        </div>
+        <StatusBanner variant="warning" action={
+          <Btn variant="secondary" small onClick={loadMasterData} disabled={masterDataLoading}>
+            <RefreshCw size={13} className={masterDataLoading ? "animate-spin" : ""} /> Refresh
+          </Btn>
+        }>
+          <strong>Geography master data not seeded.</strong> Federal contest structures require constituency data.
+          Districts: {masterData.districts ?? 0} · Constituencies: {masterData.constituencies ?? 0} / {masterData.required_constituencies ?? 165}
+        </StatusBanner>
       )}
 
-      {/* Messages */}
+      {/* Action messages */}
       {actionError && (
-        <div style={{
-          padding: "12px 18px", borderRadius: 10, marginBottom: 16,
-          background: P.errorBg, border: `1px solid ${P.error}30`,
-          display: "flex", alignItems: "center", gap: 10,
-        }}>
-          <AlertTriangle size={18} color={P.error} />
-          <span style={{ fontSize: 14, color: P.error, fontWeight: 600 }}>{actionError}</span>
-        </div>
+        <StatusBanner variant="error">{actionError}</StatusBanner>
       )}
       {actionSuccess && (
-        <div style={{
-          padding: "12px 18px", borderRadius: 10, marginBottom: 16,
-          background: P.successBg, border: `1px solid ${P.success}30`,
-          display: "flex", alignItems: "center", gap: 10,
-        }}>
-          <CheckCircle2 size={18} color={P.success} />
-          <span style={{ fontSize: 14, color: P.success, fontWeight: 600 }}>{actionSuccess}</span>
-        </div>
+        <StatusBanner variant="success">{actionSuccess}</StatusBanner>
       )}
 
-      {/* Create Form */}
+      {/* Create form */}
       {showCreate && (
         <CreateFederalElectionForm
           onSubmit={handleCreate}
@@ -351,61 +212,141 @@ export default function ManageFederalElectionsPage() {
         />
       )}
 
-      {/* Election List */}
-      {loading ? (
-        <div style={{ textAlign: "center", padding: 40, color: P.muted }}>
-          <Loader2 size={28} className="animate-spin" style={{ margin: "0 auto 12px" }} />
-          <p>Loading elections…</p>
+      {/* Election list */}
+      <SectionCard style={{ marginBottom: T.space["2xl"] }}>
+        <SectionHeader
+          icon={Landmark}
+          iconColor={T.accent}
+          title="Federal elections"
+          subtitle={`${elections.length} election${elections.length !== 1 ? "s" : ""}`}
+        />
+
+        {loading ? (
+          <div style={{ textAlign: "center", padding: 40, color: T.muted }}>
+            <Loader2 size={28} style={{ margin: "0 auto 12px", animation: "adminSpin 1s linear infinite" }} />
+            <p style={{ margin: 0, fontSize: 14 }}>Loading elections…</p>
+          </div>
+        ) : error ? (
+          <div style={{ textAlign: "center", padding: 40, color: T.error, fontSize: 14 }}>
+            <AlertTriangle size={20} style={{ margin: "0 auto 8px" }} />
+            <p>{error}</p>
+          </div>
+        ) : elections.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "48px 32px" }}>
+            <div style={{
+              width: 56, height: 56, borderRadius: T.radius.xl, margin: "0 auto 16px",
+              background: T.borderLight, display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <Landmark size={28} color={T.subtle} />
+            </div>
+            <p style={{ fontSize: 15, fontWeight: 700, color: T.text, margin: "0 0 6px" }}>
+              No federal elections yet
+            </p>
+            <p style={{ fontSize: 13, color: T.muted, margin: "0 0 16px" }}>
+              Create your first federal election to begin managing the electoral process.
+            </p>
+            <Btn variant="navy" onClick={() => { clearMessages(); setShowCreate(true); }}>
+              <Plus size={14} /> Create election
+            </Btn>
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {elections.map((el) => (
+              <ElectionCard
+                key={el.id}
+                election={el}
+                expanded={expandedId === el.id}
+                onToggle={() => setExpandedId(expandedId === el.id ? null : el.id)}
+                onDelete={() => requestDelete(el.id, el.status)}
+                onGenerate={() => handleGenerate(el.id)}
+                onConfigure={() => handleConfigure(el.id)}
+                onAdvance={(nextLabel) => handleAdvance(el.id, nextLabel)}
+                actionLoading={actionLoading}
+                masterData={masterData}
+              />
+            ))}
+          </div>
+        )}
+      </SectionCard>
+
+      {/* Federal lifecycle section */}
+      <SectionCard style={{ marginBottom: T.space["2xl"] }}>
+        <SectionHeader icon={Clock} iconColor={T.navy} title="Federal election lifecycle" subtitle="The complete lifecycle of a federal election" />
+        <div style={{ padding: "20px 24px" }}>
+          <WorkflowTimeline steps={LIFECYCLE_DETAIL} compact />
         </div>
-      ) : error ? (
-        <div style={{ textAlign: "center", padding: 40, color: P.error }}>{error}</div>
-      ) : elections.length === 0 ? (
-        <div style={{
-          textAlign: "center", padding: "60px 40px", borderRadius: 14,
-          background: P.surface, border: `1px solid ${P.border}`,
-        }}>
-          <Landmark size={40} color={P.muted} style={{ margin: "0 auto 16px", opacity: 0.4 }} />
-          <p style={{ fontSize: 16, fontWeight: 700, color: P.text, margin: "0 0 6px" }}>
-            No federal elections yet
-          </p>
-          <p style={{ fontSize: 14, color: P.muted }}>
-            Create a new federal election to get started.
-          </p>
+      </SectionCard>
+
+      {/* Federal contest model section */}
+      <SectionCard>
+        <SectionHeader icon={LayoutList} iconColor={T.navy} title="Federal contest model" subtitle="Structure of a House of Representatives election" />
+        <div style={{ padding: "20px 24px" }}>
+          <div style={{
+            display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+            gap: T.space.lg, marginBottom: T.space.xl,
+          }}>
+            {/* FPTP block */}
+            <div style={{
+              padding: "20px 24px", borderRadius: T.radius.lg,
+              background: "#EFF6FF", border: "1px solid #BFDBFE",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                <span style={{ padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 800, background: "#DBEAFE", color: "#2563EB" }}>FPTP</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: T.text }}>Direct constituency seats</span>
+              </div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: "#2563EB", marginBottom: 6 }}>165</div>
+              <p style={{ margin: 0, fontSize: 12, color: T.muted, lineHeight: 1.5 }}>
+                Single-member constituencies. Each voter casts one FPTP ballot for a candidate. Winner: highest valid votes.
+              </p>
+            </div>
+
+            {/* PR block */}
+            <div style={{
+              padding: "20px 24px", borderRadius: T.radius.lg,
+              background: T.purpleBg, border: `1px solid ${T.purpleBorder}`,
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                <span style={{ padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 800, background: "#EDE9FE", color: "#7C3AED" }}>PR</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: T.text }}>Proportional representation</span>
+              </div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: "#7C3AED", marginBottom: 6 }}>110</div>
+              <p style={{ margin: 0, fontSize: 12, color: T.muted, lineHeight: 1.5 }}>
+                Nationwide closed party lists. Each voter casts one PR ballot for a party. Allocated via Sainte-Laguë method. 3% threshold.
+              </p>
+            </div>
+          </div>
+
+          {/* Total */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 12, padding: "12px 20px",
+            background: T.surfaceAlt, borderRadius: T.radius.md, border: `1px solid ${T.borderLight}`,
+          }}>
+            <Vote size={16} color={T.navy} />
+            <span style={{ fontSize: 13, fontWeight: 700, color: T.navy }}>Total: 275 seats</span>
+            <span style={{ fontSize: 12, color: T.muted }}>
+              Each voter casts 2 ballots — 1 FPTP (constituency) + 1 PR (nationwide party list)
+            </span>
+          </div>
         </div>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {elections.map((el) => (
-            <ElectionCard
-              key={el.id}
-              election={el}
-              expanded={expandedId === el.id}
-              onToggle={() => setExpandedId(expandedId === el.id ? null : el.id)}
-              onDelete={() => requestDelete(el.id, el.status)}
-              onGenerate={() => handleGenerate(el.id)}
-              onConfigure={() => handleConfigure(el.id)}
-              onAdvance={(nextLabel) => handleAdvance(el.id, nextLabel)}
-              actionLoading={actionLoading}
-              masterData={masterData}
-            />
-          ))}
-        </div>
-      )}
+      </SectionCard>
+
+      {/* Delete dialog */}
       <ConfirmDialog
         open={!!confirmDel}
         onClose={() => setConfirmDel(null)}
         onConfirm={handleDelete}
-        title="Delete Election"
-        body={`Delete this ${confirmDel?.status === "ARCHIVED" ? "archived" : "draft"} election and all its associated data? This cannot be undone.`}
+        title="Delete election"
+        body={`Delete this ${confirmDel?.status === "ARCHIVED" ? "archived" : "draft"} election and all associated data? This action cannot be undone.`}
         confirmLabel="Delete"
         variant="danger"
       />
-    </div>
+    </PageContainer>
   );
 }
 
 
 /* ══════════════════════════════════════════════════════════════ */
-/*  CREATE FORM — FEDERAL ONLY                                  */
+/*  CREATE FORM                                                  */
 /* ══════════════════════════════════════════════════════════════ */
 
 function CreateFederalElectionForm({ onSubmit, onCancel, submitting }) {
@@ -426,145 +367,60 @@ function CreateFederalElectionForm({ onSubmit, onCancel, submitting }) {
     });
   };
 
-  const inputStyle = {
-    width: "100%",
-    padding: "10px 14px",
-    borderRadius: 8,
-    border: `1px solid ${P.border}`,
-    fontSize: 14,
-    fontFamily: "inherit",
-    color: P.text,
-    background: P.surface,
-    boxSizing: "border-box",
-  };
-
-  const labelStyle = {
-    display: "block",
-    fontSize: 13,
-    fontWeight: 700,
-    color: P.text,
-    marginBottom: 6,
-  };
-
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{
-        background: P.surface,
-        borderRadius: 14,
-        border: `1px solid ${P.border}`,
-        padding: "28px 32px",
-        marginBottom: 20,
-      }}
-    >
-      <h3 style={{ margin: "0 0 20px", fontSize: 17, fontWeight: 800, color: P.navy }}>
-        New Federal Election
-      </h3>
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-        <div style={{ gridColumn: "1 / -1" }}>
-          <label style={labelStyle}>Title</label>
-          <input
-            style={inputStyle}
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Federal HoR Election 2083"
-            required
-            minLength={3}
-            maxLength={255}
-          />
-        </div>
-
-        <div style={{ gridColumn: "1 / -1" }}>
-          <label style={labelStyle}>Description (optional)</label>
-          <textarea
-            style={{ ...inputStyle, minHeight: 60, resize: "vertical" }}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Optional notes about this election"
-          />
-        </div>
-
-        <div>
-          <label style={labelStyle}>Government Level</label>
-          <input style={{ ...inputStyle, background: "#F8FAFC", color: P.muted }} value="Federal" disabled />
-        </div>
-
-        <div>
-          <label style={labelStyle}>Election Type</label>
-          <input style={{ ...inputStyle, background: "#F8FAFC", color: P.muted }} value="House of Representatives (Direct)" disabled />
-        </div>
-
-        <div>
-          <label style={labelStyle}>Start Time</label>
-          <input
-            type="datetime-local"
-            style={inputStyle}
-            value={startTime}
-            onChange={(e) => setStartTime(e.target.value)}
-            required
-          />
-        </div>
-
-        <div>
-          <label style={labelStyle}>End Time</label>
-          <input
-            type="datetime-local"
-            style={inputStyle}
-            value={endTime}
-            onChange={(e) => setEndTime(e.target.value)}
-            required
-          />
-        </div>
+    <SectionCard style={{ marginBottom: T.space.xl }}>
+      <div style={{ padding: "24px 28px", borderBottom: `1px solid ${T.borderLight}` }}>
+        <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: T.navy }}>
+          New federal election
+        </h3>
+        <p style={{ margin: "4px 0 0", fontSize: 13, color: T.muted }}>
+          Create a new House of Representatives election
+        </p>
       </div>
-
-      <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
-        <button
-          type="button"
-          onClick={onCancel}
-          style={{
-            padding: "9px 20px", borderRadius: 8, border: `1px solid ${P.border}`,
-            background: P.surface, color: P.muted, fontWeight: 600, fontSize: 14,
-            cursor: "pointer",
-          }}
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          disabled={submitting}
-          style={{
-            padding: "9px 20px", borderRadius: 8, border: "none",
-            background: P.navy, color: "#FFF", fontWeight: 700, fontSize: 14,
-            cursor: submitting ? "not-allowed" : "pointer",
-            opacity: submitting ? 0.6 : 1,
-            display: "flex", alignItems: "center", gap: 8,
-          }}
-        >
-          {submitting && <Loader2 size={16} className="animate-spin" />}
-          Create Draft Election
-        </button>
-      </div>
-    </form>
+      <form onSubmit={handleSubmit} style={{ padding: "24px 28px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16, marginBottom: 20 }}>
+          <div style={{ gridColumn: "1 / -1" }}>
+            <label style={labelStyle}>Title</label>
+            <input style={inputStyle} value={title} onChange={e => setTitle(e.target.value)}
+              placeholder="e.g. Federal HoR Election 2083" required minLength={3} maxLength={255} />
+          </div>
+          <div style={{ gridColumn: "1 / -1" }}>
+            <label style={labelStyle}>Description (optional)</label>
+            <textarea style={{ ...inputStyle, minHeight: 60, resize: "vertical" }} value={description}
+              onChange={e => setDescription(e.target.value)} placeholder="Optional notes about this election" />
+          </div>
+          <div>
+            <label style={labelStyle}>Government level</label>
+            <input style={{ ...inputStyle, background: T.surfaceAlt, color: T.muted }} value="Federal" disabled />
+          </div>
+          <div>
+            <label style={labelStyle}>Election type</label>
+            <input style={{ ...inputStyle, background: T.surfaceAlt, color: T.muted }} value="House of Representatives (Direct)" disabled />
+          </div>
+          <div>
+            <label style={labelStyle}>Start time</label>
+            <input type="datetime-local" style={inputStyle} value={startTime} onChange={e => setStartTime(e.target.value)} required />
+          </div>
+          <div>
+            <label style={labelStyle}>End time</label>
+            <input type="datetime-local" style={inputStyle} value={endTime} onChange={e => setEndTime(e.target.value)} required />
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+          <Btn variant="secondary" onClick={onCancel} type="button">Cancel</Btn>
+          <Btn variant="navy" type="submit" disabled={submitting} loading={submitting}>Create draft election</Btn>
+        </div>
+      </form>
+    </SectionCard>
   );
 }
 
 
 /* ══════════════════════════════════════════════════════════════ */
-/*  ELECTION CARD                                               */
+/*  ELECTION CARD                                                */
 /* ══════════════════════════════════════════════════════════════ */
 
-function ElectionCard({
-  election: el,
-  expanded,
-  onToggle,
-  onDelete,
-  onGenerate,
-  onConfigure,
-  onAdvance,
-  actionLoading,
-  masterData,
-}) {
+function ElectionCard({ election: el, expanded, onToggle, onDelete, onGenerate, onConfigure, onAdvance, actionLoading, masterData }) {
   const masterDataReady = masterData?.federal_ready ?? false;
   const [readiness, setReadiness] = useState(null);
   const [contests, setContests] = useState(null);
@@ -574,176 +430,151 @@ function ElectionCard({
   const hasContests = el.contest_count > 0;
 
   React.useEffect(() => {
-    if (!expanded) {
-      setReadiness(null);
-      setContests(null);
-      return;
-    }
+    if (!expanded) { setReadiness(null); setContests(null); return; }
     let cancelled = false;
     (async () => {
       setDetailLoading(true);
       try {
         const [r, c] = await Promise.all([getReadiness(el.id), getContests(el.id)]);
-        if (!cancelled) {
-          setReadiness(r);
-          setContests(c);
-        }
-      } catch {
-        /* ignore */
-      } finally {
-        if (!cancelled) setDetailLoading(false);
-      }
+        if (!cancelled) { setReadiness(r); setContests(c); }
+      } catch { /* ignore */ }
+      finally { if (!cancelled) setDetailLoading(false); }
     })();
     return () => { cancelled = true; };
   }, [expanded, el.id, el.contest_count]);
 
+  const TRANSITIONS = {
+    CONFIGURED: { next: "Nominations open", color: "#06B6D4" },
+    NOMINATIONS_OPEN: { next: "Nominations closed", color: "#0EA5E9" },
+    NOMINATIONS_CLOSED: { next: "Candidate list published", color: "#2563EB" },
+    CANDIDATE_LIST_PUBLISHED: { next: "Polling open", color: "#16A34A" },
+    POLLING_OPEN: { next: "Polling closed", color: "#F59E0B" },
+    FINALIZED: { next: "Archived", color: "#6B7280" },
+  };
+  const transition = TRANSITIONS[el.status];
+
   return (
-    <div
-      style={{
-        background: P.surface,
-        borderRadius: 14,
-        border: `1px solid ${expanded ? P.accent + "40" : P.border}`,
-        overflow: "hidden",
-        transition: "border-color 0.2s",
-      }}
-    >
+    <div style={{
+      borderBottom: `1px solid ${T.borderLight}`,
+      transition: "background 0.15s",
+    }}>
       {/* Header row */}
       <button
         onClick={onToggle}
         style={{
-          width: "100%",
-          display: "flex",
-          alignItems: "center",
-          gap: 16,
-          padding: "18px 24px",
-          border: "none",
-          background: "transparent",
-          cursor: "pointer",
-          textAlign: "left",
+          width: "100%", display: "flex", alignItems: "center", gap: 14,
+          padding: "16px 24px", border: "none", background: expanded ? T.surfaceAlt : "transparent",
+          cursor: "pointer", textAlign: "left", transition: "background 0.15s",
         }}
       >
-        <ChevronRight
-          size={18}
-          color={P.muted}
-          style={{
-            transition: "transform 0.2s",
-            transform: expanded ? "rotate(90deg)" : "none",
-            flexShrink: 0,
-          }}
-        />
-
+        <ChevronDown size={16} color={T.muted} style={{
+          transition: "transform 0.2s",
+          transform: expanded ? "rotate(0deg)" : "rotate(-90deg)",
+          flexShrink: 0,
+        }} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 15, fontWeight: 700, color: P.text }}>{el.title}</span>
-            <StatusBadge status={el.status} />
+            <span style={{ fontSize: 14, fontWeight: 700, color: T.text }}>{el.title}</span>
+            <AdminBadge map={STATUS_MAP} status={el.status} />
           </div>
-          <div style={{ fontSize: 13, color: P.muted, marginTop: 4, display: "flex", gap: 16, flexWrap: "wrap" }}>
+          <div style={{ fontSize: 12, color: T.muted, marginTop: 4, display: "flex", gap: 14, flexWrap: "wrap" }}>
             <span>{SUBTYPE_LABELS[el.election_subtype] || el.election_subtype}</span>
             <span>{formatDateTime(el.start_time)} — {formatDateTime(el.end_time)}</span>
           </div>
         </div>
-
-        {/* Contest badge */}
-        <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
+        <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0, flexWrap: "wrap" }}>
           {hasContests ? (
             <span style={{
-              padding: "4px 12px", borderRadius: 8, fontSize: 12, fontWeight: 700,
-              background: P.successBg, color: P.success,
+              padding: "4px 12px", borderRadius: T.radius.sm, fontSize: 11, fontWeight: 700,
+              background: T.successBg, color: T.success,
             }}>
-              <LayoutList size={13} style={{ verticalAlign: "-2px", marginRight: 4 }} />
+              <LayoutList size={12} style={{ verticalAlign: "-2px", marginRight: 4 }} />
               {formatContestCounts(el)}
             </span>
-          ) : isDraft ? (
+          ) : isDraft && (
             <span style={{
-              padding: "4px 12px", borderRadius: 8, fontSize: 12, fontWeight: 700,
-              background: P.warnBg, color: P.warn,
+              padding: "4px 12px", borderRadius: T.radius.sm, fontSize: 11, fontWeight: 700,
+              background: T.warnBg, color: T.warn,
             }}>
               No contests
             </span>
-          ) : null}
+          )}
         </div>
       </button>
 
       {/* Expanded detail */}
       {expanded && (
-        <div style={{ padding: "0 24px 20px", borderTop: `1px solid ${P.border}` }}>
+        <div style={{ padding: "0 24px 24px" }}>
           {detailLoading ? (
-            <div style={{ padding: "24px 0", textAlign: "center", color: P.muted }}>
-              <Loader2 size={20} className="animate-spin" />
+            <div style={{ padding: "24px 0", textAlign: "center", color: T.muted }}>
+              <Loader2 size={20} style={{ animation: "adminSpin 1s linear infinite" }} />
             </div>
           ) : (
-            <>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+
+              {/* Lifecycle mini-timeline for this election */}
+              <div style={{
+                padding: "12px 16px", background: T.surfaceAlt,
+                borderRadius: T.radius.md, border: `1px solid ${T.borderLight}`, overflow: "auto",
+              }}>
+                <WorkflowTimeline steps={LIFECYCLE_STEPS} activeStep={el.status} compact />
+              </div>
+
               {/* Readiness panel */}
               {readiness && (
                 <div style={{
-                  marginTop: 16, padding: "16px 20px", borderRadius: 10,
-                  background: readiness.ready ? P.successBg : P.warnBg,
-                  border: `1px solid ${readiness.ready ? P.success : P.warn}20`,
+                  padding: "14px 18px", borderRadius: T.radius.md,
+                  background: readiness.ready ? T.successBg : T.warnBg,
+                  border: `1px solid ${readiness.ready ? T.successBorder : T.warnBorder}`,
                 }}>
                   <div style={{
-                    fontWeight: 700, fontSize: 14,
-                    color: readiness.ready ? P.success : P.warn,
-                    display: "flex", alignItems: "center", gap: 8,
+                    fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", gap: 8,
+                    color: readiness.ready ? T.success : T.warn,
                   }}>
-                    {readiness.ready ? (
-                      <><CheckCircle2 size={16} /> Structure Ready</>
-                    ) : (
-                      <><AlertTriangle size={16} /> Structure Not Ready</>
-                    )}
+                    {readiness.ready ? <><CheckCircle2 size={15} /> Structure ready</> : <><AlertTriangle size={15} /> Structure not ready</>}
                   </div>
-                  {!readiness.ready && readiness.issues.length > 0 && (
-                    <ul style={{
-                      margin: "8px 0 0", paddingLeft: 24,
-                      fontSize: 13, color: P.warn, lineHeight: 1.6,
-                    }}>
+                  {!readiness.ready && readiness.issues?.length > 0 && (
+                    <ul style={{ margin: "8px 0 0", paddingLeft: 22, fontSize: 12, color: T.warn, lineHeight: 1.6 }}>
                       {readiness.issues.map((issue, i) => <li key={i}>{issue}</li>)}
                     </ul>
                   )}
-                  <div style={{ marginTop: 8, fontSize: 13, color: P.muted }}>
+                  <div style={{ marginTop: 8, fontSize: 12, color: T.muted }}>
                     Total contests: {readiness.total_contests}
                     {readiness.contest_counts && Object.entries(readiness.contest_counts)
-                      .filter(([, v]) => v > 0)
-                      .map(([k, v]) => ` · ${k}: ${v}`)
-                    }
+                      .filter(([, v]) => v > 0).map(([k, v]) => ` · ${k}: ${v}`)}
                     {readiness.total_constituencies > 0 && ` · Constituencies: ${readiness.total_constituencies}`}
                   </div>
                 </div>
               )}
 
-              {/* Contest summary */}
+              {/* Contest structure */}
               {contests && contests.length > 0 && (
-                <div style={{ marginTop: 16 }}>
-                  <div style={{ fontWeight: 700, fontSize: 14, color: P.text, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
-                    <LayoutList size={16} color={P.accent} />
-                    Contest Structure ({contests.length} total)
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 13, color: T.text, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
+                    <LayoutList size={15} color={T.accent} /> Contest structure ({contests.length} total)
                   </div>
-                  <div style={{
-                    maxHeight: 260, overflowY: "auto",
-                    border: `1px solid ${P.border}`, borderRadius: 10,
-                  }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                  <div style={{ maxHeight: 240, overflowY: "auto", border: `1px solid ${T.border}`, borderRadius: T.radius.md }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                       <thead>
-                        <tr style={{ background: "#F8FAFC" }}>
-                          <th style={{ padding: "8px 14px", textAlign: "left", fontWeight: 700, color: P.muted, borderBottom: `1px solid ${P.border}` }}>Type</th>
-                          <th style={{ padding: "8px 14px", textAlign: "left", fontWeight: 700, color: P.muted, borderBottom: `1px solid ${P.border}` }}>Contest Title</th>
-                          <th style={{ padding: "8px 14px", textAlign: "right", fontWeight: 700, color: P.muted, borderBottom: `1px solid ${P.border}` }}>Seats</th>
+                        <tr style={{ background: T.surfaceAlt }}>
+                          <th style={{ padding: "8px 14px", textAlign: "left", fontWeight: 700, color: T.muted, borderBottom: `1px solid ${T.border}` }}>Type</th>
+                          <th style={{ padding: "8px 14px", textAlign: "left", fontWeight: 700, color: T.muted, borderBottom: `1px solid ${T.border}` }}>Contest title</th>
+                          <th style={{ padding: "8px 14px", textAlign: "right", fontWeight: 700, color: T.muted, borderBottom: `1px solid ${T.border}` }}>Seats</th>
                         </tr>
                       </thead>
                       <tbody>
                         {contests.map((c) => (
-                          <tr key={c.id} style={{ borderBottom: `1px solid ${P.border}` }}>
+                          <tr key={c.id} style={{ borderBottom: `1px solid ${T.borderLight}` }}>
                             <td style={{ padding: "7px 14px" }}>
                               <span style={{
                                 display: "inline-block", padding: "2px 8px", borderRadius: 4,
-                                fontSize: 11, fontWeight: 700,
-                                background: (CONTEST_TYPE_COLORS[c.contest_type] || { bg: "#F1F5F9" }).bg,
-                                color: (CONTEST_TYPE_COLORS[c.contest_type] || { color: "#475569" }).color,
-                              }}>
-                                {c.contest_type}
-                              </span>
+                                fontSize: 10, fontWeight: 700,
+                                background: (CONTEST_COLORS[c.contest_type] || { bg: "#F1F5F9" }).bg,
+                                color: (CONTEST_COLORS[c.contest_type] || { color: "#475569" }).color,
+                              }}>{c.contest_type}</span>
                             </td>
-                            <td style={{ padding: "7px 14px", color: P.text }}>{c.title}</td>
-                            <td style={{ padding: "7px 14px", textAlign: "right", fontWeight: 600, color: P.text }}>{c.seat_count}</td>
+                            <td style={{ padding: "7px 14px", color: T.text }}>{c.title}</td>
+                            <td style={{ padding: "7px 14px", textAlign: "right", fontWeight: 600, color: T.text }}>{c.seat_count}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -752,124 +583,62 @@ function ElectionCard({
                 </div>
               )}
 
-              {/* Actions */}
+              {/* Actions — draft */}
               {isDraft && (
                 <div style={{
-                  marginTop: 20, display: "flex", gap: 10, flexWrap: "wrap",
-                  paddingTop: 16, borderTop: `1px solid ${P.border}`,
+                  display: "flex", gap: 10, flexWrap: "wrap", paddingTop: 12,
+                  borderTop: `1px solid ${T.borderLight}`,
                 }}>
                   {!hasContests && (
-                    <button
-                      onClick={onGenerate}
-                      disabled={actionLoading === `gen-${el.id}` || !masterDataReady}
-                      title={!masterDataReady ? "Required geography data not yet seeded" : "Generate contest structure"}
-                      style={{
-                        display: "flex", alignItems: "center", gap: 7,
-                        padding: "9px 18px", borderRadius: 8, border: "none",
-                        background: P.accent, color: "#FFF", fontWeight: 700, fontSize: 13,
-                        cursor: !masterDataReady ? "not-allowed" : "pointer",
-                        opacity: !masterDataReady ? 0.5 : 1,
-                      }}
-                    >
-                      {actionLoading === `gen-${el.id}` ? <Loader2 size={15} className="animate-spin" /> : <Settings2 size={15} />}
-                      Generate Structure
-                    </button>
+                    <Btn onClick={onGenerate} disabled={actionLoading === `gen-${el.id}` || !masterDataReady}
+                      loading={actionLoading === `gen-${el.id}`}
+                      title={!masterDataReady ? "Required geography data not yet seeded" : "Generate contest structure"}>
+                      <Settings2 size={14} /> Generate structure
+                    </Btn>
                   )}
-
                   {hasContests && readiness?.ready && (
-                    <button
-                      onClick={onConfigure}
-                      disabled={actionLoading === `cfg-${el.id}`}
-                      style={{
-                        display: "flex", alignItems: "center", gap: 7,
-                        padding: "9px 18px", borderRadius: 8, border: "none",
-                        background: P.success, color: "#FFF", fontWeight: 700, fontSize: 13,
-                        cursor: "pointer",
-                      }}
-                    >
-                      {actionLoading === `cfg-${el.id}` ? <Loader2 size={15} className="animate-spin" /> : <Lock size={15} />}
-                      Lock Setup (Configure)
-                    </button>
+                    <Btn variant="success" onClick={onConfigure} disabled={actionLoading === `cfg-${el.id}`}
+                      loading={actionLoading === `cfg-${el.id}`}>
+                      <Lock size={14} /> Lock setup (configure)
+                    </Btn>
                   )}
-
-                  <button
-                    onClick={onDelete}
-                    disabled={actionLoading === `delete-${el.id}`}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 7,
-                      padding: "9px 18px", borderRadius: 8,
-                      border: `1px solid ${P.error}40`,
-                      background: P.errorBg, color: P.error, fontWeight: 700, fontSize: 13,
-                      cursor: "pointer", marginLeft: "auto",
-                    }}
-                  >
-                    {actionLoading === `delete-${el.id}` ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
-                    Delete Draft
-                  </button>
+                  <Btn variant="ghost" onClick={onDelete} disabled={actionLoading === `delete-${el.id}`}
+                    loading={actionLoading === `delete-${el.id}`}
+                    style={{ color: T.error, marginLeft: "auto" }}>
+                    <Trash2 size={14} /> Delete draft
+                  </Btn>
                 </div>
               )}
 
-              {/* Locked elections — lifecycle advance buttons */}
-              {!isDraft && (() => {
-                const TRANSITIONS = {
-                  CONFIGURED: { next: "Nominations Open", icon: ChevronRight, color: "#06B6D4" },
-                  NOMINATIONS_OPEN: { next: "Nominations Closed", icon: Lock, color: "#0EA5E9" },
-                  NOMINATIONS_CLOSED: { next: "Candidate List Published", icon: CheckCircle2, color: "#2563EB" },
-                  CANDIDATE_LIST_PUBLISHED: { next: "Polling Open", icon: ChevronRight, color: "#16A34A" },
-                  POLLING_OPEN: { next: "Polling Closed", icon: Lock, color: "#F59E0B" },
-                  FINALIZED: { next: "Archived", icon: ChevronRight, color: "#6B7280" },
-                };
-                const t = TRANSITIONS[el.status];
-                return (
-                  <div style={{
-                    marginTop: 16, padding: "12px 16px", borderRadius: 8,
-                    background: "#F8FAFC", fontSize: 13, color: P.muted,
-                    display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
-                  }}>
-                    <Lock size={14} />
-                    <span>
-                      This election is in <strong style={{ color: P.text }}>{el.status}</strong> state.
-                    </span>
-                    {t && (
-                      <button
-                        onClick={() => onAdvance(t.next)}
-                        disabled={!!actionLoading}
-                        style={{
-                          display: "flex", alignItems: "center", gap: 6,
-                          padding: "7px 16px", borderRadius: 8, border: "none",
-                          background: t.color, color: "#FFF", fontWeight: 700, fontSize: 13,
-                          cursor: actionLoading ? "not-allowed" : "pointer",
-                          opacity: actionLoading ? 0.6 : 1, marginLeft: "auto",
-                        }}
-                      >
-                        {actionLoading === `adv-${el.id}` ? (
-                          <Loader2 size={14} className="animate-spin" />
-                        ) : (
-                          <t.icon size={14} />
-                        )}
-                        Advance → {t.next}
-                      </button>
-                    )}
-                    {el.status === "ARCHIVED" && (
-                      <button
-                        onClick={onDelete}
-                        disabled={actionLoading === `delete-${el.id}`}
-                        style={{
-                          display: "flex", alignItems: "center", gap: 6,
-                          padding: "7px 16px", borderRadius: 8,
-                          border: `1px solid ${P.error}40`,
-                          background: P.errorBg, color: P.error, fontWeight: 700, fontSize: 13,
-                          cursor: "pointer", marginLeft: t ? 0 : "auto",
-                        }}
-                      >
-                        {actionLoading === `delete-${el.id}` ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-                        Delete Archived
-                      </button>
-                    )}
-                  </div>
-                );
-              })()}
-            </>
+              {/* Actions — locked (lifecycle advance) */}
+              {!isDraft && (
+                <div style={{
+                  display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
+                  padding: "12px 16px", borderRadius: T.radius.md,
+                  background: T.surfaceAlt, border: `1px solid ${T.borderLight}`,
+                }}>
+                  <Lock size={13} color={T.muted} />
+                  <span style={{ fontSize: 13, color: T.muted }}>
+                    Status: <strong style={{ color: T.text }}>{STATUS_MAP[el.status]?.label || el.status}</strong>
+                  </span>
+                  {transition && (
+                    <Btn small onClick={() => onAdvance(transition.next)}
+                      disabled={!!actionLoading} loading={actionLoading === `adv-${el.id}`}
+                      style={{ background: transition.color, color: "#fff", border: "none", marginLeft: "auto" }}>
+                      Advance → {transition.next}
+                    </Btn>
+                  )}
+                  {el.status === "ARCHIVED" && (
+                    <Btn small variant="ghost" onClick={onDelete}
+                      disabled={actionLoading === `delete-${el.id}`}
+                      loading={actionLoading === `delete-${el.id}`}
+                      style={{ color: T.error, marginLeft: transition ? 0 : "auto" }}>
+                      <Trash2 size={13} /> Delete archived
+                    </Btn>
+                  )}
+                </div>
+              )}
+            </div>
           )}
         </div>
       )}

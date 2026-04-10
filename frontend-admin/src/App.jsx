@@ -30,6 +30,9 @@ import ManageFederalElectionsPage from "./pages/ManageFederalElectionsPage";
 import ManageProvincialElectionsPage from "./pages/ManageProvincialElectionsPage";
 import ManageLocalElectionsPage from "./pages/ManageLocalElectionsPage";
 import ManageCandidatesPage from "./pages/ManageCandidatesPage";
+import ManageFederalCandidatesPage from "./pages/ManageFederalCandidatesPage";
+import ManageProvincialCandidatesPage from "./pages/ManageProvincialCandidatesPage";
+import ManageLocalCandidatesPage from "./pages/ManageLocalCandidatesPage";
 import VoterAssignmentsPage from "./pages/VoterAssignmentsPage";
 import ResultsPage from "./pages/ResultsPage";
 
@@ -154,13 +157,43 @@ export default function App() {
           </RequireAdminOrSuperAdmin>
         }
       />
-      {/* Manage Candidates — admin + super_admin */}
+      {/* Manage Candidates — hub + level pages */}
       <Route
         path="/admin/manage-candidates"
         element={
           <RequireAdminOrSuperAdmin>
             <AdminShell title="Manage Candidates" subtitle="Manage parties, candidate profiles, nominations, and PR lists">
               <ManageCandidatesPage />
+            </AdminShell>
+          </RequireAdminOrSuperAdmin>
+        }
+      />
+      <Route
+        path="/admin/manage-candidates/federal"
+        element={
+          <RequireAdminOrSuperAdmin>
+            <AdminShell title="Federal Candidates" subtitle="Candidate profiles, nominations, and PR lists for federal elections">
+              <ManageFederalCandidatesPage />
+            </AdminShell>
+          </RequireAdminOrSuperAdmin>
+        }
+      />
+      <Route
+        path="/admin/manage-candidates/provincial"
+        element={
+          <RequireAdminOrSuperAdmin>
+            <AdminShell title="Provincial Candidates" subtitle="Provincial Assembly candidate management">
+              <ManageProvincialCandidatesPage />
+            </AdminShell>
+          </RequireAdminOrSuperAdmin>
+        }
+      />
+      <Route
+        path="/admin/manage-candidates/local"
+        element={
+          <RequireAdminOrSuperAdmin>
+            <AdminShell title="Local Candidates" subtitle="Municipal and Rural Municipal candidate management">
+              <ManageLocalCandidatesPage />
             </AdminShell>
           </RequireAdminOrSuperAdmin>
         }

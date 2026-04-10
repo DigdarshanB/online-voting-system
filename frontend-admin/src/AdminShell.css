@@ -96,8 +96,15 @@
     padding: 0 16px !important;
   }
 
-  .admin-main-content {
-    padding: 24px 16px 48px !important;
+  /* Pages handle their own responsive padding via PageContainer or inline */
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .admin-sidebar,
+  .admin-backdrop,
+  .admin-sidebar-link {
+    transition: none !important;
   }
 }
 

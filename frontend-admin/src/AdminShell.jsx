@@ -83,6 +83,18 @@ export default function AdminShell({ children, title, subtitle }) {
       title: "Manage Candidates",
       subtitle: "Manage parties, candidate profiles, nominations, and PR lists",
     },
+    "/admin/manage-candidates/federal": {
+      title: "Federal Candidates",
+      subtitle: "Candidate profiles, nominations, and PR lists for federal elections",
+    },
+    "/admin/manage-candidates/provincial": {
+      title: "Provincial Candidates",
+      subtitle: "Provincial Assembly candidate management",
+    },
+    "/admin/manage-candidates/local": {
+      title: "Local Candidates",
+      subtitle: "Municipal and Rural Municipal candidate management",
+    },
     "/admin/voter-assignments": {
       title: "Voter Assignments",
       subtitle: "Assign voters to federal constituencies for election eligibility",

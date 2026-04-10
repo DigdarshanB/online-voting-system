@@ -1,141 +1,81 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { Building2, Vote, Users, Landmark, BarChart3, Shield, Map } from "lucide-react";
+import { T } from "../components/ui/tokens";
 import {
-  Building2,
-  ArrowLeft,
-  Landmark,
-  Users,
-  Vote,
-  BarChart3,
-} from "lucide-react";
+  PageContainer, BackLink, SummaryStrip, SummaryMetric,
+  PlannedBanner, SectionCard, SectionHeader, AdminKeyframes,
+} from "../components/ui/AdminUI";
 
-const P = {
-  navy: "#173B72",
-  accent: "#2F6FED",
-  surface: "#FFFFFF",
-  bg: "#F5F7FB",
-  border: "#DCE3EC",
-  text: "#0F172A",
-  muted: "#64748B",
-  purple: "#7C3AED",
-  purpleBg: "#F5F3FF",
-};
-
-const SECTIONS = [
-  {
-    icon: Vote,
-    label: "Election Setup",
-    description: "Create provincial assembly elections, generate constituency structures, and configure lifecycle",
-  },
-  {
-    icon: Users,
-    label: "Candidate Nominations",
-    description: "Manage party nominations, candidate lists, and PR allocations for provincial contests",
-  },
-  {
-    icon: Landmark,
-    label: "Voter Assignments",
-    description: "Assign voters to provincial assembly constituencies across all 7 provinces",
-  },
-  {
-    icon: BarChart3,
-    label: "Results & Counting",
-    description: "Provincial ballot counting, result tallying, and finalization workflows",
-  },
+const CAPABILITIES = [
+  { icon: Vote, label: "Election setup", description: "Create provincial assembly elections, generate constituency structures per province, and configure lifecycle" },
+  { icon: Users, label: "Candidate nominations", description: "Manage party nominations and candidate lists for provincial assembly constituencies" },
+  { icon: Landmark, label: "Voter assignments", description: "Assign voters to provincial assembly constituencies across all 7 provinces" },
+  { icon: BarChart3, label: "Results & counting", description: "Provincial ballot counting, result tallying, and finalization workflows" },
 ];
 
 export default function ManageProvincialElectionsPage() {
   const navigate = useNavigate();
 
   return (
-    <div style={{ padding: "32px 40px", maxWidth: 1200, margin: "0 auto" }}>
-      {/* Back link */}
-      <button
-        onClick={() => navigate("/admin/manage-elections")}
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 6,
-          marginBottom: 20,
-          padding: 0,
-          border: "none",
-          background: "transparent",
-          color: P.muted,
-          fontSize: 13,
-          fontWeight: 600,
-          cursor: "pointer",
-        }}
-      >
-        <ArrowLeft size={15} /> Back to Election Hub
-      </button>
+    <PageContainer>
+      <AdminKeyframes />
+      <BackLink onClick={() => navigate("/admin/manage-elections")}>Election Hub</BackLink>
 
-      {/* Header */}
-      <div style={{ marginBottom: 32 }}>
-        <h2
-          style={{
-            margin: 0,
-            fontSize: 22,
-            fontWeight: 800,
-            color: P.text,
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-          }}
-        >
-          <Building2 size={22} strokeWidth={2.2} color={P.purple} />
-          Provincial Elections
-        </h2>
-        <p style={{ margin: "4px 0 0", fontSize: 14, color: P.muted }}>
-          Provincial Assembly elections across all 7 provinces of Nepal
-        </p>
-      </div>
+      {/* Summary strip */}
+      <SummaryStrip>
+        <SummaryMetric label="Provinces" value="7" icon={Map} color={T.purple} />
+        <SummaryMetric label="Status" value="Planned" color={T.muted} />
+        <SummaryMetric label="Election type" value="Provincial Assembly" color={T.purple} description="Direct + PR seats" />
+      </SummaryStrip>
 
-      {/* Coming soon banner */}
-      <div
-        style={{
-          padding: "28px 32px",
-          borderRadius: 14,
-          background: P.purpleBg,
-          border: `1px solid ${P.purple}20`,
-          marginBottom: 32,
-          textAlign: "center",
-        }}
-      >
-        <Building2 size={40} color={P.purple} style={{ margin: "0 auto 16px", opacity: 0.6 }} />
-        <p style={{ fontSize: 18, fontWeight: 800, color: P.text, margin: "0 0 6px" }}>
-          Coming Next Phase
-        </p>
-        <p style={{ fontSize: 14, color: P.muted, maxWidth: 520, margin: "0 auto" }}>
-          Provincial election management is being built. The following areas will be available once this phase is complete.
-        </p>
-      </div>
+      {/* Planned banner */}
+      <PlannedBanner
+        icon={Building2}
+        color={T.purple}
+        bgColor={T.purpleBg}
+        title="Provincial election management — planned"
+        description="Provincial Assembly election administration is being developed. This module will support the complete election lifecycle for all 7 provinces, including constituency-level structure generation, nominations, and vote counting."
+      />
 
-      {/* Section preview cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
-        {SECTIONS.map((section) => {
-          const Icon = section.icon;
-          return (
-            <div
-              key={section.label}
-              style={{
-                padding: "22px 24px",
-                borderRadius: 12,
-                background: P.surface,
-                border: `1px solid ${P.border}`,
-                opacity: 0.7,
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                <Icon size={18} color={P.purple} strokeWidth={2} />
-                <span style={{ fontSize: 15, fontWeight: 700, color: P.text }}>{section.label}</span>
+      {/* Capability cards */}
+      <SectionCard>
+        <SectionHeader
+          icon={Shield}
+          iconColor={T.purple}
+          title="Planned capabilities"
+          subtitle="Areas that will be available when this phase is complete"
+        />
+        <div style={{
+          display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+          gap: 0,
+        }}>
+          {CAPABILITIES.map((cap, i) => {
+            const Icon = cap.icon;
+            return (
+              <div key={i} style={{
+                padding: "20px 24px",
+                borderRight: `1px solid ${T.borderLight}`,
+                borderBottom: `1px solid ${T.borderLight}`,
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                  <div style={{
+                    width: 32, height: 32, borderRadius: T.radius.md,
+                    background: T.purpleBg, display: "flex", alignItems: "center",
+                    justifyContent: "center", flexShrink: 0,
+                  }}>
+                    <Icon size={16} color={T.purple} strokeWidth={2} />
+                  </div>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: T.text }}>{cap.label}</span>
+                </div>
+                <p style={{ margin: 0, fontSize: 12, color: T.muted, lineHeight: 1.5, paddingLeft: 42 }}>
+                  {cap.description}
+                </p>
               </div>
-              <p style={{ margin: 0, fontSize: 13, color: P.muted, lineHeight: 1.5 }}>
-                {section.description}
-              </p>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+            );
+          })}
+        </div>
+      </SectionCard>
+    </PageContainer>
   );
 }
