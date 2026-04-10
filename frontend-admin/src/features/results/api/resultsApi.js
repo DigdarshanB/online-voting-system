@@ -44,3 +44,13 @@ export async function lockCountRun(countRunId) {
   const res = await apiClient.post(`/admin/results/count-runs/${countRunId}/lock`);
   return res.data;
 }
+
+export async function getPrElectedMembers(countRunId) {
+  const res = await apiClient.get(`/admin/results/count-runs/${countRunId}/pr-elected-members`);
+  return res.data;
+}
+
+export async function getProvincialSummary(countRunId) {
+  const res = await apiClient.get(`/admin/results/count-runs/${countRunId}/provincial-summary`);
+  return res.data;
+}

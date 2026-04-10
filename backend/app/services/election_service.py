@@ -3,7 +3,7 @@
 Business rules enforced here:
 - Structure generation dispatches by (government_level, election_subtype)
 - Federal HoR: 165 FPTP + 1 PR contest atomically
-- Provincial Assembly: FPTP + PR per province (placeholder)
+- Provincial Assembly: N FPTP + 1 PR per province (N = constituency count)
 - Local: Mayor + Deputy Mayor per local body
 - Generation blocked unless area_units master data is sufficient
 - Only DRAFT elections may have structure generated or be edited/deleted
@@ -27,6 +27,8 @@ from app.core.election_constants import (
     LOCAL_BODY_CATEGORIES,
     get_structure_def,
 )
+from app.core.geography_loader import EXPECTED_PROVINCE_CONSTITUENCY_COUNTS
+from app.core.provincial_constants import PROVINCIAL_PR_SEATS
 from app.models.area_unit import AreaUnit
 from app.models.constituency import Constituency
 from app.models.election import Election
@@ -62,6 +64,7 @@ def create_election(
     description: str | None,
     government_level: str,
     election_subtype: str,
+    province_code: str | None = None,
     start_time,
     end_time,
     created_by: int,
@@ -76,12 +79,25 @@ def create_election(
             f"Unsupported election type: {government_level}/{election_subtype}"
         )
 
+    # For provincial elections, resolve scope_area_id from province_code
+    scope_area_id = None
+    if government_level == "PROVINCIAL" and province_code:
+        province_au = _get_area_by_code(db, province_code)
+        if province_au is None or province_au.category != "PROVINCE":
+            raise ElectionServiceError(
+                f"Province code '{province_code}' not found in area_units. "
+                "Ensure geography data has been seeded."
+            )
+        scope_area_id = province_au.id
+
     election = Election(
         title=title,
         description=description,
         election_type=government_level,  # keep legacy column populated
         government_level=government_level,
         election_subtype=election_subtype,
+        province_code=province_code,
+        scope_area_id=scope_area_id,
         status="DRAFT",
         start_time=start_time,
         end_time=end_time,
@@ -331,44 +347,99 @@ def _generate_federal_hor(db: Session, election: Election) -> dict:
 
 
 def _generate_provincial_assembly(db: Session, election: Election) -> dict:
-    """Generate PR contests per province for a Provincial Assembly election.
+    """Generate FPTP + PR contests for a single-province Provincial Assembly election.
 
-    Provincial constituency FPTP data is not yet available in the canonical JSON.
-    For now, generates 1 PR contest per province (7 total).
-    FPTP generation will be added when provincial constituency data is available.
+    One FPTP contest per federal CONSTITUENCY area_unit in the province, plus one
+    province-wide PR contest whose seat_count equals the FPTP count (per Nepal
+    Constitution Article 176).
+
+    The election's scope_area_id is set to the province area_unit id so the election
+    is formally linked to its province geography.
     """
-    provinces = list(
+    if not election.province_code:
+        raise ElectionServiceError(
+            "Cannot generate structure: election.province_code is not set. "
+            "A provincial election must be scoped to a specific province (e.g. 'P1')."
+        )
+
+    # Fetch the province area_unit
+    province = _get_area_by_code(db, election.province_code)
+    if province is None or province.category != "PROVINCE":
+        raise ElectionServiceError(
+            f"Province code '{election.province_code}' not found in area_units. "
+            "Ensure area_unit data has been seeded."
+        )
+
+    if province.province_number is None:
+        raise ElectionServiceError(
+            f"Province '{election.province_code}' has no province_number set in area_units."
+        )
+
+    prov_num = province.province_number
+
+    # Wire scope_area_id so the election is formally linked to its province
+    if election.scope_area_id is None:
+        election.scope_area_id = province.id
+
+    # Look up expected PR seat count from provincial constants
+    pr_seat_count = PROVINCIAL_PR_SEATS.get(prov_num)
+    if pr_seat_count is None:
+        raise ElectionServiceError(
+            f"No PR seat count defined for province_number={prov_num}. "
+            "Check provincial_constants.py."
+        )
+
+    # Fetch all CONSTITUENCY area_units that belong to this province
+    constituencies = list(
         db.execute(
             select(AreaUnit)
-            .where(AreaUnit.category == "PROVINCE")
+            .where(
+                AreaUnit.category == "CONSTITUENCY",
+                AreaUnit.province_number == prov_num,
+            )
             .order_by(AreaUnit.code)
         ).scalars().all()
     )
 
-    if len(provinces) != 7:
+    expected_fptp = EXPECTED_PROVINCE_CONSTITUENCY_COUNTS.get(prov_num, 0)
+    if len(constituencies) != expected_fptp:
         raise ElectionServiceError(
-            f"Expected 7 provinces in area_units, found {len(provinces)}. "
-            "Seed area unit data first."
+            f"Province {prov_num}: expected {expected_fptp} constituencies in area_units "
+            f"but found {len(constituencies)}. Seed/fix geography data first."
         )
 
-    pr_created = 0
-    for prov in provinces:
-        contest = ElectionContest(
-            election_id=election.id,
-            contest_type=CONTEST_TYPE_PR,
-            title=f"Provincial PR – {prov.name}",
-            seat_count=0,  # seat counts vary by province; set later
-            area_id=prov.id,
+    if not constituencies:
+        raise ElectionServiceError(
+            f"No constituency area_units found for province '{election.province_code}' "
+            f"(province_number={prov_num}). Seed geography data first."
         )
-        db.add(contest)
-        pr_created += 1
+
+    # Create one FPTP contest per constituency in the province
+    for c in constituencies:
+        db.add(ElectionContest(
+            election_id=election.id,
+            contest_type=CONTEST_TYPE_FPTP,
+            title=f"Provincial FPTP – {c.name}",
+            seat_count=FPTP_SEATS_PER_CONSTITUENCY,
+            area_id=c.id,
+        ))
+
+    # Create one province-wide PR contest with correct seat count
+    db.add(ElectionContest(
+        election_id=election.id,
+        contest_type=CONTEST_TYPE_PR,
+        title=f"Provincial PR – {province.name}",
+        seat_count=pr_seat_count,
+        area_id=province.id,
+    ))
 
     db.commit()
 
     return {
-        "fptp_contests_created": 0,
-        "pr_contests_created": pr_created,
-        "total_contests": pr_created,
+        "fptp_contests_created": len(constituencies),
+        "pr_contests_created": 1,
+        "pr_seat_count": pr_seat_count,
+        "total_contests": len(constituencies) + 1,
     }
 
 
@@ -459,8 +530,7 @@ def check_structure_readiness(db: Session, election: Election) -> dict:
     if key == ("FEDERAL", "HOR_DIRECT"):
         issues.extend(_check_federal_hor_readiness(db, fptp, pr))
     elif key == ("PROVINCIAL", "PROVINCIAL_ASSEMBLY"):
-        if pr < 7:
-            issues.append(f"Expected at least 7 provincial PR contests, found {pr}")
+        issues.extend(_check_provincial_readiness(db, election, fptp, pr))
     elif key[0] == "LOCAL":
         from app.core.election_constants import CONTEST_TYPE_MAYOR, CONTEST_TYPE_DEPUTY_MAYOR
         mayor_count = contest_counts.get(CONTEST_TYPE_MAYOR, 0)
@@ -504,6 +574,97 @@ def _check_federal_hor_readiness(db: Session, fptp: int, pr: int) -> list[str]:
         )
     if pr != 1:
         issues.append(f"Expected 1 PR contest, found {pr}")
+    return issues
+
+
+def _check_provincial_readiness(db: Session, election: Election, fptp: int, pr: int) -> list[str]:
+    """Provincial Assembly specific readiness checks.
+
+    Hard requirements (any failure blocks CONFIGURED transition):
+    - province_code and scope_area_id must be set
+    - FPTP count must match EXPECTED_PROVINCE_CONSTITUENCY_COUNTS
+    - Exactly 1 PR contest
+    - PR seat_count must match PROVINCIAL_PR_SEATS (no zeros allowed)
+    - No duplicate area_id among FPTP contests
+    - All contest titles must be non-empty
+    """
+    issues = []
+
+    # ── Province identity checks ──────────────────────────────
+    if not election.province_code:
+        issues.append(
+            "Election is missing province_code — cannot determine expected contest counts"
+        )
+        return issues
+
+    if election.scope_area_id is None:
+        issues.append(
+            "Election is missing scope_area_id — province link was not wired at creation"
+        )
+
+    province = _get_area_by_code(db, election.province_code)
+    if province is None:
+        issues.append(f"Province '{election.province_code}' not found in area_units")
+        return issues
+
+    prov_num = province.province_number
+
+    # ── FPTP count check ──────────────────────────────────────
+    expected_fptp = EXPECTED_PROVINCE_CONSTITUENCY_COUNTS.get(prov_num, 0)
+    if fptp != expected_fptp:
+        issues.append(
+            f"Expected {expected_fptp} FPTP contests for province {prov_num}, found {fptp}"
+        )
+
+    # ── PR count & seat_count check ───────────────────────────
+    if pr != 1:
+        issues.append(f"Expected exactly 1 provincial PR contest, found {pr}")
+
+    if pr >= 1:
+        pr_contest = db.execute(
+            select(ElectionContest)
+            .where(
+                ElectionContest.election_id == election.id,
+                ElectionContest.contest_type == CONTEST_TYPE_PR,
+            )
+        ).scalar_one_or_none()
+
+        if pr_contest is not None:
+            expected_pr_seats = PROVINCIAL_PR_SEATS.get(prov_num, 0)
+            if pr_contest.seat_count != expected_pr_seats:
+                issues.append(
+                    f"Provincial PR seat_count is {pr_contest.seat_count}, "
+                    f"expected {expected_pr_seats} (per Constitution Article 176)"
+                )
+            if pr_contest.seat_count == 0:
+                issues.append("Provincial PR contest has seat_count=0 — cannot configure")
+
+    # ── Duplicate area check among FPTP contests ──────────────
+    fptp_area_ids = [
+        row[0]
+        for row in db.execute(
+            select(ElectionContest.area_id)
+            .where(
+                ElectionContest.election_id == election.id,
+                ElectionContest.contest_type == CONTEST_TYPE_FPTP,
+            )
+        ).all()
+    ]
+    if len(fptp_area_ids) != len(set(fptp_area_ids)):
+        issues.append("Duplicate area_id detected among FPTP contests")
+
+    # ── Title completeness check ──────────────────────────────
+    empty_title_count = db.execute(
+        select(func.count())
+        .select_from(ElectionContest)
+        .where(
+            ElectionContest.election_id == election.id,
+            (ElectionContest.title == None) | (ElectionContest.title == ""),  # noqa: E711
+        )
+    ).scalar_one()
+    if empty_title_count > 0:
+        issues.append(f"{empty_title_count} contest(s) have empty or missing titles")
+
     return issues
 
 
@@ -619,6 +780,14 @@ def get_master_data_status(db: Session) -> dict:
         area_counts.get(c, 0) for c in LOCAL_BODY_CATEGORIES
     )
 
+    # Province list for frontend province selector
+    province_rows = db.execute(
+        select(AreaUnit.code, AreaUnit.name)
+        .where(AreaUnit.category == "PROVINCE")
+        .order_by(AreaUnit.code)
+    ).all()
+    province_list = [{"code": row.code, "name": row.name} for row in province_rows]
+
     return {
         # Backward-compatible fields (used by frontend-admin)
         "districts": district_count,
@@ -633,4 +802,5 @@ def get_master_data_status(db: Session) -> dict:
         "federal_ready": constituency_count >= FEDERAL_HOR_FPTP_CONSTITUENCY_COUNT,
         "provincial_ready": area_counts.get("PROVINCE", 0) == 7,
         "local_ready": total_local > 0,
+        "province_list": province_list,
     }

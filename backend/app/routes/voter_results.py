@@ -20,13 +20,18 @@ from app.models.election import Election
 from app.models.user import User
 from app.schemas.result import (
     FptpResultRowRead,
+    PrElectedMemberRead,
     PrResultRowRead,
+    ProvincialResultSummary,
     ResultSummary,
 )
 from app.services.count_service import (
     CountServiceError,
+    enrich_pr_elected_members,
     get_fptp_results,
+    get_pr_elected_members,
     get_pr_results,
+    get_provincial_result_summary,
     get_result_summary,
     enrich_fptp_results,
     enrich_pr_results,
@@ -102,3 +107,37 @@ def voter_pr_results(
     run = _get_final_count_run(db, election_id)
     rows = get_pr_results(db, run.id)
     return enrich_pr_results(db, rows)
+
+
+@router.get(
+    "/{election_id}/pr-elected-members",
+    response_model=list[PrElectedMemberRead],
+)
+def voter_pr_elected_members(
+    election_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """PR elected-member roster (individual candidates who won PR seats)."""
+    _require_voter(current_user)
+    run = _get_final_count_run(db, election_id)
+    members = get_pr_elected_members(db, run.id)
+    return enrich_pr_elected_members(db, members)
+
+
+@router.get(
+    "/{election_id}/provincial-summary",
+    response_model=ProvincialResultSummary,
+)
+def voter_provincial_summary(
+    election_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Full provincial assembly result including composition breakdown."""
+    _require_voter(current_user)
+    run = _get_final_count_run(db, election_id)
+    try:
+        return get_provincial_result_summary(db, run.id)
+    except CountServiceError as e:
+        raise HTTPException(status_code=404, detail=str(e))

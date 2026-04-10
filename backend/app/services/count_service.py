@@ -36,9 +36,9 @@ from app.core.config import settings
 from app.core.federal_constants import (
     CONTEST_TYPE_FPTP,
     CONTEST_TYPE_PR,
-    FEDERAL_HOR_PR_SEATS,
     PR_THRESHOLD_FRACTION,
 )
+from app.core.provincial_constants import PROVINCIAL_PR_THRESHOLD_FRACTION
 from app.models.ballot import Ballot
 from app.models.ballot_entry import BallotEntry
 from app.models.candidate_profile import CandidateProfile
@@ -48,6 +48,9 @@ from app.models.election_contest import ElectionContest
 from app.models.fptp_candidate_nomination import FptpCandidateNomination
 from app.models.fptp_result_row import FptpResultRow
 from app.models.party import Party
+from app.models.pr_elected_member import PrElectedMember
+from app.models.pr_party_list_entry import PrPartyListEntry
+from app.models.pr_party_submission import PrPartySubmission
 from app.models.pr_result_row import PrResultRow
 
 
@@ -153,7 +156,11 @@ def execute_count(db: Session, count_run_id: int) -> CountRun:
         fptp_adj = _tally_fptp(db, count_run, fptp_votes)
 
         # ── 4. PR tally + Sainte-Laguë allocation ──────────────
-        pr_adj = _tally_pr(db, count_run, pr_votes)
+        election = db.get(Election, election_id)
+        pr_adj = _tally_pr(db, count_run, pr_votes, election)
+
+        # ── 5. Fill PR elected members from party lists ─────────
+        _fill_pr_elected_members(db, count_run, election)
 
         count_run.total_fptp_adjudication = fptp_adj
         count_run.total_pr_adjudication = pr_adj
@@ -175,6 +182,8 @@ def finalize_count(db: Session, count_run_id: int) -> CountRun:
     """Attempt to finalize a completed count run.
 
     Blocks if unresolved FPTP ties or PR boundary ties exist.
+    For provincial elections, validates province-scoped seat completeness
+    and elected-member counts.
     On success, marks the run as final and the election as FINALIZED.
     """
     count_run = db.get(CountRun, count_run_id)
@@ -186,6 +195,8 @@ def finalize_count(db: Session, count_run_id: int) -> CountRun:
         )
     if count_run.is_final:
         raise CountServiceError("Count run is already finalized")
+    if count_run.is_locked:
+        raise CountServiceError("Count run is locked — cannot finalize a locked run")
 
     # ── Check for unresolved adjudication ───────────────────────
     if count_run.total_fptp_adjudication > 0:
@@ -199,16 +210,101 @@ def finalize_count(db: Session, count_run_id: int) -> CountRun:
             "quotient tie(s) require adjudication"
         )
 
+    election = db.get(Election, count_run.election_id)
+
+    # ── Province-scoped completeness validation ─────────────────
+    if election and election.government_level == "PROVINCIAL":
+        _validate_provincial_completeness(db, count_run, election)
+
+    # ── Result completeness: every FPTP contest must have a winner ─
+    fptp_rows = get_fptp_results(db, count_run_id)
+    fptp_contests = db.execute(
+        select(ElectionContest).where(
+            ElectionContest.election_id == count_run.election_id,
+            ElectionContest.contest_type == CONTEST_TYPE_FPTP,
+        )
+    ).scalars().all()
+    winners_by_contest = {r.contest_id for r in fptp_rows if r.is_winner}
+    contest_ids = {c.id for c in fptp_contests}
+    missing_winners = contest_ids - winners_by_contest
+    if missing_winners:
+        raise CountServiceError(
+            f"Cannot finalize: {len(missing_winners)} FPTP contest(s) have no declared winner"
+        )
+
+    # ── PR elected members must be populated ────────────────────
+    pr_rows = get_pr_results(db, count_run_id)
+    total_pr_seats_allocated = sum(r.allocated_seats for r in pr_rows)
+    pr_members = get_pr_elected_members(db, count_run_id)
+    if total_pr_seats_allocated > 0 and len(pr_members) < total_pr_seats_allocated:
+        raise CountServiceError(
+            f"Cannot finalize: {total_pr_seats_allocated} PR seats allocated but only "
+            f"{len(pr_members)} elected members recorded. PR seat-filling may have failed."
+        )
+
     count_run.is_final = True
     count_run.is_locked = True
 
     # Transition election
-    election = db.get(Election, count_run.election_id)
     if election and election.status == "COUNTING":
         election.status = "FINALIZED"
         election.result_publish_at = datetime.now(timezone.utc)
     db.flush()
     return count_run
+
+
+def _validate_provincial_completeness(
+    db: Session, count_run: CountRun, election: Election
+) -> None:
+    """Validate province-scoped seat totals for a provincial election.
+
+    Checks:
+    1. PR seats allocated match the province's constitutional PR seat count
+    2. FPTP contests match expected constituency count for the province
+    """
+    from app.core.provincial_constants import PROVINCIAL_PR_SEATS
+
+    province_code = election.province_code  # e.g. "P1"
+    if not province_code or not province_code.startswith("P"):
+        raise CountServiceError(
+            f"Cannot validate provincial completeness: invalid province_code '{province_code}'"
+        )
+    province_number = int(province_code[1:])
+
+    expected_pr_seats = PROVINCIAL_PR_SEATS.get(province_number)
+    if expected_pr_seats is None:
+        raise CountServiceError(
+            f"Cannot validate: unknown province number {province_number}"
+        )
+
+    # Check PR seat count from contest configuration
+    pr_contests = db.execute(
+        select(ElectionContest).where(
+            ElectionContest.election_id == election.id,
+            ElectionContest.contest_type == CONTEST_TYPE_PR,
+        )
+    ).scalars().all()
+    configured_pr_seats = sum(c.seat_count for c in pr_contests)
+    if configured_pr_seats != expected_pr_seats:
+        raise CountServiceError(
+            f"Province {province_number} PR seat mismatch: "
+            f"configured={configured_pr_seats}, constitutional={expected_pr_seats}"
+        )
+
+    # Check FPTP contest count
+    from app.core.geography_loader import EXPECTED_PROVINCE_CONSTITUENCY_COUNTS
+    expected_fptp = EXPECTED_PROVINCE_CONSTITUENCY_COUNTS.get(province_number, 0)
+    fptp_contests = db.execute(
+        select(ElectionContest).where(
+            ElectionContest.election_id == election.id,
+            ElectionContest.contest_type == CONTEST_TYPE_FPTP,
+        )
+    ).scalars().all()
+    if len(fptp_contests) != expected_fptp:
+        raise CountServiceError(
+            f"Province {province_number} FPTP contest mismatch: "
+            f"found={len(fptp_contests)}, expected={expected_fptp}"
+        )
 
 
 def lock_count_run(db: Session, count_run_id: int) -> CountRun:
@@ -332,7 +428,7 @@ def get_result_summary(db: Session, count_run_id: int) -> dict:
             ElectionContest.contest_type == CONTEST_TYPE_PR,
         )
     ).scalars().all()
-    total_pr_seats = sum(c.seat_count for c in pr_contests) if pr_contests else FEDERAL_HOR_PR_SEATS
+    total_pr_seats = sum(c.seat_count for c in pr_contests) if pr_contests else 0
 
     return {
         "count_run_id": count_run.id,
@@ -463,16 +559,26 @@ def _tally_pr(
     db: Session,
     count_run: CountRun,
     pr_votes: list[int],
+    election: Election | None = None,
 ) -> int:
     """Tally PR votes, apply threshold, allocate seats via Sainte-Laguë.
 
-    Reads ``seat_count`` from the election's PR contest(s) instead of
-    hardcoding a federal constant, so this works for any election level.
+    Reads ``seat_count`` from the election's PR contest(s).
+    Resolves the threshold fraction from the election's government level:
+      - FEDERAL  → PR_THRESHOLD_FRACTION (3%)
+      - PROVINCIAL → PROVINCIAL_PR_THRESHOLD_FRACTION (3%)
+    This keeps each level's threshold independently configurable.
 
     Returns 1 if a boundary quotient tie requires adjudication, 0 otherwise.
     Uses ``fractions.Fraction`` for exact rational arithmetic — no floats.
     """
     election_id = count_run.election_id
+
+    # ── Resolve threshold from government level ──────────────────
+    if election and election.government_level == "PROVINCIAL":
+        threshold = Fraction(PROVINCIAL_PR_THRESHOLD_FRACTION)
+    else:
+        threshold = Fraction(PR_THRESHOLD_FRACTION)
 
     # ── Determine seat count from the election's PR contest(s) ───
     pr_contests = db.execute(
@@ -482,7 +588,10 @@ def _tally_pr(
         )
     ).scalars().all()
 
-    seats_to_allocate = sum(c.seat_count for c in pr_contests) if pr_contests else FEDERAL_HOR_PR_SEATS
+    if not pr_contests:
+        raise CountServiceError("No PR contest found for this election")
+
+    seats_to_allocate = sum(c.seat_count for c in pr_contests)
 
     # Count votes per party
     vote_count: dict[int, int] = defaultdict(int)
@@ -501,7 +610,6 @@ def _tally_pr(
         parties = {r.id: r.name for r in rows}
 
     # ── Threshold check (exact via Fraction) ─────────────────────
-    threshold = Fraction(PR_THRESHOLD_FRACTION)
     qualifying: dict[int, int] = {}   # party_id → votes
     non_qualifying: dict[int, int] = {}
 
@@ -585,3 +693,212 @@ def _tally_pr(
 
     db.flush()
     return adjudication_required
+
+
+# ── Internal: PR elected-member filling ─────────────────────────
+
+
+def _fill_pr_elected_members(
+    db: Session,
+    count_run: CountRun,
+    election: Election | None = None,
+) -> int:
+    """Fill PR elected-member rows from party lists after seat allocation.
+
+    For each party with allocated_seats > 0, pick the top N candidates
+    from the party's approved PR list (ordered by list_position ASC).
+
+    Returns total elected members inserted.
+    """
+    if election is None:
+        election = db.get(Election, count_run.election_id)
+
+    election_id = count_run.election_id
+
+    # Get PR result rows with seats > 0
+    pr_rows = db.execute(
+        select(PrResultRow).where(
+            PrResultRow.count_run_id == count_run.id,
+            PrResultRow.allocated_seats > 0,
+        )
+    ).scalars().all()
+
+    if not pr_rows:
+        return 0
+
+    # Get the PR contest(s) for this election
+    pr_contests = db.execute(
+        select(ElectionContest).where(
+            ElectionContest.election_id == election_id,
+            ElectionContest.contest_type == CONTEST_TYPE_PR,
+        )
+    ).scalars().all()
+
+    if not pr_contests:
+        return 0
+
+    # For federal: 1 nationwide PR contest.
+    # For provincial: 1 province-wide PR contest.
+    # We assign all elected members to the first (and typically only) PR contest.
+    pr_contest = pr_contests[0]
+
+    total_inserted = 0
+    global_seat_number = 0
+
+    for pr_row in pr_rows:
+        party_id = pr_row.party_id
+        seats_won = pr_row.allocated_seats
+
+        # Find the party's APPROVED PR submission for this election
+        submission = db.execute(
+            select(PrPartySubmission).where(
+                PrPartySubmission.election_id == election_id,
+                PrPartySubmission.party_id == party_id,
+                PrPartySubmission.status == "APPROVED",
+            )
+        ).scalar_one_or_none()
+
+        if not submission:
+            continue  # No approved list — seats cannot be filled (edge case)
+
+        # Get list entries ordered by position, limited to seats_won
+        entries = db.execute(
+            select(
+                PrPartyListEntry.id.label("entry_id"),
+                PrPartyListEntry.candidate_id,
+                PrPartyListEntry.list_position,
+                CandidateProfile.full_name,
+            )
+            .join(
+                CandidateProfile,
+                PrPartyListEntry.candidate_id == CandidateProfile.id,
+            )
+            .where(PrPartyListEntry.submission_id == submission.id)
+            .order_by(PrPartyListEntry.list_position.asc())
+            .limit(seats_won)
+        ).all()
+
+        for entry in entries:
+            global_seat_number += 1
+            member = PrElectedMember(
+                count_run_id=count_run.id,
+                contest_id=pr_contest.id,
+                party_id=party_id,
+                candidate_id=entry.candidate_id,
+                list_entry_id=entry.entry_id,
+                seat_number=global_seat_number,
+                candidate_name=entry.full_name,
+                party_name=pr_row.party_name,
+            )
+            db.add(member)
+            total_inserted += 1
+
+    db.flush()
+    return total_inserted
+
+
+# ── PR elected member queries ───────────────────────────────────
+
+
+def get_pr_elected_members(db: Session, count_run_id: int) -> list[PrElectedMember]:
+    """Return all PR elected members for a count run, ordered by seat number."""
+    return (
+        db.execute(
+            select(PrElectedMember)
+            .where(PrElectedMember.count_run_id == count_run_id)
+            .order_by(PrElectedMember.seat_number)
+        )
+        .scalars()
+        .all()
+    )
+
+
+def enrich_pr_elected_members(db: Session, members: list[PrElectedMember]) -> list[dict]:
+    """Hydrate candidate photo and party symbol onto PR elected-member rows."""
+    if not members:
+        return []
+    candidate_ids = list({m.candidate_id for m in members})
+    party_ids = list({m.party_id for m in members})
+
+    photo_rows = db.execute(
+        select(CandidateProfile.id, CandidateProfile.photo_path)
+        .where(CandidateProfile.id.in_(candidate_ids))
+    ).all()
+    photo_lookup = {r.id: r.photo_path for r in photo_rows}
+
+    sym_rows = db.execute(
+        select(Party.id, Party.symbol_path).where(Party.id.in_(party_ids))
+    ).all()
+    sym_lookup = {r.id: r.symbol_path for r in sym_rows}
+
+    enriched = []
+    for m in members:
+        d = {c.name: getattr(m, c.name) for c in m.__table__.columns}
+        d["candidate_photo_path"] = photo_lookup.get(m.candidate_id)
+        d["party_symbol_path"] = sym_lookup.get(m.party_id)
+        enriched.append(d)
+    return enriched
+
+
+# ── Provincial result summary ───────────────────────────────────
+
+
+def get_provincial_result_summary(db: Session, count_run_id: int) -> dict:
+    """Return a detailed provincial assembly result summary.
+
+    Includes FPTP winners, PR allocations, elected PR members, and
+    an overall assembly composition breakdown.
+    """
+    count_run = db.get(CountRun, count_run_id)
+    if not count_run:
+        raise CountServiceError("Count run not found")
+
+    election = db.get(Election, count_run.election_id)
+    if not election:
+        raise CountServiceError("Election not found")
+
+    base_summary = get_result_summary(db, count_run_id)
+
+    # FPTP winners
+    fptp_rows = get_fptp_results(db, count_run_id)
+    fptp_winners = [r for r in fptp_rows if r.is_winner]
+
+    # PR elected members
+    pr_members = get_pr_elected_members(db, count_run_id)
+
+    # Assembly composition — party → {fptp_seats, pr_seats}
+    composition: dict[str, dict] = defaultdict(
+        lambda: {"party_name": "", "fptp_seats": 0, "pr_seats": 0, "total_seats": 0}
+    )
+    for w in fptp_winners:
+        key = w.party_name or "Independent"
+        composition[key]["party_name"] = key
+        composition[key]["fptp_seats"] += 1
+        composition[key]["total_seats"] += 1
+
+    for m in pr_members:
+        key = m.party_name or "Independent"
+        composition[key]["party_name"] = key
+        composition[key]["pr_seats"] += 1
+        composition[key]["total_seats"] += 1
+
+    sorted_composition = sorted(
+        composition.values(), key=lambda x: x["total_seats"], reverse=True
+    )
+
+    return {
+        **base_summary,
+        "government_level": election.government_level,
+        "province_code": election.province_code,
+        "election_title": election.title,
+        "pr_elected_members_count": len(pr_members),
+        "assembly_composition": sorted_composition,
+        "assembly_total_seats": (
+            base_summary["fptp"]["total_contests"]
+            + base_summary["pr"]["total_seats"]
+        ),
+        "assembly_seats_filled": (
+            base_summary["fptp"]["winners_declared"]
+            + len(pr_members)
+        ),
+    }

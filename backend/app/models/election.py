@@ -85,3 +85,21 @@ class Election(Base):
         DateTime, nullable=False, server_default=func.now(), onupdate=func.now(), index=True,
     )
     result_visible_from: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    # Provincial elections are scoped to a single province.
+    # Stores the area_units.code value (e.g. "P1") for PROVINCIAL elections; null for others.
+    province_code: Mapped[str | None] = mapped_column(
+        String(10), nullable=True, index=True,
+    )
+
+    # ── Province-scoping FK (new) ──────────────────────────────
+    # For PROVINCIAL elections, points to the area_units row for the
+    # province (category='PROVINCE', e.g. code='P1').
+    # NULL for FEDERAL and LOCAL elections.
+    # province_code above is kept for backward compat; this FK adds
+    # referential integrity through the area_units table.
+    scope_area_id: Mapped[int | None] = mapped_column(
+        ForeignKey("area_units.id", name="fk_elections_scope_area"),
+        nullable=True,
+        index=True,
+    )

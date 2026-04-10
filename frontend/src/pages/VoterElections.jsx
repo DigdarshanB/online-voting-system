@@ -138,6 +138,7 @@ export default function VoterElections() {
               style={{
                 background: "#fff",
                 border: "1px solid #e2e8f0",
+                borderLeft: e.government_level === "PROVINCIAL" ? "4px solid #7c3aed" : "1px solid #e2e8f0",
                 borderRadius: 12,
                 padding: 24,
                 boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
@@ -189,6 +190,22 @@ export default function VoterElections() {
                 >
                   {sc.label}
                 </span>
+                {e.government_level === "PROVINCIAL" && (
+                  <span
+                    style={{
+                      padding: "4px 10px",
+                      borderRadius: 9999,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      background: "#f5f3ff",
+                      color: "#7c3aed",
+                      border: "1px solid #e9d5ff",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Provincial Assembly
+                  </span>
+                )}
               </div>
 
               {/* meta row */}

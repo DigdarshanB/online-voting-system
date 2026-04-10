@@ -18,11 +18,16 @@ VALID_LEVEL_SUBTYPE_PAIRS = {
 
 # ── Election CRUD ───────────────────────────────────────────────
 
+_VALID_PROVINCE_CODES = {"P1", "P2", "P3", "P4", "P5", "P6", "P7"}
+
+
 class ElectionCreate(BaseModel):
     title: str = Field(..., min_length=3, max_length=255)
     description: str | None = None
     government_level: str = Field(..., pattern="^(FEDERAL|PROVINCIAL|LOCAL)$")
     election_subtype: str = Field(..., pattern="^(HOR_DIRECT|PROVINCIAL_ASSEMBLY|LOCAL_MUNICIPAL|LOCAL_RURAL)$")
+    # province_code is required for PROVINCIAL elections, must be null for all others.
+    province_code: str | None = Field(None, pattern="^P[1-7]$")
     start_time: datetime
     end_time: datetime
 
@@ -34,6 +39,24 @@ class ElectionCreate(BaseModel):
                 f"Invalid combination: {self.government_level}/{self.election_subtype}. "
                 f"Valid: {', '.join(f'{l}/{s}' for l, s in sorted(VALID_LEVEL_SUBTYPE_PAIRS))}"
             )
+        return self
+
+    @model_validator(mode="after")
+    def validate_province_code(self) -> "ElectionCreate":
+        if self.government_level == "PROVINCIAL":
+            if not self.province_code:
+                raise ValueError(
+                    "province_code is required for PROVINCIAL elections (e.g. 'P1' through 'P7')"
+                )
+            if self.province_code not in _VALID_PROVINCE_CODES:
+                raise ValueError(
+                    f"province_code must be one of: {', '.join(sorted(_VALID_PROVINCE_CODES))}"
+                )
+        else:
+            if self.province_code is not None:
+                raise ValueError(
+                    "province_code must only be set for PROVINCIAL elections"
+                )
         return self
 
 
@@ -52,6 +75,8 @@ class ElectionRead(BaseModel):
     status: str
     government_level: str | None = None
     election_subtype: str | None = None
+    province_code: str | None = None
+    scope_area_id: int | None = None
     start_time: datetime
     end_time: datetime
     nomination_open_at: datetime | None = None
@@ -76,6 +101,8 @@ class ElectionSummary(BaseModel):
     status: str
     government_level: str | None = None
     election_subtype: str | None = None
+    province_code: str | None = None
+    scope_area_id: int | None = None
     start_time: datetime
     end_time: datetime
     contest_count: int = 0

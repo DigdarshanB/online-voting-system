@@ -346,6 +346,7 @@ export default function ManageElectionsPage() {
           onSubmit={handleCreate}
           onCancel={() => setShowCreate(false)}
           submitting={actionLoading === "create"}
+          masterData={masterData}
         />
       )}
 
@@ -406,11 +407,12 @@ export default function ManageElectionsPage() {
 /*  CREATE FORM                                                 */
 /* ══════════════════════════════════════════════════════════════ */
 
-function CreateElectionForm({ onSubmit, onCancel, submitting }) {
+function CreateElectionForm({ onSubmit, onCancel, submitting, masterData }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [governmentLevel, setGovernmentLevel] = useState("FEDERAL");
   const [electionSubtype, setElectionSubtype] = useState("HOR_DIRECT");
+  const [provinceCode, setProvinceCode] = useState("P1");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
 
@@ -419,6 +421,11 @@ function CreateElectionForm({ onSubmit, onCancel, submitting }) {
     // Auto-select first valid subtype for the new level
     const subtypes = LEVEL_SUBTYPES[level] || [];
     setElectionSubtype(subtypes[0]?.value || "");
+    // Reset province to first available when switching to PROVINCIAL
+    if (level === "PROVINCIAL") {
+      const provinces = masterData?.province_list || [];
+      setProvinceCode(provinces[0]?.code || "P1");
+    }
   };
 
   const handleSubmit = (e) => {
@@ -428,6 +435,7 @@ function CreateElectionForm({ onSubmit, onCancel, submitting }) {
       description: description.trim() || null,
       government_level: governmentLevel,
       election_subtype: electionSubtype,
+      province_code: governmentLevel === "PROVINCIAL" ? provinceCode : null,
       start_time: new Date(startTime).toISOString(),
       end_time: new Date(endTime).toISOString(),
     });
@@ -509,6 +517,30 @@ function CreateElectionForm({ onSubmit, onCancel, submitting }) {
             ))}
           </select>
         </div>
+
+        {governmentLevel === "PROVINCIAL" && (
+          <div>
+            <label style={labelStyle}>Province</label>
+            <select
+              style={inputStyle}
+              value={provinceCode}
+              onChange={(e) => setProvinceCode(e.target.value)}
+              required
+            >
+              {(masterData?.province_list || [
+                { code: "P1", name: "Koshi Province" },
+                { code: "P2", name: "Madhesh Province" },
+                { code: "P3", name: "Bagmati Province" },
+                { code: "P4", name: "Gandaki Province" },
+                { code: "P5", name: "Lumbini Province" },
+                { code: "P6", name: "Karnali Province" },
+                { code: "P7", name: "Sudurpashchim Province" },
+              ]).map((p) => (
+                <option key={p.code} value={p.code}>{p.name} ({p.code})</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div>
           <label style={labelStyle}>Start Time</label>
@@ -655,6 +687,11 @@ function ElectionCard({
           </div>
           <div style={{ fontSize: 13, color: P.muted, marginTop: 4, display: "flex", gap: 16, flexWrap: "wrap" }}>
             <span>{SUBTYPE_LABELS[el.election_subtype] || el.election_subtype}</span>
+            {el.province_code && (
+              <span style={{ fontWeight: 600, color: P.purple }}>
+                {el.province_code}
+              </span>
+            )}
             <span>{formatDateTime(el.start_time)} — {formatDateTime(el.end_time)}</span>
           </div>
         </div>

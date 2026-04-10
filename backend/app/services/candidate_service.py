@@ -3,6 +3,10 @@
 Business rules:
 - Candidates may be nominated for FPTP only in NOMINATIONS_OPEN elections
 - One nomination per candidate per contest (enforced by unique constraint)
+- A candidate may only contest one FPTP constituency per election
+- A candidate cannot be in both FPTP and PR for the same election
+- A party can have at most one pending/approved candidate per FPTP contest
+- For provincial elections: contest area must belong to the election's province
 - Only PENDING / WITHDRAWN nominations may be deleted
 - Approve/reject transitions require admin review
 """
@@ -12,11 +16,14 @@ from datetime import datetime, timezone
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.models.area_unit import AreaUnit
 from app.models.candidate_profile import CandidateProfile
 from app.models.election import Election
 from app.models.election_contest import ElectionContest
 from app.models.fptp_candidate_nomination import FptpCandidateNomination
 from app.models.party import Party
+from app.models.pr_party_list_entry import PrPartyListEntry
+from app.models.pr_party_submission import PrPartySubmission
 from app.repositories import candidate_repository
 
 
@@ -176,6 +183,43 @@ def create_fptp_nomination(
         if not party or not party.is_active:
             raise CandidateServiceError("Party not found or inactive")
 
+    # ── Provincial contest-area coherence ──────────────────────
+    # For provincial elections, verify the contest's area_id resolves
+    # to a constituency in the election's province.
+    if election.government_level == "PROVINCIAL" and contest.area_id is not None:
+        area = db.get(AreaUnit, contest.area_id)
+        if area is None:
+            raise CandidateServiceError(
+                "Contest's area_id does not resolve to a valid area_unit"
+            )
+        # Resolve the province_number from the election
+        election_prov_num = None
+        if election.scope_area_id:
+            prov_area = db.get(AreaUnit, election.scope_area_id)
+            if prov_area:
+                election_prov_num = prov_area.province_number
+        if election_prov_num is not None and area.province_number != election_prov_num:
+            raise CandidateServiceError(
+                f"Contest area '{area.name}' belongs to province {area.province_number}, "
+                f"but this election is scoped to province {election_prov_num}"
+            )
+
+    # ── FPTP → PR mutual exclusion ─────────────────────────────
+    # A candidate cannot be in both FPTP and PR for the same election.
+    pr_entry = db.execute(
+        select(PrPartyListEntry)
+        .join(PrPartySubmission, PrPartyListEntry.submission_id == PrPartySubmission.id)
+        .where(
+            PrPartySubmission.election_id == election.id,
+            PrPartyListEntry.candidate_id == candidate_id,
+        )
+    ).scalar_one_or_none()
+    if pr_entry:
+        raise CandidateServiceError(
+            "This candidate is already on a PR list for this election. "
+            "A candidate cannot be in both FPTP and PR for the same election."
+        )
+
     # check duplicate in same contest (also enforced by unique constraint)
     existing = db.execute(
         select(FptpCandidateNomination).where(
@@ -187,6 +231,25 @@ def create_fptp_nomination(
         raise CandidateServiceError(
             "This candidate is already nominated for this contest"
         )
+
+    # ── One party per contest ──────────────────────────────────
+    # A party can have at most one PENDING or APPROVED candidate in a
+    # given contest. This prevents two candidates from the same party
+    # competing in the same constituency.
+    if party_id is not None:
+        same_party_nom = db.execute(
+            select(FptpCandidateNomination).where(
+                FptpCandidateNomination.contest_id == contest_id,
+                FptpCandidateNomination.party_id == party_id,
+                FptpCandidateNomination.status.in_(("PENDING", "APPROVED")),
+            )
+        ).scalar_one_or_none()
+        if same_party_nom:
+            raise CandidateServiceError(
+                f"This party already has a pending/approved candidate in this contest "
+                f"(nomination #{same_party_nom.id}). "
+                f"Withdraw or reject that nomination first."
+            )
 
     # ── Cross-constituency uniqueness ──────────────────────────
     # A candidate may only be nominated to ONE single-seat contest

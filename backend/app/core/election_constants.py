@@ -94,20 +94,20 @@ FEDERAL_HOR_DIRECT = ElectionStructureDef(
 
 # ── Provincial Assembly ────────────────────────────────────────
 # Nepal's Provincial Assembly elections use FPTP + PR per province.
-# Provincial constituency data is not yet in the JSON, so this
-# uses a placeholder structure that will be filled when that data
-# is available. For now, the province itself is the area target.
+# N FPTP contests per province (one per federal constituency in that province)
+# + 1 province-wide PR contest (seat_count = N, per Article 176).
+# The actual generation and seat_count assignment is handled by
+# election_service._generate_provincial_assembly() using provincial_constants.
+# This ContestDef is kept for registry/documentation purposes.
 
 PROVINCIAL_ASSEMBLY = ElectionStructureDef(
     government_level="PROVINCIAL",
     election_subtype="PROVINCIAL_ASSEMBLY",
-    description="Provincial Assembly — FPTP per province constituency + PR per province",
+    description="Provincial Assembly — N FPTP per province constituency + 1 PR per province (N seats)",
     contest_defs=[
-        # Placeholder: will be FPTP per provincial constituency when data exists
-        # For now, one FPTP contest per province
         ContestDef(
             CONTEST_TYPE_FPTP,
-            area_category="PROVINCE",
+            area_category="CONSTITUENCY",
             seat_count=FPTP_SEATS_PER_CONSTITUENCY,
             per_area=True,
             title_template="Provincial FPTP – {area_name}",
@@ -115,8 +115,8 @@ PROVINCIAL_ASSEMBLY = ElectionStructureDef(
         ContestDef(
             CONTEST_TYPE_PR,
             area_category="PROVINCE",
-            seat_count=0,  # varies by province; set dynamically
-            per_area=True,
+            seat_count=0,  # set dynamically from provincial_constants per province
+            per_area=False,
             title_template="Provincial PR – {area_name}",
         ),
     ],

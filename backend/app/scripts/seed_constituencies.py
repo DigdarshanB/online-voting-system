@@ -1,50 +1,21 @@
 """Seed Nepal's 77 districts and 165 federal HoR constituencies.
 
-Source of truth: nepal_geography.json (repo root)
+Geography data is loaded via app.core.geography_loader, which reads from
+``nepal_geography.json`` (clean extraction) with fallback to the RTF source
+``Constituencies, Provinces and Municipalities.json`` — both in the repo root.
+
 Run:  python -m app.scripts.seed_constituencies
 """
 
-import json
-import os
-import re
-
 from sqlalchemy import select, func
 
+from app.core.geography_loader import (
+    load_all,
+    PROVINCE_CODE_TO_NUMBER as _PROVINCE_CODE_TO_NUMBER,
+)
 from app.db.session import SessionLocal
 from app.models.district import District
 from app.models.constituency import Constituency
-
-# Province code → number mapping
-_PROVINCE_CODE_TO_NUMBER = {
-    "P1": 1, "P2": 2, "P3": 3, "P4": 4,
-    "P5": 5, "P6": 6, "P7": 7,
-}
-
-
-def _load_geography_json() -> list[dict]:
-    """Load the canonical geography data from nepal_geography.json or the RTF-embedded JSON."""
-    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-
-    # Try clean JSON first
-    clean_path = os.path.join(repo_root, "nepal_geography.json")
-    if os.path.exists(clean_path):
-        with open(clean_path, "r", encoding="utf-8") as f:
-            return json.load(f)
-
-    # Fall back to RTF-embedded JSON
-    rtf_path = os.path.join(repo_root, "Constituencies, Provinces and Municipalities.json")
-    if not os.path.exists(rtf_path):
-        raise FileNotFoundError(
-            f"Cannot find geography source at {clean_path} or {rtf_path}"
-        )
-    with open(rtf_path, "r", encoding="utf-8", errors="ignore") as f:
-        raw = f.read()
-    text = raw[raw.find("["):]
-    text = text[: text.rfind("]") + 1]
-    text = text.replace("\\{", "{").replace("\\}", "}")
-    text = re.sub(r"\\[a-z]+\d*\s?", "", text)
-    text = text.replace("\\", "")
-    return json.loads(text)
 
 
 def seed(force: bool = False):
@@ -69,7 +40,7 @@ def seed(force: bool = False):
             db.execute(District.__table__.delete())
             db.flush()
 
-        data = _load_geography_json()
+        data = load_all()
 
         # Categorize entries
         by_category = {}

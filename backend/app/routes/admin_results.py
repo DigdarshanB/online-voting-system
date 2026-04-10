@@ -21,22 +21,27 @@ from app.models.user import User
 from app.schemas.result import (
     CountRunRead,
     FptpResultRowRead,
+    PrElectedMemberRead,
     PrResultRowRead,
+    ProvincialResultSummary,
     ResultSummary,
 )
 from app.services.count_service import (
     CountServiceError,
+    enrich_pr_elected_members,
+    enrich_pr_results,
     execute_count,
+    enrich_fptp_results,
     finalize_count,
     get_count_run,
     get_count_runs,
     get_fptp_results,
+    get_pr_elected_members,
     get_pr_results,
+    get_provincial_result_summary,
     get_result_summary,
     initiate_count,
     lock_count_run,
-    enrich_fptp_results,
-    enrich_pr_results,
 )
 
 router = APIRouter(prefix="/admin/results", tags=["admin-results"])
@@ -199,3 +204,39 @@ def lock(
     except CountServiceError as e:
         db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
+
+
+# ── PR elected members ──────────────────────────────────────────
+
+
+@router.get(
+    "/count-runs/{count_run_id}/pr-elected-members",
+    response_model=list[PrElectedMemberRead],
+)
+def get_pr_members(
+    count_run_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    _require_admin(current_user)
+    members = get_pr_elected_members(db, count_run_id)
+    return enrich_pr_elected_members(db, members)
+
+
+# ── Provincial result summary ───────────────────────────────────
+
+
+@router.get(
+    "/count-runs/{count_run_id}/provincial-summary",
+    response_model=ProvincialResultSummary,
+)
+def get_provincial_summary(
+    count_run_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    _require_admin(current_user)
+    try:
+        return get_provincial_result_summary(db, count_run_id)
+    except CountServiceError as e:
+        raise HTTPException(status_code=404, detail=str(e))

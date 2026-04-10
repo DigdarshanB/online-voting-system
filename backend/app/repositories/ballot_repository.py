@@ -26,13 +26,15 @@ def create_ballot_with_entries(
     *,
     election_id: int,
     voter_id: int,
-    constituency_id: int,
+    constituency_id: int | None = None,
+    area_id: int | None = None,
     entries: list[dict],
 ) -> Ballot:
     ballot = Ballot(
         election_id=election_id,
         voter_id=voter_id,
         constituency_id=constituency_id,
+        area_id=area_id,
     )
     db.add(ballot)
     db.flush()

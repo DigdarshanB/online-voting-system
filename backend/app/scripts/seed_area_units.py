@@ -1,78 +1,24 @@
-"""Seed the area_units table from the canonical nepal_geography.json.
+"""Seed the area_units table from the canonical geography source.
 
 Loads all entries: country, provinces, districts, federal constituencies,
 municipalities, rural municipalities, metropolitan cities, sub-metropolitan cities.
 
 Also backfills area_id on existing election_contests that have constituency_id set.
 
+Geography data is loaded via app.core.geography_loader, which reads from
+``nepal_geography.json`` (clean extraction) with fallback to the RTF source
+``Constituencies, Provinces and Municipalities.json`` — both in the repo root.
+
 Run:  python -m app.scripts.seed_area_units
 """
 
-import json
-import os
-import re
+from sqlalchemy import select, func
 
-from sqlalchemy import select, func, text
-
+from app.core.geography_loader import load_all, resolve_province_number
 from app.db.session import SessionLocal
 from app.models.area_unit import AreaUnit
 from app.models.constituency import Constituency
 from app.models.election_contest import ElectionContest
-
-# Province code to number mapping
-_PROV_MAP = {"P1": 1, "P2": 2, "P3": 3, "P4": 4, "P5": 5, "P6": 6, "P7": 7}
-
-
-def _load_geography_json() -> list[dict]:
-    """Load canonical geography data from JSON."""
-    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-
-    clean_path = os.path.join(repo_root, "nepal_geography.json")
-    if os.path.exists(clean_path):
-        with open(clean_path, "r", encoding="utf-8") as f:
-            return json.load(f)
-
-    rtf_path = os.path.join(repo_root, "Constituencies, Provinces and Municipalities.json")
-    if not os.path.exists(rtf_path):
-        raise FileNotFoundError("Cannot find geography source file")
-    with open(rtf_path, "r", encoding="utf-8", errors="ignore") as f:
-        raw = f.read()
-    text_data = raw[raw.find("["):]
-    text_data = text_data[: text_data.rfind("]") + 1]
-    text_data = text_data.replace("\\{", "{").replace("\\}", "}")
-    text_data = re.sub(r"\\[a-z]+\d*\s?", "", text_data)
-    text_data = text_data.replace("\\", "")
-    return json.loads(text_data)
-
-
-def _resolve_province_number(item: dict, code_to_item: dict) -> int | None:
-    """Walk up the tree to find the province number."""
-    cat = item["category"]
-    code = item["code"]
-
-    if cat == "COUNTRY":
-        return None
-    if cat == "PROVINCE":
-        return _PROV_MAP.get(code)
-
-    # Walk up: item → parent → ... until we find a province
-    visited = set()
-    current = item
-    while current:
-        if current["code"] in visited:
-            return None  # cycle guard
-        visited.add(current["code"])
-        parent_code = current.get("parent_code")
-        if not parent_code:
-            return None
-        parent = code_to_item.get(parent_code)
-        if not parent:
-            return None
-        if parent["category"] == "PROVINCE":
-            return _PROV_MAP.get(parent["code"])
-        current = parent
-
-    return None
 
 
 def seed(force: bool = False):
@@ -90,12 +36,12 @@ def seed(force: bool = False):
             db.execute(AreaUnit.__table__.delete())
             db.flush()
 
-        data = _load_geography_json()
+        data = load_all()
         code_to_item = {item["code"]: item for item in data}
 
         total = 0
         for item in data:
-            prov_num = _resolve_province_number(item, code_to_item)
+            prov_num = resolve_province_number(item, code_to_item)
             au = AreaUnit(
                 code=item["code"],
                 name=item["name"],

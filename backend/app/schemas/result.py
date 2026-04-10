@@ -99,3 +99,45 @@ class ResultSummary(BaseModel):
     can_finalize: bool
     started_at: str | None = None
     completed_at: str | None = None
+
+
+# ── PR Elected Member ──────────────────────────────────────────
+
+
+class PrElectedMemberRead(BaseModel):
+    id: int
+    count_run_id: int
+    contest_id: int
+    party_id: int
+    candidate_id: int
+    list_entry_id: int | None = None
+    seat_number: int
+    candidate_name: str
+    party_name: str
+    elected_at: datetime | None = None
+    candidate_photo_path: str | None = None
+    party_symbol_path: str | None = None
+
+    class Config:
+        from_attributes = True
+
+
+# ── Assembly Composition ────────────────────────────────────────
+
+
+class AssemblyPartyComposition(BaseModel):
+    party_name: str
+    fptp_seats: int = 0
+    pr_seats: int = 0
+    total_seats: int = 0
+
+
+class ProvincialResultSummary(ResultSummary):
+    """Extended summary for provincial elections with assembly composition."""
+    government_level: str | None = None
+    province_code: str | None = None
+    election_title: str | None = None
+    pr_elected_members_count: int = 0
+    assembly_composition: list[AssemblyPartyComposition] = []
+    assembly_total_seats: int = 0
+    assembly_seats_filled: int = 0

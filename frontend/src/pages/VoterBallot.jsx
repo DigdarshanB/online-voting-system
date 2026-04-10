@@ -133,8 +133,8 @@ export default function VoterBallot() {
             <strong>Ballot ID:</strong> {castResult.ballot_id}
           </div>
           <div style={{ margin: "4px 0", fontSize: 14 }}>
-            <strong>Constituency:</strong>{" "}
-            {ballot.voter_constituency.name}
+            <strong>{ballot.voter_area ? "Provincial constituency" : "Constituency"}:</strong>{" "}
+            {ballot.voter_area ? ballot.voter_area.name : ballot.voter_constituency?.name}
           </div>
         </div>
         <button
@@ -267,10 +267,21 @@ export default function VoterBallot() {
           {ballot.election_title}
         </h1>
         <p style={{ color: "#64748b", fontSize: 14, margin: 0 }}>
-          Constituency:{" "}
-          <strong>{ballot.voter_constituency.name}</strong> (
-          {ballot.voter_constituency.district_name})
+          {ballot.voter_area ? "Provincial constituency" : "Constituency"}:{" "}
+          <strong>{ballot.voter_area ? ballot.voter_area.name : ballot.voter_constituency?.name}</strong>
+          {ballot.voter_constituency?.district_name
+            ? ` (${ballot.voter_constituency.district_name})`
+            : ballot.voter_area?.province_number
+            ? ` (Province ${ballot.voter_area.province_number})`
+            : ""}
         </p>
+        {ballot.government_level === "PROVINCIAL" && (
+          <div style={{ marginTop: 6 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, background: "#f5f3ff", color: "#7c3aed", padding: "2px 10px", borderRadius: 6, border: "1px solid #e9d5ff" }}>
+              {ballot.province_code} · Provincial Assembly Election
+            </span>
+          </div>
+        )}
       </div>
 
       {/* ── info banners ─────────────────────────────── */}
@@ -324,7 +335,7 @@ export default function VoterBallot() {
         >
           <div
             style={{
-              background: "#1e40af",
+              background: ballot.government_level === "PROVINCIAL" ? "#6d28d9" : "#1e40af",
               color: "#fff",
               padding: "14px 20px",
             }}

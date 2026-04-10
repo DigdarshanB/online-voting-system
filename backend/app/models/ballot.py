@@ -26,9 +26,15 @@ class Ballot(Base):
         nullable=False,
         index=True,
     )
-    constituency_id: Mapped[int] = mapped_column(
+    # Federal ballots set constituency_id; provincial/local set area_id instead.
+    constituency_id: Mapped[int | None] = mapped_column(
         ForeignKey("constituencies.id", name="fk_ballots_constituency"),
-        nullable=False,
+        nullable=True,
+    )
+    area_id: Mapped[int | None] = mapped_column(
+        ForeignKey("area_units.id", name="fk_ballots_area_unit"),
+        nullable=True,
+        index=True,
     )
     cast_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=func.now(),

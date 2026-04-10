@@ -22,3 +22,5 @@ from app.models.ballot_entry import BallotEntry
 from app.models.count_run import CountRun
 from app.models.fptp_result_row import FptpResultRow
 from app.models.pr_result_row import PrResultRow
+from app.models.pr_elected_member import PrElectedMember
+from app.models.voter_area_assignment import VoterAreaAssignment

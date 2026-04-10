@@ -2,12 +2,16 @@
 
 Validation checks:
 1. List is not empty
-2. Entry count does not exceed PR seat count (110)
+2. Entry count does not exceed PR seat count for this election
 3. List positions are sequential 1..N with no gaps
 4. No duplicate candidates within same list
 5. No candidate appears in another party's PR list for the same election
-6. Required metadata present on every candidate (full_name, date_of_birth, gender)
-7. Quota-readiness direction hints (warnings only, not blocking)
+6. No candidate appears in both FPTP and PR for the same election
+7. Required metadata present on every candidate (full_name, date_of_birth, gender)
+8. Quota-readiness direction hints (warnings only, not blocking)
+
+PR seat limits are resolved per-election from the election's PR contest(s)
+and are never hard-coded to a federal assumption.
 
 Admin UI displays outcomes but cannot override structural validation.
 """
@@ -18,7 +22,6 @@ from datetime import datetime, timezone
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.core.federal_constants import FEDERAL_HOR_PR_SEATS
 from app.models.candidate_profile import CandidateProfile
 from app.models.election import Election
 from app.models.party import Party
@@ -305,6 +308,7 @@ def validate_pr_list(db: Session, submission: PrPartySubmission) -> dict:
 
     # Determine the max PR seats for this election.
     # Sum up seat_count across all PR contests in the election.
+    # Never fall back to a hard-coded federal number.
     from app.models.election_contest import ElectionContest
     pr_seat_total = db.execute(
         select(func.sum(ElectionContest.seat_count))
@@ -312,7 +316,16 @@ def validate_pr_list(db: Session, submission: PrPartySubmission) -> dict:
             ElectionContest.election_id == submission.election_id,
             ElectionContest.contest_type == "PR",
         )
-    ).scalar_one() or FEDERAL_HOR_PR_SEATS  # fallback for safety
+    ).scalar_one()
+    if pr_seat_total is None or int(pr_seat_total) == 0:
+        errors.append({
+            "code": "NO_PR_SEATS",
+            "message": (
+                "No PR contest with seat_count > 0 found for this election. "
+                "Generate/configure election structure first."
+            ),
+        })
+        return _build_result(errors, warnings, entries)
     max_entries = int(pr_seat_total)
 
     # 1. Non-empty
@@ -384,7 +397,30 @@ def validate_pr_list(db: Session, submission: PrPartySubmission) -> dict:
                 "position": entry.list_position,
             })
 
-    # 6. Required metadata check
+    # 6. FPTP ↔ PR mutual exclusion: no candidate may be in both FPTP and PR
+    from app.models.fptp_candidate_nomination import FptpCandidateNomination
+    for entry in entries:
+        fptp_nom = db.execute(
+            select(FptpCandidateNomination).where(
+                FptpCandidateNomination.election_id == submission.election_id,
+                FptpCandidateNomination.candidate_id == entry.candidate_id,
+            )
+        ).scalar_one_or_none()
+        if fptp_nom:
+            fptp_contest = db.get(ElectionContest, fptp_nom.contest_id)
+            errors.append({
+                "code": "CANDIDATE_IN_FPTP",
+                "message": (
+                    f"Candidate {entry.candidate_id} is also nominated for "
+                    f"FPTP contest '{fptp_contest.title if fptp_contest else fptp_nom.contest_id}'. "
+                    f"A candidate cannot be in both FPTP and PR for the same election."
+                ),
+                "candidate_id": entry.candidate_id,
+                "fptp_contest_id": fptp_nom.contest_id,
+                "position": entry.list_position,
+            })
+
+    # 7. Required metadata check
     for entry in entries:
         profile = db.get(CandidateProfile, entry.candidate_id)
         if not profile:
@@ -406,7 +442,7 @@ def validate_pr_list(db: Session, submission: PrPartySubmission) -> dict:
                     "position": entry.list_position,
                 })
 
-    # 7. Quota-readiness hints (warnings, not errors)
+    # 8. Quota-readiness hints (warnings, not errors)
     gender_counts: dict[str, int] = {}
     for entry in entries:
         profile = db.get(CandidateProfile, entry.candidate_id)
@@ -447,6 +483,9 @@ def _build_result(
             "no_duplicates_in_list": len(set(candidate_ids)) == len(candidate_ids) if entries else True,
             "no_cross_party_duplicates": not any(
                 e["code"] == "CANDIDATE_IN_OTHER_LIST" for e in errors
+            ),
+            "no_fptp_pr_overlap": not any(
+                e["code"] == "CANDIDATE_IN_FPTP" for e in errors
             ),
             "metadata_complete": not any(
                 e["code"] == "MISSING_METADATA" for e in errors

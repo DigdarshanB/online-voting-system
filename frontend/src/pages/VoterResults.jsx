@@ -12,24 +12,30 @@ export default function VoterResults() {
   const [summary, setSummary] = useState(null);
   const [fptpRows, setFptpRows] = useState([]);
   const [prRows, setPrRows] = useState([]);
+  const [prElectedMembers, setPrElectedMembers] = useState([]);
+  const [provincialSummary, setProvincialSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (!user || !electionId) return;
-    Promise.all([
+    Promise.allSettled([
       apiClient.get(`/voter/results/${electionId}/summary`),
       apiClient.get(`/voter/results/${electionId}/fptp`),
       apiClient.get(`/voter/results/${electionId}/pr`),
+      apiClient.get(`/voter/results/${electionId}/pr-elected-members`),
+      apiClient.get(`/voter/results/${electionId}/provincial-summary`),
     ])
-      .then(([sRes, fRes, pRes]) => {
-        setSummary(sRes.data);
-        setFptpRows(fRes.data);
-        setPrRows(pRes.data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err?.response?.data?.detail || "Results are not yet available");
+      .then(([sRes, fRes, pRes, membersRes, provRes]) => {
+        if (sRes.status === "rejected") {
+          setError(sRes.reason?.response?.data?.detail || "Results are not yet available");
+        } else {
+          setSummary(sRes.value.data);
+        }
+        if (fRes.status === "fulfilled") setFptpRows(fRes.value.data);
+        if (pRes.status === "fulfilled") setPrRows(pRes.value.data);
+        if (membersRes.status === "fulfilled") setPrElectedMembers(membersRes.value.data);
+        if (provRes.status === "fulfilled") setProvincialSummary(provRes.value.data);
         setLoading(false);
       });
   }, [user, electionId]);
@@ -84,6 +90,33 @@ export default function VoterResults() {
                 Proportional Representation Results
               </h2>
               <PrTable rows={prRows} />
+            </div>
+          )}
+
+          {/* Provincial: elected PR member roster */}
+          {provincialSummary?.government_level === "PROVINCIAL" && prElectedMembers.length > 0 && (
+            <div style={{ marginBottom: 32 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", marginBottom: 4 }}>
+                Elected PR Members
+              </h2>
+              <p style={{ color: "#64748b", fontSize: 13, marginBottom: 12 }}>
+                Candidates elected through proportional representation
+              </p>
+              <PrElectedMembersTable members={prElectedMembers} />
+            </div>
+          )}
+
+          {/* Provincial: assembly composition */}
+          {provincialSummary?.government_level === "PROVINCIAL" && (provincialSummary.assembly_composition?.length ?? 0) > 0 && (
+            <div style={{ marginBottom: 32 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", marginBottom: 4 }}>
+                Assembly Composition
+              </h2>
+              <p style={{ color: "#64748b", fontSize: 13, marginBottom: 12 }}>
+                Party-wise seat distribution (FPTP + PR) &middot;{" "}
+                {provincialSummary.assembly_seats_filled} / {provincialSummary.assembly_total_seats} seats filled
+              </p>
+              <AssemblyCompositionTable rows={provincialSummary.assembly_composition} />
             </div>
           )}
         </>
@@ -194,6 +227,75 @@ function PrTable({ rows }) {
                   : <span style={{ color: "#94a3b8" }}>Below 3%</span>}
               </Td>
               <Td align="right" bold style={{ fontSize: 16 }}>{r.allocated_seats}</Td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function PrElectedMembersTable({ members }) {
+  const sorted = [...members].sort((a, b) => a.seat_number - b.seat_number);
+  return (
+    <div style={{ overflowX: "auto", borderRadius: 10, border: "1px solid #e2e8f0" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <thead>
+          <tr style={{ background: "#f5f3ff" }}>
+            <Th align="right">#</Th>
+            <Th>Candidate</Th>
+            <Th>Party</Th>
+          </tr>
+        </thead>
+        <tbody>
+          {sorted.map((m) => (
+            <tr key={m.id}>
+              <Td align="right" bold style={{ color: "#7c3aed", fontFamily: "monospace", width: 48 }}>{m.seat_number}</Td>
+              <Td bold>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  {m.candidate_photo_path ? (
+                    <img src={`${API_BASE}/${m.candidate_photo_path}`} alt="" style={{ width: 26, height: 26, borderRadius: "50%", objectFit: "cover", border: "1px solid #e2e8f0", flexShrink: 0 }} />
+                  ) : (
+                    <div style={{ width: 26, height: 26, borderRadius: "50%", background: "#f3e8ff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#7c3aed", flexShrink: 0 }}>
+                      {m.candidate_name?.[0] || "?"}
+                    </div>
+                  )}
+                  {m.candidate_name}
+                </div>
+              </Td>
+              <Td>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  {m.party_symbol_path && <img src={`${API_BASE}/${m.party_symbol_path}`} alt="" style={{ width: 18, height: 18, objectFit: "contain" }} />}
+                  {m.party_name}
+                </div>
+              </Td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function AssemblyCompositionTable({ rows }) {
+  return (
+    <div style={{ overflowX: "auto", borderRadius: 10, border: "1px solid #e2e8f0" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <thead>
+          <tr style={{ background: "#f5f3ff" }}>
+            <Th>Party</Th>
+            <Th align="right">FPTP Seats</Th>
+            <Th align="right">PR Seats</Th>
+            <Th align="right">Total</Th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={i} style={{ background: i === 0 ? "#faf5ff" : "transparent" }}>
+              <Td bold>{r.party_name}</Td>
+              <Td align="right">{r.fptp_seats}</Td>
+              <Td align="right" style={{ color: "#7c3aed" }}>{r.pr_seats}</Td>
+              <Td align="right" bold style={{ fontSize: 15, color: i === 0 ? "#7c3aed" : "#1e293b" }}>{r.total_seats}</Td>
             </tr>
           ))}
         </tbody>

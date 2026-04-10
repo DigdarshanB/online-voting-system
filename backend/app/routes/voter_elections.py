@@ -6,8 +6,8 @@ from app.core.jwt import get_current_user
 from app.db.deps import get_db
 from app.models.user import User
 from app.services.ballot_service import (
-    cast_dual_ballot,
-    get_ballot_info,
+    cast_dual_ballot_dispatch,
+    get_ballot_info_dispatch,
     list_voter_elections,
 )
 
@@ -51,7 +51,7 @@ def get_ballot(
     db: Session = Depends(get_db),
 ):
     _require_active_voter(current_user)
-    return get_ballot_info(db, election_id, current_user)
+    return get_ballot_info_dispatch(db, election_id, current_user)
 
 
 @router.post("/{election_id}/cast")
@@ -62,7 +62,7 @@ def cast_ballot(
     db: Session = Depends(get_db),
 ):
     _require_active_voter(current_user)
-    return cast_dual_ballot(
+    return cast_dual_ballot_dispatch(
         db,
         election_id=election_id,
         voter=current_user,
