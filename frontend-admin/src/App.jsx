@@ -34,6 +34,7 @@ import ManageFederalCandidatesPage from "./pages/ManageFederalCandidatesPage";
 import ManageProvincialCandidatesPage from "./pages/ManageProvincialCandidatesPage";
 import ManageLocalCandidatesPage from "./pages/ManageLocalCandidatesPage";
 import VoterAssignmentsPage from "./pages/VoterAssignmentsPage";
+import ProvincialVoterAssignmentsPage from "./pages/ProvincialVoterAssignmentsPage";
 import ResultsPage from "./pages/ResultsPage";
 
 import {
@@ -205,6 +206,16 @@ export default function App() {
           <RequireAdminOrSuperAdmin>
             <AdminShell title="Voter Assignments" subtitle="Assign voters to federal constituencies for election eligibility">
               <VoterAssignmentsPage />
+            </AdminShell>
+          </RequireAdminOrSuperAdmin>
+        }
+      />
+      <Route
+        path="/admin/voter-assignments/provincial"
+        element={
+          <RequireAdminOrSuperAdmin>
+            <AdminShell title="Provincial Voter Assignments" subtitle="Assign voters to provincial assembly areas">
+              <ProvincialVoterAssignmentsPage />
             </AdminShell>
           </RequireAdminOrSuperAdmin>
         }

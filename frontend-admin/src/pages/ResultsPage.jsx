@@ -8,6 +8,7 @@ import {
   listCountRuns, createCountRun, executeCountRun,
   getResultSummary, getFptpResults, getPrResults,
   finalizeCountRun, lockCountRun,
+  getProvincialSummary, getPrElectedMembers,
 } from "../features/results/api/resultsApi";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
@@ -150,6 +151,10 @@ function ElectionResultCard({
   const [fptpRows, setFptpRows] = useState([]);
   const [prRows, setPrRows] = useState([]);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [provincialSummary, setProvincialSummary] = useState(null);
+  const [prElectedMembers, setPrElectedMembers] = useState([]);
+
+  const isProvincial = election.government_level === "PROVINCIAL";
 
   // Load count runs when expanded
   useEffect(() => {
@@ -178,19 +183,33 @@ function ElectionResultCard({
     let cancelled = false;
     (async () => {
       try {
-        const [s, f, p] = await Promise.all([
+        const promises = [
           getResultSummary(selectedRunId),
           getFptpResults(selectedRunId),
           getPrResults(selectedRunId),
-        ]);
+        ];
+        const [s, f, p] = await Promise.all(promises);
         if (!cancelled) { setSummary(s); setFptpRows(f); setPrRows(p); }
+
+        // Provincial-specific data
+        if (isProvincial && !cancelled) {
+          try {
+            const [ps, em] = await Promise.all([
+              getProvincialSummary(selectedRunId),
+              getPrElectedMembers(selectedRunId),
+            ]);
+            if (!cancelled) { setProvincialSummary(ps); setPrElectedMembers(Array.isArray(em) ? em : []); }
+          } catch {
+            if (!cancelled) { setProvincialSummary(null); setPrElectedMembers([]); }
+          }
+        }
       } catch {
         /* results may not exist yet */
-        if (!cancelled) { setSummary(null); setFptpRows([]); setPrRows([]); }
+        if (!cancelled) { setSummary(null); setFptpRows([]); setPrRows([]); setProvincialSummary(null); setPrElectedMembers([]); }
       }
     })();
     return () => { cancelled = true; };
-  }, [selectedRunId]);
+  }, [selectedRunId, isProvincial]);
 
   const handleInitiate = async () => {
     clearMessages();
@@ -279,6 +298,9 @@ function ElectionResultCard({
         />
         <div style={{ flex: 1 }}>
           <span style={{ fontWeight: 600, color: P.text, fontSize: 15 }}>{election.title}</span>
+          {election.government_level === "PROVINCIAL" && (
+            <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6, background: P.purpleBg, color: P.purple }}>Provincial</span>
+          )}
         </div>
         <StatusBadge status={election.status} />
       </div>
@@ -404,6 +426,10 @@ function ElectionResultCard({
 
               {/* PR Results Table */}
               {prRows.length > 0 && <PrResultsTable rows={prRows} />}
+
+              {/* Provincial-specific sections */}
+              {isProvincial && provincialSummary && <ProvincialSummarySection summary={provincialSummary} />}
+              {isProvincial && prElectedMembers.length > 0 && <PrElectedMembersTable members={prElectedMembers} />}
             </>
           )}
         </div>
@@ -614,6 +640,95 @@ function PrResultsTable({ rows }) {
                     </span>
                   )}
                 </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   PROVINCIAL SUMMARY SECTION
+   ══════════════════════════════════════════════════════════════ */
+function ProvincialSummarySection({ summary }) {
+  if (!summary) return null;
+  const cards = [
+    { label: "Province", value: summary.province_name || summary.province_code || "—", color: P.purple },
+    { label: "Total Seats", value: summary.total_seats ?? "—", color: P.navy },
+    { label: "FPTP Seats", value: summary.fptp_seats ?? "—", color: P.accent },
+    { label: "PR Seats", value: summary.pr_seats ?? "—", color: P.orange },
+    { label: "Assembly Formed", value: summary.assembly_formed ? "Yes" : "No", color: summary.assembly_formed ? P.success : P.muted },
+  ].filter(c => c.value !== "—" || c.label === "Province");
+
+  return (
+    <div style={{ marginBottom: 24 }}>
+      <h3 style={{ fontSize: 16, fontWeight: 700, color: P.text, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+        <Award size={18} color={P.purple} /> Provincial Assembly Summary
+      </h3>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
+        {cards.map((c, i) => (
+          <div key={i} style={{ background: P.bg, borderRadius: 12, padding: "14px 16px", border: `1px solid ${P.border}` }}>
+            <div style={{ fontSize: 11, color: P.muted, fontWeight: 600, marginBottom: 4 }}>{c.label}</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: c.color }}>{c.value}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   PR ELECTED MEMBERS TABLE
+   ══════════════════════════════════════════════════════════════ */
+function PrElectedMembersTable({ members }) {
+  const thStyle = {
+    padding: "10px 14px", textAlign: "left", fontSize: 12, fontWeight: 600,
+    color: P.muted, borderBottom: `2px solid ${P.border}`, background: P.bg,
+  };
+  const tdStyle = { padding: "10px 14px", fontSize: 13, color: P.text, borderBottom: `1px solid ${P.border}` };
+
+  return (
+    <div style={{ marginBottom: 24 }}>
+      <h3 style={{ fontSize: 16, fontWeight: 700, color: P.text, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+        <Users size={18} color={P.purple} /> PR Elected Members ({members.length})
+      </h3>
+      <div style={{ overflowX: "auto", borderRadius: 10, border: `1px solid ${P.border}` }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              <th style={thStyle}>Pos</th>
+              <th style={thStyle}>Candidate</th>
+              <th style={thStyle}>Party</th>
+              <th style={thStyle}>Gender</th>
+            </tr>
+          </thead>
+          <tbody>
+            {members.map((m, i) => (
+              <tr key={m.id || i} style={{ background: i % 2 === 0 ? "transparent" : P.bg }}>
+                <td style={{ ...tdStyle, fontFamily: "monospace", fontWeight: 700, color: P.accent }}>{m.list_position ?? i + 1}</td>
+                <td style={{ ...tdStyle, fontWeight: 600 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    {m.candidate_photo_path ? (
+                      <img src={`${API_BASE}/${m.candidate_photo_path}`} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", border: `1px solid ${P.border}` }} />
+                    ) : (
+                      <div style={{ width: 28, height: 28, borderRadius: "50%", background: P.bg, border: `1px solid ${P.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: P.muted }}>
+                        {(m.candidate_name || "?")[0]}
+                      </div>
+                    )}
+                    {m.candidate_name || `#${m.candidate_id}`}
+                  </div>
+                </td>
+                <td style={tdStyle}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    {m.party_symbol_path && <img src={`${API_BASE}/${m.party_symbol_path}`} alt="" style={{ width: 20, height: 20, objectFit: "contain" }} />}
+                    {m.party_name || "Independent"}
+                  </div>
+                </td>
+                <td style={{ ...tdStyle, fontSize: 12, color: P.muted }}>{m.gender || "—"}</td>
               </tr>
             ))}
           </tbody>
