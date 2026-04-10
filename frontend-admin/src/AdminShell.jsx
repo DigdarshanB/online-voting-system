@@ -357,7 +357,7 @@ export default function AdminShell({ children, title, subtitle }) {
             <h1 style={{ margin: 0, fontSize: isMobile ? 16 : 19, fontWeight: 800, color: PALETTE.topbarText, letterSpacing: "-0.02em" }}>
               {currentMeta.title}
             </h1>
-            {currentMeta.subtitle && (
+            {!isMobile && currentMeta.subtitle && (
               <p style={{ margin: "2px 0 0", fontSize: 13, color: PALETTE.mutedText, fontWeight: 500 }}>
                 {currentMeta.subtitle}
               </p>
@@ -412,6 +412,7 @@ export default function AdminShell({ children, title, subtitle }) {
           {children}
         </main>
         <footer
+          className="admin-footer"
           style={{
             padding: "16px 32px",
             textAlign: "center",

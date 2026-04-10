@@ -258,9 +258,9 @@ export default function ManageElectionsPage() {
   };
 
   return (
-    <div style={{ padding: "32px 40px", maxWidth: 1200, margin: "0 auto" }}>
+    <div className="admin-page-container" style={{ padding: "32px 40px", maxWidth: 1200, margin: "0 auto" }}>
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
+      <div className="admin-toolbar" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
         <div>
           <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: P.text, display: "flex", alignItems: "center", gap: 10 }}>
             <Vote size={22} strokeWidth={2.2} color={P.accent} />
@@ -286,7 +286,7 @@ export default function ManageElectionsPage() {
 
       {/* Master Data Banner */}
       {masterData && (!masterData.federal_ready || !masterData.provincial_ready || !masterData.local_ready) && (
-        <div style={{
+        <div className="admin-context-band" style={{
           padding: "14px 20px", borderRadius: 10, marginBottom: 20,
           background: P.warnBg, border: `1px solid ${P.warn}30`,
           display: "flex", alignItems: "center", gap: 12,
@@ -468,7 +468,7 @@ function CreateElectionForm({ onSubmit, onCancel, submitting }) {
         New Election
       </h3>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+      <div className="admin-form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
         <div style={{ gridColumn: "1 / -1" }}>
           <label style={labelStyle}>Title</label>
           <input
@@ -625,6 +625,7 @@ function ElectionCard({
       {/* Header row */}
       <button
         onClick={onToggle}
+        className="admin-election-card-header"
         style={{
           width: "100%",
           display: "flex",
@@ -732,7 +733,7 @@ function ElectionCard({
                     <LayoutList size={16} color={P.accent} />
                     Contest Structure ({contests.length} total)
                   </div>
-                  <div style={{
+                  <div className="admin-table-wrap" style={{
                     maxHeight: 260, overflowY: "auto",
                     border: `1px solid ${P.border}`, borderRadius: 10,
                   }}>
@@ -769,7 +770,7 @@ function ElectionCard({
 
               {/* Actions */}
               {isDraft && (
-                <div style={{
+                <div className="admin-election-actions" style={{
                   marginTop: 20, display: "flex", gap: 10, flexWrap: "wrap",
                   paddingTop: 16, borderTop: `1px solid ${P.border}`,
                 }}>
@@ -836,7 +837,7 @@ function ElectionCard({
                 };
                 const t = TRANSITIONS[el.status];
                 return (
-                  <div style={{
+                  <div className="admin-election-actions" style={{
                     marginTop: 16, padding: "12px 16px", borderRadius: 8,
                     background: "#F8FAFC", fontSize: 13, color: P.muted,
                     display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",

@@ -1,0 +1,661 @@
+/* ═══════════════════════════════════════════════════════════════
+   admin-responsive.css  —  Responsive hardening for admin pages
+   Applied globally via index.css import.
+   Target widths: 360, 375, 390, 403, 414, 768, 1024, 1280, 1536
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Base: ensure flex/grid children can shrink ────────────── */
+.admin-content-wrap {
+  min-width: 0;
+}
+
+.admin-main-content {
+  min-width: 0;
+}
+
+/* ── AdminShell topbar ─────────────────────────────────────── */
+@media (max-width: 640px) {
+  .admin-topbar {
+    padding: 0 12px !important;
+  }
+
+  .admin-topbar h1 {
+    font-size: 15px !important;
+  }
+
+  .admin-topbar p {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-topbar {
+    height: 60px !important;
+  }
+}
+
+/* ── PageContainer responsive padding ──────────────────────── */
+.admin-page-container {
+  padding: clamp(16px, 3vw, 40px) clamp(12px, 4vw, 48px);
+  max-width: 1360px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+@media (max-width: 480px) {
+  .admin-page-container {
+    padding: 12px 10px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INTRO / CONTEXT BANNER CARDS
+   Used in ManageCandidatesPage and ManageElectionsHubPage
+   ═══════════════════════════════════════════════════════════════ */
+.admin-intro-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 20px;
+}
+
+@media (max-width: 720px) {
+  .admin-intro-card {
+    grid-template-columns: auto 1fr;
+  }
+
+  .admin-intro-card .admin-intro-tags {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-intro-card {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding: 18px 16px !important;
+  }
+
+  .admin-intro-card .admin-intro-icon {
+    justify-self: start;
+  }
+
+  .admin-intro-card .admin-intro-tags {
+    grid-column: auto;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION HEADER — flex wrap for title + action
+   ═══════════════════════════════════════════════════════════════ */
+.admin-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .admin-section-header {
+    padding: 14px 16px;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TOOLBAR — search + action row
+   ═══════════════════════════════════════════════════════════════ */
+.admin-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .admin-toolbar {
+    padding: 10px 14px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 10px 12px !important;
+  }
+
+  .admin-toolbar .admin-toolbar-left {
+    width: 100%;
+  }
+
+  .admin-toolbar .admin-toolbar-right {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  /* SearchInput inside toolbar should fill width */
+  .admin-toolbar .admin-toolbar-left > div {
+    max-width: 100% !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   KPI ROW — responsive grid
+   ═══════════════════════════════════════════════════════════════ */
+.admin-kpi-row {
+  display: grid;
+  gap: 16px;
+}
+
+@media (min-width: 769px) {
+  .admin-kpi-row {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-kpi-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 400px) {
+  .admin-kpi-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .admin-kpi-row > div {
+    padding: 14px 12px !important;
+  }
+
+  .admin-kpi-row .admin-kpi-value {
+    font-size: 22px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   WORKSPACE TABS (ManageFederalCandidatesPage)
+   ═══════════════════════════════════════════════════════════════ */
+.admin-workspace-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-workspace-tabs > button {
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .admin-workspace-tabs {
+    gap: 4px;
+    padding: 3px !important;
+  }
+
+  .admin-workspace-tabs > button {
+    padding: 10px 12px !important;
+    gap: 6px !important;
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
+    justify-content: center;
+  }
+
+  /* Hide sublabels on small screens */
+  .admin-workspace-tabs .admin-tab-sublabel {
+    display: none;
+  }
+
+  /* Smaller icon tiles */
+  .admin-workspace-tabs .admin-tab-icon {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  .admin-workspace-tabs .admin-tab-label {
+    font-size: 12px !important;
+  }
+}
+
+@media (max-width: 400px) {
+  .admin-workspace-tabs > button {
+    padding: 8px 8px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   WORKSPACE CARDS (election-level entry cards)
+   ═══════════════════════════════════════════════════════════════ */
+.admin-workspace-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 640px) {
+  .admin-workspace-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ELECTION LEVEL CARDS (ManageElectionsHubPage)
+   ═══════════════════════════════════════════════════════════════ */
+.admin-level-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .admin-level-cards {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-level-cards {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DATA TABLES — responsive strategy
+   ═══════════════════════════════════════════════════════════════ */
+.admin-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  min-width: 0;
+}
+
+.admin-table-wrap table {
+  min-width: 500px;
+}
+
+@media (max-width: 640px) {
+  .admin-table-wrap table th,
+  .admin-table-wrap table td {
+    padding: 10px 10px !important;
+    font-size: 12px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PARTY ROW CARDS (ManageCandidatesPage)
+   ═══════════════════════════════════════════════════════════════ */
+.admin-party-row {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+@media (max-width: 480px) {
+  .admin-party-row {
+    gap: 10px;
+    padding: 12px 12px !important;
+  }
+
+  .admin-party-row .admin-party-info {
+    min-width: 0;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FORMS — responsive grid
+   ═══════════════════════════════════════════════════════════════ */
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 480px) {
+  .admin-form-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION CARD — padding adjustments on mobile
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  .admin-section-card-inner {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-section-card-inner {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   NOMINATION / PR ACTION BUTTONS — wrap properly
+   ═══════════════════════════════════════════════════════════════ */
+.admin-action-group {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .admin-action-group {
+    gap: 4px;
+    justify-content: flex-start;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DIALOGS / MODALS — mobile safe
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+  .admin-modal-panel {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    margin: 8px;
+    max-height: 90vh !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CONTEXT BAND (ManageFederalCandidatesPage)
+   ═══════════════════════════════════════════════════════════════ */
+.admin-context-band {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 480px) {
+  .admin-context-band {
+    padding: 12px 14px !important;
+    gap: 10px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ELECTION CARD HEADER (accordion toggle button)
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  .admin-election-card-header {
+    padding: 14px 16px !important;
+    gap: 10px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-election-card-header {
+    padding: 12px 12px !important;
+    gap: 8px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ELECTION ACTION BARS (draft actions, lifecycle advance)
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  .admin-election-actions {
+    padding: 12px 14px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-election-actions {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    padding: 10px 12px !important;
+  }
+
+  .admin-election-actions button {
+    justify-content: center;
+  }
+
+  .admin-election-actions button[style*="marginLeft: auto"],
+  .admin-election-actions button[style*="margin-left: auto"] {
+    margin-left: 0 !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PR SUBMISSION ACCORDION
+   ═══════════════════════════════════════════════════════════════ */
+.admin-pr-sub-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .admin-pr-sub-header {
+    gap: 6px;
+    padding: 12px 12px !important;
+    flex-wrap: wrap;
+  }
+
+  .admin-pr-sub-header .admin-pr-sub-name {
+    flex: 1 1 50%;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .admin-pr-sub-detail {
+    padding: 4px 12px 14px !important;
+  }
+}
+
+/* PR entry add row */
+.admin-pr-entry-form {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 480px) {
+  .admin-pr-entry-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-pr-entry-form > label {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+}
+
+/* PR action buttons row */
+.admin-pr-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ELECTION SELECTOR ROW
+   ═══════════════════════════════════════════════════════════════ */
+.admin-election-selector {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 480px) {
+  .admin-election-selector {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .admin-election-selector > label {
+    min-width: 0 !important;
+    width: 100%;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MANAGE ELECTIONS PAGE — accordion cards
+   ═══════════════════════════════════════════════════════════════ */
+.admin-election-card-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .admin-election-card-header {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .admin-election-card-details {
+    padding: 16px 14px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-election-card-header {
+    gap: 8px;
+  }
+
+  .admin-election-card-header .admin-election-title {
+    font-size: 14px !important;
+  }
+}
+
+/* Election details grid */
+.admin-election-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 480px) {
+  .admin-election-detail-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+/* Election action bar */
+.admin-election-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+@media (max-width: 480px) {
+  .admin-election-actions {
+    gap: 6px;
+    justify-content: flex-start;
+  }
+
+  .admin-election-actions button {
+    font-size: 11px !important;
+    padding: 5px 10px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TOAST — mobile position
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+  .admin-toast {
+    left: 8px !important;
+    right: 8px !important;
+    max-width: none !important;
+    top: 12px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FOOTER — responsive padding
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  .admin-footer {
+    padding: 14px 16px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SUMMARY STRIP (AdminUI)
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+  .admin-summary-strip {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CREATE ELECTION FORM (ManageElectionsPage)
+   ═══════════════════════════════════════════════════════════════ */
+.admin-create-form {
+  display: grid;
+  gap: 16px;
+}
+
+@media (max-width: 640px) {
+  .admin-create-form {
+    padding: 16px !important;
+  }
+
+  .admin-create-form .admin-form-row {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   READINESS CHECKLIST (ManageElectionsPage)
+   ═══════════════════════════════════════════════════════════════ */
+.admin-readiness-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+@media (max-width: 480px) {
+  .admin-readiness-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   REDUCED MOTION
+   ═══════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  .admin-intro-card,
+  .admin-workspace-tabs > button,
+  .level-card {
+    transition: none !important;
+  }
+}

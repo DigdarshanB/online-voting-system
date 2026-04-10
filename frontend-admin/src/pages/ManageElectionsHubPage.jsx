@@ -106,16 +106,13 @@ export default function ManageElectionsHubPage() {
           borderRadius: T.radius.xl,
           padding: "24px 28px",
           marginBottom: T.space["2xl"],
-          display: "grid",
-          gridTemplateColumns: "auto 1fr auto",
-          alignItems: "center",
-          gap: 20,
           boxShadow: T.shadow.sm,
         }}
-        className="hub-intro"
+        className="hub-intro admin-intro-card"
       >
         {/* Left — icon tile */}
         <div
+          className="admin-intro-icon"
           style={{
             width: 52,
             height: 52,
@@ -136,7 +133,7 @@ export default function ManageElectionsHubPage() {
           <h1
             style={{
               margin: 0,
-              fontSize: "clamp(20px, 2.4vw, 28px)",
+              fontSize: "clamp(18px, 2.4vw, 28px)",
               fontWeight: 800,
               color: T.navy,
               lineHeight: 1.2,
@@ -167,7 +164,7 @@ export default function ManageElectionsHubPage() {
             flexWrap: "wrap",
             alignSelf: "center",
           }}
-          className="hub-intro-tags"
+          className="hub-intro-tags admin-intro-tags"
         >
           {[
             { label: "Federal", bg: T.accentLight, color: T.accent },
@@ -198,6 +195,7 @@ export default function ManageElectionsHubPage() {
       <ul
         role="list"
         aria-label="Election levels"
+        className="admin-level-cards"
         style={{
           listStyle: "none",
           margin: 0,

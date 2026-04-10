@@ -66,6 +66,73 @@ export default function ManageCandidatesPage() {
       <AdminKeyframes />
       <Toast msg={msg} onClose={() => setMsg(null)} />
 
+      {/* ── Contextual intro card ── */}
+      <div
+        role="banner"
+        className="admin-intro-card"
+        style={{
+          background: T.surface,
+          border: `1px solid ${T.border}`,
+          borderRadius: T.radius.xl,
+          padding: "24px 28px",
+          marginBottom: T.space["2xl"],
+          boxShadow: T.shadow.sm,
+        }}
+      >
+        {/* Left — icon tile */}
+        <div className="admin-intro-icon" style={{
+          width: 52, height: 52,
+          borderRadius: T.radius.lg,
+          background: T.accentLight,
+          border: `1px solid ${T.accent}20`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          flexShrink: 0,
+        }}>
+          <UserCheck size={26} color={T.accent} strokeWidth={2.2} />
+        </div>
+
+        {/* Middle — title + descriptor */}
+        <div style={{ minWidth: 0 }}>
+          <h1 style={{
+            margin: 0,
+            fontSize: "clamp(18px, 2.4vw, 28px)",
+            fontWeight: 800,
+            color: T.navy,
+            lineHeight: 1.2,
+            letterSpacing: "-0.01em",
+          }}>
+            Candidate Administration
+          </h1>
+          <p style={{
+            margin: "4px 0 0",
+            fontSize: 14, color: T.muted,
+            lineHeight: 1.45, maxWidth: 480,
+          }}>
+            Manage shared party registry and access election-level candidate workspaces for federal, provincial, and local elections.
+          </p>
+        </div>
+
+        {/* Right — scope tags */}
+        <div className="admin-intro-tags" style={{ display: "flex", gap: 6, flexWrap: "wrap", alignSelf: "center" }}>
+          {[
+            { label: "Federal",    bg: T.accentLight, color: T.accent  },
+            { label: "Provincial", bg: T.purpleBg,    color: T.purple  },
+            { label: "Local",      bg: T.orangeBg,    color: T.orange  },
+          ].map(tag => (
+            <span key={tag.label} style={{
+              padding: "4px 12px", borderRadius: 6,
+              fontSize: 11, fontWeight: 700,
+              letterSpacing: "0.02em",
+              background: tag.bg, color: tag.color,
+              border: `1px solid ${tag.color}18`,
+              whiteSpace: "nowrap",
+            }}>
+              {tag.label}
+            </span>
+          ))}
+        </div>
+      </div>
+
       {/* ── Compact intro ── */}
       <p style={{
         margin: `0 0 ${T.space.xl}px`, fontSize: 13, color: T.muted,
@@ -105,7 +172,7 @@ export default function ManageCandidatesPage() {
           </div>
         </div>
 
-        <div style={{
+        <div className="admin-workspace-grid" style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
           gap: 16,
@@ -295,7 +362,7 @@ function PartiesSection({ msg, setMsg }) {
 
         {showForm && (
           <div style={{ padding: 20, borderBottom: `1px solid ${T.borderLight}`, background: T.surfaceAlt }}>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 12 }}>
+            <div className="admin-form-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 12 }}>
               <label style={lbl}>Name *<input style={inp} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></label>
               <label style={lbl}>Abbreviation *<input style={inp} value={form.abbreviation} onChange={e => setForm({ ...form, abbreviation: e.target.value })} /></label>
               <label style={lbl}>Address<input style={inp} value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} /></label>
@@ -305,12 +372,14 @@ function PartiesSection({ msg, setMsg }) {
         )}
 
         {/* Toolbar */}
-        <div style={{
+        <div className="admin-toolbar" style={{
           display: "flex", alignItems: "center",
           padding: "10px 24px",
           borderBottom: `1px solid ${T.borderLight}`,
         }}>
-          <SearchInput value={search} onChange={setSearch} placeholder="Search parties..." />
+          <div className="admin-toolbar-left">
+            <SearchInput value={search} onChange={setSearch} placeholder="Search parties..." />
+          </div>
         </div>
 
         {loading ? (

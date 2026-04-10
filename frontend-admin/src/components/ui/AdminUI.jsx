@@ -86,7 +86,7 @@ export function BackLink({ onClick, to, children = "Back", label }) {
 
 export function SummaryStrip({ children }) {
   return (
-    <div style={{
+    <div className="admin-summary-strip" style={{
       display: "grid",
       gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
       gap: T.space.lg,
@@ -168,7 +168,7 @@ export function SectionCard({ children, style }) {
 
 export function SectionHeader({ title, subtitle, icon: Icon, iconColor, action }) {
   return (
-    <div style={{
+    <div className="admin-section-header" style={{
       display: "flex", justifyContent: "space-between", alignItems: "center",
       padding: "16px 24px", borderBottom: `1px solid ${T.borderLight}`,
       gap: 12, flexWrap: "wrap",
@@ -268,7 +268,7 @@ export function Toast({ msg, onClose }) {
     return () => clearTimeout(t);
   }, [msg, onClose]);
   return (
-    <div style={{
+    <div className="admin-toast" style={{
       position: "fixed", top: 20, right: 20, zIndex: 10000,
       padding: "12px 20px", borderRadius: T.radius.lg, fontSize: 13, fontWeight: 600,
       background: msg.type === "error" ? T.errorBg : T.successBg,

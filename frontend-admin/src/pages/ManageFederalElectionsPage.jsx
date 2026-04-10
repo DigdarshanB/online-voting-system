@@ -281,7 +281,7 @@ export default function ManageFederalElectionsPage() {
       <SectionCard>
         <SectionHeader icon={LayoutList} iconColor={T.navy} title="Federal contest model" subtitle="Structure of a House of Representatives election" />
         <div style={{ padding: "20px 24px" }}>
-          <div style={{
+          <div className="admin-form-grid" style={{
             display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
             gap: T.space.lg, marginBottom: T.space.xl,
           }}>
@@ -378,7 +378,7 @@ function CreateFederalElectionForm({ onSubmit, onCancel, submitting }) {
         </p>
       </div>
       <form onSubmit={handleSubmit} style={{ padding: "24px 28px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16, marginBottom: 20 }}>
+        <div className="admin-form-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16, marginBottom: 20 }}>
           <div style={{ gridColumn: "1 / -1" }}>
             <label style={labelStyle}>Title</label>
             <input style={inputStyle} value={title} onChange={e => setTitle(e.target.value)}
@@ -461,6 +461,7 @@ function ElectionCard({ election: el, expanded, onToggle, onDelete, onGenerate, 
       {/* Header row */}
       <button
         onClick={onToggle}
+        className="admin-election-card-header"
         style={{
           width: "100%", display: "flex", alignItems: "center", gap: 14,
           padding: "16px 24px", border: "none", background: expanded ? T.surfaceAlt : "transparent",
@@ -553,7 +554,7 @@ function ElectionCard({ election: el, expanded, onToggle, onDelete, onGenerate, 
                   <div style={{ fontWeight: 700, fontSize: 13, color: T.text, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
                     <LayoutList size={15} color={T.accent} /> Contest structure ({contests.length} total)
                   </div>
-                  <div style={{ maxHeight: 240, overflowY: "auto", border: `1px solid ${T.border}`, borderRadius: T.radius.md }}>
+                  <div className="admin-table-wrap" style={{ maxHeight: 240, overflowY: "auto", border: `1px solid ${T.border}`, borderRadius: T.radius.md }}>
                     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                       <thead>
                         <tr style={{ background: T.surfaceAlt }}>
@@ -585,7 +586,7 @@ function ElectionCard({ election: el, expanded, onToggle, onDelete, onGenerate, 
 
               {/* Actions — draft */}
               {isDraft && (
-                <div style={{
+                <div className="admin-election-actions" style={{
                   display: "flex", gap: 10, flexWrap: "wrap", paddingTop: 12,
                   borderTop: `1px solid ${T.borderLight}`,
                 }}>
@@ -612,7 +613,7 @@ function ElectionCard({ election: el, expanded, onToggle, onDelete, onGenerate, 
 
               {/* Actions — locked (lifecycle advance) */}
               {!isDraft && (
-                <div style={{
+                <div className="admin-election-actions" style={{
                   display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
                   padding: "12px 16px", borderRadius: T.radius.md,
                   background: T.surfaceAlt, border: `1px solid ${T.borderLight}`,

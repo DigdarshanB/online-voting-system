@@ -152,6 +152,7 @@ function WorkspaceTabs({ tabs, activeTab, onSelect, id }) {
       role="tablist"
       aria-label="Federal candidates workspace"
       onKeyDown={handleKeyDown}
+      className="admin-workspace-tabs"
       style={{
         display: "flex", gap: 6, marginBottom: T.space["2xl"],
         padding: 4, background: T.surfaceAlt, borderRadius: T.radius.xl,
@@ -202,7 +203,7 @@ function WorkspaceTabs({ tabs, activeTab, onSelect, id }) {
               }
             }}
           >
-            <div style={{
+            <div className="admin-tab-icon" style={{
               width: 32, height: 32, borderRadius: T.radius.md,
               background: active ? T.accentLight : T.borderLight,
               display: "flex", alignItems: "center", justifyContent: "center",
@@ -211,7 +212,7 @@ function WorkspaceTabs({ tabs, activeTab, onSelect, id }) {
               <Icon size={15} color={active ? T.accent : T.muted} strokeWidth={2} />
             </div>
             <div style={{ textAlign: "left", minWidth: 0 }}>
-              <div style={{
+              <div className="admin-tab-label" style={{
                 fontSize: 13, fontWeight: active ? 700 : 600,
                 color: active ? T.accent : T.textSecondary,
                 lineHeight: 1.3, whiteSpace: "nowrap",
@@ -219,7 +220,7 @@ function WorkspaceTabs({ tabs, activeTab, onSelect, id }) {
               }}>
                 {t.label}
               </div>
-              <span style={{
+              <span className="admin-tab-sublabel" style={{
                 fontSize: 10, fontWeight: 600,
                 color: active ? T.accent : T.muted,
                 letterSpacing: "0.02em",
@@ -246,9 +247,9 @@ function WorkspaceTabs({ tabs, activeTab, onSelect, id }) {
 /* ══════════════════════════════════════════════════════════════ */
 function KPIRow({ items }) {
   return (
-    <div style={{
+    <div className="admin-kpi-row" style={{
       display: "grid",
-      gridTemplateColumns: `repeat(${items.length}, 1fr)`,
+      gridTemplateColumns: `repeat(auto-fit, minmax(140px, 1fr))`,
       gap: T.space.lg,
       marginBottom: T.space.xl,
     }}>
@@ -265,7 +266,7 @@ function KPIRow({ items }) {
           }}>
             {item.label}
           </div>
-          <div style={{
+          <div className="admin-kpi-value" style={{
             fontSize: 28, fontWeight: 800, color: item.accent || T.text,
             lineHeight: 1,
           }}>
@@ -286,15 +287,15 @@ function KPIRow({ items }) {
 /* ══════════════════════════════════════════════════════════════ */
 function Toolbar({ left, right }) {
   return (
-    <div style={{
+    <div className="admin-toolbar" style={{
       display: "flex", alignItems: "center", justifyContent: "space-between",
       gap: 12, padding: "12px 24px", borderBottom: `1px solid ${T.borderLight}`,
       flexWrap: "wrap",
     }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
+      <div className="admin-toolbar-left" style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
         {left}
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+      <div className="admin-toolbar-right" style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
         {right}
       </div>
     </div>
@@ -460,7 +461,7 @@ function CandidatesPanel({ setMsg }) {
             <EmptyState icon={Users} title="No candidate profiles" message={search ? "No match for this search." : "Create the first candidate profile."} />
           </div>
         ) : (
-          <div style={{ overflowX: "auto" }}>
+          <div className="admin-table-wrap" style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: T.surfaceAlt }}>
@@ -543,6 +544,7 @@ function CandidatesPanel({ setMsg }) {
         >
           <div
             onClick={e => e.stopPropagation()}
+            className="admin-modal-panel"
             style={{
               background: T.surface, borderRadius: T.radius.xl,
               boxShadow: T.shadow.xl, width: "min(95vw, 560px)",
@@ -563,7 +565,7 @@ function CandidatesPanel({ setMsg }) {
               </button>
             </div>
             <div style={{ padding: 24 }}>
-              <div style={{
+              <div className="admin-form-grid" style={{
                 display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
                 gap: 12, marginBottom: 20,
               }}>
@@ -713,7 +715,7 @@ function NominationsPanel({ setMsg }) {
   return (
     <>
       {/* Election & contest selectors */}
-      <div style={{ display: "flex", gap: 12, marginBottom: T.space.xl, flexWrap: "wrap" }}>
+      <div className="admin-election-selector" style={{ display: "flex", gap: 12, marginBottom: T.space.xl, flexWrap: "wrap" }}>
         <label style={{ ...lbl, minWidth: 200, flex: 1 }}>Election
           <select style={sel} value={selectedElection} onChange={e => { setSelectedElection(e.target.value); setSelectedContest(""); }}>
             <option value="">Select election</option>
@@ -759,7 +761,7 @@ function NominationsPanel({ setMsg }) {
 
         {showForm && selectedElection && (
           <div style={{ padding: 20, borderBottom: `1px solid ${T.borderLight}`, background: T.surfaceAlt }}>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 12 }}>
+            <div className="admin-form-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 12 }}>
               <label style={lbl}>Contest *
                 <select style={sel} value={form.contest_id} onChange={e => setForm({ ...form, contest_id: e.target.value })}>
                   <option value="">Select contest</option>
@@ -800,7 +802,7 @@ function NominationsPanel({ setMsg }) {
             <EmptyState icon={UserPlus} title="No nominations" message={search ? "No match for this search." : "Create the first nomination."} />
           </div>
         ) : (
-          <div style={{ overflowX: "auto" }}>
+          <div className="admin-table-wrap" style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: T.surfaceAlt }}>
@@ -1031,7 +1033,7 @@ function PRListsPanel({ setMsg }) {
   return (
     <>
       {/* Election selector */}
-      <div style={{ display: "flex", gap: 12, marginBottom: T.space.xl }}>
+      <div className="admin-election-selector" style={{ display: "flex", gap: 12, marginBottom: T.space.xl }}>
         <label style={{ ...lbl, minWidth: 240, flex: 1, maxWidth: 400 }}>Election
           <select style={sel} value={selectedElection} onChange={e => { setSelectedElection(e.target.value); setExpandedSub(null); }}>
             <option value="">Select election</option>
@@ -1207,7 +1209,7 @@ function PRSubmissionDetail({
       <div style={{ padding: "4px 18px 18px", borderTop: `1px solid ${T.borderLight}` }}>
         {/* Entries table */}
         {safeEntries.length > 0 ? (
-          <div style={{ overflowX: "auto", marginBottom: 12 }}>
+          <div className="admin-table-wrap" style={{ overflowX: "auto", marginBottom: 12 }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: T.surfaceAlt }}>
@@ -1258,7 +1260,7 @@ function PRSubmissionDetail({
                 No eligible candidates available for this party. Candidates already assigned to FPTP or another PR list cannot be reused.
               </div>
             ) : (
-              <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
+              <div className="admin-pr-entry-form" style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
                 <label style={{ ...lbl, flex: 1, minWidth: 140 }}>Candidate
                   <select style={sel} value={ef.candidate_id || ""} onChange={e => setEntryForm(p => ({ ...p, [sub.id]: { ...ef, candidate_id: e.target.value } }))}>
                     <option value="">Select candidate</option>
@@ -1298,7 +1300,7 @@ function PRSubmissionDetail({
         )}
 
         {/* Actions */}
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        <div className="admin-pr-actions" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           <Btn variant="secondary" small onClick={() => handleValidate(sub)}>
             <Shield size={13} /> Validate
           </Btn>
