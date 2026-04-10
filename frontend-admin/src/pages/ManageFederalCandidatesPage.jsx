@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useCallback, useId, Component } fr
 import {
   Users, UserPlus, ListOrdered, Plus, Trash2, Check, X,
   ChevronDown, ChevronUp, AlertTriangle, Shield, RotateCcw,
-  Search, MoreHorizontal, Camera, FileText,
+  Search, MoreHorizontal, Camera, FileText, Pencil,
 } from "lucide-react";
 import { T } from "../components/ui/tokens";
 import {
@@ -13,7 +13,7 @@ import {
 import useParties from "../features/candidates/hooks/useParties";
 import useCandidateProfiles from "../features/candidates/hooks/useCandidateProfiles";
 import {
-  createProfile, deleteProfile,
+  createProfile, updateProfile, deleteProfile,
   uploadCandidatePhoto, removeCandidatePhoto,
   listElections, listContests,
   listFptpNominations, createFptpNomination, updateFptpNomination, deleteFptpNomination,
@@ -175,9 +175,9 @@ function WorkspaceTabs({ tabs, activeTab, onSelect, id }) {
               display: "flex", alignItems: "center", gap: 8,
               padding: "12px 20px",
               borderRadius: T.radius.lg,
-              border: active ? `1.5px solid ${T.accent}40` : "1.5px solid transparent",
-              background: active ? T.surface : "transparent",
-              boxShadow: active ? T.shadow.sm : "none",
+              border: active ? `1.5px solid ${T.accent}` : "1.5px solid transparent",
+              background: active ? T.accentLight : "transparent",
+              boxShadow: active ? `0 2px 8px ${T.accent}15, ${T.shadow.sm}` : "none",
               cursor: "pointer",
               transition: "all 0.18s ease",
               flex: "1 1 auto", minWidth: 0,
@@ -213,7 +213,7 @@ function WorkspaceTabs({ tabs, activeTab, onSelect, id }) {
             <div style={{ textAlign: "left", minWidth: 0 }}>
               <div style={{
                 fontSize: 13, fontWeight: active ? 700 : 600,
-                color: active ? T.text : T.textSecondary,
+                color: active ? T.accent : T.textSecondary,
                 lineHeight: 1.3, whiteSpace: "nowrap",
                 overflow: "hidden", textOverflow: "ellipsis",
               }}>
@@ -314,6 +314,9 @@ function CandidatesPanel({ setMsg }) {
   const [search, setSearch] = useState("");
   const [confirmDel, setConfirmDel] = useState(null);
   const [uploading, setUploading] = useState({});
+  const [editCandidate, setEditCandidate] = useState(null);
+  const [editForm, setEditForm] = useState({ full_name: "", gender: "", date_of_birth: "", address: "", citizenship_no: "", party_id: "" });
+  const [updating, setUpdating] = useState(false);
 
   const partyMap = useMemo(() => Object.fromEntries((parties || []).map(p => [p.id, p])), [parties]);
 
@@ -359,6 +362,40 @@ function CandidatesPanel({ setMsg }) {
     try { await removeCandidatePhoto(c.id); setMsg({ type: "success", text: "Photo removed" }); reload(); }
     catch (err) { setMsg({ type: "error", text: errMsg(err) }); }
     finally { setUploading(u => ({ ...u, [c.id]: false })); }
+  };
+
+  const handleStartEdit = (c) => {
+    setEditCandidate(c);
+    setEditForm({
+      full_name: c.full_name || "",
+      gender: c.gender || "",
+      date_of_birth: c.date_of_birth || "",
+      address: c.address || "",
+      citizenship_no: c.citizenship_no || "",
+      party_id: c.party_id ? String(c.party_id) : "",
+    });
+  };
+
+  const handleUpdate = async () => {
+    if (!editCandidate) return;
+    if (!editForm.full_name.trim()) {
+      setMsg({ type: "error", text: "Full name is required" }); return;
+    }
+    setUpdating(true);
+    try {
+      await updateProfile(editCandidate.id, {
+        full_name: editForm.full_name,
+        gender: editForm.gender || null,
+        date_of_birth: editForm.date_of_birth || null,
+        address: editForm.address || null,
+        citizenship_no: editForm.citizenship_no || null,
+        party_id: editForm.party_id ? Number(editForm.party_id) : null,
+      });
+      setMsg({ type: "success", text: "Candidate profile updated" });
+      setEditCandidate(null);
+      reload();
+    } catch (err) { setMsg({ type: "error", text: errMsg(err) }); }
+    finally { setUpdating(false); }
   };
 
   const withPhoto = profiles.filter(c => c.photo_path).length;
@@ -433,7 +470,7 @@ function CandidatesPanel({ setMsg }) {
                   <th style={thStyle}>DOB</th>
                   <th style={thStyle}>Citizenship</th>
                   <th style={thStyle}>Party</th>
-                  <th style={{ ...thStyle, width: 60, textAlign: "center" }}>Actions</th>
+                  <th style={{ ...thStyle, width: 90, textAlign: "center" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -476,9 +513,14 @@ function CandidatesPanel({ setMsg }) {
                         </div>
                       </td>
                       <td style={{ ...tdStyle, textAlign: "center" }}>
-                        <Btn variant="ghost" small onClick={() => setConfirmDel(c)} style={{ color: T.error }}>
-                          <Trash2 size={14} />
-                        </Btn>
+                        <div style={{ display: "flex", gap: 2, justifyContent: "center" }}>
+                          <Btn variant="ghost" small onClick={() => handleStartEdit(c)} style={{ color: T.accent }}>
+                            <Pencil size={14} />
+                          </Btn>
+                          <Btn variant="ghost" small onClick={() => setConfirmDel(c)} style={{ color: T.error }}>
+                            <Trash2 size={14} />
+                          </Btn>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -488,6 +530,75 @@ function CandidatesPanel({ setMsg }) {
           </div>
         )}
       </SectionCard>
+
+      {/* Edit candidate dialog */}
+      {editCandidate && (
+        <div
+          style={{
+            position: "fixed", inset: 0, zIndex: 9000,
+            background: "rgba(15,23,42,0.45)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}
+          onClick={() => { if (!updating) setEditCandidate(null); }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: T.surface, borderRadius: T.radius.xl,
+              boxShadow: T.shadow.xl, width: "min(95vw, 560px)",
+              maxHeight: "85vh", overflow: "auto",
+              border: `1px solid ${T.border}`,
+            }}
+          >
+            <div style={{
+              padding: "20px 24px", borderBottom: `1px solid ${T.borderLight}`,
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+            }}>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: T.navy }}>Edit Candidate Profile</h3>
+              <button
+                onClick={() => setEditCandidate(null)} disabled={updating}
+                style={{ background: "none", border: "none", cursor: "pointer", color: T.muted, padding: 4 }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div style={{ padding: 24 }}>
+              <div style={{
+                display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                gap: 12, marginBottom: 20,
+              }}>
+                <label style={lbl}>Full Name *
+                  <input style={inp} value={editForm.full_name} onChange={e => setEditForm({ ...editForm, full_name: e.target.value })} />
+                </label>
+                <label style={lbl}>Gender
+                  <select style={sel} value={editForm.gender} onChange={e => setEditForm({ ...editForm, gender: e.target.value })}>
+                    <option value="">—</option><option value="MALE">Male</option><option value="FEMALE">Female</option><option value="OTHER">Other</option>
+                  </select>
+                </label>
+                <label style={lbl}>Date of birth
+                  <input style={inp} type="date" value={editForm.date_of_birth} onChange={e => setEditForm({ ...editForm, date_of_birth: e.target.value })} />
+                </label>
+                <label style={lbl}>Citizenship No
+                  <input style={inp} value={editForm.citizenship_no} onChange={e => setEditForm({ ...editForm, citizenship_no: e.target.value })} />
+                </label>
+                <label style={lbl}>Address
+                  <input style={inp} value={editForm.address} onChange={e => setEditForm({ ...editForm, address: e.target.value })} />
+                </label>
+                <label style={lbl}>Party
+                  <select style={sel} value={editForm.party_id} onChange={e => setEditForm({ ...editForm, party_id: e.target.value })}>
+                    <option value="">Independent</option>
+                    {parties.filter(p => p.is_active).map(p => <option key={p.id} value={p.id}>{p.name} ({p.abbreviation})</option>)}
+                  </select>
+                </label>
+              </div>
+              <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                <Btn variant="ghost" small onClick={() => setEditCandidate(null)} disabled={updating}>Cancel</Btn>
+                <Btn small onClick={handleUpdate} loading={updating}>Save changes</Btn>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ConfirmDialog open={!!confirmDel} onClose={() => setConfirmDel(null)} onConfirm={handleDelete}
         title="Delete candidate profile" body={`Delete profile for "${confirmDel?.full_name}"? This action cannot be undone.`} confirmLabel="Delete" variant="danger" />

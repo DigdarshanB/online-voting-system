@@ -12,7 +12,7 @@ import {
 import useParties from "../features/candidates/hooks/useParties";
 import { createParty, deleteParty, uploadPartySymbol, removePartySymbol } from "../features/candidates/api/candidatesApi";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
-import ImageUpload from "../components/ui/ImageUpload";
+import ProfileMediaMenu from "../components/ui/ProfileMediaMenu";
 import EmptyState from "../components/ui/EmptyState";
 import { TableSkeleton } from "../components/ui/Skeleton";
 
@@ -341,13 +341,13 @@ function PartiesSection({ msg, setMsg }) {
                   onMouseEnter={e => { e.currentTarget.style.borderColor = T.border; e.currentTarget.style.background = T.surface; }}
                   onMouseLeave={e => { e.currentTarget.style.borderColor = T.borderLight; e.currentTarget.style.background = T.surfaceAlt; }}
                 >
-                  <ImageUpload
+                  <ProfileMediaMenu
                     currentUrl={imageUrl(p.symbol_path)}
                     onUpload={(file) => handleSymbolUpload(p, file)}
                     onRemove={() => handleSymbolRemove(p)}
                     uploading={uploading[p.id]}
-                    label=""
-                    size={52}
+                    size={48}
+                    shape="square"
                   />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 2 }}>
