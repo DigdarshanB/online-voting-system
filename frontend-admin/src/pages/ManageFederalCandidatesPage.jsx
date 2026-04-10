@@ -308,7 +308,7 @@ function CandidatesPanel({ setMsg }) {
   const { parties } = useParties();
   const { profiles, loading, reload } = useCandidateProfiles();
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: "", party_id: "", date_of_birth: "", bio: "" });
+  const [form, setForm] = useState({ full_name: "", gender: "", date_of_birth: "", address: "", citizenship_no: "", party_id: "" });
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [confirmDel, setConfirmDel] = useState(null);
@@ -321,19 +321,20 @@ function CandidatesPanel({ setMsg }) {
     const q = search.toLowerCase();
     return profiles.filter(c => {
       const pName = partyMap[c.party_id]?.name || "";
-      return c.name.toLowerCase().includes(q) || pName.toLowerCase().includes(q);
+      return c.full_name.toLowerCase().includes(q) || pName.toLowerCase().includes(q);
     });
   }, [profiles, search, partyMap]);
 
   const handleCreate = async () => {
-    if (!form.name.trim() || !form.party_id) {
-      setMsg({ type: "error", text: "Name and party are required" }); return;
+    if (!form.full_name.trim()) {
+      setMsg({ type: "error", text: "Full name is required" }); return;
     }
     setSaving(true);
+    const payload = { ...form, party_id: form.party_id ? Number(form.party_id) : null, gender: form.gender || null, date_of_birth: form.date_of_birth || null };
     try {
-      await createProfile({ name: form.name, party_id: Number(form.party_id), date_of_birth: form.date_of_birth || undefined, bio: form.bio || undefined });
+      await createProfile(payload);
       setMsg({ type: "success", text: "Candidate profile created" });
-      setShowForm(false); setForm({ name: "", party_id: "", date_of_birth: "", bio: "" }); reload();
+      setShowForm(false); setForm({ full_name: "", gender: "", date_of_birth: "", address: "", citizenship_no: "", party_id: "" }); reload();
     } catch (err) { setMsg({ type: "error", text: errMsg(err) }); }
     finally { setSaving(false); }
   };
@@ -393,15 +394,21 @@ function CandidatesPanel({ setMsg }) {
         {showForm && (
           <div style={{ padding: 20, borderBottom: `1px solid ${T.borderLight}`, background: T.surfaceAlt }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 12 }}>
-              <label style={lbl}>Name *<input style={inp} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></label>
-              <label style={lbl}>Party *
-                <select style={sel} value={form.party_id} onChange={e => setForm({ ...form, party_id: e.target.value })}>
-                  <option value="">Select party</option>
-                  {parties.map(p => <option key={p.id} value={p.id}>{p.name} ({p.abbreviation})</option>)}
+              <label style={lbl}>Full Name *<input style={inp} value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} /></label>
+              <label style={lbl}>Gender
+                <select style={sel} value={form.gender} onChange={e => setForm({ ...form, gender: e.target.value })}>
+                  <option value="">—</option><option value="MALE">Male</option><option value="FEMALE">Female</option><option value="OTHER">Other</option>
                 </select>
               </label>
               <label style={lbl}>Date of birth<input style={inp} type="date" value={form.date_of_birth} onChange={e => setForm({ ...form, date_of_birth: e.target.value })} /></label>
-              <label style={lbl}>Bio<input style={inp} value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} /></label>
+              <label style={lbl}>Citizenship No<input style={inp} value={form.citizenship_no} onChange={e => setForm({ ...form, citizenship_no: e.target.value })} /></label>
+              <label style={lbl}>Address<input style={inp} value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} /></label>
+              <label style={lbl}>Party
+                <select style={sel} value={form.party_id} onChange={e => setForm({ ...form, party_id: e.target.value })}>
+                  <option value="">Independent</option>
+                  {parties.filter(p => p.is_active).map(p => <option key={p.id} value={p.id}>{p.name} ({p.abbreviation})</option>)}
+                </select>
+              </label>
             </div>
             <Btn onClick={handleCreate} loading={saving}>Create profile</Btn>
           </div>
@@ -421,8 +428,10 @@ function CandidatesPanel({ setMsg }) {
                 <tr style={{ background: T.surfaceAlt }}>
                   <th style={thStyle}>Profile</th>
                   <th style={thStyle}>Candidate</th>
-                  <th style={thStyle}>Party</th>
+                  <th style={thStyle}>Gender</th>
                   <th style={thStyle}>DOB</th>
+                  <th style={thStyle}>Citizenship</th>
+                  <th style={thStyle}>Party</th>
                   <th style={{ ...thStyle, width: 60, textAlign: "center" }}>Actions</th>
                 </tr>
               </thead>
@@ -446,12 +455,15 @@ function CandidatesPanel({ setMsg }) {
                         />
                       </td>
                       <td style={tdStyle}>
-                        <div style={{ fontWeight: 600, fontSize: 13, color: T.text, lineHeight: 1.3 }}>{c.name}</div>
-                        {c.bio && <div style={{ fontSize: 11, color: T.muted, marginTop: 2, maxWidth: 240, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.bio}</div>}
+                        <div style={{ fontWeight: 600, fontSize: 13, color: T.text, lineHeight: 1.3 }}>{c.full_name}</div>
+                        {!c.is_active && <AdminBadge map={{ INACTIVE: { bg: T.errorBg, color: T.error, label: "Inactive" } }} status="INACTIVE" />}
                       </td>
+                      <td style={{ ...tdStyle, fontSize: 12, color: T.muted }}>{c.gender || "—"}</td>
+                      <td style={{ ...tdStyle, fontSize: 12, color: T.muted }}>{c.date_of_birth || "—"}</td>
+                      <td style={{ ...tdStyle, fontSize: 12, color: T.muted }}>{c.citizenship_no || "—"}</td>
                       <td style={tdStyle}>
                         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                          <span style={{ fontSize: 13, color: T.textSecondary }}>{party?.name || "—"}</span>
+                          <span style={{ fontSize: 13, color: T.textSecondary }}>{party?.name || <span style={{ color: T.muted }}>Independent</span>}</span>
                           {party?.abbreviation && (
                             <span style={{
                               fontSize: 10, fontWeight: 700, padding: "2px 7px",
@@ -462,7 +474,6 @@ function CandidatesPanel({ setMsg }) {
                           )}
                         </div>
                       </td>
-                      <td style={{ ...tdStyle, fontSize: 12, color: T.muted }}>{c.date_of_birth || "—"}</td>
                       <td style={{ ...tdStyle, textAlign: "center" }}>
                         <Btn variant="ghost" small onClick={() => setConfirmDel(c)} style={{ color: T.error }}>
                           <Trash2 size={14} />
@@ -478,7 +489,7 @@ function CandidatesPanel({ setMsg }) {
       </SectionCard>
 
       <ConfirmDialog open={!!confirmDel} onClose={() => setConfirmDel(null)} onConfirm={handleDelete}
-        title="Delete candidate profile" body={`Delete profile for "${confirmDel?.name}"? This action cannot be undone.`} confirmLabel="Delete" variant="danger" />
+        title="Delete candidate profile" body={`Delete profile for "${confirmDel?.full_name}"? This action cannot be undone.`} confirmLabel="Delete" variant="danger" />
     </>
   );
 }
@@ -547,20 +558,20 @@ function NominationsPanel({ setMsg }) {
     const q = search.toLowerCase();
     return nominations.filter(n => {
       const prof = profileMap[n.candidate_id];
-      return prof?.name?.toLowerCase().includes(q) || String(n.id).includes(q);
+      return prof?.full_name?.toLowerCase().includes(q) || String(n.id).includes(q);
     });
   }, [nominations, search, profileMap]);
 
   const handleCreate = async () => {
-    if (!form.contest_id || !form.candidate_id || !form.party_id) {
-      setMsg({ type: "error", text: "Contest, candidate, and party are required" }); return;
+    if (!form.contest_id || !form.candidate_id) {
+      setMsg({ type: "error", text: "Contest and candidate are required" }); return;
     }
     setSaving(true);
     try {
       await createFptpNomination(selectedElection, {
         contest_id: Number(form.contest_id),
         candidate_id: Number(form.candidate_id),
-        party_id: Number(form.party_id),
+        party_id: form.party_id ? Number(form.party_id) : null,
       });
       setMsg({ type: "success", text: "Nomination created" });
       setShowForm(false); setForm({ contest_id: "", candidate_id: "", party_id: "" });
@@ -601,7 +612,7 @@ function NominationsPanel({ setMsg }) {
           <label style={{ ...lbl, minWidth: 200, flex: 1 }}>Contest filter
             <select style={sel} value={selectedContest} onChange={e => setSelectedContest(e.target.value)}>
               <option value="">All contests</option>
-              {contests.map(c => <option key={c.id} value={c.id}>{c.name || `Contest #${c.id}`} ({c.contest_type})</option>)}
+              {contests.map(c => <option key={c.id} value={c.id}>{c.title} ({c.contest_type})</option>)}
             </select>
           </label>
         )}
@@ -640,19 +651,24 @@ function NominationsPanel({ setMsg }) {
               <label style={lbl}>Contest *
                 <select style={sel} value={form.contest_id} onChange={e => setForm({ ...form, contest_id: e.target.value })}>
                   <option value="">Select contest</option>
-                  {contests.map(c => <option key={c.id} value={c.id}>{c.name || `Contest #${c.id}`}</option>)}
+                  {contests.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+                </select>
+              </label>
+              <label style={lbl}>Party
+                <select style={sel} value={form.party_id} onChange={e => {
+                  const newPartyId = e.target.value;
+                  const currentCandidate = profiles.find(c => String(c.id) === form.candidate_id);
+                  const candidateMatchesParty = currentCandidate && (!newPartyId ? true : String(currentCandidate.party_id) === newPartyId);
+                  setForm({ ...form, party_id: newPartyId, candidate_id: candidateMatchesParty ? form.candidate_id : "" });
+                }}>
+                  <option value="">Independent / All</option>
+                  {parties.filter(p => p.is_active).map(p => <option key={p.id} value={p.id}>{p.name} ({p.abbreviation})</option>)}
                 </select>
               </label>
               <label style={lbl}>Candidate *
                 <select style={sel} value={form.candidate_id} onChange={e => setForm({ ...form, candidate_id: e.target.value })}>
                   <option value="">Select candidate</option>
-                  {profiles.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
-              </label>
-              <label style={lbl}>Party *
-                <select style={sel} value={form.party_id} onChange={e => setForm({ ...form, party_id: e.target.value })}>
-                  <option value="">Select party</option>
-                  {parties.map(p => <option key={p.id} value={p.id}>{p.name} ({p.abbreviation})</option>)}
+                  {profiles.filter(c => c.is_active && (!form.party_id ? true : String(c.party_id) === form.party_id)).map(p => <option key={p.id} value={p.id}>{p.full_name}{p.party_id ? ` (${partyMap[p.party_id]?.abbreviation || ""})` : " (Independent)"}</option>)}
                 </select>
               </label>
             </div>
@@ -695,10 +711,10 @@ function NominationsPanel({ setMsg }) {
                       onMouseEnter={e => { e.currentTarget.style.background = T.surfaceAlt; }}
                       onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
                     >
-                      <td style={{ ...tdStyle, fontSize: 12, color: T.textSecondary }}>{contest?.name || `#${n.contest_id}`}</td>
-                      <td style={{ ...tdStyle, fontWeight: 600, color: T.text }}>{prof?.name || `#${n.candidate_id}`}</td>
+                      <td style={{ ...tdStyle, fontSize: 12, color: T.textSecondary }}>{contest?.title || `#${n.contest_id}`}</td>
+                      <td style={{ ...tdStyle, fontWeight: 600, color: T.text }}>{prof?.full_name || `#${n.candidate_id}`}</td>
                       <td style={tdStyle}>
-                        <span style={{ fontSize: 12, color: T.textSecondary }}>{party?.abbreviation || `#${n.party_id}`}</span>
+                        <span style={{ fontSize: 12, color: T.textSecondary }}>{party ? party.abbreviation : "Ind."}</span>
                       </td>
                       <td style={tdStyle}><AdminBadge map={NOM_MAP} status={n.status} /></td>
                       <td style={{ ...tdStyle, textAlign: "right" }}>
@@ -862,7 +878,7 @@ function PRListsPanel({ setMsg }) {
         <label style={{ ...lbl, minWidth: 240, flex: 1, maxWidth: 400 }}>Election
           <select style={sel} value={selectedElection} onChange={e => { setSelectedElection(e.target.value); setExpandedSub(null); }}>
             <option value="">Select election</option>
-            {elections.map(e => <option key={e.id} value={e.id}>{e.title} — {e.status.replace(/_/g, " ")}</option>)}
+            {elections.filter(e => ["NOMINATIONS_OPEN", "NOMINATIONS_CLOSED", "CANDIDATE_LIST_PUBLISHED"].includes(e.status)).map(e => <option key={e.id} value={e.id}>{e.title} — {e.status.replace(/_/g, " ")}</option>)}
           </select>
         </label>
       </div>
@@ -972,7 +988,7 @@ function PRListsPanel({ setMsg }) {
                                 return (
                                   <tr key={entry.id}>
                                     <td style={{ ...tdStyle, fontFamily: "monospace", fontWeight: 700, color: T.accent }}>{entry.list_position}</td>
-                                    <td style={{ ...tdStyle, fontWeight: 600, color: T.text }}>{prof?.name || `#${entry.candidate_id}`}</td>
+                                    <td style={{ ...tdStyle, fontWeight: 600, color: T.text }}>{prof?.full_name || `#${entry.candidate_id}`}</td>
                                     <td style={{ ...tdStyle, fontSize: 12, color: T.muted }}>{prof?.gender || "—"}</td>
                                     <td style={{ ...tdStyle, fontSize: 12, color: T.muted }}>{prof?.date_of_birth || "—"}</td>
                                     <td style={tdStyle}>
@@ -995,7 +1011,7 @@ function PRListsPanel({ setMsg }) {
                         <label style={{ ...lbl, flex: 1, minWidth: 140 }}>Candidate
                           <select style={sel} value={ef.candidate_id || ""} onChange={e => setEntryForm(p => ({ ...p, [sub.id]: { ...ef, candidate_id: e.target.value } }))}>
                             <option value="">Select</option>
-                            {profiles.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                            {profiles.filter(p => p.is_active).map(p => <option key={p.id} value={p.id}>{p.full_name}</option>)}
                           </select>
                         </label>
                         <label style={{ ...lbl, width: 90 }}>Position
