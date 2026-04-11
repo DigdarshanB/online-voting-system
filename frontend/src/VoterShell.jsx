@@ -16,6 +16,7 @@ import {
   UserCircle2,
   LogOut,
   Menu,
+  Users,
 } from "lucide-react";
 import { getToken, clearToken } from "./lib/authStorage";
 import "./VoterShell.css";
@@ -42,6 +43,7 @@ const PALETTE = {
 
 const MAIN_NAV_ITEMS = [
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
+  { label: "Candidates", to: "/candidates", icon: Users },
   { label: "Elections", to: "/elections", icon: Vote },
   { label: "Results", to: "/results", icon: BarChart3 },
 ];
@@ -55,6 +57,10 @@ const ROUTE_META = {
   "/dashboard": {
     title: "Voter Dashboard",
     subtitle: "Overview of your voting activity and upcoming elections",
+  },
+  "/candidates": {
+    title: "Nominated Candidates",
+    subtitle: "View candidates nominated for your eligible elections",
   },
   "/elections": {
     title: "Elections",

@@ -1349,3 +1349,316 @@ def cast_local_ballot_dispatch(
             detail="This endpoint is only for local elections",
         )
     return cast_local_ballot(db, election_id, voter, selections)
+
+
+# ── Voter-scoped nominated candidates by election family ─────
+
+
+def _get_approved_pr_parties(db: Session, election_id: int) -> list[dict]:
+    """Return approved PR party submissions for an election."""
+    rows = db.execute(
+        select(
+            Party.id.label("party_id"),
+            Party.name.label("party_name"),
+            Party.abbreviation.label("party_abbreviation"),
+            Party.symbol_path.label("party_symbol_path"),
+        )
+        .join(PrPartySubmission, PrPartySubmission.party_id == Party.id)
+        .where(
+            PrPartySubmission.election_id == election_id,
+            PrPartySubmission.status == "APPROVED",
+        )
+        .order_by(Party.name)
+    ).all()
+    return [
+        {
+            "party_id": r.party_id,
+            "party_name": r.party_name,
+            "party_abbreviation": r.party_abbreviation,
+            "party_symbol_path": r.party_symbol_path,
+        }
+        for r in rows
+    ]
+
+
+def get_eligible_nominations_by_family(
+    db: Session, voter: User, government_level: str
+) -> dict:
+    """Return nominated candidates the voter is eligible to see for a given
+    election family (FEDERAL / PROVINCIAL / LOCAL).
+
+    Reuses the same eligibility logic as list_voter_elections and the same
+    nomination-fetching pattern as get_ballot_info*.
+    Only APPROVED nominations from elections in VOTER_VISIBLE_STATUSES.
+    """
+    valid_levels = ("FEDERAL", "PROVINCIAL", "LOCAL")
+    if government_level not in valid_levels:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid election family. Must be one of {valid_levels}",
+        )
+
+    # ── Find eligible elections for this family ──────────────────
+    elections = (
+        db.execute(
+            select(Election).where(
+                Election.status.in_(VOTER_VISIBLE_STATUSES),
+                Election.government_level == government_level,
+            )
+            .order_by(Election.polling_start_at.desc(), Election.created_at.desc())
+        )
+        .scalars()
+        .all()
+    )
+
+    voter_constituency_id = _get_voter_constituency_id(db, voter.id)
+
+    eligible_elections = [
+        e
+        for e in elections
+        if _is_eligible_for_election(db, e, voter.id, voter_constituency_id)
+    ]
+
+    if not eligible_elections:
+        return {
+            "government_level": government_level,
+            "voter_area": None,
+            "elections": [],
+        }
+
+    # ── Resolve voter area info ──────────────────────────────────
+    voter_area_info = None
+
+    if government_level == "FEDERAL":
+        if voter_constituency_id:
+            constituency = db.execute(
+                select(Constituency)
+                .options(joinedload(Constituency.district))
+                .where(Constituency.id == voter_constituency_id)
+            ).unique().scalar_one_or_none()
+            if constituency:
+                voter_area_info = {
+                    "type": "constituency",
+                    "name": constituency.name,
+                    "district_name": (
+                        constituency.district.name
+                        if constituency.district
+                        else None
+                    ),
+                }
+
+    elif government_level == "PROVINCIAL":
+        assignment = _get_voter_area_assignment(db, voter.id, "PROVINCIAL")
+        if assignment:
+            area = db.get(AreaUnit, assignment.area_id)
+            if area:
+                voter_area_info = {
+                    "type": "provincial_constituency",
+                    "name": area.name,
+                    "code": area.code,
+                    "province_number": area.province_number,
+                }
+
+    elif government_level == "LOCAL":
+        assignment = _get_voter_area_assignment(db, voter.id, "LOCAL")
+        if assignment:
+            ward = db.get(AreaUnit, assignment.area_id)
+            if ward:
+                local_body = db.execute(
+                    select(AreaUnit).where(AreaUnit.code == ward.parent_code)
+                ).scalar_one_or_none()
+                voter_area_info = {
+                    "type": "ward",
+                    "ward_name": ward.name,
+                    "ward_number": ward.ward_number,
+                    "local_body_name": local_body.name if local_body else None,
+                    "local_body_category": local_body.category if local_body else None,
+                    "province_number": ward.province_number,
+                }
+
+    # ── Build nominations per eligible election ──────────────────
+    result_elections = []
+
+    for election in eligible_elections:
+        election_data = {
+            "id": election.id,
+            "title": election.title,
+            "status": election.status,
+            "election_subtype": election.election_subtype,
+            "province_code": election.province_code,
+            "polling_start_at": (
+                election.polling_start_at.isoformat()
+                if election.polling_start_at
+                else None
+            ),
+            "polling_end_at": (
+                election.polling_end_at.isoformat()
+                if election.polling_end_at
+                else None
+            ),
+            "contests": [],
+        }
+
+        if government_level == "FEDERAL":
+            _build_federal_contests(db, election, voter_constituency_id, election_data)
+        elif government_level == "PROVINCIAL":
+            _build_provincial_contests(db, election, voter, election_data)
+        elif government_level == "LOCAL":
+            _build_local_contests(db, election, voter, election_data)
+
+        result_elections.append(election_data)
+
+    return {
+        "government_level": government_level,
+        "voter_area": voter_area_info,
+        "elections": result_elections,
+    }
+
+
+def _build_federal_contests(
+    db: Session, election: Election, voter_constituency_id: int, out: dict
+) -> None:
+    """Append FPTP + PR contest data for a federal election."""
+    # FPTP for voter's constituency
+    fptp_contest = db.execute(
+        select(ElectionContest).where(
+            ElectionContest.election_id == election.id,
+            ElectionContest.contest_type == CONTEST_TYPE_FPTP,
+            ElectionContest.constituency_id == voter_constituency_id,
+        )
+    ).scalar_one_or_none()
+
+    if fptp_contest:
+        rows = _get_approved_nominations_for_contest(db, fptp_contest.id)
+        out["contests"].append({
+            "contest_id": fptp_contest.id,
+            "contest_type": CONTEST_TYPE_FPTP,
+            "contest_title": fptp_contest.title,
+            "seat_count": fptp_contest.seat_count,
+            "candidates": _format_candidates(rows),
+        })
+
+    # PR (nationwide)
+    pr_contest = db.execute(
+        select(ElectionContest).where(
+            ElectionContest.election_id == election.id,
+            ElectionContest.contest_type == CONTEST_TYPE_PR,
+            ElectionContest.constituency_id.is_(None),
+        )
+    ).scalar_one_or_none()
+
+    if pr_contest:
+        out["contests"].append({
+            "contest_id": pr_contest.id,
+            "contest_type": CONTEST_TYPE_PR,
+            "contest_title": pr_contest.title,
+            "seat_count": pr_contest.seat_count,
+            "parties": _get_approved_pr_parties(db, election.id),
+        })
+
+
+def _build_provincial_contests(
+    db: Session, election: Election, voter: User, out: dict
+) -> None:
+    """Append FPTP + PR contest data for a provincial election."""
+    assignment = _get_voter_area_assignment(db, voter.id, "PROVINCIAL")
+    if not assignment:
+        return
+
+    # FPTP for voter's provincial constituency
+    fptp_contest = db.execute(
+        select(ElectionContest).where(
+            ElectionContest.election_id == election.id,
+            ElectionContest.contest_type == CONTEST_TYPE_FPTP,
+            ElectionContest.area_id == assignment.area_id,
+        )
+    ).scalar_one_or_none()
+
+    if fptp_contest:
+        rows = _get_approved_nominations_for_contest(db, fptp_contest.id)
+        out["contests"].append({
+            "contest_id": fptp_contest.id,
+            "contest_type": CONTEST_TYPE_FPTP,
+            "contest_title": fptp_contest.title,
+            "seat_count": fptp_contest.seat_count,
+            "candidates": _format_candidates(rows),
+        })
+
+    # PR (province-wide)
+    pr_contest = db.execute(
+        select(ElectionContest).where(
+            ElectionContest.election_id == election.id,
+            ElectionContest.contest_type == CONTEST_TYPE_PR,
+        )
+    ).scalar_one_or_none()
+
+    if pr_contest:
+        out["contests"].append({
+            "contest_id": pr_contest.id,
+            "contest_type": CONTEST_TYPE_PR,
+            "contest_title": pr_contest.title,
+            "seat_count": pr_contest.seat_count,
+            "parties": _get_approved_pr_parties(db, election.id),
+        })
+
+
+def _build_local_contests(
+    db: Session, election: Election, voter: User, out: dict
+) -> None:
+    """Append all 6 contest types for a local election."""
+    assignment = _get_voter_area_assignment(db, voter.id, "LOCAL")
+    if not assignment:
+        return
+
+    ward = db.get(AreaUnit, assignment.area_id)
+    if not ward or ward.category != "WARD":
+        return
+
+    local_body = db.execute(
+        select(AreaUnit).where(AreaUnit.code == ward.parent_code)
+    ).scalar_one_or_none()
+    if not local_body:
+        return
+
+    # Head contests (scoped to local body)
+    for ct in (CONTEST_TYPE_MAYOR, CONTEST_TYPE_DEPUTY_MAYOR):
+        contest = db.execute(
+            select(ElectionContest).where(
+                ElectionContest.election_id == election.id,
+                ElectionContest.contest_type == ct,
+                ElectionContest.area_id == local_body.id,
+            )
+        ).scalar_one_or_none()
+        if contest:
+            rows = _get_approved_nominations_for_contest(db, contest.id)
+            out["contests"].append({
+                "contest_id": contest.id,
+                "contest_type": ct,
+                "contest_title": contest.title,
+                "seat_count": contest.seat_count,
+                "candidates": _format_candidates(rows),
+            })
+
+    # Ward contests (scoped to voter's ward)
+    for ct in (
+        CONTEST_TYPE_WARD_CHAIR,
+        CONTEST_TYPE_WARD_WOMAN_MEMBER,
+        CONTEST_TYPE_WARD_DALIT_WOMAN_MEMBER,
+        CONTEST_TYPE_WARD_MEMBER_OPEN,
+    ):
+        contest = db.execute(
+            select(ElectionContest).where(
+                ElectionContest.election_id == election.id,
+                ElectionContest.contest_type == ct,
+                ElectionContest.area_id == ward.id,
+            )
+        ).scalar_one_or_none()
+        if contest:
+            rows = _get_approved_nominations_for_contest(db, contest.id)
+            out["contests"].append({
+                "contest_id": contest.id,
+                "contest_type": ct,
+                "contest_title": contest.title,
+                "seat_count": contest.seat_count,
+                "candidates": _format_candidates(rows),
+            })

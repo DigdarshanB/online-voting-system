@@ -9,6 +9,7 @@ from app.services.ballot_service import (
     cast_dual_ballot_dispatch,
     cast_local_ballot_dispatch,
     get_ballot_info_dispatch,
+    get_eligible_nominations_by_family,
     list_voter_elections,
 )
 
@@ -54,6 +55,18 @@ def get_elections(
 ):
     _require_active_voter(current_user)
     return list_voter_elections(db, current_user)
+
+
+@router.get("/candidates/{family}")
+def get_candidates_by_family(
+    family: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Return nominated candidates the voter is eligible to see for a given
+    election family (FEDERAL / PROVINCIAL / LOCAL)."""
+    _require_active_voter(current_user)
+    return get_eligible_nominations_by_family(db, current_user, family.upper())
 
 
 @router.get("/{election_id}/ballot")

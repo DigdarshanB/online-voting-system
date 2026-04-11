@@ -34,6 +34,8 @@ import VoterResults from "./pages/VoterResults";
 import VoterResultsHub from "./pages/VoterResultsHub";
 import VoterReceipt from "./pages/VoterReceipt";
 import VoterAccount from "./pages/VoterAccount";
+import VoterCandidates from "./pages/VoterCandidates";
+import VoterCandidatesByFamily from "./pages/VoterCandidatesByFamily";
 
 import { RequireActiveVoter, RequireAuth } from "./lib/routeGuards";
 
@@ -84,6 +86,26 @@ export default function App() {
                 <VoterDashboard user={user} />
               </VoterShell>
             )}
+          </RequireActiveVoter>
+        }
+      />
+      <Route
+        path="/candidates"
+        element={
+          <RequireActiveVoter>
+            <VoterShell title="Nominated Candidates" subtitle="View candidates nominated for your eligible elections">
+              <VoterCandidates />
+            </VoterShell>
+          </RequireActiveVoter>
+        }
+      />
+      <Route
+        path="/candidates/:family"
+        element={
+          <RequireActiveVoter>
+            <VoterShell title="Nominated Candidates" subtitle="View candidates nominated for your eligible elections">
+              <VoterCandidatesByFamily />
+            </VoterShell>
           </RequireActiveVoter>
         }
       />
