@@ -12,7 +12,7 @@ import {
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import { T, STATUS_MAP, CONTEST_COLORS } from "../components/ui/tokens";
 import {
-  PageContainer, BackLink, SummaryStrip, SummaryMetric, StatusBanner,
+  PageContainer, BackLink, StatusBanner,
   SectionCard, SectionHeader, AdminBadge, Btn, WorkflowTimeline,
   AdminKeyframes, formatDateTime, inputStyle, labelStyle,
 } from "../components/ui/AdminUI";
@@ -175,28 +175,240 @@ export default function ManageProvincialElectionsPage() {
     <PageContainer>
       <AdminKeyframes />
 
-      {/* Back + primary CTA */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
-        <BackLink onClick={() => navigate("/admin/manage-elections")}>Election Hub</BackLink>
-        <Btn onClick={() => { clearMessages(); setShowCreate(true); }}
-          style={{ background: T.purple, border: "none", color: "#fff" }}>
-          <Plus size={16} strokeWidth={2.5} /> New provincial election
-        </Btn>
-      </div>
+      {/* Back nav */}
+      <BackLink onClick={() => navigate("/admin/manage-elections")}>Election Hub</BackLink>
 
-      {/* Summary strip */}
-      <SummaryStrip>
-        <SummaryMetric label="Total elections" value={elections.length} icon={Building2} color={T.purple} />
-        <SummaryMetric label="Active / in progress" value={activeCount} color={activeCount > 0 ? T.success : T.muted} />
-        <SummaryMetric label="Draft / setup" value={draftCount} color={draftCount > 0 ? T.warn : T.muted} />
-        <SummaryMetric label="Finalized / archived" value={finalizedCount} />
-        <SummaryMetric label="Provinces with elections" value={`${provincesWithElections} / 7`} color={T.purple} />
-        <SummaryMetric
-          label="Master data"
-          value={masterDataReady ? "Ready" : "Not ready"}
-          color={masterDataReady ? T.success : T.warn}
-        />
-      </SummaryStrip>
+      {/* ── Unified dashboard header ───────────────────────────── */}
+      <div style={{
+        background: T.surface,
+        border: `1px solid ${T.border}`,
+        borderRadius: T.radius.xl,
+        marginBottom: T.space.xl,
+        overflow: "hidden",
+        boxShadow: T.shadow.md,
+      }}>
+        {/* Title + CTA row */}
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "20px 28px",
+          gap: 16,
+          flexWrap: "wrap",
+        }}>
+          <div>
+            <h2 style={{
+              margin: "0 0 3px",
+              fontSize: 20,
+              fontWeight: 800,
+              color: T.navy,
+              lineHeight: 1.25,
+            }}>
+              Provincial Elections
+            </h2>
+            <p style={{ margin: 0, fontSize: 13, color: T.muted }}>
+              Manage Nepal’s 7 Provincial Assembly elections · Article 176, Constitution of Nepal
+            </p>
+          </div>
+          <Btn
+            onClick={() => { clearMessages(); setShowCreate(true); }}
+            style={{ background: T.purple, border: "none", color: "#fff", flexShrink: 0 }}
+          >
+            <Plus size={16} strokeWidth={2.5} /> New provincial election
+          </Btn>
+        </div>
+
+        {/* KPI cards row */}
+        <div style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: T.space.md,
+          padding: "0 20px 20px",
+          borderTop: `1px solid ${T.borderLight}`,
+          paddingTop: T.space.md,
+        }}>
+
+          {/* Total elections */}
+          <div style={{
+            flex: "1 1 130px",
+            background: T.surface,
+            border: `1px solid ${T.border}`,
+            borderRadius: T.radius.lg,
+            padding: "14px 18px",
+            boxShadow: T.shadow.sm,
+          }}>
+            <span style={{
+              display: "block", fontSize: 10, fontWeight: 700, color: T.muted,
+              textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8,
+            }}>
+              Total elections
+            </span>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+              <Building2 size={14} color={T.purple} strokeWidth={2.5} />
+              <span style={{ fontSize: 26, fontWeight: 800, color: T.purple, lineHeight: 1 }}>
+                {elections.length}
+              </span>
+            </div>
+            <span style={{ display: "block", fontSize: 11, color: T.muted, marginTop: 5 }}>
+              provincial assembly
+            </span>
+          </div>
+
+          {/* Active / in progress */}
+          <div style={{
+            flex: "1 1 130px",
+            background: T.surface,
+            border: `1px solid ${T.border}`,
+            borderRadius: T.radius.lg,
+            padding: "14px 18px",
+            boxShadow: T.shadow.sm,
+          }}>
+            <span style={{
+              display: "block", fontSize: 10, fontWeight: 700, color: T.muted,
+              textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8,
+            }}>
+              Active / in progress
+            </span>
+            <span style={{
+              display: "block", fontSize: 26, fontWeight: 800, lineHeight: 1,
+              color: activeCount > 0 ? T.success : T.muted,
+            }}>
+              {activeCount}
+            </span>
+            <span style={{ display: "block", fontSize: 11, color: T.muted, marginTop: 5 }}>
+              configured → counting
+            </span>
+          </div>
+
+          {/* Draft / setup */}
+          <div style={{
+            flex: "1 1 130px",
+            background: T.surface,
+            border: `1px solid ${T.border}`,
+            borderRadius: T.radius.lg,
+            padding: "14px 18px",
+            boxShadow: T.shadow.sm,
+          }}>
+            <span style={{
+              display: "block", fontSize: 10, fontWeight: 700, color: T.muted,
+              textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8,
+            }}>
+              Draft / setup
+            </span>
+            <span style={{
+              display: "block", fontSize: 26, fontWeight: 800, lineHeight: 1,
+              color: draftCount > 0 ? T.warn : T.muted,
+            }}>
+              {draftCount}
+            </span>
+            <span style={{ display: "block", fontSize: 11, color: T.muted, marginTop: 5 }}>
+              awaiting configuration
+            </span>
+          </div>
+
+          {/* Finalized / archived */}
+          <div style={{
+            flex: "1 1 130px",
+            background: T.surface,
+            border: `1px solid ${T.border}`,
+            borderRadius: T.radius.lg,
+            padding: "14px 18px",
+            boxShadow: T.shadow.sm,
+          }}>
+            <span style={{
+              display: "block", fontSize: 10, fontWeight: 700, color: T.muted,
+              textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8,
+            }}>
+              Finalized / archived
+            </span>
+            <span style={{
+              display: "block", fontSize: 26, fontWeight: 800, lineHeight: 1, color: T.text,
+            }}>
+              {finalizedCount}
+            </span>
+            <span style={{ display: "block", fontSize: 11, color: T.muted, marginTop: 5 }}>
+              completed elections
+            </span>
+          </div>
+
+          {/* Provinces with elections */}
+          <div style={{
+            flex: "1 1 150px",
+            background: T.surface,
+            border: `1px solid ${T.border}`,
+            borderRadius: T.radius.lg,
+            padding: "14px 18px",
+            boxShadow: T.shadow.sm,
+          }}>
+            <span style={{
+              display: "block", fontSize: 10, fontWeight: 700, color: T.muted,
+              textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8,
+            }}>
+              Provinces with elections
+            </span>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+              <span style={{ fontSize: 26, fontWeight: 800, color: T.purple, lineHeight: 1 }}>
+                {provincesWithElections}
+              </span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: T.muted }}>&thinsp;/ 7</span>
+            </div>
+            <div style={{ display: "flex", gap: 3, marginTop: 8, flexWrap: "wrap" }}>
+              {PROVINCE_SEATS.map(p => {
+                const has = elections.some(e => e.province_code === p.code);
+                return (
+                  <div key={p.code} title={p.code} style={{
+                    width: 9, height: 9, borderRadius: 2,
+                    background: has ? T.purple : T.borderLight,
+                  }} />
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Master data */}
+          <div style={{
+            flex: "1 1 165px",
+            background: masterDataReady ? T.successBg : T.warnBg,
+            border: `1px solid ${masterDataReady ? T.successBorder : T.warnBorder}`,
+            borderRadius: T.radius.lg,
+            padding: "14px 18px",
+            boxShadow: T.shadow.sm,
+          }}>
+            <span style={{
+              display: "block", fontSize: 10, fontWeight: 700, color: T.muted,
+              textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8,
+            }}>
+              Master data
+            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+              {masterDataLoading
+                ? <Loader2 size={15} color={T.muted} style={{ animation: "adminSpin 0.8s linear infinite", flexShrink: 0 }} />
+                : masterDataReady
+                  ? <CheckCircle2 size={16} color={T.success} strokeWidth={2.5} style={{ flexShrink: 0 }} />
+                  : <AlertTriangle size={16} color={T.warn} strokeWidth={2.5} style={{ flexShrink: 0 }} />
+              }
+              <span style={{
+                fontSize: 22, fontWeight: 800, lineHeight: 1,
+                color: masterDataReady ? T.success : T.warn,
+              }}>
+                {masterDataReady ? "Ready" : "Not ready"}
+              </span>
+            </div>
+            <span style={{
+              display: "block", fontSize: 11, fontWeight: 600, marginTop: 5,
+              color: masterDataReady ? T.success : T.warn,
+            }}>
+              {masterDataLoading
+                ? "Checking…"
+                : masterDataReady
+                  ? `${masterData?.provinces ?? 7} provinces \u00b7 ${masterData?.area_units_total ?? 0} units`
+                  : `${masterData?.provinces ?? 0} / 7 provinces seeded`
+              }
+            </span>
+          </div>
+
+        </div>
+      </div>
 
       {/* Master data banner */}
       {masterData && !masterData.provincial_ready && (
