@@ -144,7 +144,11 @@ class PrValidationResult(BaseModel):
 class CandidateReadiness(BaseModel):
     ready: bool
     issues: list[str]
-    fptp_contests_total: int
-    fptp_contests_filled: int
-    pr_submissions_total: int
-    pr_submissions_valid: int
+    contest_types: list[str] = []
+    # Dynamic detail fields: {contest_type}_contests_total, {contest_type}_contests_filled,
+    # pr_submissions_total, pr_submissions_valid, etc.
+    # Using model_config to allow extra fields from the service dict.
+
+    class Config:
+        from_attributes = True
+        extra = "allow"

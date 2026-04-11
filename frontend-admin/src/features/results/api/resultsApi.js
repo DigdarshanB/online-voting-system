@@ -54,3 +54,8 @@ export async function getProvincialSummary(countRunId) {
   const res = await apiClient.get(`/admin/results/count-runs/${countRunId}/provincial-summary`);
   return res.data;
 }
+
+export async function getLocalSummary(countRunId) {
+  const res = await apiClient.get(`/admin/results/count-runs/${countRunId}/local-summary`);
+  return res.data;
+}

@@ -21,6 +21,7 @@ from app.models.user import User
 from app.schemas.result import (
     CountRunRead,
     FptpResultRowRead,
+    LocalResultSummary,
     PrElectedMemberRead,
     PrResultRowRead,
     ProvincialResultSummary,
@@ -36,6 +37,7 @@ from app.services.count_service import (
     get_count_run,
     get_count_runs,
     get_fptp_results,
+    get_local_result_summary,
     get_pr_elected_members,
     get_pr_results,
     get_provincial_result_summary,
@@ -238,5 +240,24 @@ def get_provincial_summary(
     _require_admin(current_user)
     try:
         return get_provincial_result_summary(db, count_run_id)
+    except CountServiceError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+# ── Local result summary ────────────────────────────────────────
+
+
+@router.get(
+    "/count-runs/{count_run_id}/local-summary",
+    response_model=LocalResultSummary,
+)
+def get_local_summary(
+    count_run_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    _require_admin(current_user)
+    try:
+        return get_local_result_summary(db, count_run_id)
     except CountServiceError as e:
         raise HTTPException(status_code=404, detail=str(e))

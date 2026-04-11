@@ -26,13 +26,13 @@ class BallotEntry(Base):
         nullable=False,
         index=True,
     )
-    ballot_type: Mapped[str] = mapped_column(String(10), nullable=False)
+    ballot_type: Mapped[str] = mapped_column(String(20), nullable=False)
     encrypted_choice: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
     nonce: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
 
     __table_args__ = (
         UniqueConstraint(
-            "ballot_id", "ballot_type",
-            name="uq_one_entry_per_ballot_type",
+            "ballot_id", "contest_id",
+            name="uq_one_entry_per_ballot_contest",
         ),
     )

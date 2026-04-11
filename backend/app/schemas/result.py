@@ -141,3 +141,50 @@ class ProvincialResultSummary(ResultSummary):
     assembly_composition: list[AssemblyPartyComposition] = []
     assembly_total_seats: int = 0
     assembly_seats_filled: int = 0
+
+
+# ── Local Result Summary ────────────────────────────────────────
+
+
+class LocalContestCandidate(BaseModel):
+    nomination_id: int
+    candidate_name: str
+    party_name: str | None = None
+    vote_count: int = 0
+    rank: int = 0
+    is_winner: bool = False
+    requires_adjudication: bool = False
+
+
+class LocalContestResult(BaseModel):
+    contest_id: int
+    contest_type: str
+    contest_title: str
+    area_name: str | None = None
+    seat_count: int = 1
+    candidates: list[LocalContestCandidate] = []
+
+
+class LocalWardResult(BaseModel):
+    area_id: int
+    ward_name: str
+    ward_number: int | None = None
+    contests: list[LocalContestResult] = []
+
+
+class LocalSummaryTotals(BaseModel):
+    total_direct_contests: int = 0
+    total_seats: int = 0
+    seats_filled: int = 0
+    adjudication_required: int = 0
+    wards_counted: int = 0
+
+
+class LocalResultSummary(ResultSummary):
+    """Extended summary for local elections with head/ward breakdowns."""
+    government_level: str | None = None
+    election_title: str | None = None
+    election_subtype: str | None = None
+    head_results: list[LocalContestResult] = []
+    ward_results: list[LocalWardResult] = []
+    local_summary: LocalSummaryTotals | None = None

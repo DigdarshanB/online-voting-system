@@ -38,7 +38,14 @@ from app.core.federal_constants import (
     CONTEST_TYPE_PR,
     PR_THRESHOLD_FRACTION,
 )
+from app.core.election_constants import (
+    ALL_LOCAL_CONTEST_TYPES,
+    LOCAL_HEAD_CONTEST_TYPES,
+    LOCAL_WARD_CONTEST_TYPES,
+    CONTEST_TYPE_WARD_MEMBER_OPEN,
+)
 from app.core.provincial_constants import PROVINCIAL_PR_THRESHOLD_FRACTION
+from app.models.area_unit import AreaUnit
 from app.models.ballot import Ballot
 from app.models.ballot_entry import BallotEntry
 from app.models.candidate_profile import CandidateProfile
@@ -145,22 +152,39 @@ def execute_count(db: Session, count_run_id: int) -> CountRun:
         fptp_votes: dict[int, list[int]] = defaultdict(list)   # contest_id → [nomination_id, ...]
         pr_votes: list[int] = []                                # [party_id, ...]
 
+        election = db.get(Election, election_id)
+        is_local = election and election.government_level == "LOCAL"
+
         for entry in entries:
             payload = _decrypt_choice(entry.encrypted_choice, entry.nonce)
             if entry.ballot_type == CONTEST_TYPE_FPTP:
                 fptp_votes[payload["contest_id"]].append(payload["nomination_id"])
             elif entry.ballot_type == CONTEST_TYPE_PR:
                 pr_votes.append(payload["party_id"])
+            elif entry.ballot_type in ALL_LOCAL_CONTEST_TYPES:
+                cid = payload["contest_id"]
+                if "nomination_ids" in payload:
+                    # WARD_MEMBER_OPEN: 2 picks stored in one entry
+                    for nid in payload["nomination_ids"]:
+                        fptp_votes[cid].append(nid)
+                else:
+                    fptp_votes[cid].append(payload["nomination_id"])
 
-        # ── 3. FPTP tally ──────────────────────────────────────
-        fptp_adj = _tally_fptp(db, count_run, fptp_votes)
+        # ── 3. FPTP / direct-contest tally ─────────────────────
+        if is_local:
+            fptp_adj = _tally_local_direct(db, count_run, fptp_votes, election)
+        else:
+            fptp_adj = _tally_fptp(db, count_run, fptp_votes)
 
         # ── 4. PR tally + Sainte-Laguë allocation ──────────────
-        election = db.get(Election, election_id)
-        pr_adj = _tally_pr(db, count_run, pr_votes, election)
+        if is_local:
+            pr_adj = 0  # no PR in local elections
+        else:
+            pr_adj = _tally_pr(db, count_run, pr_votes, election)
 
         # ── 5. Fill PR elected members from party lists ─────────
-        _fill_pr_elected_members(db, count_run, election)
+        if not is_local:
+            _fill_pr_elected_members(db, count_run, election)
 
         count_run.total_fptp_adjudication = fptp_adj
         count_run.total_pr_adjudication = pr_adj
@@ -201,46 +225,68 @@ def finalize_count(db: Session, count_run_id: int) -> CountRun:
     # ── Check for unresolved adjudication ───────────────────────
     if count_run.total_fptp_adjudication > 0:
         raise CountServiceError(
-            f"Cannot finalize: {count_run.total_fptp_adjudication} FPTP contest(s) "
+            f"Cannot finalize: {count_run.total_fptp_adjudication} contest(s) "
             "require adjudication (unresolved ties)"
         )
-    if count_run.total_pr_adjudication > 0:
+
+    election = db.get(Election, count_run.election_id)
+    is_local = election and election.government_level == "LOCAL"
+
+    if not is_local and count_run.total_pr_adjudication > 0:
         raise CountServiceError(
             f"Cannot finalize: {count_run.total_pr_adjudication} PR seat-boundary "
             "quotient tie(s) require adjudication"
         )
 
-    election = db.get(Election, count_run.election_id)
-
     # ── Province-scoped completeness validation ─────────────────
     if election and election.government_level == "PROVINCIAL":
         _validate_provincial_completeness(db, count_run, election)
 
-    # ── Result completeness: every FPTP contest must have a winner ─
+    # ── Result completeness: every direct contest must have winners ─
     fptp_rows = get_fptp_results(db, count_run_id)
-    fptp_contests = db.execute(
-        select(ElectionContest).where(
-            ElectionContest.election_id == count_run.election_id,
-            ElectionContest.contest_type == CONTEST_TYPE_FPTP,
-        )
-    ).scalars().all()
-    winners_by_contest = {r.contest_id for r in fptp_rows if r.is_winner}
-    contest_ids = {c.id for c in fptp_contests}
-    missing_winners = contest_ids - winners_by_contest
-    if missing_winners:
-        raise CountServiceError(
-            f"Cannot finalize: {len(missing_winners)} FPTP contest(s) have no declared winner"
-        )
 
-    # ── PR elected members must be populated ────────────────────
-    pr_rows = get_pr_results(db, count_run_id)
-    total_pr_seats_allocated = sum(r.allocated_seats for r in pr_rows)
-    pr_members = get_pr_elected_members(db, count_run_id)
-    if total_pr_seats_allocated > 0 and len(pr_members) < total_pr_seats_allocated:
-        raise CountServiceError(
-            f"Cannot finalize: {total_pr_seats_allocated} PR seats allocated but only "
-            f"{len(pr_members)} elected members recorded. PR seat-filling may have failed."
-        )
+    if is_local:
+        # Local: check ALL local contest types
+        local_contests = db.execute(
+            select(ElectionContest).where(
+                ElectionContest.election_id == count_run.election_id,
+                ElectionContest.contest_type.in_(ALL_LOCAL_CONTEST_TYPES),
+            )
+        ).scalars().all()
+        for contest in local_contests:
+            contest_rows = [r for r in fptp_rows if r.contest_id == contest.id]
+            winners = [r for r in contest_rows if r.is_winner]
+            if len(winners) < contest.seat_count:
+                raise CountServiceError(
+                    f"Cannot finalize: contest '{contest.title}' (type={contest.contest_type}) "
+                    f"has {len(winners)} winner(s) but requires {contest.seat_count}"
+                )
+    else:
+        # Federal/Provincial: check FPTP contests
+        fptp_contests = db.execute(
+            select(ElectionContest).where(
+                ElectionContest.election_id == count_run.election_id,
+                ElectionContest.contest_type == CONTEST_TYPE_FPTP,
+            )
+        ).scalars().all()
+        winners_by_contest = {r.contest_id for r in fptp_rows if r.is_winner}
+        contest_ids = {c.id for c in fptp_contests}
+        missing_winners = contest_ids - winners_by_contest
+        if missing_winners:
+            raise CountServiceError(
+                f"Cannot finalize: {len(missing_winners)} FPTP contest(s) have no declared winner"
+            )
+
+    # ── PR elected members must be populated (non-local only) ───
+    if not is_local:
+        pr_rows = get_pr_results(db, count_run_id)
+        total_pr_seats_allocated = sum(r.allocated_seats for r in pr_rows)
+        pr_members = get_pr_elected_members(db, count_run_id)
+        if total_pr_seats_allocated > 0 and len(pr_members) < total_pr_seats_allocated:
+            raise CountServiceError(
+                f"Cannot finalize: {total_pr_seats_allocated} PR seats allocated but only "
+                f"{len(pr_members)} elected members recorded. PR seat-filling may have failed."
+            )
 
     count_run.is_final = True
     count_run.is_locked = True
@@ -409,12 +455,59 @@ def get_result_summary(db: Session, count_run_id: int) -> dict:
     if not count_run:
         raise CountServiceError("Count run not found")
 
-    fptp_rows = get_fptp_results(db, count_run_id)
-    pr_rows = get_pr_results(db, count_run_id)
+    election = db.get(Election, count_run.election_id)
+    is_local = election and election.government_level == "LOCAL"
 
-    # FPTP winners
+    fptp_rows = get_fptp_results(db, count_run_id)
+
+    # FPTP / direct-contest winners
     fptp_winners = [r for r in fptp_rows if r.is_winner]
     fptp_adj_contests = len({r.contest_id for r in fptp_rows if r.requires_adjudication})
+
+    if is_local:
+        # Local: count all local contests
+        local_contests = db.execute(
+            select(ElectionContest).where(
+                ElectionContest.election_id == count_run.election_id,
+                ElectionContest.contest_type.in_(ALL_LOCAL_CONTEST_TYPES),
+            )
+        ).scalars().all()
+        total_direct_contests = len(local_contests)
+        total_seats = sum(c.seat_count for c in local_contests)
+
+        return {
+            "count_run_id": count_run.id,
+            "election_id": count_run.election_id,
+            "status": count_run.status,
+            "is_final": count_run.is_final,
+            "is_locked": count_run.is_locked,
+            "total_ballots_counted": count_run.total_ballots_counted,
+            "government_level": "LOCAL",
+            "fptp": {
+                "total_contests": total_direct_contests,
+                "winners_declared": len(fptp_winners),
+                "adjudication_required": fptp_adj_contests,
+                "total_seats": total_seats,
+                "seats_filled": len(fptp_winners),
+            },
+            "pr": {
+                "total_valid_votes": 0,
+                "parties_qualified": 0,
+                "seats_allocated": 0,
+                "total_seats": 0,
+                "adjudication_required": 0,
+            },
+            "can_finalize": (
+                count_run.status == "COMPLETED"
+                and not count_run.is_final
+                and fptp_adj_contests == 0
+            ),
+            "started_at": count_run.started_at.isoformat() if count_run.started_at else None,
+            "completed_at": count_run.completed_at.isoformat() if count_run.completed_at else None,
+        }
+
+    # Federal / Provincial
+    pr_rows = get_pr_results(db, count_run_id)
 
     # PR summary
     pr_qualified = [r for r in pr_rows if r.meets_threshold]
@@ -547,6 +640,149 @@ def _tally_fptp(
                 requires_adjudication=is_tie and vote_count == max_votes,
             )
             db.add(row)
+
+    db.flush()
+    return adjudication_count
+
+
+# ── Internal: Local direct-contest tally ────────────────────────
+
+
+def _tally_local_direct(
+    db: Session,
+    count_run: CountRun,
+    fptp_votes: dict[int, list[int]],
+    election: Election,
+) -> int:
+    """Tally all local direct contests (all 6 types).
+
+    Handles both seat_count=1 (single winner) and seat_count=2
+    (WARD_MEMBER_OPEN with top-two winners).
+    Returns count of contests requiring adjudication.
+    """
+    election_id = count_run.election_id
+
+    # Load all local contests for this election
+    contests = db.execute(
+        select(ElectionContest).where(
+            ElectionContest.election_id == election_id,
+            ElectionContest.contest_type.in_(ALL_LOCAL_CONTEST_TYPES),
+        )
+    ).scalars().all()
+
+    # Load approved nominations with candidate/party names
+    nominations = db.execute(
+        select(
+            FptpCandidateNomination.id,
+            FptpCandidateNomination.contest_id,
+            CandidateProfile.full_name,
+            Party.name.label("party_name"),
+        )
+        .join(CandidateProfile, FptpCandidateNomination.candidate_id == CandidateProfile.id)
+        .outerjoin(Party, FptpCandidateNomination.party_id == Party.id)
+        .where(
+            FptpCandidateNomination.election_id == election_id,
+            FptpCandidateNomination.status == "APPROVED",
+        )
+    ).all()
+
+    nom_lookup: dict[int, dict] = {}
+    contest_noms: dict[int, list[int]] = defaultdict(list)
+    for row in nominations:
+        nom_lookup[row.id] = {
+            "candidate_name": row.full_name,
+            "party_name": row.party_name,
+        }
+        contest_noms[row.contest_id].append(row.id)
+
+    adjudication_count = 0
+
+    for contest in contests:
+        seats = contest.seat_count or 1
+        votes_for_contest = fptp_votes.get(contest.id, [])
+
+        # Count per nomination
+        tally: dict[int, int] = defaultdict(int)
+        for nom_id in votes_for_contest:
+            if nom_id in nom_lookup:
+                tally[nom_id] += 1
+
+        # Ensure all approved nominations appear, even with 0 votes
+        for nom_id in contest_noms.get(contest.id, []):
+            if nom_id not in tally:
+                tally[nom_id] = 0
+
+        if not tally:
+            continue
+
+        sorted_noms = sorted(tally.items(), key=lambda x: x[1], reverse=True)
+
+        if seats == 1:
+            # Single-winner: same logic as FPTP
+            max_votes = sorted_noms[0][1]
+            top_count = sum(1 for _, v in sorted_noms if v == max_votes)
+            is_tie = top_count > 1 and max_votes > 0
+            if is_tie:
+                adjudication_count += 1
+
+            for rank_idx, (nom_id, vote_count) in enumerate(sorted_noms, start=1):
+                info = nom_lookup.get(nom_id, {"candidate_name": "Unknown", "party_name": None})
+                row = FptpResultRow(
+                    count_run_id=count_run.id,
+                    contest_id=contest.id,
+                    nomination_id=nom_id,
+                    candidate_name=info["candidate_name"],
+                    party_name=info["party_name"],
+                    vote_count=vote_count,
+                    rank=rank_idx,
+                    is_winner=(rank_idx == 1 and not is_tie),
+                    requires_adjudication=is_tie and vote_count == max_votes,
+                )
+                db.add(row)
+        else:
+            # Multi-seat (WARD_MEMBER_OPEN, seat_count=2): top N win
+            # Detect tie at the seat boundary
+            boundary_votes = sorted_noms[seats - 1][1] if len(sorted_noms) >= seats else 0
+            # Count how many candidates have exactly boundary votes
+            at_boundary = sum(1 for _, v in sorted_noms if v == boundary_votes)
+            # Candidates clearly above boundary
+            above_boundary = sum(1 for _, v in sorted_noms if v > boundary_votes)
+            # Tie exists if more candidates at boundary than remaining seats
+            remaining_seats = seats - above_boundary
+            is_boundary_tie = at_boundary > remaining_seats and boundary_votes > 0
+            if is_boundary_tie:
+                adjudication_count += 1
+
+            for rank_idx, (nom_id, vote_count) in enumerate(sorted_noms, start=1):
+                info = nom_lookup.get(nom_id, {"candidate_name": "Unknown", "party_name": None})
+                if is_boundary_tie:
+                    # If tie at boundary: candidates above boundary are winners,
+                    # candidates at boundary need adjudication, rest are losers
+                    if vote_count > boundary_votes:
+                        is_winner = True
+                        needs_adj = False
+                    elif vote_count == boundary_votes:
+                        is_winner = False
+                        needs_adj = True
+                    else:
+                        is_winner = False
+                        needs_adj = False
+                else:
+                    is_winner = rank_idx <= seats
+                    needs_adj = False
+
+                row = FptpResultRow(
+                    count_run_id=count_run.id,
+                    contest_id=contest.id,
+                    nomination_id=nom_id,
+                    candidate_name=info["candidate_name"],
+                    party_name=info["party_name"],
+                    vote_count=vote_count,
+                    rank=rank_idx,
+                    is_winner=is_winner,
+                    requires_adjudication=needs_adj,
+                )
+                db.add(row)
 
     db.flush()
     return adjudication_count
@@ -901,4 +1137,129 @@ def get_provincial_result_summary(db: Session, count_run_id: int) -> dict:
             base_summary["fptp"]["winners_declared"]
             + len(pr_members)
         ),
+    }
+
+
+# ── Local result summary ───────────────────────────────────────
+
+
+def get_local_result_summary(
+    db: Session,
+    count_run_id: int,
+) -> dict:
+    """Return a detailed local-election result summary with ward breakdowns."""
+    count_run = db.get(CountRun, count_run_id)
+    if not count_run:
+        raise CountServiceError("Count run not found")
+
+    election = db.get(Election, count_run.election_id)
+    if not election or election.government_level != "LOCAL":
+        raise CountServiceError("Not a local election")
+
+    base_summary = get_result_summary(db, count_run_id)
+    fptp_rows = get_fptp_results(db, count_run_id)
+
+    # Load all local contests with area info
+    contests = db.execute(
+        select(ElectionContest).where(
+            ElectionContest.election_id == election.id,
+            ElectionContest.contest_type.in_(ALL_LOCAL_CONTEST_TYPES),
+        )
+    ).scalars().all()
+
+    contest_map = {c.id: c for c in contests}
+
+    # Gather area IDs to resolve names
+    area_ids = {c.area_id for c in contests if c.area_id}
+    areas = {}
+    if area_ids:
+        area_rows = db.execute(
+            select(AreaUnit).where(AreaUnit.id.in_(area_ids))
+        ).scalars().all()
+        areas = {a.id: a for a in area_rows}
+
+    # Head contests (MAYOR/DEPUTY_MAYOR — scoped to local body)
+    head_results = []
+    for contest in contests:
+        if contest.contest_type not in LOCAL_HEAD_CONTEST_TYPES:
+            continue
+        rows = [r for r in fptp_rows if r.contest_id == contest.id]
+        area = areas.get(contest.area_id)
+        head_results.append({
+            "contest_id": contest.id,
+            "contest_type": contest.contest_type,
+            "contest_title": contest.title,
+            "area_name": area.name if area else None,
+            "seat_count": contest.seat_count,
+            "candidates": [
+                {
+                    "nomination_id": r.nomination_id,
+                    "candidate_name": r.candidate_name,
+                    "party_name": r.party_name,
+                    "vote_count": r.vote_count,
+                    "rank": r.rank,
+                    "is_winner": r.is_winner,
+                    "requires_adjudication": r.requires_adjudication,
+                }
+                for r in sorted(rows, key=lambda x: x.rank)
+            ],
+        })
+
+    # Ward contests — group by ward area_id
+    ward_map: dict[int, dict] = {}  # area_id → {area, contests: [...]}
+    for contest in contests:
+        if contest.contest_type not in LOCAL_WARD_CONTEST_TYPES:
+            continue
+        aid = contest.area_id
+        if aid not in ward_map:
+            area = areas.get(aid)
+            ward_map[aid] = {
+                "area_id": aid,
+                "ward_name": area.name if area else f"Ward (area={aid})",
+                "ward_number": area.ward_number if area else None,
+                "contests": [],
+            }
+        rows = [r for r in fptp_rows if r.contest_id == contest.id]
+        ward_map[aid]["contests"].append({
+            "contest_id": contest.id,
+            "contest_type": contest.contest_type,
+            "contest_title": contest.title,
+            "seat_count": contest.seat_count,
+            "candidates": [
+                {
+                    "nomination_id": r.nomination_id,
+                    "candidate_name": r.candidate_name,
+                    "party_name": r.party_name,
+                    "vote_count": r.vote_count,
+                    "rank": r.rank,
+                    "is_winner": r.is_winner,
+                    "requires_adjudication": r.requires_adjudication,
+                }
+                for r in sorted(rows, key=lambda x: x.rank)
+            ],
+        })
+
+    wards_sorted = sorted(ward_map.values(), key=lambda w: (w["ward_number"] or 0))
+
+    # Summary totals
+    total_contests = len(contests)
+    total_seats = sum(c.seat_count for c in contests)
+    all_winners = [r for r in fptp_rows if r.is_winner]
+    adj_count = len({c.id for c in contests
+                     if any(r.requires_adjudication for r in fptp_rows if r.contest_id == c.id)})
+
+    return {
+        **base_summary,
+        "government_level": "LOCAL",
+        "election_title": election.title,
+        "election_subtype": election.election_subtype,
+        "head_results": head_results,
+        "ward_results": wards_sorted,
+        "local_summary": {
+            "total_direct_contests": total_contests,
+            "total_seats": total_seats,
+            "seats_filled": len(all_winners),
+            "adjudication_required": adj_count,
+            "wards_counted": len(ward_map),
+        },
     }

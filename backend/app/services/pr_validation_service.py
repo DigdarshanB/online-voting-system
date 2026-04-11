@@ -564,16 +564,19 @@ def reject_submission(
 def check_candidate_readiness(db: Session, election: Election) -> dict:
     """Candidate-side readiness overview. Informational only — does not block.
 
-    Multi-level aware: checks FPTP/MAYOR/DEPUTY_MAYOR nominations and PR submissions
-    based on what contest types exist in this election.
+    Multi-level aware: checks nominations for all contest types that exist
+    in this election including local ward-level types with multi-seat logic.
+    PR submission checks only run for elections that have PR contests.
+    Local direct elections have no PR.
     """
     from app.models.fptp_candidate_nomination import FptpCandidateNomination
     from app.models.election_contest import ElectionContest
+    from app.core.election_constants import CONTEST_TYPE_WARD_MEMBER_OPEN
 
     issues: list[str] = []
     details: dict = {}
 
-    # Get all contest types in this election
+    # Get all contest types in this election with counts
     contest_type_counts = dict(
         db.execute(
             select(ElectionContest.contest_type, func.count(ElectionContest.id))
@@ -582,34 +585,64 @@ def check_candidate_readiness(db: Session, election: Election) -> dict:
         ).all()
     )
 
-    # Check nomination fill for all single-seat contest types (FPTP, MAYOR, DEPUTY_MAYOR)
-    single_seat_types = ("FPTP", "MAYOR", "DEPUTY_MAYOR")
-    for ct in single_seat_types:
+    # All nominatable contest types in this election (everything except PR)
+    nominatable_types = [ct for ct in contest_type_counts if ct != "PR"]
+
+    for ct in nominatable_types:
         total = contest_type_counts.get(ct, 0)
         if total == 0:
             continue
-        filled = db.execute(
-            select(func.count()).select_from(
-                select(FptpCandidateNomination.contest_id)
-                .join(ElectionContest, FptpCandidateNomination.contest_id == ElectionContest.id)
-                .where(
-                    FptpCandidateNomination.election_id == election.id,
-                    ElectionContest.contest_type == ct,
-                    FptpCandidateNomination.status == "APPROVED",
-                )
-                .group_by(FptpCandidateNomination.contest_id)
-                .having(func.count(FptpCandidateNomination.id) >= 2)
-                .subquery()
-            )
-        ).scalar_one()
-        details[f"{ct.lower()}_contests_total"] = total
-        details[f"{ct.lower()}_contests_filled"] = filled
-        if filled < total:
-            issues.append(
-                f"Only {filled}/{total} {ct} contests have ≥2 approved candidates"
-            )
 
-    # PR submissions check (only if election has PR contests)
+        if ct == CONTEST_TYPE_WARD_MEMBER_OPEN:
+            # Multi-seat contest (seat_count=2): "filled" means ≥ seat_count+1
+            # approved candidates in that contest (competitive election requires
+            # more candidates than seats). We use ≥3 as the fill threshold.
+            # But for minimum viability, we check ≥ seat_count (at least 2).
+            filled = db.execute(
+                select(func.count()).select_from(
+                    select(FptpCandidateNomination.contest_id)
+                    .join(ElectionContest, FptpCandidateNomination.contest_id == ElectionContest.id)
+                    .where(
+                        FptpCandidateNomination.election_id == election.id,
+                        ElectionContest.contest_type == ct,
+                        FptpCandidateNomination.status == "APPROVED",
+                    )
+                    .group_by(FptpCandidateNomination.contest_id)
+                    .having(func.count(FptpCandidateNomination.id) >= 3)
+                    .subquery()
+                )
+            ).scalar_one()
+            details[f"{ct.lower()}_contests_total"] = total
+            details[f"{ct.lower()}_contests_filled"] = filled
+            if filled < total:
+                issues.append(
+                    f"Only {filled}/{total} {ct} contests have ≥3 approved candidates "
+                    f"(2 seats requires at least 3 for a competitive election)"
+                )
+        else:
+            # Single-seat types: "filled" means ≥ 2 approved candidates
+            filled = db.execute(
+                select(func.count()).select_from(
+                    select(FptpCandidateNomination.contest_id)
+                    .join(ElectionContest, FptpCandidateNomination.contest_id == ElectionContest.id)
+                    .where(
+                        FptpCandidateNomination.election_id == election.id,
+                        ElectionContest.contest_type == ct,
+                        FptpCandidateNomination.status == "APPROVED",
+                    )
+                    .group_by(FptpCandidateNomination.contest_id)
+                    .having(func.count(FptpCandidateNomination.id) >= 2)
+                    .subquery()
+                )
+            ).scalar_one()
+            details[f"{ct.lower()}_contests_total"] = total
+            details[f"{ct.lower()}_contests_filled"] = filled
+            if filled < total:
+                issues.append(
+                    f"Only {filled}/{total} {ct} contests have ≥2 approved candidates"
+                )
+
+    # PR submissions check (only if election has PR contests — NOT for local direct)
     pr_total_contests = contest_type_counts.get("PR", 0)
     if pr_total_contests > 0:
         pr_total = db.execute(

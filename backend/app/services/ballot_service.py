@@ -10,6 +10,17 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.core.config import settings
 from app.core.federal_constants import CONTEST_TYPE_FPTP, CONTEST_TYPE_PR
+from app.core.election_constants import (
+    CONTEST_TYPE_MAYOR,
+    CONTEST_TYPE_DEPUTY_MAYOR,
+    CONTEST_TYPE_WARD_CHAIR,
+    CONTEST_TYPE_WARD_WOMAN_MEMBER,
+    CONTEST_TYPE_WARD_DALIT_WOMAN_MEMBER,
+    CONTEST_TYPE_WARD_MEMBER_OPEN,
+    ALL_LOCAL_CONTEST_TYPES,
+    LOCAL_HEAD_CONTEST_TYPES,
+    LOCAL_WARD_CONTEST_TYPES,
+)
 from app.models.ballot import Ballot
 from app.models.candidate_profile import CandidateProfile
 from app.models.constituency import Constituency
@@ -126,8 +137,26 @@ def _is_eligible_for_election(
         ).scalar_one_or_none()
         return fptp_match is not None
 
-    # Local — not yet implemented; pass through
-    return True
+    # Local — voter must be assigned to a ward within this election's scope
+    if election.government_level == "LOCAL":
+        assignment = _get_voter_area_assignment(db, voter_id, "LOCAL")
+        if not assignment:
+            return False
+        ward = db.get(AreaUnit, assignment.area_id)
+        if not ward or ward.category != "WARD":
+            return False
+        # The ward's parent local body must have a head contest in this election
+        head_match = db.execute(
+            select(ElectionContest.id).where(
+                ElectionContest.election_id == election.id,
+                ElectionContest.contest_type == CONTEST_TYPE_MAYOR,
+                ElectionContest.area_id == AreaUnit.id,
+                AreaUnit.code == ward.parent_code,
+            )
+        ).scalar_one_or_none()
+        return head_match is not None
+
+    return False
 
 
 def list_voter_elections(db: Session, voter: User) -> list[dict]:
@@ -831,6 +860,422 @@ def cast_provincial_dual_ballot(
     }
 
 
+# ── Local ballot functions ────────────────────────────────────
+
+
+def _get_approved_nominations_for_contest(db: Session, contest_id: int) -> list:
+    """Return approved nomination rows for a contest (id, name, photo, party info)."""
+    return db.execute(
+        select(
+            FptpCandidateNomination.id.label("nomination_id"),
+            CandidateProfile.full_name.label("candidate_name"),
+            CandidateProfile.photo_path.label("candidate_photo_path"),
+            Party.name.label("party_name"),
+            Party.abbreviation.label("party_abbreviation"),
+            Party.symbol_path.label("party_symbol_path"),
+        )
+        .join(
+            CandidateProfile,
+            FptpCandidateNomination.candidate_id == CandidateProfile.id,
+        )
+        .outerjoin(Party, FptpCandidateNomination.party_id == Party.id)
+        .where(
+            FptpCandidateNomination.contest_id == contest_id,
+            FptpCandidateNomination.status == "APPROVED",
+        )
+        .order_by(CandidateProfile.full_name)
+    ).all()
+
+
+def _format_candidates(rows) -> list[dict]:
+    return [
+        {
+            "nomination_id": r.nomination_id,
+            "candidate_name": r.candidate_name,
+            "candidate_photo_path": r.candidate_photo_path,
+            "party_name": r.party_name,
+            "party_abbreviation": r.party_abbreviation,
+            "party_symbol_path": r.party_symbol_path,
+        }
+        for r in rows
+    ]
+
+
+def get_ballot_info_local(db: Session, election_id: int, voter: User) -> dict:
+    """Return ballot info for a LOCAL election (6 contests, 7 selections)."""
+    election = db.get(Election, election_id)
+    if not election:
+        raise HTTPException(status_code=404, detail="Election not found")
+    if election.status not in VOTER_VISIBLE_STATUSES:
+        raise HTTPException(
+            status_code=400, detail="Election is not available for viewing"
+        )
+    if election.government_level != "LOCAL":
+        raise HTTPException(
+            status_code=400, detail="This is not a local election"
+        )
+
+    # ── voter's local area assignment (WARD) ────────────────────
+    assignment = _get_voter_area_assignment(db, voter.id, "LOCAL")
+    if not assignment:
+        raise HTTPException(
+            status_code=400,
+            detail="You have not been assigned to a ward. Contact the election commission.",
+        )
+
+    ward = db.get(AreaUnit, assignment.area_id)
+    if not ward or ward.category != "WARD":
+        raise HTTPException(
+            status_code=500, detail="Ward assignment record is invalid"
+        )
+
+    # Find parent local body
+    local_body = db.execute(
+        select(AreaUnit).where(AreaUnit.code == ward.parent_code)
+    ).scalar_one_or_none()
+    if not local_body:
+        raise HTTPException(
+            status_code=500, detail="Local body record missing for assigned ward"
+        )
+
+    # ── Head contests (MAYOR / DEPUTY_MAYOR, scoped to local body) ──
+    head_contests = {}
+    for ct in (CONTEST_TYPE_MAYOR, CONTEST_TYPE_DEPUTY_MAYOR):
+        contest = db.execute(
+            select(ElectionContest).where(
+                ElectionContest.election_id == election_id,
+                ElectionContest.contest_type == ct,
+                ElectionContest.area_id == local_body.id,
+            )
+        ).scalar_one_or_none()
+        if contest:
+            head_contests[ct] = contest
+
+    if CONTEST_TYPE_MAYOR not in head_contests:
+        raise HTTPException(
+            status_code=400,
+            detail="No head contest found for your local body in this election",
+        )
+
+    # ── Ward contests (scoped to voter's ward) ──────────────────
+    ward_contests = {}
+    for ct in (
+        CONTEST_TYPE_WARD_CHAIR,
+        CONTEST_TYPE_WARD_WOMAN_MEMBER,
+        CONTEST_TYPE_WARD_DALIT_WOMAN_MEMBER,
+        CONTEST_TYPE_WARD_MEMBER_OPEN,
+    ):
+        contest = db.execute(
+            select(ElectionContest).where(
+                ElectionContest.election_id == election_id,
+                ElectionContest.contest_type == ct,
+                ElectionContest.area_id == ward.id,
+            )
+        ).scalar_one_or_none()
+        if contest:
+            ward_contests[ct] = contest
+
+    # Build contest sections
+    def _contest_section(contest):
+        rows = _get_approved_nominations_for_contest(db, contest.id)
+        return {
+            "contest_id": contest.id,
+            "contest_title": contest.title,
+            "contest_type": contest.contest_type,
+            "seat_count": contest.seat_count,
+            "candidates": _format_candidates(rows),
+        }
+
+    already_voted = (
+        ballot_repository.get_ballot(db, election_id, voter.id) is not None
+    )
+
+    result = {
+        "election_id": election.id,
+        "election_title": election.title,
+        "election_status": election.status,
+        "government_level": "LOCAL",
+        "election_subtype": election.election_subtype,
+        "polling_start_at": (
+            election.polling_start_at.isoformat()
+            if election.polling_start_at
+            else None
+        ),
+        "polling_end_at": (
+            election.polling_end_at.isoformat()
+            if election.polling_end_at
+            else None
+        ),
+        "local_body": {
+            "id": local_body.id,
+            "code": local_body.code,
+            "name": local_body.name,
+            "category": local_body.category,
+            "province_number": local_body.province_number,
+        },
+        "ward": {
+            "id": ward.id,
+            "code": ward.code,
+            "name": ward.name,
+            "ward_number": ward.ward_number,
+        },
+        "already_voted": already_voted,
+    }
+
+    # Add head contests
+    for ct, key in (
+        (CONTEST_TYPE_MAYOR, "head"),
+        (CONTEST_TYPE_DEPUTY_MAYOR, "deputy_head"),
+    ):
+        if ct in head_contests:
+            result[key] = _contest_section(head_contests[ct])
+        else:
+            result[key] = None
+
+    # Add ward contests
+    for ct, key in (
+        (CONTEST_TYPE_WARD_CHAIR, "ward_chair"),
+        (CONTEST_TYPE_WARD_WOMAN_MEMBER, "ward_woman_member"),
+        (CONTEST_TYPE_WARD_DALIT_WOMAN_MEMBER, "ward_dalit_woman_member"),
+        (CONTEST_TYPE_WARD_MEMBER_OPEN, "ward_member_open"),
+    ):
+        if ct in ward_contests:
+            result[key] = _contest_section(ward_contests[ct])
+        else:
+            result[key] = None
+
+    return result
+
+
+def cast_local_ballot(
+    db: Session,
+    election_id: int,
+    voter: User,
+    selections: dict,
+) -> dict:
+    """Cast a local ballot (6 contests, 7 selections) atomically.
+
+    selections must contain:
+      head_nomination_id: int
+      deputy_head_nomination_id: int
+      ward_chair_nomination_id: int
+      ward_woman_member_nomination_id: int
+      ward_dalit_woman_member_nomination_id: int
+      ward_member_open_nomination_ids: [int, int]  (two distinct)
+    """
+    # 1 — voter eligibility
+    if voter.role != "voter":
+        raise HTTPException(status_code=403, detail="Only voters can cast ballots")
+    if voter.status != "ACTIVE":
+        raise HTTPException(
+            status_code=403, detail="Your account is not active"
+        )
+
+    # 2 — election exists and is local
+    election = db.get(Election, election_id)
+    if not election:
+        raise HTTPException(status_code=404, detail="Election not found")
+    if election.government_level != "LOCAL":
+        raise HTTPException(
+            status_code=400, detail="This is not a local election"
+        )
+
+    # 3 — polling is open
+    if election.status != "POLLING_OPEN":
+        raise HTTPException(
+            status_code=400,
+            detail="This election is not currently open for voting",
+        )
+
+    # 4 — polling window enforcement
+    now = datetime.now(timezone.utc)
+    if election.polling_start_at and now < election.polling_start_at.replace(
+        tzinfo=timezone.utc
+    ):
+        raise HTTPException(
+            status_code=400, detail="Polling has not started yet"
+        )
+    if election.polling_end_at and now > election.polling_end_at.replace(
+        tzinfo=timezone.utc
+    ):
+        raise HTTPException(status_code=400, detail="Polling has ended")
+
+    # 5 — local area assignment (WARD)
+    assignment = _get_voter_area_assignment(db, voter.id, "LOCAL")
+    if not assignment:
+        raise HTTPException(
+            status_code=400,
+            detail="You have not been assigned to a ward",
+        )
+
+    ward = db.get(AreaUnit, assignment.area_id)
+    if not ward or ward.category != "WARD":
+        raise HTTPException(status_code=500, detail="Ward assignment invalid")
+
+    local_body = db.execute(
+        select(AreaUnit).where(AreaUnit.code == ward.parent_code)
+    ).scalar_one_or_none()
+    if not local_body:
+        raise HTTPException(
+            status_code=500, detail="Local body record missing"
+        )
+
+    # 6 — duplicate-vote prevention
+    existing = ballot_repository.get_ballot(db, election_id, voter.id)
+    if existing:
+        raise HTTPException(
+            status_code=409,
+            detail="You have already cast your ballot in this election",
+        )
+
+    # 7 — validate all seven selections are present
+    required_keys = [
+        "head_nomination_id",
+        "deputy_head_nomination_id",
+        "ward_chair_nomination_id",
+        "ward_woman_member_nomination_id",
+        "ward_dalit_woman_member_nomination_id",
+        "ward_member_open_nomination_ids",
+    ]
+    for key in required_keys:
+        if key not in selections or selections[key] is None:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Missing required selection: {key}",
+            )
+
+    open_ids = selections["ward_member_open_nomination_ids"]
+    if not isinstance(open_ids, list) or len(open_ids) != 2:
+        raise HTTPException(
+            status_code=400,
+            detail="ward_member_open_nomination_ids must be a list of exactly 2 candidate IDs",
+        )
+    if open_ids[0] == open_ids[1]:
+        raise HTTPException(
+            status_code=400,
+            detail="The two open ward member selections must be different candidates",
+        )
+
+    # 8 — resolve contests and validate each nomination
+
+    # Map: (contest_type, area_id) → look up
+    single_seat_checks = [
+        (CONTEST_TYPE_MAYOR, local_body.id, selections["head_nomination_id"]),
+        (CONTEST_TYPE_DEPUTY_MAYOR, local_body.id, selections["deputy_head_nomination_id"]),
+        (CONTEST_TYPE_WARD_CHAIR, ward.id, selections["ward_chair_nomination_id"]),
+        (CONTEST_TYPE_WARD_WOMAN_MEMBER, ward.id, selections["ward_woman_member_nomination_id"]),
+        (CONTEST_TYPE_WARD_DALIT_WOMAN_MEMBER, ward.id, selections["ward_dalit_woman_member_nomination_id"]),
+    ]
+
+    entries = []
+
+    for contest_type, area_id, nomination_id in single_seat_checks:
+        contest = db.execute(
+            select(ElectionContest).where(
+                ElectionContest.election_id == election_id,
+                ElectionContest.contest_type == contest_type,
+                ElectionContest.area_id == area_id,
+            )
+        ).scalar_one_or_none()
+        if not contest:
+            raise HTTPException(
+                status_code=400,
+                detail=f"No {contest_type} contest found for your area",
+            )
+
+        nomination = db.execute(
+            select(FptpCandidateNomination).where(
+                FptpCandidateNomination.id == nomination_id,
+                FptpCandidateNomination.contest_id == contest.id,
+                FptpCandidateNomination.status == "APPROVED",
+            )
+        ).scalar_one_or_none()
+        if not nomination:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid candidate selection for {contest_type}",
+            )
+
+        ct, nonce = _encrypt_choice(
+            {"contest_id": contest.id, "nomination_id": nomination_id}
+        )
+        entries.append({
+            "contest_id": contest.id,
+            "ballot_type": contest_type,
+            "encrypted_choice": ct,
+            "nonce": nonce,
+        })
+
+    # WARD_MEMBER_OPEN (2 selections from one contest)
+    open_contest = db.execute(
+        select(ElectionContest).where(
+            ElectionContest.election_id == election_id,
+            ElectionContest.contest_type == CONTEST_TYPE_WARD_MEMBER_OPEN,
+            ElectionContest.area_id == ward.id,
+        )
+    ).scalar_one_or_none()
+    if not open_contest:
+        raise HTTPException(
+            status_code=400,
+            detail="No ward member open contest found for your ward",
+        )
+
+    for nom_id in open_ids:
+        nomination = db.execute(
+            select(FptpCandidateNomination).where(
+                FptpCandidateNomination.id == nom_id,
+                FptpCandidateNomination.contest_id == open_contest.id,
+                FptpCandidateNomination.status == "APPROVED",
+            )
+        ).scalar_one_or_none()
+        if not nomination:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid candidate selection for WARD_MEMBER_OPEN (nomination {nom_id})",
+            )
+
+    # Store open-member as a single entry with both nomination_ids
+    open_ct, open_nonce = _encrypt_choice(
+        {
+            "contest_id": open_contest.id,
+            "nomination_ids": open_ids,
+        }
+    )
+    entries.append({
+        "contest_id": open_contest.id,
+        "ballot_type": CONTEST_TYPE_WARD_MEMBER_OPEN,
+        "encrypted_choice": open_ct,
+        "nonce": open_nonce,
+    })
+
+    # 9 — atomic insert (6 entries in one transaction)
+    try:
+        ballot = ballot_repository.create_ballot_with_entries(
+            db,
+            election_id=election_id,
+            voter_id=voter.id,
+            area_id=ward.id,
+            entries=entries,
+        )
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="You have already cast your ballot in this election",
+        )
+
+    return {
+        "success": True,
+        "ballot_id": ballot.id,
+        "election_id": election_id,
+        "message": (
+            "Your local ballot has been cast successfully. "
+            "All seven selections were recorded."
+        ),
+    }
+
+
 # ── Level-dispatching wrappers ────────────────────────────────
 
 
@@ -843,6 +1288,8 @@ def get_ballot_info_dispatch(
         raise HTTPException(status_code=404, detail="Election not found")
     if election.government_level == "PROVINCIAL":
         return get_ballot_info_provincial(db, election_id, voter)
+    if election.government_level == "LOCAL":
+        return get_ballot_info_local(db, election_id, voter)
     # Default: federal
     return get_ballot_info(db, election_id, voter)
 
@@ -854,10 +1301,15 @@ def cast_dual_ballot_dispatch(
     fptp_nomination_id: int,
     pr_party_id: int,
 ) -> dict:
-    """Route to the correct cast function based on election level."""
+    """Route to the correct cast function based on election level (federal/provincial)."""
     election = db.get(Election, election_id)
     if not election:
         raise HTTPException(status_code=404, detail="Election not found")
+    if election.government_level == "LOCAL":
+        raise HTTPException(
+            status_code=400,
+            detail="Local elections use the dedicated local cast endpoint",
+        )
     if election.government_level == "PROVINCIAL":
         return cast_provincial_dual_ballot(
             db, election_id, voter, fptp_nomination_id, pr_party_id
@@ -870,3 +1322,21 @@ def cast_dual_ballot_dispatch(
         fptp_nomination_id=fptp_nomination_id,
         pr_party_id=pr_party_id,
     )
+
+
+def cast_local_ballot_dispatch(
+    db: Session,
+    election_id: int,
+    voter: User,
+    selections: dict,
+) -> dict:
+    """Dispatch to local cast function after verifying level."""
+    election = db.get(Election, election_id)
+    if not election:
+        raise HTTPException(status_code=404, detail="Election not found")
+    if election.government_level != "LOCAL":
+        raise HTTPException(
+            status_code=400,
+            detail="This endpoint is only for local elections",
+        )
+    return cast_local_ballot(db, election_id, voter, selections)

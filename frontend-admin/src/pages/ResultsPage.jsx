@@ -9,6 +9,7 @@ import {
   getResultSummary, getFptpResults, getPrResults,
   finalizeCountRun, lockCountRun,
   getProvincialSummary, getPrElectedMembers,
+  getLocalSummary,
 } from "../features/results/api/resultsApi";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
@@ -153,8 +154,10 @@ function ElectionResultCard({
   const [detailLoading, setDetailLoading] = useState(false);
   const [provincialSummary, setProvincialSummary] = useState(null);
   const [prElectedMembers, setPrElectedMembers] = useState([]);
+  const [localSummary, setLocalSummary] = useState(null);
 
   const isProvincial = election.government_level === "PROVINCIAL";
+  const isLocal = election.government_level === "LOCAL";
 
   // Load count runs when expanded
   useEffect(() => {
@@ -203,13 +206,23 @@ function ElectionResultCard({
             if (!cancelled) { setProvincialSummary(null); setPrElectedMembers([]); }
           }
         }
+
+        // Local-specific data
+        if (isLocal && !cancelled) {
+          try {
+            const ls = await getLocalSummary(selectedRunId);
+            if (!cancelled) setLocalSummary(ls);
+          } catch {
+            if (!cancelled) setLocalSummary(null);
+          }
+        }
       } catch {
         /* results may not exist yet */
-        if (!cancelled) { setSummary(null); setFptpRows([]); setPrRows([]); setProvincialSummary(null); setPrElectedMembers([]); }
+        if (!cancelled) { setSummary(null); setFptpRows([]); setPrRows([]); setProvincialSummary(null); setPrElectedMembers([]); setLocalSummary(null); }
       }
     })();
     return () => { cancelled = true; };
-  }, [selectedRunId, isProvincial]);
+  }, [selectedRunId, isProvincial, isLocal]);
 
   const handleInitiate = async () => {
     clearMessages();
@@ -300,6 +313,9 @@ function ElectionResultCard({
           <span style={{ fontWeight: 600, color: P.text, fontSize: 15 }}>{election.title}</span>
           {election.government_level === "PROVINCIAL" && (
             <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6, background: P.purpleBg, color: P.purple }}>Provincial</span>
+          )}
+          {election.government_level === "LOCAL" && (
+            <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6, background: P.orangeBg, color: P.orange }}>Local</span>
           )}
         </div>
         <StatusBadge status={election.status} />
@@ -403,10 +419,10 @@ function ElectionResultCard({
               })()}
 
               {/* Summary cards */}
-              {summary && <SummaryCards summary={summary} />}
+              {summary && <SummaryCards summary={summary} isLocal={isLocal} />}
 
               {/* Adjudication warnings */}
-              {summary && (summary.fptp.adjudication_required > 0 || summary.pr.adjudication_required > 0) && (
+              {summary && (summary.fptp.adjudication_required > 0 || (!isLocal && summary.pr.adjudication_required > 0)) && (
                 <div style={{
                   padding: "12px 16px", borderRadius: 10, background: P.warnBg,
                   color: P.warn, marginBottom: 16, fontSize: 13, display: "flex", alignItems: "center", gap: 8,
@@ -414,18 +430,21 @@ function ElectionResultCard({
                   <ShieldAlert size={16} />
                   <span>
                     <strong>Adjudication required:</strong>
-                    {summary.fptp.adjudication_required > 0 && ` ${summary.fptp.adjudication_required} FPTP tie(s).`}
-                    {summary.pr.adjudication_required > 0 && ` PR seat-boundary quotient tie.`}
+                    {summary.fptp.adjudication_required > 0 && ` ${summary.fptp.adjudication_required} ${isLocal ? "contest" : "FPTP"} tie(s).`}
+                    {!isLocal && summary.pr.adjudication_required > 0 && ` PR seat-boundary quotient tie.`}
                     {" "}Finalization is blocked until resolved.
                   </span>
                 </div>
               )}
 
-              {/* FPTP Results Table */}
-              {fptpRows.length > 0 && <FptpResultsTable rows={fptpRows} />}
+              {/* Local-specific sections */}
+              {isLocal && localSummary && <LocalResultSection localSummary={localSummary} />}
+
+              {/* FPTP Results Table (hidden for local — shown in LocalResultSection) */}
+              {!isLocal && fptpRows.length > 0 && <FptpResultsTable rows={fptpRows} />}
 
               {/* PR Results Table */}
-              {prRows.length > 0 && <PrResultsTable rows={prRows} />}
+              {!isLocal && prRows.length > 0 && <PrResultsTable rows={prRows} />}
 
               {/* Provincial-specific sections */}
               {isProvincial && provincialSummary && <ProvincialSummarySection summary={provincialSummary} />}
@@ -451,8 +470,13 @@ function actionBtnStyle(color, actionLoading) {
 /* ══════════════════════════════════════════════════════════════
    SUMMARY CARDS
    ══════════════════════════════════════════════════════════════ */
-function SummaryCards({ summary }) {
-  const cards = [
+function SummaryCards({ summary, isLocal = false }) {
+  const cards = isLocal ? [
+    { icon: Users, label: "Ballots Counted", value: summary.total_ballots_counted ?? "—", color: P.accent },
+    { icon: Award, label: "Contests", value: summary.fptp.total_contests ?? "—", color: P.navy },
+    { icon: CheckCircle2, label: "Winners Declared", value: `${summary.fptp.winners_declared} / ${summary.fptp.total_seats ?? summary.fptp.total_contests}`, color: P.success },
+    { icon: ShieldAlert, label: "Adjudication", value: summary.fptp.adjudication_required ?? 0, color: summary.fptp.adjudication_required > 0 ? P.warn : P.muted },
+  ] : [
     { icon: Users, label: "Ballots Counted", value: summary.total_ballots_counted ?? "—", color: P.accent },
     { icon: Award, label: "FPTP Winners", value: `${summary.fptp.winners_declared} / ${summary.fptp.total_contests}`, color: P.success },
     { icon: TrendingUp, label: "PR Seats", value: `${summary.pr.seats_allocated} / ${summary.pr.total_seats ?? "—"}`, color: P.purple },
@@ -734,6 +758,124 @@ function PrElectedMembersTable({ members }) {
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   LOCAL RESULT SECTION
+   ══════════════════════════════════════════════════════════════ */
+function LocalResultSection({ localSummary }) {
+  if (!localSummary) return null;
+
+  const { head_results = [], ward_results = [], local_summary } = localSummary;
+
+  const thStyle = {
+    padding: "10px 14px", textAlign: "left", fontSize: 12, fontWeight: 600,
+    color: P.muted, borderBottom: `2px solid ${P.border}`, background: P.bg,
+  };
+  const tdStyle = { padding: "10px 14px", fontSize: 13, color: P.text, borderBottom: `1px solid ${P.border}` };
+
+  /* shared table for a single contest */
+  const ContestTable = ({ contest }) => (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ fontSize: 13, fontWeight: 600, color: P.navy, marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
+        {contest.contest_title || contest.contest_type}
+        {contest.area_name && <span style={{ fontWeight: 400, color: P.muted }}> — {contest.area_name}</span>}
+        <span style={{ fontSize: 11, color: P.muted, marginLeft: "auto" }}>
+          {contest.seat_count > 1 ? `${contest.seat_count} seats` : "1 seat"}
+        </span>
+      </div>
+      <div style={{ overflowX: "auto", borderRadius: 10, border: `1px solid ${P.border}` }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              <th style={thStyle}>Rank</th>
+              <th style={thStyle}>Candidate</th>
+              <th style={thStyle}>Party</th>
+              <th style={{ ...thStyle, textAlign: "right" }}>Votes</th>
+              <th style={thStyle}>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(contest.candidates || []).map((c, i) => (
+              <tr key={c.nomination_id || i} style={{
+                background: c.is_winner ? "#F0FDF4" : c.requires_adjudication ? "#FFFBEB" : "transparent",
+              }}>
+                <td style={tdStyle}>{c.rank}</td>
+                <td style={{ ...tdStyle, fontWeight: c.is_winner ? 700 : 400 }}>{c.candidate_name}</td>
+                <td style={tdStyle}>{c.party_name || "Independent"}</td>
+                <td style={{ ...tdStyle, textAlign: "right", fontWeight: 600 }}>{c.vote_count.toLocaleString()}</td>
+                <td style={tdStyle}>
+                  {c.is_winner && <span style={{ color: P.success, fontWeight: 600, fontSize: 12 }}>✓ Winner</span>}
+                  {c.requires_adjudication && (
+                    <span style={{ color: P.warn, fontWeight: 600, fontSize: 12, display: "flex", alignItems: "center", gap: 4 }}>
+                      <AlertTriangle size={12} /> Tie
+                    </span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ marginBottom: 24 }}>
+      {/* Local summary totals */}
+      {local_summary && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: 20 }}>
+          {[
+            { label: "Total Contests", value: local_summary.total_direct_contests, color: P.navy },
+            { label: "Total Seats", value: local_summary.total_seats, color: P.accent },
+            { label: "Seats Filled", value: local_summary.seats_filled, color: P.success },
+            { label: "Adjudication", value: local_summary.adjudication_required, color: local_summary.adjudication_required > 0 ? P.warn : P.muted },
+            { label: "Wards Counted", value: local_summary.wards_counted, color: P.purple },
+          ].map((c, i) => (
+            <div key={i} style={{ background: P.bg, borderRadius: 12, padding: "14px 16px", border: `1px solid ${P.border}` }}>
+              <div style={{ fontSize: 11, color: P.muted, fontWeight: 600, marginBottom: 4 }}>{c.label}</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: c.color }}>{c.value ?? "—"}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Head contests (Mayor, Deputy Mayor) */}
+      {head_results.length > 0 && (
+        <div style={{ marginBottom: 24 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: P.text, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+            <Award size={18} color={P.orange} /> Head Positions
+          </h3>
+          {head_results.map((contest) => (
+            <ContestTable key={contest.contest_id} contest={contest} />
+          ))}
+        </div>
+      )}
+
+      {/* Ward results */}
+      {ward_results.length > 0 && (
+        <div>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: P.text, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+            <Users size={18} color={P.purple} /> Ward Results
+          </h3>
+          {ward_results.map((ward) => (
+            <div key={ward.area_id} style={{ marginBottom: 20 }}>
+              <div style={{
+                fontSize: 14, fontWeight: 700, color: P.navy, marginBottom: 10,
+                padding: "8px 14px", background: P.bg, borderRadius: 8, border: `1px solid ${P.border}`,
+              }}>
+                {ward.ward_name || `Ward ${ward.ward_number}`}
+              </div>
+              {(ward.contests || []).map((contest) => (
+                <ContestTable key={contest.contest_id} contest={contest} />
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

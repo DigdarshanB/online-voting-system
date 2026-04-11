@@ -7,6 +7,7 @@ from app.db.deps import get_db
 from app.models.user import User
 from app.services.ballot_service import (
     cast_dual_ballot_dispatch,
+    cast_local_ballot_dispatch,
     get_ballot_info_dispatch,
     list_voter_elections,
 )
@@ -28,8 +29,19 @@ def _require_active_voter(user: User) -> None:
 
 
 class CastBallotRequest(BaseModel):
+    """Federal / Provincial dual-ballot (FPTP + PR)."""
     fptp_nomination_id: int
     pr_party_id: int
+
+
+class CastLocalBallotRequest(BaseModel):
+    """Local ballot — 7 selections across 6 contests."""
+    head_nomination_id: int
+    deputy_head_nomination_id: int
+    ward_chair_nomination_id: int
+    ward_woman_member_nomination_id: int
+    ward_dalit_woman_member_nomination_id: int
+    ward_member_open_nomination_ids: list[int]
 
 
 # ── endpoints ────────────────────────────────────────────────────
@@ -68,4 +80,20 @@ def cast_ballot(
         voter=current_user,
         fptp_nomination_id=payload.fptp_nomination_id,
         pr_party_id=payload.pr_party_id,
+    )
+
+
+@router.post("/{election_id}/cast-local")
+def cast_local_ballot(
+    election_id: int,
+    payload: CastLocalBallotRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    _require_active_voter(current_user)
+    return cast_local_ballot_dispatch(
+        db,
+        election_id=election_id,
+        voter=current_user,
+        selections=payload.model_dump(),
     )

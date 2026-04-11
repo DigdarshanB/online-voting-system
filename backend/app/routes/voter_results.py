@@ -20,6 +20,7 @@ from app.models.election import Election
 from app.models.user import User
 from app.schemas.result import (
     FptpResultRowRead,
+    LocalResultSummary,
     PrElectedMemberRead,
     PrResultRowRead,
     ProvincialResultSummary,
@@ -29,6 +30,7 @@ from app.services.count_service import (
     CountServiceError,
     enrich_pr_elected_members,
     get_fptp_results,
+    get_local_result_summary,
     get_pr_elected_members,
     get_pr_results,
     get_provincial_result_summary,
@@ -139,5 +141,23 @@ def voter_provincial_summary(
     run = _get_final_count_run(db, election_id)
     try:
         return get_provincial_result_summary(db, run.id)
+    except CountServiceError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.get(
+    "/{election_id}/local-summary",
+    response_model=LocalResultSummary,
+)
+def voter_local_summary(
+    election_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Full local election result with head and ward breakdowns."""
+    _require_voter(current_user)
+    run = _get_final_count_run(db, election_id)
+    try:
+        return get_local_result_summary(db, run.id)
     except CountServiceError as e:
         raise HTTPException(status_code=404, detail=str(e))

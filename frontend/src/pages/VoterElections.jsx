@@ -138,7 +138,11 @@ export default function VoterElections() {
               style={{
                 background: "#fff",
                 border: "1px solid #e2e8f0",
-                borderLeft: e.government_level === "PROVINCIAL" ? "4px solid #7c3aed" : "1px solid #e2e8f0",
+                borderLeft: e.government_level === "PROVINCIAL"
+                  ? "4px solid #7c3aed"
+                  : e.government_level === "LOCAL"
+                  ? "4px solid #ea580c"
+                  : "1px solid #e2e8f0",
                 borderRadius: 12,
                 padding: 24,
                 boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
@@ -204,6 +208,22 @@ export default function VoterElections() {
                     }}
                   >
                     Provincial Assembly{e.province_code ? ` · ${e.province_code}` : ""}
+                  </span>
+                )}
+                {e.government_level === "LOCAL" && (
+                  <span
+                    style={{
+                      padding: "4px 10px",
+                      borderRadius: 9999,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      background: "#fff7ed",
+                      color: "#ea580c",
+                      border: "1px solid #fed7aa",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Local Body Election
                   </span>
                 )}
               </div>

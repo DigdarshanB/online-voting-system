@@ -14,6 +14,7 @@ export default function VoterResults() {
   const [prRows, setPrRows] = useState([]);
   const [prElectedMembers, setPrElectedMembers] = useState([]);
   const [provincialSummary, setProvincialSummary] = useState(null);
+  const [localSummary, setLocalSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -25,8 +26,9 @@ export default function VoterResults() {
       apiClient.get(`/voter/results/${electionId}/pr`),
       apiClient.get(`/voter/results/${electionId}/pr-elected-members`),
       apiClient.get(`/voter/results/${electionId}/provincial-summary`),
+      apiClient.get(`/voter/results/${electionId}/local-summary`),
     ])
-      .then(([sRes, fRes, pRes, membersRes, provRes]) => {
+      .then(([sRes, fRes, pRes, membersRes, provRes, localRes]) => {
         if (sRes.status === "rejected") {
           setError(sRes.reason?.response?.data?.detail || "Results are not yet available");
         } else {
@@ -36,6 +38,7 @@ export default function VoterResults() {
         if (pRes.status === "fulfilled") setPrRows(pRes.value.data);
         if (membersRes.status === "fulfilled") setPrElectedMembers(membersRes.value.data);
         if (provRes.status === "fulfilled") setProvincialSummary(provRes.value.data);
+        if (localRes.status === "fulfilled") setLocalSummary(localRes.value.data);
         setLoading(false);
       });
   }, [user, electionId]);
@@ -57,24 +60,39 @@ export default function VoterResults() {
       {loading && <p style={{ color: "#64748b", padding: 24 }}>Loading results…</p>}
       {error && <p style={{ color: "#dc2626", padding: 24 }}>{error}</p>}
 
-      {!loading && !error && summary && (
+      {!loading && !error && summary && (() => {
+        const isLocal = summary.government_level === "LOCAL" || localSummary?.government_level === "LOCAL";
+        return (
         <>
           {/* Summary cards */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12, marginBottom: 28 }}>
             <SummaryCard label="Ballots Counted" value={summary.total_ballots_counted?.toLocaleString() ?? "—"} color="#2563eb" />
-            <SummaryCard label="FPTP Winners" value={`${summary.fptp.winners_declared} / ${summary.fptp.total_contests}`} color="#059669" />
-            <SummaryCard label="PR Seats Allocated" value={`${summary.pr.seats_allocated} / ${summary.pr.total_seats ?? "—"}`} color="#7c3aed" />
-            <SummaryCard label="PR Parties Qualified" value={summary.pr.parties_qualified} color="#ea580c" />
+            {isLocal ? (
+              <>
+                <SummaryCard label="Contests" value={summary.fptp.total_contests ?? "—"} color="#1e3a5f" />
+                <SummaryCard label="Winners Declared" value={`${summary.fptp.winners_declared} / ${summary.fptp.total_seats ?? summary.fptp.total_contests}`} color="#059669" />
+                <SummaryCard label="Adjudication" value={summary.fptp.adjudication_required ?? 0} color={summary.fptp.adjudication_required > 0 ? "#d97706" : "#94a3b8"} />
+              </>
+            ) : (
+              <>
+                <SummaryCard label="FPTP Winners" value={`${summary.fptp.winners_declared} / ${summary.fptp.total_contests}`} color="#059669" />
+                <SummaryCard label="PR Seats Allocated" value={`${summary.pr.seats_allocated} / ${summary.pr.total_seats ?? "—"}`} color="#7c3aed" />
+                <SummaryCard label="PR Parties Qualified" value={summary.pr.parties_qualified} color="#ea580c" />
+              </>
+            )}
           </div>
 
           {summary.fptp.adjudication_required > 0 && (
             <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 10, padding: "12px 16px", marginBottom: 20, color: "#92400e", fontSize: 14 }}>
-              ⚠ {summary.fptp.adjudication_required} FPTP constituency tie(s) pending adjudication.
+              ⚠ {summary.fptp.adjudication_required} {isLocal ? "contest" : "FPTP constituency"} tie(s) pending adjudication.
             </div>
           )}
 
-          {/* FPTP Results */}
-          {fptpRows.length > 0 && (
+          {/* Local Results */}
+          {isLocal && localSummary && <LocalResultSection localSummary={localSummary} />}
+
+          {/* FPTP Results (hidden for local — shown in LocalResultSection) */}
+          {!isLocal && fptpRows.length > 0 && (
             <div style={{ marginBottom: 32 }}>
               <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", marginBottom: 12 }}>
                 FPTP Constituency Results
@@ -84,7 +102,7 @@ export default function VoterResults() {
           )}
 
           {/* PR Results */}
-          {prRows.length > 0 && (
+          {!isLocal && prRows.length > 0 && (
             <div style={{ marginBottom: 32 }}>
               <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", marginBottom: 12 }}>
                 Proportional Representation Results
@@ -120,7 +138,8 @@ export default function VoterResults() {
             </div>
           )}
         </>
-      )}
+        );
+      })()}
     </div>
   );
 }
@@ -323,5 +342,104 @@ function Td({ children, align = "left", bold = false, style = {} }) {
     }}>
       {children}
     </td>
+  );
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   LOCAL RESULT SECTION
+   ══════════════════════════════════════════════════════════════ */
+function LocalResultSection({ localSummary }) {
+  if (!localSummary) return null;
+
+  const { head_results = [], ward_results = [], local_summary } = localSummary;
+
+  const ContestTable = ({ contest }) => (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ fontSize: 13, fontWeight: 600, color: "#334155", marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
+        {contest.contest_title || contest.contest_type}
+        {contest.area_name && <span style={{ fontWeight: 400, color: "#64748b" }}> — {contest.area_name}</span>}
+        <span style={{ fontSize: 11, color: "#64748b", marginLeft: "auto" }}>
+          {contest.seat_count > 1 ? `${contest.seat_count} seats` : "1 seat"}
+        </span>
+      </div>
+      <div style={{ overflowX: "auto", borderRadius: 10, border: "1px solid #e2e8f0" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr style={{ background: "#f1f5f9" }}>
+              <Th>Rank</Th>
+              <Th>Candidate</Th>
+              <Th>Party</Th>
+              <Th align="right">Votes</Th>
+              <Th>Result</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {(contest.candidates || []).map((c, i) => (
+              <tr key={c.nomination_id || i} style={{
+                background: c.is_winner ? "#f0fdf4" : c.requires_adjudication ? "#fffbeb" : "transparent",
+              }}>
+                <Td>{c.rank}</Td>
+                <Td bold={c.is_winner}>{c.candidate_name}</Td>
+                <Td>{c.party_name || "Independent"}</Td>
+                <Td align="right" bold>{c.vote_count.toLocaleString()}</Td>
+                <Td>
+                  {c.is_winner && <span style={{ color: "#059669", fontWeight: 600 }}>✓ Winner</span>}
+                  {c.requires_adjudication && <span style={{ color: "#d97706", fontWeight: 600 }}>⚠ Tie</span>}
+                </Td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Local summary totals */}
+      {local_summary && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: 24 }}>
+          <SummaryCard label="Total Contests" value={local_summary.total_direct_contests} color="#1e3a5f" />
+          <SummaryCard label="Total Seats" value={local_summary.total_seats} color="#2563eb" />
+          <SummaryCard label="Seats Filled" value={local_summary.seats_filled} color="#059669" />
+          <SummaryCard label="Wards Counted" value={local_summary.wards_counted} color="#7c3aed" />
+        </div>
+      )}
+
+      {/* Head contests (Mayor, Deputy Mayor) */}
+      {head_results.length > 0 && (
+        <div style={{ marginBottom: 32 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", marginBottom: 12 }}>
+            Head Positions
+          </h2>
+          {head_results.map((contest) => (
+            <ContestTable key={contest.contest_id} contest={contest} />
+          ))}
+        </div>
+      )}
+
+      {/* Ward results */}
+      {ward_results.length > 0 && (
+        <div style={{ marginBottom: 32 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", marginBottom: 12 }}>
+            Ward Results
+          </h2>
+          {ward_results.map((ward) => (
+            <div key={ward.area_id} style={{ marginBottom: 20 }}>
+              <div style={{
+                fontSize: 14, fontWeight: 700, color: "#1e3a5f", marginBottom: 10,
+                padding: "8px 14px", background: "#f1f5f9", borderRadius: 8, border: "1px solid #e2e8f0",
+              }}>
+                {ward.ward_name || `Ward ${ward.ward_number}`}
+              </div>
+              {(ward.contests || []).map((contest) => (
+                <ContestTable key={contest.contest_id} contest={contest} />
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </>
   );
 }

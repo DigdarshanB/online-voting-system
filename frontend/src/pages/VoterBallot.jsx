@@ -21,6 +21,16 @@ export default function VoterBallot() {
   const [castResult, setCastResult] = useState(null);
   const [castError, setCastError] = useState("");
 
+  // Local ballot selections
+  const [localChoices, setLocalChoices] = useState({
+    head: null,
+    deputy_head: null,
+    ward_chair: null,
+    ward_woman_member: null,
+    ward_dalit_woman_member: null,
+    ward_member_open: [],
+  });
+
   useEffect(() => {
     if (!user) return;
     apiClient
@@ -133,9 +143,24 @@ export default function VoterBallot() {
             <strong>Ballot ID:</strong> {castResult.ballot_id}
           </div>
           <div style={{ margin: "4px 0", fontSize: 14 }}>
-            <strong>{ballot.voter_area ? "Provincial constituency" : "Constituency"}:</strong>{" "}
-            {ballot.voter_area ? ballot.voter_area.name : ballot.voter_constituency?.name}
+            <strong>
+              {ballot.government_level === "LOCAL"
+                ? "Local Body"
+                : ballot.voter_area
+                ? "Provincial constituency"
+                : "Constituency"}:
+            </strong>{" "}
+            {ballot.government_level === "LOCAL"
+              ? ballot.local_body?.name
+              : ballot.voter_area
+              ? ballot.voter_area.name
+              : ballot.voter_constituency?.name}
           </div>
+          {ballot.government_level === "LOCAL" && ballot.ward && (
+            <div style={{ margin: "4px 0", fontSize: 14 }}>
+              <strong>Ward:</strong> Ward {ballot.ward.ward_number} — {ballot.ward.name}
+            </div>
+          )}
         </div>
         <button
           onClick={() => navigate("/elections")}
@@ -195,14 +220,37 @@ export default function VoterBallot() {
   /* ── ballot form ──────────────────────────────────────────── */
 
   const canVote = ballot.election_status === "POLLING_OPEN";
+  const isLocal = ballot.government_level === "LOCAL";
   const bothSelected = fptpChoice !== null && prChoice !== null;
+  const localReady =
+    localChoices.head !== null &&
+    localChoices.deputy_head !== null &&
+    localChoices.ward_chair !== null &&
+    localChoices.ward_woman_member !== null &&
+    localChoices.ward_dalit_woman_member !== null &&
+    localChoices.ward_member_open.length === 2;
+  const readyToVote = isLocal ? localReady : bothSelected;
 
-  const selectedCandidate = ballot.fptp.candidates.find(
+  const selectedCandidate = ballot.fptp?.candidates?.find(
     (c) => c.nomination_id === fptpChoice
   );
-  const selectedParty = ballot.pr.parties.find(
+  const selectedParty = ballot.pr?.parties?.find(
     (p) => p.party_id === prChoice
   );
+
+  function setLocalChoice(key, nominationId) {
+    setLocalChoices((prev) => ({ ...prev, [key]: nominationId }));
+  }
+
+  function toggleOpenMember(nominationId) {
+    setLocalChoices((prev) => {
+      const arr = prev.ward_member_open;
+      if (arr.includes(nominationId))
+        return { ...prev, ward_member_open: arr.filter((id) => id !== nominationId) };
+      if (arr.length >= 2) return prev;
+      return { ...prev, ward_member_open: [...arr, nominationId] };
+    });
+  }
 
   function handleCast() {
     setConfirming(true);
@@ -212,13 +260,20 @@ export default function VoterBallot() {
     setSubmitting(true);
     setCastError("");
     try {
-      const res = await apiClient.post(
-        `/voter/elections/${electionId}/cast`,
-        {
-          fptp_nomination_id: fptpChoice,
-          pr_party_id: prChoice,
-        }
-      );
+      const url = isLocal
+        ? `/voter/elections/${electionId}/cast-local`
+        : `/voter/elections/${electionId}/cast`;
+      const payload = isLocal
+        ? {
+            head_nomination_id: localChoices.head,
+            deputy_head_nomination_id: localChoices.deputy_head,
+            ward_chair_nomination_id: localChoices.ward_chair,
+            ward_woman_member_nomination_id: localChoices.ward_woman_member,
+            ward_dalit_woman_member_nomination_id: localChoices.ward_dalit_woman_member,
+            ward_member_open_nomination_ids: localChoices.ward_member_open,
+          }
+        : { fptp_nomination_id: fptpChoice, pr_party_id: prChoice };
+      const res = await apiClient.post(url, payload);
       setCastResult(res.data);
     } catch (err) {
       setCastError(
@@ -267,18 +322,31 @@ export default function VoterBallot() {
           {ballot.election_title}
         </h1>
         <p style={{ color: "#64748b", fontSize: 14, margin: 0 }}>
-          {ballot.voter_area ? "Provincial constituency" : "Constituency"}:{" "}
-          <strong>{ballot.voter_area ? ballot.voter_area.name : ballot.voter_constituency?.name}</strong>
-          {ballot.voter_constituency?.district_name
-            ? ` (${ballot.voter_constituency.district_name})`
-            : ballot.voter_area?.province_number
-            ? ` (Province ${ballot.voter_area.province_number})`
-            : ""}
+          {isLocal ? (
+            <>Local Body: <strong>{ballot.local_body?.name}</strong> — Ward {ballot.ward?.ward_number}</>
+          ) : (
+            <>
+              {ballot.voter_area ? "Provincial constituency" : "Constituency"}:{" "}
+              <strong>{ballot.voter_area ? ballot.voter_area.name : ballot.voter_constituency?.name}</strong>
+              {ballot.voter_constituency?.district_name
+                ? ` (${ballot.voter_constituency.district_name})`
+                : ballot.voter_area?.province_number
+                ? ` (Province ${ballot.voter_area.province_number})`
+                : ""}
+            </>
+          )}
         </p>
         {ballot.government_level === "PROVINCIAL" && (
           <div style={{ marginTop: 6 }}>
             <span style={{ fontSize: 11, fontWeight: 700, background: "#f5f3ff", color: "#7c3aed", padding: "2px 10px", borderRadius: 6, border: "1px solid #e9d5ff" }}>
               {ballot.province_code} · Provincial Assembly Election
+            </span>
+          </div>
+        )}
+        {isLocal && (
+          <div style={{ marginTop: 6 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, background: "#fff7ed", color: "#ea580c", padding: "2px 10px", borderRadius: 6, border: "1px solid #fed7aa" }}>
+              Local Body Election · {ballot.local_body?.name}
             </span>
           </div>
         )}
@@ -316,7 +384,103 @@ export default function VoterBallot() {
         </div>
       )}
 
-      {/* ── two-column ballot ────────────────────────── */}
+      {/* ── local ballot ─────────────────────────────── */}
+      {isLocal && (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+          {[
+            { key: "head", color: "#ea580c", bg: "#fff7ed" },
+            { key: "deputy_head", color: "#ea580c", bg: "#fff7ed" },
+            { key: "ward_chair", color: "#2563eb", bg: "#eff6ff" },
+            { key: "ward_woman_member", color: "#7c3aed", bg: "#f5f3ff" },
+            { key: "ward_dalit_woman_member", color: "#7c3aed", bg: "#f5f3ff" },
+            { key: "ward_member_open", color: "#059669", bg: "#ecfdf5" },
+          ].map(({ key, color, bg }) => {
+            const contest = ballot[key];
+            if (!contest) return null;
+            const isMulti = (contest.seat_count || 1) > 1;
+            return (
+              <div key={key} style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, overflow: "hidden" }}>
+                <div style={{ background: color, color: "#fff", padding: "14px 20px" }}>
+                  <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>{contest.contest_title}</h2>
+                  <p style={{ fontSize: 11, opacity: 0.6, margin: "2px 0 0" }}>
+                    {isMulti ? `Select ${contest.seat_count} candidates` : "Select ONE candidate"}
+                  </p>
+                </div>
+                <div style={{ padding: 16 }}>
+                  {contest.candidates.length === 0 ? (
+                    <p style={{ color: "#94a3b8", textAlign: "center", padding: 20 }}>No candidates available</p>
+                  ) : (
+                    contest.candidates.map((c) => {
+                      const checked = isMulti
+                        ? localChoices.ward_member_open.includes(c.nomination_id)
+                        : localChoices[key] === c.nomination_id;
+                      const maxed = isMulti && localChoices.ward_member_open.length >= contest.seat_count && !checked;
+                      return (
+                        <label
+                          key={c.nomination_id}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 12,
+                            padding: "12px 16px",
+                            borderRadius: 8,
+                            marginBottom: 8,
+                            cursor: canVote && !maxed ? "pointer" : "default",
+                            background: checked ? bg : "#f8fafc",
+                            border: checked ? `2px solid ${color}` : "2px solid transparent",
+                            transition: "all 0.15s",
+                          }}
+                        >
+                          <input
+                            type={isMulti ? "checkbox" : "radio"}
+                            name={`local_${key}`}
+                            checked={checked}
+                            onChange={() =>
+                              isMulti
+                                ? toggleOpenMember(c.nomination_id)
+                                : setLocalChoice(key, c.nomination_id)
+                            }
+                            disabled={!canVote || maxed}
+                            style={{ accentColor: color, width: 18, height: 18 }}
+                          />
+                          {c.candidate_photo_path ? (
+                            <img
+                              src={`${API_BASE}/${c.candidate_photo_path}`}
+                              alt=""
+                              style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", border: "1px solid #e2e8f0", flexShrink: 0 }}
+                            />
+                          ) : (
+                            <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 600, color: "#64748b", flexShrink: 0 }}>
+                              {c.candidate_name?.[0] || "?"}
+                            </div>
+                          )}
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 600, fontSize: 14, color: "#1e293b" }}>{c.candidate_name}</div>
+                            {c.party_name ? (
+                              <div style={{ fontSize: 12, color: "#64748b", display: "flex", alignItems: "center", gap: 4 }}>
+                                {c.party_symbol_path && (
+                                  <img src={`${API_BASE}/${c.party_symbol_path}`} alt="" style={{ width: 14, height: 14, objectFit: "contain" }} />
+                                )}
+                                {c.party_name}
+                                {c.party_abbreviation ? ` (${c.party_abbreviation})` : ""}
+                              </div>
+                            ) : (
+                              <div style={{ fontSize: 12, color: "#94a3b8" }}>Independent</div>
+                            )}
+                          </div>
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── two-column ballot (federal / provincial) ── */}
+      {!isLocal && (
       <div
         style={{
           display: "grid",
@@ -594,28 +758,29 @@ export default function VoterBallot() {
           </div>
         </div>
       </div>
+      )}
 
       {/* ── submit button ────────────────────────────── */}
       {canVote && (
         <div style={{ marginTop: 32, textAlign: "center" }}>
           <button
             onClick={handleCast}
-            disabled={!bothSelected || submitting}
+            disabled={!readyToVote || submitting}
             style={{
               padding: "14px 40px",
               borderRadius: 10,
               fontSize: 16,
               fontWeight: 700,
-              background: bothSelected ? "#16a34a" : "#d1d5db",
-              color: bothSelected ? "#fff" : "#9ca3af",
+              background: readyToVote ? "#16a34a" : "#d1d5db",
+              color: readyToVote ? "#fff" : "#9ca3af",
               border: "none",
-              cursor: bothSelected ? "pointer" : "not-allowed",
+              cursor: readyToVote ? "pointer" : "not-allowed",
               transition: "all 0.2s",
             }}
           >
             {submitting ? "Casting…" : "Cast Your Ballot"}
           </button>
-          {!bothSelected && (
+          {!readyToVote && (
             <p
               style={{
                 color: "#94a3b8",
@@ -623,8 +788,9 @@ export default function VoterBallot() {
                 marginTop: 8,
               }}
             >
-              Please select both an FPTP candidate and a PR party
-              to proceed.
+              {isLocal
+                ? "Please make a selection for every contest to proceed."
+                : "Please select both an FPTP candidate and a PR party to proceed."}
             </p>
           )}
         </div>
@@ -680,70 +846,68 @@ export default function VoterBallot() {
                 borderRadius: 8,
                 padding: 16,
                 marginBottom: 20,
+                maxHeight: 320,
+                overflowY: "auto",
               }}
             >
-              <div style={{ marginBottom: 12 }}>
-                <div
-                  style={{
-                    fontSize: 12,
-                    color: "#64748b",
-                    fontWeight: 600,
-                    textTransform: "uppercase",
-                    marginBottom: 2,
-                  }}
-                >
-                  FPTP Candidate
-                </div>
-                <div
-                  style={{
-                    fontSize: 15,
-                    fontWeight: 600,
-                    color: "#1e40af",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                  }}
-                >
-                  {selectedCandidate?.candidate_photo_path ? (
-                    <img src={`${API_BASE}/${selectedCandidate.candidate_photo_path}`} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} />
-                  ) : null}
-                  {selectedCandidate?.candidate_name}
-                  {selectedCandidate?.party_abbreviation
-                    ? ` (${selectedCandidate.party_abbreviation})`
-                    : ""}
-                </div>
-              </div>
-              <div>
-                <div
-                  style={{
-                    fontSize: 12,
-                    color: "#64748b",
-                    fontWeight: 600,
-                    textTransform: "uppercase",
-                    marginBottom: 2,
-                  }}
-                >
-                  PR Party
-                </div>
-                <div
-                  style={{
-                    fontSize: 15,
-                    fontWeight: 600,
-                    color: "#7c3aed",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                  }}
-                >
-                  {selectedParty?.party_symbol_path ? (
-                    <img src={`${API_BASE}/${selectedParty.party_symbol_path}`} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />
-                  ) : null}
-                  {selectedParty?.party_name}
-                  {selectedParty?.party_abbreviation
-                    ? ` (${selectedParty.party_abbreviation})`
-                    : ""}
-                </div>
-              </div>
+              {isLocal ? (
+                [
+                  { key: "head", label: "Head (Mayor/Chairperson)" },
+                  { key: "deputy_head", label: "Deputy Head" },
+                  { key: "ward_chair", label: "Ward Chairperson" },
+                  { key: "ward_woman_member", label: "Ward Woman Member" },
+                  { key: "ward_dalit_woman_member", label: "Ward Dalit Woman Member" },
+                  { key: "ward_member_open", label: "Ward Members (Open)" },
+                ].map(({ key, label }, idx) => {
+                  const contest = ballot[key];
+                  if (!contest) return null;
+                  const isMulti = (contest.seat_count || 1) > 1;
+                  const names = isMulti
+                    ? localChoices.ward_member_open.map(
+                        (id) => contest.candidates.find((x) => x.nomination_id === id)?.candidate_name || "?"
+                      )
+                    : [contest.candidates.find((x) => x.nomination_id === localChoices[key])?.candidate_name || "?"];
+                  return (
+                    <div key={key} style={{ marginBottom: idx < 5 ? 10 : 0 }}>
+                      <div style={{ fontSize: 12, color: "#64748b", fontWeight: 600, textTransform: "uppercase", marginBottom: 2 }}>
+                        {label}
+                      </div>
+                      {names.map((n, i) => (
+                        <div key={i} style={{ fontSize: 14, fontWeight: 600, color: "#1e293b" }}>
+                          {isMulti ? `${i + 1}. ` : ""}{n}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })
+              ) : (
+                <>
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontSize: 12, color: "#64748b", fontWeight: 600, textTransform: "uppercase", marginBottom: 2 }}>
+                      FPTP Candidate
+                    </div>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: "#1e40af", display: "flex", alignItems: "center", gap: 8 }}>
+                      {selectedCandidate?.candidate_photo_path ? (
+                        <img src={`${API_BASE}/${selectedCandidate.candidate_photo_path}`} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} />
+                      ) : null}
+                      {selectedCandidate?.candidate_name}
+                      {selectedCandidate?.party_abbreviation ? ` (${selectedCandidate.party_abbreviation})` : ""}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12, color: "#64748b", fontWeight: 600, textTransform: "uppercase", marginBottom: 2 }}>
+                      PR Party
+                    </div>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: "#7c3aed", display: "flex", alignItems: "center", gap: 8 }}>
+                      {selectedParty?.party_symbol_path ? (
+                        <img src={`${API_BASE}/${selectedParty.party_symbol_path}`} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />
+                      ) : null}
+                      {selectedParty?.party_name}
+                      {selectedParty?.party_abbreviation ? ` (${selectedParty.party_abbreviation})` : ""}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             <div
