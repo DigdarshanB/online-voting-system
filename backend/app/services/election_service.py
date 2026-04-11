@@ -458,19 +458,33 @@ def _generate_provincial_assembly(db: Session, election: Election) -> dict:
 
 
 def _generate_local(db: Session, election: Election) -> dict:
-    """Generate Mayor + Deputy Mayor contests for local body elections.
+    """Generate local body election contests.
 
-    Creates one MAYOR and one DEPUTY_MAYOR contest per local body
-    (municipality, rural municipality, metropolitan, sub-metropolitan).
+    LOCAL_MUNICIPAL (urban): Mayor + Deputy Mayor per MUNICIPALITY/METROPOLITAN/SUB_METROPOLITAN
+    LOCAL_RURAL: Chairperson + Vice Chairperson per RURAL_MUNICIPALITY
+
+    Ward-level contests (5 per ward) are generated only when ward data is available
+    in the area_units table.  If no wards exist, only head/deputy contests are
+    generated and a warning is returned so the readiness check can flag it.
     """
-    from app.core.election_constants import CONTEST_TYPE_MAYOR, CONTEST_TYPE_DEPUTY_MAYOR
+    from app.core.election_constants import (
+        CONTEST_TYPE_MAYOR,
+        CONTEST_TYPE_DEPUTY_MAYOR,
+        CONTEST_TYPE_WARD_CHAIR,
+        CONTEST_TYPE_WARD_WOMAN_MEMBER,
+        CONTEST_TYPE_WARD_DALIT_WOMAN_MEMBER,
+        CONTEST_TYPE_WARD_OPEN_MEMBER_1,
+        CONTEST_TYPE_WARD_OPEN_MEMBER_2,
+        URBAN_LOCAL_BODY_CATEGORIES,
+        RURAL_LOCAL_BODY_CATEGORIES,
+    )
 
     # Determine which local body categories to target
     if election.election_subtype == "LOCAL_RURAL":
-        target_categories = ("RURAL_MUNICIPALITY",)
+        target_categories = RURAL_LOCAL_BODY_CATEGORIES
     else:
-        # LOCAL_MUNICIPAL: all local body types
-        target_categories = LOCAL_BODY_CATEGORIES
+        # LOCAL_MUNICIPAL: urban local bodies only
+        target_categories = URBAN_LOCAL_BODY_CATEGORIES
 
     local_bodies = list(
         db.execute(
@@ -486,39 +500,137 @@ def _generate_local(db: Session, election: Election) -> dict:
             "Seed area unit data first."
         )
 
+    # Collect local body codes to find their wards
+    lb_codes = [lb.code for lb in local_bodies]
+
+    # Find wards belonging to these local bodies
+    wards = list(
+        db.execute(
+            select(AreaUnit)
+            .where(
+                AreaUnit.category == "WARD",
+                AreaUnit.parent_code.in_(lb_codes),
+            )
+            .order_by(AreaUnit.parent_code, AreaUnit.ward_number)
+        ).scalars().all()
+    )
+
+    # Group wards by parent local body code
+    wards_by_lb: dict[str, list] = {}
+    for w in wards:
+        wards_by_lb.setdefault(w.parent_code, []).append(w)
+
+    # Determine titles based on urban/rural
+    is_rural = election.election_subtype == "LOCAL_RURAL"
+
     mayor_created = 0
     deputy_created = 0
+    ward_chair_created = 0
+    ward_woman_created = 0
+    ward_dalit_woman_created = 0
+    ward_open_1_created = 0
+    ward_open_2_created = 0
 
     for lb in local_bodies:
-        # Mayor / Chair
+        head_title = f"Chairperson – {lb.name}" if is_rural else f"Mayor – {lb.name}"
+        deputy_title = f"Vice Chairperson – {lb.name}" if is_rural else f"Deputy Mayor – {lb.name}"
+
         db.add(ElectionContest(
             election_id=election.id,
             contest_type=CONTEST_TYPE_MAYOR,
-            title=f"Mayor – {lb.name}" if lb.category != "RURAL_MUNICIPALITY" else f"Chair – {lb.name}",
+            title=head_title,
             seat_count=1,
             area_id=lb.id,
         ))
         mayor_created += 1
 
-        # Deputy Mayor / Vice Chair
         db.add(ElectionContest(
             election_id=election.id,
             contest_type=CONTEST_TYPE_DEPUTY_MAYOR,
-            title=f"Deputy Mayor – {lb.name}" if lb.category != "RURAL_MUNICIPALITY" else f"Vice Chair – {lb.name}",
+            title=deputy_title,
             seat_count=1,
             area_id=lb.id,
         ))
         deputy_created += 1
 
+        # Ward-level contests (only if wards exist for this local body)
+        lb_wards = wards_by_lb.get(lb.code, [])
+        for ward in lb_wards:
+            db.add(ElectionContest(
+                election_id=election.id,
+                contest_type=CONTEST_TYPE_WARD_CHAIR,
+                title=f"Ward Chairperson – {ward.name}",
+                seat_count=1,
+                area_id=ward.id,
+            ))
+            ward_chair_created += 1
+
+            db.add(ElectionContest(
+                election_id=election.id,
+                contest_type=CONTEST_TYPE_WARD_WOMAN_MEMBER,
+                title=f"Woman Ward Member – {ward.name}",
+                seat_count=1,
+                area_id=ward.id,
+            ))
+            ward_woman_created += 1
+
+            db.add(ElectionContest(
+                election_id=election.id,
+                contest_type=CONTEST_TYPE_WARD_DALIT_WOMAN_MEMBER,
+                title=f"Dalit Woman Ward Member – {ward.name}",
+                seat_count=1,
+                area_id=ward.id,
+            ))
+            ward_dalit_woman_created += 1
+
+            db.add(ElectionContest(
+                election_id=election.id,
+                contest_type=CONTEST_TYPE_WARD_OPEN_MEMBER_1,
+                title=f"Open Ward Member 1 – {ward.name}",
+                seat_count=1,
+                area_id=ward.id,
+            ))
+            ward_open_1_created += 1
+
+            db.add(ElectionContest(
+                election_id=election.id,
+                contest_type=CONTEST_TYPE_WARD_OPEN_MEMBER_2,
+                title=f"Open Ward Member 2 – {ward.name}",
+                seat_count=1,
+                area_id=ward.id,
+            ))
+            ward_open_2_created += 1
+
     db.commit()
 
-    return {
+    total_ward_contests = (
+        ward_chair_created + ward_woman_created + ward_dalit_woman_created
+        + ward_open_1_created + ward_open_2_created
+    )
+
+    result = {
         "fptp_contests_created": 0,
         "pr_contests_created": 0,
         "mayor_contests_created": mayor_created,
         "deputy_mayor_contests_created": deputy_created,
-        "total_contests": mayor_created + deputy_created,
+        "ward_chair_contests_created": ward_chair_created,
+        "ward_woman_member_contests_created": ward_woman_created,
+        "ward_dalit_woman_member_contests_created": ward_dalit_woman_created,
+        "ward_open_member_1_contests_created": ward_open_1_created,
+        "ward_open_member_2_contests_created": ward_open_2_created,
+        "total_ward_contests": total_ward_contests,
+        "total_contests": mayor_created + deputy_created + total_ward_contests,
+        "wards_available": len(wards) > 0,
     }
+
+    if len(wards) == 0:
+        result["warning"] = (
+            "No ward data found. Only head/deputy contests generated. "
+            "Import ward data (nepal_ward_data.json) and re-seed to enable "
+            "full 7-selection local elections."
+        )
+
+    return result
 
 
 # ── Readiness checks (multi-level) ─────────────────────────────
@@ -543,17 +655,7 @@ def check_structure_readiness(db: Session, election: Election) -> dict:
     elif key == ("PROVINCIAL", "PROVINCIAL_ASSEMBLY"):
         issues.extend(_check_provincial_readiness(db, election, fptp, pr))
     elif key[0] == "LOCAL":
-        from app.core.election_constants import CONTEST_TYPE_MAYOR, CONTEST_TYPE_DEPUTY_MAYOR
-        mayor_count = contest_counts.get(CONTEST_TYPE_MAYOR, 0)
-        deputy_count = contest_counts.get(CONTEST_TYPE_DEPUTY_MAYOR, 0)
-        if mayor_count == 0:
-            issues.append("No Mayor/Chair contests generated")
-        if deputy_count == 0:
-            issues.append("No Deputy Mayor/Vice Chair contests generated")
-        if mayor_count != deputy_count:
-            issues.append(
-                f"Mayor ({mayor_count}) and Deputy Mayor ({deputy_count}) contest counts don't match"
-            )
+        issues.extend(_check_local_readiness(db, election, contest_counts))
     else:
         struct_def = get_structure_def(election.government_level, election.election_subtype)
         if struct_def is None:
@@ -679,6 +781,95 @@ def _check_provincial_readiness(db: Session, election: Election, fptp: int, pr: 
     return issues
 
 
+def _check_local_readiness(
+    db: Session, election: Election, contest_counts: dict[str, int],
+) -> list[str]:
+    """Local election readiness checks.
+
+    Validates:
+    - Mayor/Chair and Deputy/Vice contests exist and match in count
+    - Correct local body category targeting (urban vs rural)
+    - Ward contest availability (warns if missing)
+    - Ward contest counts are internally consistent (5 types × N wards)
+    """
+    from app.core.election_constants import (
+        CONTEST_TYPE_MAYOR,
+        CONTEST_TYPE_DEPUTY_MAYOR,
+        CONTEST_TYPE_WARD_CHAIR,
+        CONTEST_TYPE_WARD_WOMAN_MEMBER,
+        CONTEST_TYPE_WARD_DALIT_WOMAN_MEMBER,
+        CONTEST_TYPE_WARD_OPEN_MEMBER_1,
+        CONTEST_TYPE_WARD_OPEN_MEMBER_2,
+        URBAN_LOCAL_BODY_CATEGORIES,
+        RURAL_LOCAL_BODY_CATEGORIES,
+    )
+    from app.core.geography_loader import ward_data_available
+
+    issues: list[str] = []
+
+    mayor_count = contest_counts.get(CONTEST_TYPE_MAYOR, 0)
+    deputy_count = contest_counts.get(CONTEST_TYPE_DEPUTY_MAYOR, 0)
+
+    if mayor_count == 0:
+        issues.append("No Mayor/Chairperson contests generated")
+    if deputy_count == 0:
+        issues.append("No Deputy Mayor/Vice Chairperson contests generated")
+    if mayor_count != deputy_count:
+        issues.append(
+            f"Mayor ({mayor_count}) and Deputy ({deputy_count}) contest counts don't match"
+        )
+
+    # Verify expected local body count
+    if election.election_subtype == "LOCAL_RURAL":
+        expected_categories = RURAL_LOCAL_BODY_CATEGORIES
+    else:
+        expected_categories = URBAN_LOCAL_BODY_CATEGORIES
+
+    expected_body_count = db.execute(
+        select(func.count())
+        .select_from(AreaUnit)
+        .where(AreaUnit.category.in_(expected_categories))
+    ).scalar_one()
+
+    if mayor_count != expected_body_count:
+        issues.append(
+            f"Expected {expected_body_count} head contests for "
+            f"{election.election_subtype}, found {mayor_count}"
+        )
+
+    # Ward contest checks
+    ward_chair = contest_counts.get(CONTEST_TYPE_WARD_CHAIR, 0)
+    ward_woman = contest_counts.get(CONTEST_TYPE_WARD_WOMAN_MEMBER, 0)
+    ward_dalit = contest_counts.get(CONTEST_TYPE_WARD_DALIT_WOMAN_MEMBER, 0)
+    ward_open_1 = contest_counts.get(CONTEST_TYPE_WARD_OPEN_MEMBER_1, 0)
+    ward_open_2 = contest_counts.get(CONTEST_TYPE_WARD_OPEN_MEMBER_2, 0)
+    ward_types = [ward_chair, ward_woman, ward_dalit, ward_open_1, ward_open_2]
+
+    if all(w == 0 for w in ward_types):
+        if ward_data_available():
+            issues.append(
+                "Ward data file exists but no ward contests generated. "
+                "Re-generate election structure to include ward contests."
+            )
+        else:
+            issues.append(
+                "No ward contests generated — ward master data (nepal_ward_data.json) "
+                "is not available. Local elections require ward data for the full "
+                "7-selection ballot. Import ward data and re-generate."
+            )
+    else:
+        # Ward contests exist — verify consistency (all 5 types must have same count)
+        if len(set(ward_types)) != 1:
+            issues.append(
+                f"Ward contest type counts are inconsistent: "
+                f"WARD_CHAIR={ward_chair}, WARD_WOMAN={ward_woman}, "
+                f"WARD_DALIT_WOMAN={ward_dalit}, WARD_OPEN_1={ward_open_1}, "
+                f"WARD_OPEN_2={ward_open_2}. All must be equal."
+            )
+
+    return issues
+
+
 # ── Configure / lock setup ─────────────────────────────────────
 
 def configure_election(db: Session, election: Election) -> Election:
@@ -772,6 +963,13 @@ def _get_area_by_code(db: Session, code: str) -> AreaUnit | None:
 def get_master_data_status(db: Session) -> dict:
     """Return geography master data counts for all levels."""
     from app.models.district import District
+    from app.core.geography_loader import (
+        ward_data_available,
+        EXPECTED_TOTAL_LOCAL_BODIES,
+        EXPECTED_URBAN_LOCAL_BODIES,
+        EXPECTED_RURAL_LOCAL_BODIES,
+        EXPECTED_WARD_COUNT,
+    )
 
     district_count = db.execute(
         select(func.count()).select_from(District)
@@ -790,6 +988,7 @@ def get_master_data_status(db: Session) -> dict:
     total_local = sum(
         area_counts.get(c, 0) for c in LOCAL_BODY_CATEGORIES
     )
+    ward_count = area_counts.get("WARD", 0)
 
     # Province list for frontend province selector
     province_rows = db.execute(
@@ -808,10 +1007,17 @@ def get_master_data_status(db: Session) -> dict:
         # New multi-level fields
         "provinces": area_counts.get("PROVINCE", 0),
         "local_bodies": total_local,
+        "wards": ward_count,
+        "ward_data_available": ward_data_available(),
+        "expected_wards": EXPECTED_WARD_COUNT,
+        "expected_local_bodies": EXPECTED_TOTAL_LOCAL_BODIES,
+        "expected_urban_local_bodies": EXPECTED_URBAN_LOCAL_BODIES,
+        "expected_rural_local_bodies": EXPECTED_RURAL_LOCAL_BODIES,
         "area_units_total": sum(area_counts.values()),
         "area_counts": area_counts,
         "federal_ready": constituency_count >= FEDERAL_HOR_FPTP_CONSTITUENCY_COUNT,
         "provincial_ready": area_counts.get("PROVINCE", 0) == 7,
-        "local_ready": total_local > 0,
+        "local_ready": total_local >= EXPECTED_TOTAL_LOCAL_BODIES,
+        "local_wards_ready": ward_count >= EXPECTED_WARD_COUNT,
         "province_list": province_list,
     }

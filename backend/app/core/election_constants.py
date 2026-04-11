@@ -123,20 +123,56 @@ PROVINCIAL_ASSEMBLY = ElectionStructureDef(
 )
 
 
-# ── Local Municipal ─────────────────────────────────────────────
-# Local body elections elect a mayor + deputy mayor per municipality/metro/sub-metro.
-# Ward-level positions can be added later.
+# ── Local ───────────────────────────────────────────────────────
+# Nepal local direct elections: each voter casts 7 FPTP selections per ward.
+#
+# Local bodies are of two kinds:
+#   URBAN: MUNICIPALITY, METROPOLITAN, SUB_METROPOLITAN → elect Mayor + Deputy Mayor
+#   RURAL: RURAL_MUNICIPALITY → elect Chairperson + Vice Chairperson
+#
+# Ward-level (both urban and rural): Ward Chairperson, Woman Ward Member,
+# Dalit Woman Ward Member, Open Ward Member ×2.
+#
+# All 7 positions are FPTP (first-past-the-post, single winner).
+# There is NO proportional representation in local direct elections.
 
+# All local body categories (used for counting, geography validation, etc.)
 LOCAL_BODY_CATEGORIES = ("MUNICIPALITY", "RURAL_MUNICIPALITY", "METROPOLITAN", "SUB_METROPOLITAN")
+
+# Urban-only local bodies (elect Mayor + Deputy Mayor)
+URBAN_LOCAL_BODY_CATEGORIES = ("MUNICIPALITY", "METROPOLITAN", "SUB_METROPOLITAN")
+
+# Rural-only local bodies (elect Chairperson + Vice Chairperson)
+RURAL_LOCAL_BODY_CATEGORIES = ("RURAL_MUNICIPALITY",)
+
+# ── Ward-level contest types ───────────────────────────────────
+CONTEST_TYPE_WARD_WOMAN_MEMBER = "WARD_WOMAN_MEMBER"
+CONTEST_TYPE_WARD_DALIT_WOMAN_MEMBER = "WARD_DALIT_WOMAN"
+CONTEST_TYPE_WARD_OPEN_MEMBER_1 = "WARD_OPEN_MEMBER_1"
+CONTEST_TYPE_WARD_OPEN_MEMBER_2 = "WARD_OPEN_MEMBER_2"
+
+# All 7 local direct-election contest types (one ballot = 7 selections)
+LOCAL_HEAD_CONTEST_TYPES = (CONTEST_TYPE_MAYOR, CONTEST_TYPE_DEPUTY_MAYOR)
+LOCAL_WARD_CONTEST_TYPES = (
+    CONTEST_TYPE_WARD_CHAIR,
+    CONTEST_TYPE_WARD_WOMAN_MEMBER,
+    CONTEST_TYPE_WARD_DALIT_WOMAN_MEMBER,
+    CONTEST_TYPE_WARD_OPEN_MEMBER_1,
+    CONTEST_TYPE_WARD_OPEN_MEMBER_2,
+)
+ALL_LOCAL_CONTEST_TYPES = LOCAL_HEAD_CONTEST_TYPES + LOCAL_WARD_CONTEST_TYPES
 
 LOCAL_MUNICIPAL = ElectionStructureDef(
     government_level="LOCAL",
     election_subtype="LOCAL_MUNICIPAL",
-    description="Local body elections — Mayor + Deputy Mayor per local body",
+    description=(
+        "Urban local body elections — Mayor + Deputy Mayor per body, "
+        "5 ward-level positions per ward. 7 FPTP selections per voter."
+    ),
     contest_defs=[
         ContestDef(
             CONTEST_TYPE_MAYOR,
-            area_category=None,  # handled specially: iterate LOCAL_BODY_CATEGORIES
+            area_category=None,  # handled specially: iterate URBAN_LOCAL_BODY_CATEGORIES
             seat_count=1,
             per_area=True,
             title_template="Mayor – {area_name}",
@@ -148,27 +184,100 @@ LOCAL_MUNICIPAL = ElectionStructureDef(
             per_area=True,
             title_template="Deputy Mayor – {area_name}",
         ),
+        ContestDef(
+            CONTEST_TYPE_WARD_CHAIR,
+            area_category="WARD",
+            seat_count=1,
+            per_area=True,
+            title_template="Ward Chairperson – {area_name}",
+        ),
+        ContestDef(
+            CONTEST_TYPE_WARD_WOMAN_MEMBER,
+            area_category="WARD",
+            seat_count=1,
+            per_area=True,
+            title_template="Woman Ward Member – {area_name}",
+        ),
+        ContestDef(
+            CONTEST_TYPE_WARD_DALIT_WOMAN_MEMBER,
+            area_category="WARD",
+            seat_count=1,
+            per_area=True,
+            title_template="Dalit Woman Ward Member – {area_name}",
+        ),
+        ContestDef(
+            CONTEST_TYPE_WARD_OPEN_MEMBER_1,
+            area_category="WARD",
+            seat_count=1,
+            per_area=True,
+            title_template="Open Ward Member 1 – {area_name}",
+        ),
+        ContestDef(
+            CONTEST_TYPE_WARD_OPEN_MEMBER_2,
+            area_category="WARD",
+            seat_count=1,
+            per_area=True,
+            title_template="Open Ward Member 2 – {area_name}",
+        ),
     ],
 )
 
 LOCAL_RURAL = ElectionStructureDef(
     government_level="LOCAL",
     election_subtype="LOCAL_RURAL",
-    description="Rural municipality elections — Chair + Vice Chair per rural municipality",
+    description=(
+        "Rural municipality elections — Chairperson + Vice Chairperson per body, "
+        "5 ward-level positions per ward. 7 FPTP selections per voter."
+    ),
     contest_defs=[
         ContestDef(
             CONTEST_TYPE_MAYOR,
             area_category="RURAL_MUNICIPALITY",
             seat_count=1,
             per_area=True,
-            title_template="Chair – {area_name}",
+            title_template="Chairperson – {area_name}",
         ),
         ContestDef(
             CONTEST_TYPE_DEPUTY_MAYOR,
             area_category="RURAL_MUNICIPALITY",
             seat_count=1,
             per_area=True,
-            title_template="Vice Chair – {area_name}",
+            title_template="Vice Chairperson – {area_name}",
+        ),
+        ContestDef(
+            CONTEST_TYPE_WARD_CHAIR,
+            area_category="WARD",
+            seat_count=1,
+            per_area=True,
+            title_template="Ward Chairperson – {area_name}",
+        ),
+        ContestDef(
+            CONTEST_TYPE_WARD_WOMAN_MEMBER,
+            area_category="WARD",
+            seat_count=1,
+            per_area=True,
+            title_template="Woman Ward Member – {area_name}",
+        ),
+        ContestDef(
+            CONTEST_TYPE_WARD_DALIT_WOMAN_MEMBER,
+            area_category="WARD",
+            seat_count=1,
+            per_area=True,
+            title_template="Dalit Woman Ward Member – {area_name}",
+        ),
+        ContestDef(
+            CONTEST_TYPE_WARD_OPEN_MEMBER_1,
+            area_category="WARD",
+            seat_count=1,
+            per_area=True,
+            title_template="Open Ward Member 1 – {area_name}",
+        ),
+        ContestDef(
+            CONTEST_TYPE_WARD_OPEN_MEMBER_2,
+            area_category="WARD",
+            seat_count=1,
+            per_area=True,
+            title_template="Open Ward Member 2 – {area_name}",
         ),
     ],
 )

@@ -29,10 +29,12 @@ VALID_LEVELS = ("PROVINCIAL", "LOCAL")
 
 # Maps government_level to allowed AreaUnit categories for assignment.
 # Provincial voters are assigned to a CONSTITUENCY area_unit within their province.
-# Local voters are assigned to a municipality-level area_unit.
+# Local voters are assigned to a WARD area_unit.
+# The ward determines ward-level contests; its parent local body determines
+# the head/deputy contests (Mayor/Deputy or Chairperson/Vice Chairperson).
 _LEVEL_CATEGORIES: dict[str, tuple[str, ...]] = {
     "PROVINCIAL": ("CONSTITUENCY",),
-    "LOCAL": ("MUNICIPALITY", "RURAL_MUNICIPALITY", "METROPOLITAN", "SUB_METROPOLITAN"),
+    "LOCAL": ("WARD",),
 }
 
 

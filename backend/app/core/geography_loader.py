@@ -58,6 +58,10 @@ EXPECTED: dict[str, int] = {
     "SUB_METROPOLITAN": 11,
 }
 
+# Ward records are loaded from a separate ward data file, not the base JSON.
+# EXPECTED_WARD_COUNT is set once ward data has been imported.
+EXPECTED_WARD_COUNT: int = 6_743
+
 PROVINCE_CODE_TO_NUMBER: dict[str, int] = {
     "P1": 1, "P2": 2, "P3": 3,
     "P4": 4, "P5": 5, "P6": 6, "P7": 7,
@@ -76,6 +80,32 @@ LOCAL_BODY_CATEGORIES = frozenset({
     "METROPOLITAN",
     "SUB_METROPOLITAN",
 })
+
+# Urban local bodies (elect Mayor + Deputy Mayor).
+URBAN_LOCAL_BODY_CATEGORIES = frozenset({
+    "MUNICIPALITY",
+    "METROPOLITAN",
+    "SUB_METROPOLITAN",
+})
+
+# Rural local bodies (elect Chairperson + Vice Chairperson).
+RURAL_LOCAL_BODY_CATEGORIES = frozenset({
+    "RURAL_MUNICIPALITY",
+})
+
+# Expected local body counts by classification
+EXPECTED_URBAN_LOCAL_BODIES: int = 270 + 6 + 11  # 287
+EXPECTED_RURAL_LOCAL_BODIES: int = 466
+EXPECTED_TOTAL_LOCAL_BODIES: int = EXPECTED_URBAN_LOCAL_BODIES + EXPECTED_RURAL_LOCAL_BODIES  # 753
+
+# ── Ward data ─────────────────────────────────────────────────
+# Ward data is stored separately from the base geography JSON because
+# it must be sourced from an authoritative election commission file.
+# The file must be: repo_root/nepal_ward_data.json
+# Format: [{"local_body_code": "LB0001", "ward_count": 9}, ...]
+# Until this file exists, ward-dependent operations fail safely.
+
+WARD_DATA_PATH = os.path.join(REPO_ROOT, "nepal_ward_data.json")
 
 # ---------------------------------------------------------------------------
 # Internal RTF parser
@@ -401,3 +431,196 @@ def validate_source() -> list[str]:
                 )
 
     return issues
+
+
+# ---------------------------------------------------------------------------
+# Ward data loader
+# ---------------------------------------------------------------------------
+
+def ward_data_available() -> bool:
+    """Return True if the authoritative ward data file exists."""
+    return os.path.exists(WARD_DATA_PATH)
+
+
+def load_ward_data() -> list[dict]:
+    """Load ward-count-per-local-body from the authoritative ward data file.
+
+    Expected format: JSON array of objects with keys:
+      - ``local_body_code``: str — matches an existing local body area_unit code
+      - ``ward_count``: int — number of wards in that local body (typically 9–33)
+
+    Returns
+    -------
+    list[dict]
+        The parsed ward data array.
+
+    Raises
+    ------
+    FileNotFoundError
+        If ``nepal_ward_data.json`` does not exist.
+    ValueError
+        If the file is malformed or empty.
+    """
+    if not os.path.exists(WARD_DATA_PATH):
+        raise FileNotFoundError(
+            f"Ward data file not found at: {WARD_DATA_PATH}\n"
+            "Local elections require authoritative ward data.\n"
+            "Expected format: [{\"local_body_code\": \"LB0001\", \"ward_count\": 9}, ...]"
+        )
+
+    with open(WARD_DATA_PATH, "r", encoding="utf-8") as fh:
+        data = json.load(fh)
+
+    if not isinstance(data, list) or len(data) == 0:
+        raise ValueError(
+            f"Ward data file is empty or malformed. "
+            f"Expected a non-empty JSON array, got {type(data).__name__}."
+        )
+
+    return data
+
+
+def validate_ward_data() -> list[str]:
+    """Validate the ward data file against the base geography source.
+
+    Checks performed:
+    1. Ward data file is loadable.
+    2. Every entry has ``local_body_code`` (str) and ``ward_count`` (int ≥ 1).
+    3. Every ``local_body_code`` references an existing local body in the base geography.
+    4. No duplicate local_body_code entries.
+    5. Ward count per body is in reasonable range (1–35).
+    6. Total ward count matches EXPECTED_WARD_COUNT (6,743).
+    7. Coverage: every local body in base geography has a ward entry.
+    8. Province consistency: ward parent chain resolves to correct province.
+
+    Returns
+    -------
+    list[str]
+        List of issue descriptions; empty list means PASS.
+    """
+    issues: list[str] = []
+
+    # --- 1. Load ward data ---
+    try:
+        ward_data = load_ward_data()
+    except (FileNotFoundError, ValueError) as exc:
+        return [str(exc)]
+
+    # --- Load base geography for cross-referencing ---
+    try:
+        base = load_all()
+    except Exception as exc:
+        return [f"Cannot load base geography: {exc}"]
+
+    base_by_code = {r["code"]: r for r in base}
+    local_body_codes = {
+        r["code"] for r in base if r["category"] in LOCAL_BODY_CATEGORIES
+    }
+
+    # --- 2. Required fields ---
+    for i, entry in enumerate(ward_data):
+        if not isinstance(entry.get("local_body_code"), str) or not entry["local_body_code"]:
+            issues.append(f"Entry {i}: missing or empty 'local_body_code'.")
+        ward_count = entry.get("ward_count")
+        if not isinstance(ward_count, int) or ward_count < 1:
+            issues.append(
+                f"Entry {i} ({entry.get('local_body_code', '?')}): "
+                f"'ward_count' must be a positive integer, got {ward_count!r}."
+            )
+
+    if issues:
+        return issues  # stop early if structural problems
+
+    # --- 3. Reference existing local body ---
+    seen_codes: dict[str, int] = {}
+    for entry in ward_data:
+        code = entry["local_body_code"]
+        seen_codes[code] = seen_codes.get(code, 0) + 1
+        if code not in local_body_codes:
+            issues.append(
+                f"Ward entry for '{code}' does not match any local body in base geography."
+            )
+
+    # --- 4. No duplicates ---
+    for code, cnt in seen_codes.items():
+        if cnt > 1:
+            issues.append(f"Duplicate ward entry for local body '{code}' ({cnt} times).")
+
+    # --- 5. Reasonable range ---
+    for entry in ward_data:
+        wc = entry["ward_count"]
+        if wc < 1 or wc > 35:
+            issues.append(
+                f"Local body '{entry['local_body_code']}': ward_count={wc} "
+                f"outside expected range 1–35."
+            )
+
+    # --- 6. Total count ---
+    total_wards = sum(e["ward_count"] for e in ward_data)
+    if total_wards != EXPECTED_WARD_COUNT:
+        issues.append(
+            f"Total ward count: expected {EXPECTED_WARD_COUNT}, got {total_wards}."
+        )
+
+    # --- 7. Full coverage ---
+    covered = {e["local_body_code"] for e in ward_data}
+    missing = local_body_codes - covered
+    if missing:
+        issues.append(
+            f"{len(missing)} local bodies missing ward data: "
+            f"{sorted(missing)[:10]}{'...' if len(missing) > 10 else ''}."
+        )
+
+    # --- 8. Province consistency ---
+    code_to_item = {r["code"]: r for r in base}
+    for entry in ward_data:
+        lb = code_to_item.get(entry["local_body_code"])
+        if lb:
+            prov = resolve_province_number(lb, code_to_item)
+            if prov is None:
+                issues.append(
+                    f"Local body '{entry['local_body_code']}' cannot resolve to a province."
+                )
+
+    return issues
+
+
+def generate_ward_records(ward_data: list[dict]) -> list[dict]:
+    """Generate individual ward area_unit records from ward-count data.
+
+    Each ward record has:
+      - code: "{local_body_code}-W{nn}" (e.g. "LB0001-W01")
+      - name: "{local_body_name} Ward {n}"
+      - category: "WARD"
+      - parent_code: local_body_code
+      - ward_number: n (1-based)
+
+    Parameters
+    ----------
+    ward_data:
+        The output of :func:`load_ward_data`.
+
+    Returns
+    -------
+    list[dict]
+        Ward records ready for seeding into area_units.
+    """
+    base = load_all()
+    code_to_name = {r["code"]: r["name"] for r in base}
+
+    records = []
+    for entry in ward_data:
+        lb_code = entry["local_body_code"]
+        lb_name = code_to_name.get(lb_code, lb_code)
+        ward_count = entry["ward_count"]
+
+        for w in range(1, ward_count + 1):
+            records.append({
+                "code": f"{lb_code}-W{w:02d}",
+                "name": f"{lb_name} Ward {w}",
+                "category": "WARD",
+                "parent_code": lb_code,
+                "ward_number": w,
+            })
+
+    return records

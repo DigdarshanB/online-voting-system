@@ -3,6 +3,7 @@
 Stores ALL Nepal geography in one hierarchical table:
   COUNTRY → PROVINCE → DISTRICT → CONSTITUENCY (federal)
                                 → MUNICIPALITY / RURAL_MUNICIPALITY / METROPOLITAN / SUB_METROPOLITAN (local)
+                                    → WARD (within local bodies)
 
 Used by ElectionContest to target contests at any government level.
 The existing districts/constituencies tables remain for backward compatibility
@@ -27,6 +28,7 @@ AREA_CATEGORIES = (
     "RURAL_MUNICIPALITY",
     "METROPOLITAN",
     "SUB_METROPOLITAN",
+    "WARD",                 # ward within a local body
 )
 
 
@@ -45,7 +47,7 @@ class AreaUnit(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     code: Mapped[str] = mapped_column(
-        String(10), nullable=False, unique=True, index=True,
+        String(16), nullable=False, unique=True, index=True,
     )
     name: Mapped[str] = mapped_column(String(160), nullable=False)
     name_ne: Mapped[str | None] = mapped_column(String(160), nullable=True)
@@ -53,11 +55,15 @@ class AreaUnit(Base):
         String(30), nullable=False, index=True,
     )
     parent_code: Mapped[str | None] = mapped_column(
-        String(10), nullable=True, index=True,
+        String(16), nullable=True, index=True,
     )
     # Denormalized province number for quick filtering (null for COUNTRY)
     province_number: Mapped[int | None] = mapped_column(
         Integer, nullable=True, index=True,
+    )
+    # Ward-specific: ward number within parent local body (null for non-WARD units)
+    ward_number: Mapped[int | None] = mapped_column(
+        Integer, nullable=True,
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=func.now(),
