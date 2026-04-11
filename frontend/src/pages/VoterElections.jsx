@@ -203,7 +203,7 @@ export default function VoterElections() {
                       whiteSpace: "nowrap",
                     }}
                   >
-                    Provincial Assembly
+                    Provincial Assembly{e.province_code ? ` · ${e.province_code}` : ""}
                   </span>
                 )}
               </div>

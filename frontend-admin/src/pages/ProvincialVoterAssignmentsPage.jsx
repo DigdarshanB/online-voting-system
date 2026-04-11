@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import {
   MapPin, Search, Loader2, Trash2, CheckCircle2,
   AlertTriangle, Users, User, CreditCard, Building2,
+  ArrowLeft,
 } from "lucide-react";
 import {
   listAreaAssignments,
@@ -31,6 +33,7 @@ const btn = (bg, color) => ({ padding: "8px 18px", borderRadius: 8, border: "non
 const inp = { padding: "8px 12px", borderRadius: 8, border: `1px solid ${P.border}`, fontSize: 13, outline: "none", width: "100%", boxSizing: "border-box" };
 
 export default function ProvincialVoterAssignmentsPage() {
+  const navigate = useNavigate();
   const [assignments, setAssignments] = useState([]);
   const [areas, setAreas] = useState([]);
   const [voters, setVoters] = useState([]);
@@ -130,6 +133,17 @@ export default function ProvincialVoterAssignmentsPage() {
 
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+      {/* Back link */}
+      <button
+        onClick={() => navigate("/admin/voter-assignments")}
+        style={{
+          display: "inline-flex", alignItems: "center", gap: 6,
+          background: "none", border: "none", cursor: "pointer",
+          fontSize: 13, fontWeight: 600, color: P.muted, padding: 0, marginBottom: 14,
+        }}
+      >
+        <ArrowLeft size={14} /> Federal Voter Assignments
+      </button>
       {/* Province context band */}
       <div style={{
         background: P.purpleBg, border: `1px solid ${P.purple}30`,

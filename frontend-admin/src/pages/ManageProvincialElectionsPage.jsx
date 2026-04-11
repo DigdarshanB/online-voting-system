@@ -405,7 +405,7 @@ export default function ManageProvincialElectionsPage() {
         onClose={() => setConfirmDel(null)}
         onConfirm={handleDelete}
         title="Delete provincial election"
-        body={`Delete this ${confirmDel?.status === "ARCHIVED" ? "archived" : "draft"} provincial election and all associated data? This action cannot be undone.`}
+        body={`Delete this provincial election (${confirmDel?.status?.replace(/_/g, " ")?.toLowerCase()}) and all associated data? This action cannot be undone.`}
         confirmLabel="Delete"
         variant="danger"
       />
@@ -514,6 +514,7 @@ function ElectionCard({ election: el, expanded, onToggle, onDelete, onGenerate, 
   const [detailLoading, setDetailLoading] = useState(false);
 
   const isDraft = el.status === "DRAFT";
+  const isDeletable = ["DRAFT", "CONFIGURED", "NOMINATIONS_OPEN", "NOMINATIONS_CLOSED", "CANDIDATE_LIST_PUBLISHED", "ARCHIVED"].includes(el.status);
   const hasContests = el.contest_count > 0;
   const provCode = el.province_code || "";
 
@@ -716,12 +717,12 @@ function ElectionCard({ election: el, expanded, onToggle, onDelete, onGenerate, 
                       Advance → {transition.next}
                     </Btn>
                   )}
-                  {el.status === "ARCHIVED" && (
+                  {isDeletable && (
                     <Btn small variant="ghost" onClick={onDelete}
                       disabled={actionLoading === `delete-${el.id}`}
                       loading={actionLoading === `delete-${el.id}`}
                       style={{ color: T.error, marginLeft: transition ? 0 : "auto" }}>
-                      <Trash2 size={13} /> Delete archived
+                      <Trash2 size={13} /> Delete
                     </Btn>
                   )}
                 </div>

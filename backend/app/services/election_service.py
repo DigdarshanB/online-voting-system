@@ -139,7 +139,14 @@ def update_election(
     return election
 
 
-DELETABLE_STATUSES = ("DRAFT", "ARCHIVED")
+DELETABLE_STATUSES = (
+    "DRAFT",
+    "CONFIGURED",
+    "NOMINATIONS_OPEN",
+    "NOMINATIONS_CLOSED",
+    "CANDIDATE_LIST_PUBLISHED",
+    "ARCHIVED",
+)
 
 
 def delete_election(db: Session, election: Election) -> None:
@@ -163,15 +170,19 @@ def _cascade_delete_election_data(db: Session, election_id: int) -> None:
     from app.models.count_run import CountRun
     from app.models.fptp_candidate_nomination import FptpCandidateNomination
     from app.models.fptp_result_row import FptpResultRow
+    from app.models.pr_elected_member import PrElectedMember
     from app.models.pr_party_list_entry import PrPartyListEntry
     from app.models.pr_party_submission import PrPartySubmission
     from app.models.pr_result_row import PrResultRow
 
-    # 1. pr_result_rows (via count_runs)
+    # 1. pr_elected_members, pr_result_rows, fptp_result_rows (via count_runs)
     count_run_ids = list(db.execute(
         select(CountRun.id).where(CountRun.election_id == election_id)
     ).scalars().all())
     if count_run_ids:
+        db.execute(
+            PrElectedMember.__table__.delete().where(PrElectedMember.count_run_id.in_(count_run_ids))
+        )
         db.execute(
             PrResultRow.__table__.delete().where(PrResultRow.count_run_id.in_(count_run_ids))
         )

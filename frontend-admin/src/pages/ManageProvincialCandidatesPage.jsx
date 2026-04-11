@@ -66,7 +66,7 @@ const sel = { ...inp, cursor: "pointer" };
 /*  MAIN PAGE                                                    */
 /* ══════════════════════════════════════════════════════════════ */
 export default function ManageProvincialCandidatesPage() {
-  const [tab, setTab] = useState("candidates");
+  const [tab, setTab] = useState("nominations");
   const [msg, setMsg] = useState(null);
   const tablistId = useId();
 

@@ -10,7 +10,10 @@ import {
   Users,
   User,
   CreditCard,
+  Building2,
+  ChevronRight,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   listAssignments,
   assignVoter,
@@ -66,6 +69,7 @@ const inp = {
 };
 
 export default function VoterAssignmentsPage() {
+  const navigate = useNavigate();
   const [assignments, setAssignments] = useState([]);
   const [constituencies, setConstituencies] = useState([]);
   const [voters, setVoters] = useState([]);
@@ -177,6 +181,40 @@ export default function VoterAssignmentsPage() {
 
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+      {/* ── Level switcher ────────────────────────────── */}
+      <div style={{
+        display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap",
+      }}>
+        <div style={{
+          ...card, flex: 1, minWidth: 200, marginBottom: 0, padding: "16px 20px",
+          borderLeft: `3px solid ${P.accent}`, opacity: 1,
+          display: "flex", alignItems: "center", gap: 12,
+        }}>
+          <MapPin size={18} color={P.accent} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 700, fontSize: 14, color: P.text }}>Federal Constituencies</div>
+            <div style={{ fontSize: 12, color: P.muted }}>Currently viewing</div>
+          </div>
+        </div>
+        <div
+          onClick={() => navigate("/admin/voter-assignments/provincial")}
+          style={{
+            ...card, flex: 1, minWidth: 200, marginBottom: 0, padding: "16px 20px",
+            cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
+            transition: "border-color 0.2s",
+          }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = "#7C3AED"}
+          onMouseLeave={e => e.currentTarget.style.borderColor = P.border}
+        >
+          <Building2 size={18} color="#7C3AED" />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 700, fontSize: 14, color: P.text }}>Provincial Assemblies</div>
+            <div style={{ fontSize: 12, color: P.muted }}>Assign voters to provincial areas</div>
+          </div>
+          <ChevronRight size={16} color={P.muted} />
+        </div>
+      </div>
+
       {/* ── Message banner ────────────────────────────── */}
       {msg && (
         <div

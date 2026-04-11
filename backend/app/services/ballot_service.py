@@ -158,6 +158,7 @@ def list_voter_elections(db: Session, voter: User) -> list[dict]:
             "description": e.description,
             "government_level": e.government_level,
             "election_subtype": e.election_subtype,
+            "province_code": e.province_code,
             "status": e.status,
             "polling_start_at": (
                 e.polling_start_at.isoformat() if e.polling_start_at else None
