@@ -336,7 +336,7 @@ export default function VoterElections() {
       {/* ── back link ──────────────────────────────────── */}
       <div style={{ marginTop: 24, textAlign: "center" }}>
         <button
-          onClick={() => navigate("/home")}
+          onClick={() => navigate("/dashboard")}
           style={{
             padding: "8px 20px",
             borderRadius: 8,

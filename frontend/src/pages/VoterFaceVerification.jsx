@@ -39,7 +39,7 @@ export default function VoterFaceVerification() {
     fetchMe()
       .then((data) => {
         if (data.status === "ACTIVE" && data.totp_enabled) {
-          navigate("/home");
+          navigate("/dashboard");
         } else if (data.status === "PENDING_REVIEW") {
           navigate("/status");
         } else if (data.status === "PENDING_DOCUMENT") {

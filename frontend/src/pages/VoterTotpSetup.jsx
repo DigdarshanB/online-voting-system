@@ -46,7 +46,7 @@ export default function VoterTotpSetup() {
     try {
       await totpVerify(code);
       setStep("done");
-      navigate("/home");
+      navigate("/dashboard");
     } catch (err) {
       setError(extractError(err, "Verification failed. Try again."));
       setStep(otpauthUri ? "scan" : "challenge");

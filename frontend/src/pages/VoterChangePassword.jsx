@@ -229,7 +229,7 @@ export default function VoterChangePassword() {
 
             <footer className="voter-footer">
               <Link
-                to="/home"
+                to="/dashboard"
                 style={{
                   color: "var(--muted)",
                   fontWeight: 700,

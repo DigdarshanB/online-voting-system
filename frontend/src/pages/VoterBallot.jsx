@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import useAuthGuard from "../hooks/useAuthGuard";
 import apiClient from "../lib/apiClient";
+import { saveVoteReceipt } from "./VoterReceipt";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
@@ -275,6 +276,11 @@ export default function VoterBallot() {
         : { fptp_nomination_id: fptpChoice, pr_party_id: prChoice };
       const res = await apiClient.post(url, payload);
       setCastResult(res.data);
+      // Persist receipt for the VoterReceipt page
+      saveVoteReceipt({
+        election_id: electionId,
+        ballot_id: res.data?.ballot_id,
+      });
     } catch (err) {
       setCastError(
         err?.response?.data?.detail ||

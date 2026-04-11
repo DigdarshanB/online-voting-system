@@ -101,7 +101,7 @@ export default function VoterStatus() {
     fetchMe()
       .then((data) => {
         if (data.status === "ACTIVE" && data.totp_enabled) {
-          navigate("/home");
+          navigate("/dashboard");
           return;
         }
         if (data.status === "ACTIVE" && !data.totp_enabled) {

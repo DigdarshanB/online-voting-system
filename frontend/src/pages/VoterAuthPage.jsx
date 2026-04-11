@@ -194,7 +194,7 @@ export default function VoterAuthPage() {
         setToken(data.access_token);
         const me = await fetchMe();
         if (me.status === "ACTIVE" && me.totp_enabled) {
-          navigate("/home");
+          navigate("/dashboard");
         } else if (me.status === "ACTIVE" && !me.totp_enabled) {
           navigate("/totp-setup");
         } else if (me.status === "PENDING_FACE") {
