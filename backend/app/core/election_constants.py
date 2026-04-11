@@ -148,18 +148,17 @@ RURAL_LOCAL_BODY_CATEGORIES = ("RURAL_MUNICIPALITY",)
 # ── Ward-level contest types ───────────────────────────────────
 CONTEST_TYPE_WARD_WOMAN_MEMBER = "WARD_WOMAN_MEMBER"
 CONTEST_TYPE_WARD_DALIT_WOMAN_MEMBER = "WARD_DALIT_WOMAN"
-CONTEST_TYPE_WARD_OPEN_MEMBER_1 = "WARD_OPEN_MEMBER_1"
-CONTEST_TYPE_WARD_OPEN_MEMBER_2 = "WARD_OPEN_MEMBER_2"
+CONTEST_TYPE_WARD_MEMBER_OPEN = "WARD_MEMBER_OPEN"  # seat_count=2 (two open seats per ward)
 
-# All 7 local direct-election contest types (one ballot = 7 selections)
+# Per-ward contest types (4 contests per ward; WARD_MEMBER_OPEN elects 2 members)
 LOCAL_HEAD_CONTEST_TYPES = (CONTEST_TYPE_MAYOR, CONTEST_TYPE_DEPUTY_MAYOR)
 LOCAL_WARD_CONTEST_TYPES = (
     CONTEST_TYPE_WARD_CHAIR,
     CONTEST_TYPE_WARD_WOMAN_MEMBER,
     CONTEST_TYPE_WARD_DALIT_WOMAN_MEMBER,
-    CONTEST_TYPE_WARD_OPEN_MEMBER_1,
-    CONTEST_TYPE_WARD_OPEN_MEMBER_2,
+    CONTEST_TYPE_WARD_MEMBER_OPEN,
 )
+# Total positions per voter ballot: 2 head + 4 ward contests (OPEN elects 2) = 7 selections
 ALL_LOCAL_CONTEST_TYPES = LOCAL_HEAD_CONTEST_TYPES + LOCAL_WARD_CONTEST_TYPES
 
 LOCAL_MUNICIPAL = ElectionStructureDef(
@@ -167,7 +166,7 @@ LOCAL_MUNICIPAL = ElectionStructureDef(
     election_subtype="LOCAL_MUNICIPAL",
     description=(
         "Urban local body elections — Mayor + Deputy Mayor per body, "
-        "5 ward-level positions per ward. 7 FPTP selections per voter."
+        "4 ward-level contests per ward (OPEN elects 2). 7 FPTP selections per voter."
     ),
     contest_defs=[
         ContestDef(
@@ -206,18 +205,11 @@ LOCAL_MUNICIPAL = ElectionStructureDef(
             title_template="Dalit Woman Ward Member – {area_name}",
         ),
         ContestDef(
-            CONTEST_TYPE_WARD_OPEN_MEMBER_1,
+            CONTEST_TYPE_WARD_MEMBER_OPEN,
             area_category="WARD",
-            seat_count=1,
+            seat_count=2,
             per_area=True,
-            title_template="Open Ward Member 1 – {area_name}",
-        ),
-        ContestDef(
-            CONTEST_TYPE_WARD_OPEN_MEMBER_2,
-            area_category="WARD",
-            seat_count=1,
-            per_area=True,
-            title_template="Open Ward Member 2 – {area_name}",
+            title_template="Open Ward Member – {area_name}",
         ),
     ],
 )
@@ -227,7 +219,7 @@ LOCAL_RURAL = ElectionStructureDef(
     election_subtype="LOCAL_RURAL",
     description=(
         "Rural municipality elections — Chairperson + Vice Chairperson per body, "
-        "5 ward-level positions per ward. 7 FPTP selections per voter."
+        "4 ward-level contests per ward (OPEN elects 2). 7 FPTP selections per voter."
     ),
     contest_defs=[
         ContestDef(
@@ -266,18 +258,11 @@ LOCAL_RURAL = ElectionStructureDef(
             title_template="Dalit Woman Ward Member – {area_name}",
         ),
         ContestDef(
-            CONTEST_TYPE_WARD_OPEN_MEMBER_1,
+            CONTEST_TYPE_WARD_MEMBER_OPEN,
             area_category="WARD",
-            seat_count=1,
+            seat_count=2,
             per_area=True,
-            title_template="Open Ward Member 1 – {area_name}",
-        ),
-        ContestDef(
-            CONTEST_TYPE_WARD_OPEN_MEMBER_2,
-            area_category="WARD",
-            seat_count=1,
-            per_area=True,
-            title_template="Open Ward Member 2 – {area_name}",
+            title_template="Open Ward Member – {area_name}",
         ),
     ],
 )

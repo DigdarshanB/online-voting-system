@@ -4,7 +4,9 @@ Business rules enforced here:
 - Structure generation dispatches by (government_level, election_subtype)
 - Federal HoR: 165 FPTP + 1 PR contest atomically
 - Provincial Assembly: N FPTP + 1 PR per province (N = constituency count)
-- Local: Mayor + Deputy Mayor per local body
+- Local: 2 head contests per local body + 4 ward contests per ward
+  (WARD_MEMBER_OPEN has seat_count=2, total 7 selections per voter)
+- Ward data is REQUIRED for local election structure generation
 - Generation blocked unless area_units master data is sufficient
 - Only DRAFT elections may have structure generated or be edited/deleted
 - Configure (DRAFT→CONFIGURED) blocked unless structure passes readiness
@@ -463,9 +465,16 @@ def _generate_local(db: Session, election: Election) -> dict:
     LOCAL_MUNICIPAL (urban): Mayor + Deputy Mayor per MUNICIPALITY/METROPOLITAN/SUB_METROPOLITAN
     LOCAL_RURAL: Chairperson + Vice Chairperson per RURAL_MUNICIPALITY
 
-    Ward-level contests (5 per ward) are generated only when ward data is available
-    in the area_units table.  If no wards exist, only head/deputy contests are
-    generated and a warning is returned so the readiness check can flag it.
+    Per ward (both urban and rural): 4 contests:
+      - WARD_CHAIR (seat_count=1)
+      - WARD_WOMAN_MEMBER (seat_count=1)
+      - WARD_DALIT_WOMAN (seat_count=1)
+      - WARD_MEMBER_OPEN (seat_count=2, elects 2 members)
+
+    Total selections per voter: 2 head + 5 ward positions = 7 FPTP selections.
+
+    Ward data is REQUIRED. If no wards exist for any targeted local body,
+    generation fails — the admin must seed wards before generating structure.
     """
     from app.core.election_constants import (
         CONTEST_TYPE_MAYOR,
@@ -473,8 +482,7 @@ def _generate_local(db: Session, election: Election) -> dict:
         CONTEST_TYPE_WARD_CHAIR,
         CONTEST_TYPE_WARD_WOMAN_MEMBER,
         CONTEST_TYPE_WARD_DALIT_WOMAN_MEMBER,
-        CONTEST_TYPE_WARD_OPEN_MEMBER_1,
-        CONTEST_TYPE_WARD_OPEN_MEMBER_2,
+        CONTEST_TYPE_WARD_MEMBER_OPEN,
         URBAN_LOCAL_BODY_CATEGORIES,
         RURAL_LOCAL_BODY_CATEGORIES,
     )
@@ -483,7 +491,6 @@ def _generate_local(db: Session, election: Election) -> dict:
     if election.election_subtype == "LOCAL_RURAL":
         target_categories = RURAL_LOCAL_BODY_CATEGORIES
     else:
-        # LOCAL_MUNICIPAL: urban local bodies only
         target_categories = URBAN_LOCAL_BODY_CATEGORIES
 
     local_bodies = list(
@@ -515,12 +522,27 @@ def _generate_local(db: Session, election: Election) -> dict:
         ).scalars().all()
     )
 
+    if not wards:
+        raise ElectionServiceError(
+            "No ward data found in area_units for the targeted local bodies. "
+            "Local elections require ward master data (nepal_ward_data.json). "
+            "Seed ward data first, then re-generate structure."
+        )
+
     # Group wards by parent local body code
     wards_by_lb: dict[str, list] = {}
     for w in wards:
         wards_by_lb.setdefault(w.parent_code, []).append(w)
 
-    # Determine titles based on urban/rural
+    # Verify every local body has at least one ward
+    bodies_without_wards = [lb.code for lb in local_bodies if lb.code not in wards_by_lb]
+    if bodies_without_wards:
+        raise ElectionServiceError(
+            f"{len(bodies_without_wards)} local body/bodies have no wards in area_units. "
+            f"First few: {bodies_without_wards[:5]}. "
+            "Seed complete ward data before generating local election structure."
+        )
+
     is_rural = election.election_subtype == "LOCAL_RURAL"
 
     mayor_created = 0
@@ -528,8 +550,7 @@ def _generate_local(db: Session, election: Election) -> dict:
     ward_chair_created = 0
     ward_woman_created = 0
     ward_dalit_woman_created = 0
-    ward_open_1_created = 0
-    ward_open_2_created = 0
+    ward_open_created = 0
 
     for lb in local_bodies:
         head_title = f"Chairperson – {lb.name}" if is_rural else f"Mayor – {lb.name}"
@@ -553,9 +574,7 @@ def _generate_local(db: Session, election: Election) -> dict:
         ))
         deputy_created += 1
 
-        # Ward-level contests (only if wards exist for this local body)
-        lb_wards = wards_by_lb.get(lb.code, [])
-        for ward in lb_wards:
+        for ward in wards_by_lb[lb.code]:
             db.add(ElectionContest(
                 election_id=election.id,
                 contest_type=CONTEST_TYPE_WARD_CHAIR,
@@ -585,30 +604,21 @@ def _generate_local(db: Session, election: Election) -> dict:
 
             db.add(ElectionContest(
                 election_id=election.id,
-                contest_type=CONTEST_TYPE_WARD_OPEN_MEMBER_1,
-                title=f"Open Ward Member 1 – {ward.name}",
-                seat_count=1,
+                contest_type=CONTEST_TYPE_WARD_MEMBER_OPEN,
+                title=f"Open Ward Member – {ward.name}",
+                seat_count=2,
                 area_id=ward.id,
             ))
-            ward_open_1_created += 1
-
-            db.add(ElectionContest(
-                election_id=election.id,
-                contest_type=CONTEST_TYPE_WARD_OPEN_MEMBER_2,
-                title=f"Open Ward Member 2 – {ward.name}",
-                seat_count=1,
-                area_id=ward.id,
-            ))
-            ward_open_2_created += 1
+            ward_open_created += 1
 
     db.commit()
 
     total_ward_contests = (
-        ward_chair_created + ward_woman_created + ward_dalit_woman_created
-        + ward_open_1_created + ward_open_2_created
+        ward_chair_created + ward_woman_created
+        + ward_dalit_woman_created + ward_open_created
     )
 
-    result = {
+    return {
         "fptp_contests_created": 0,
         "pr_contests_created": 0,
         "mayor_contests_created": mayor_created,
@@ -616,21 +626,12 @@ def _generate_local(db: Session, election: Election) -> dict:
         "ward_chair_contests_created": ward_chair_created,
         "ward_woman_member_contests_created": ward_woman_created,
         "ward_dalit_woman_member_contests_created": ward_dalit_woman_created,
-        "ward_open_member_1_contests_created": ward_open_1_created,
-        "ward_open_member_2_contests_created": ward_open_2_created,
+        "ward_member_open_contests_created": ward_open_created,
         "total_ward_contests": total_ward_contests,
         "total_contests": mayor_created + deputy_created + total_ward_contests,
-        "wards_available": len(wards) > 0,
+        "local_bodies": len(local_bodies),
+        "wards": len(wards),
     }
-
-    if len(wards) == 0:
-        result["warning"] = (
-            "No ward data found. Only head/deputy contests generated. "
-            "Import ward data (nepal_ward_data.json) and re-seed to enable "
-            "full 7-selection local elections."
-        )
-
-    return result
 
 
 # ── Readiness checks (multi-level) ─────────────────────────────
@@ -786,11 +787,14 @@ def _check_local_readiness(
 ) -> list[str]:
     """Local election readiness checks.
 
-    Validates:
-    - Mayor/Chair and Deputy/Vice contests exist and match in count
-    - Correct local body category targeting (urban vs rural)
-    - Ward contest availability (warns if missing)
-    - Ward contest counts are internally consistent (5 types × N wards)
+    Requirements (all must pass):
+    1. Ward data must exist in area_units
+    2. Mayor/Chair and Deputy/Vice counts must match expected local body count
+    3. Mayor and Deputy counts must be equal
+    4. Each ward contest type count must equal total ward count
+    5. WARD_MEMBER_OPEN contests must have seat_count=2
+    6. No duplicate (contest_type, area_id) pairs
+    7. All contest titles must be non-empty
     """
     from app.core.election_constants import (
         CONTEST_TYPE_MAYOR,
@@ -798,28 +802,14 @@ def _check_local_readiness(
         CONTEST_TYPE_WARD_CHAIR,
         CONTEST_TYPE_WARD_WOMAN_MEMBER,
         CONTEST_TYPE_WARD_DALIT_WOMAN_MEMBER,
-        CONTEST_TYPE_WARD_OPEN_MEMBER_1,
-        CONTEST_TYPE_WARD_OPEN_MEMBER_2,
+        CONTEST_TYPE_WARD_MEMBER_OPEN,
         URBAN_LOCAL_BODY_CATEGORIES,
         RURAL_LOCAL_BODY_CATEGORIES,
     )
-    from app.core.geography_loader import ward_data_available
 
     issues: list[str] = []
 
-    mayor_count = contest_counts.get(CONTEST_TYPE_MAYOR, 0)
-    deputy_count = contest_counts.get(CONTEST_TYPE_DEPUTY_MAYOR, 0)
-
-    if mayor_count == 0:
-        issues.append("No Mayor/Chairperson contests generated")
-    if deputy_count == 0:
-        issues.append("No Deputy Mayor/Vice Chairperson contests generated")
-    if mayor_count != deputy_count:
-        issues.append(
-            f"Mayor ({mayor_count}) and Deputy ({deputy_count}) contest counts don't match"
-        )
-
-    # Verify expected local body count
+    # ── 1. Determine targeted categories and expected counts ──
     if election.election_subtype == "LOCAL_RURAL":
         expected_categories = RURAL_LOCAL_BODY_CATEGORIES
     else:
@@ -831,41 +821,124 @@ def _check_local_readiness(
         .where(AreaUnit.category.in_(expected_categories))
     ).scalar_one()
 
+    # Count wards belonging to targeted local bodies
+    lb_codes = [
+        row[0] for row in db.execute(
+            select(AreaUnit.code).where(AreaUnit.category.in_(expected_categories))
+        ).all()
+    ]
+    expected_ward_count = db.execute(
+        select(func.count())
+        .select_from(AreaUnit)
+        .where(
+            AreaUnit.category == "WARD",
+            AreaUnit.parent_code.in_(lb_codes) if lb_codes else AreaUnit.parent_code == "__none__",
+        )
+    ).scalar_one() if lb_codes else 0
+
+    # ── 2. Ward data required ──
+    if expected_ward_count == 0:
+        issues.append(
+            "No ward data in area_units for targeted local bodies. "
+            "Local elections require ward master data (nepal_ward_data.json). "
+            "Seed ward data and re-generate structure."
+        )
+        return issues  # No point checking further
+
+    # ── 3. Head contest counts ──
+    mayor_count = contest_counts.get(CONTEST_TYPE_MAYOR, 0)
+    deputy_count = contest_counts.get(CONTEST_TYPE_DEPUTY_MAYOR, 0)
+
+    if mayor_count == 0:
+        issues.append("No Mayor/Chairperson contests generated")
+    if deputy_count == 0:
+        issues.append("No Deputy Mayor/Vice Chairperson contests generated")
+    if mayor_count != deputy_count:
+        issues.append(
+            f"Mayor ({mayor_count}) and Deputy ({deputy_count}) counts don't match"
+        )
     if mayor_count != expected_body_count:
         issues.append(
             f"Expected {expected_body_count} head contests for "
             f"{election.election_subtype}, found {mayor_count}"
         )
 
-    # Ward contest checks
+    # ── 4. Ward contest counts (4 types, each must equal total ward count) ──
     ward_chair = contest_counts.get(CONTEST_TYPE_WARD_CHAIR, 0)
     ward_woman = contest_counts.get(CONTEST_TYPE_WARD_WOMAN_MEMBER, 0)
     ward_dalit = contest_counts.get(CONTEST_TYPE_WARD_DALIT_WOMAN_MEMBER, 0)
-    ward_open_1 = contest_counts.get(CONTEST_TYPE_WARD_OPEN_MEMBER_1, 0)
-    ward_open_2 = contest_counts.get(CONTEST_TYPE_WARD_OPEN_MEMBER_2, 0)
-    ward_types = [ward_chair, ward_woman, ward_dalit, ward_open_1, ward_open_2]
+    ward_open = contest_counts.get(CONTEST_TYPE_WARD_MEMBER_OPEN, 0)
 
-    if all(w == 0 for w in ward_types):
-        if ward_data_available():
+    ward_type_counts = {
+        "WARD_CHAIR": ward_chair,
+        "WARD_WOMAN_MEMBER": ward_woman,
+        "WARD_DALIT_WOMAN": ward_dalit,
+        "WARD_MEMBER_OPEN": ward_open,
+    }
+
+    for type_name, count in ward_type_counts.items():
+        if count != expected_ward_count:
             issues.append(
-                "Ward data file exists but no ward contests generated. "
-                "Re-generate election structure to include ward contests."
+                f"{type_name}: expected {expected_ward_count} contests "
+                f"(1 per ward), found {count}"
             )
-        else:
+
+    # ── 5. Verify WARD_MEMBER_OPEN seat_count=2 ──
+    if ward_open > 0:
+        bad_seat_count = db.execute(
+            select(func.count())
+            .select_from(ElectionContest)
+            .where(
+                ElectionContest.election_id == election.id,
+                ElectionContest.contest_type == CONTEST_TYPE_WARD_MEMBER_OPEN,
+                ElectionContest.seat_count != 2,
+            )
+        ).scalar_one()
+        if bad_seat_count > 0:
             issues.append(
-                "No ward contests generated — ward master data (nepal_ward_data.json) "
-                "is not available. Local elections require ward data for the full "
-                "7-selection ballot. Import ward data and re-generate."
+                f"{bad_seat_count} WARD_MEMBER_OPEN contest(s) have wrong seat_count "
+                f"(expected 2 for all)"
             )
-    else:
-        # Ward contests exist — verify consistency (all 5 types must have same count)
-        if len(set(ward_types)) != 1:
-            issues.append(
-                f"Ward contest type counts are inconsistent: "
-                f"WARD_CHAIR={ward_chair}, WARD_WOMAN={ward_woman}, "
-                f"WARD_DALIT_WOMAN={ward_dalit}, WARD_OPEN_1={ward_open_1}, "
-                f"WARD_OPEN_2={ward_open_2}. All must be equal."
+
+    # ── 6. Duplicate (contest_type, area_id) check ──
+    dup_count = db.execute(
+        select(func.count()).select_from(
+            select(
+                ElectionContest.contest_type,
+                ElectionContest.area_id,
             )
+            .where(ElectionContest.election_id == election.id)
+            .group_by(ElectionContest.contest_type, ElectionContest.area_id)
+            .having(func.count() > 1)
+            .subquery()
+        )
+    ).scalar_one()
+    if dup_count > 0:
+        issues.append(
+            f"{dup_count} duplicate (contest_type, area_id) pair(s) detected"
+        )
+
+    # ── 7. Title completeness ──
+    empty_title_count = db.execute(
+        select(func.count())
+        .select_from(ElectionContest)
+        .where(
+            ElectionContest.election_id == election.id,
+            (ElectionContest.title == None) | (ElectionContest.title == ""),  # noqa: E711
+        )
+    ).scalar_one()
+    if empty_title_count > 0:
+        issues.append(f"{empty_title_count} contest(s) have empty or missing titles")
+
+    # ── Summary context (appended even if ready, for admin info) ──
+    expected_total = (2 * expected_body_count) + (4 * expected_ward_count)
+    actual_total = sum(contest_counts.values())
+    if actual_total != expected_total and not issues:
+        issues.append(
+            f"Total contest count mismatch: expected {expected_total} "
+            f"(2×{expected_body_count} head + 4×{expected_ward_count} ward), "
+            f"found {actual_total}"
+        )
 
     return issues
 

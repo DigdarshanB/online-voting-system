@@ -138,7 +138,15 @@ class StructureGenerationResult(BaseModel):
     pr_contests_created: int = 0
     mayor_contests_created: int = 0
     deputy_mayor_contests_created: int = 0
+    ward_chair_contests_created: int = 0
+    ward_woman_member_contests_created: int = 0
+    ward_dalit_woman_member_contests_created: int = 0
+    ward_member_open_contests_created: int = 0
+    total_ward_contests: int = 0
     total_contests: int
+    local_bodies: int = 0
+    wards: int = 0
+    pr_seat_count: int = 0
 
 
 # ── Readiness check response ──────────────────────────────────
