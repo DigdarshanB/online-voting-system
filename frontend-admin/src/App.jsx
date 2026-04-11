@@ -35,6 +35,7 @@ import ManageProvincialCandidatesPage from "./pages/ManageProvincialCandidatesPa
 import ManageLocalCandidatesPage from "./pages/ManageLocalCandidatesPage";
 import VoterAssignmentsPage from "./pages/VoterAssignmentsPage";
 import ProvincialVoterAssignmentsPage from "./pages/ProvincialVoterAssignmentsPage";
+import LocalVoterAssignmentsPage from "./pages/LocalVoterAssignmentsPage";
 import ResultsPage from "./pages/ResultsPage";
 
 import {
@@ -216,6 +217,16 @@ export default function App() {
           <RequireAdminOrSuperAdmin>
             <AdminShell title="Provincial Voter Assignments" subtitle="Assign voters to provincial assembly areas">
               <ProvincialVoterAssignmentsPage />
+            </AdminShell>
+          </RequireAdminOrSuperAdmin>
+        }
+      />
+      <Route
+        path="/admin/voter-assignments/local"
+        element={
+          <RequireAdminOrSuperAdmin>
+            <AdminShell title="Local Voter Assignments" subtitle="Assign voters to wards within local bodies">
+              <LocalVoterAssignmentsPage />
             </AdminShell>
           </RequireAdminOrSuperAdmin>
         }

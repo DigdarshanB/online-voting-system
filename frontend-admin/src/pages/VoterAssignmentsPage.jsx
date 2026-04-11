@@ -11,6 +11,7 @@ import {
   User,
   CreditCard,
   Building2,
+  Home,
   ChevronRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -210,6 +211,23 @@ export default function VoterAssignmentsPage() {
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, fontSize: 14, color: P.text }}>Provincial Assemblies</div>
             <div style={{ fontSize: 12, color: P.muted }}>Assign voters to provincial areas</div>
+          </div>
+          <ChevronRight size={16} color={P.muted} />
+        </div>
+        <div
+          onClick={() => navigate("/admin/voter-assignments/local")}
+          style={{
+            ...card, flex: 1, minWidth: 200, marginBottom: 0, padding: "16px 20px",
+            cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
+            transition: "border-color 0.2s",
+          }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = "#C2410C"}
+          onMouseLeave={e => e.currentTarget.style.borderColor = P.border}
+        >
+          <Home size={18} color="#C2410C" />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 700, fontSize: 14, color: P.text }}>Local Wards</div>
+            <div style={{ fontSize: 12, color: P.muted }}>Assign voters to wards within local bodies</div>
           </div>
           <ChevronRight size={16} color={P.muted} />
         </div>

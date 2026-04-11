@@ -1,0 +1,3014 @@
+[
+  {
+    "local_body_code": "LB0001",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0002",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0003",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0004",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0005",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0006",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0007",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0008",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0009",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0010",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0011",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0012",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0013",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0014",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0015",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0016",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0017",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0018",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0019",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0020",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0021",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0022",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0023",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0024",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0025",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0026",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0027",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0028",
+    "ward_count": 15
+  },
+  {
+    "local_body_code": "LB0029",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0030",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0031",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0032",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0033",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0034",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0035",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0036",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0037",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0038",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0039",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0040",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0041",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0042",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0043",
+    "ward_count": 19
+  },
+  {
+    "local_body_code": "LB0044",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0045",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0046",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0047",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0048",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0049",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0050",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0051",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0052",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0053",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0054",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0055",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0056",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0057",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0058",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0059",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0060",
+    "ward_count": 20
+  },
+  {
+    "local_body_code": "LB0061",
+    "ward_count": 20
+  },
+  {
+    "local_body_code": "LB0062",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0063",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0064",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0065",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0066",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0067",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0068",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0069",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0070",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0071",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0072",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0073",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0074",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0075",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0076",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0077",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0078",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0079",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0080",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0081",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0082",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0083",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0084",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0085",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0086",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0087",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0088",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0089",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0090",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0091",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0092",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0093",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0094",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0095",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0096",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0097",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0098",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0099",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0100",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0101",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0102",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0103",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0104",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0105",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0106",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0107",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0108",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0109",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0110",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0111",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0112",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0113",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0114",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0115",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0116",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0117",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0118",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0119",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0120",
+    "ward_count": 15
+  },
+  {
+    "local_body_code": "LB0121",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0122",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0123",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0124",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0125",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0126",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0127",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0128",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0129",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0130",
+    "ward_count": 16
+  },
+  {
+    "local_body_code": "LB0131",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0132",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0133",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0134",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0135",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0136",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0137",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0138",
+    "ward_count": 16
+  },
+  {
+    "local_body_code": "LB0139",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0140",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0141",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0142",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0143",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0144",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0145",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0146",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0147",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0148",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0149",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0150",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0151",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0152",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0153",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0154",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0155",
+    "ward_count": 22
+  },
+  {
+    "local_body_code": "LB0156",
+    "ward_count": 24
+  },
+  {
+    "local_body_code": "LB0157",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0158",
+    "ward_count": 13
+  },
+  {
+    "local_body_code": "LB0159",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0160",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0161",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0162",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0163",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0164",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0165",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0166",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0167",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0168",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0169",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0170",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0171",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0172",
+    "ward_count": 25
+  },
+  {
+    "local_body_code": "LB0173",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0174",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0175",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0176",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0177",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0178",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0179",
+    "ward_count": 13
+  },
+  {
+    "local_body_code": "LB0180",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0181",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0182",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0183",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0184",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0185",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0186",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0187",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0188",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0189",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0190",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0191",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0192",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0193",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0194",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0195",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0196",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0197",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0198",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0199",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0200",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0201",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0202",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0203",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0204",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0205",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0206",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0207",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0208",
+    "ward_count": 17
+  },
+  {
+    "local_body_code": "LB0209",
+    "ward_count": 18
+  },
+  {
+    "local_body_code": "LB0210",
+    "ward_count": 15
+  },
+  {
+    "local_body_code": "LB0211",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0212",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0213",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0214",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0215",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0216",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0217",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0218",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0219",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0220",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0221",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0222",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0223",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0224",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0225",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0226",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0227",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0228",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0229",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0230",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0231",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0232",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0233",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0234",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0235",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0236",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0237",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0238",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0239",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0240",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0241",
+    "ward_count": 27
+  },
+  {
+    "local_body_code": "LB0242",
+    "ward_count": 24
+  },
+  {
+    "local_body_code": "LB0243",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0244",
+    "ward_count": 13
+  },
+  {
+    "local_body_code": "LB0245",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0246",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0247",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0248",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0249",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0250",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0251",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0252",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0253",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0254",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0255",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0256",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0257",
+    "ward_count": 32
+  },
+  {
+    "local_body_code": "LB0258",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0259",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0260",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0261",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0262",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0263",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0264",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0265",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0266",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0267",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0268",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0269",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0270",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0271",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0272",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0273",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0274",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0275",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0276",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0277",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0278",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0279",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0280",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0281",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0282",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0283",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0284",
+    "ward_count": 13
+  },
+  {
+    "local_body_code": "LB0285",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0286",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0287",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0288",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0289",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0290",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0291",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0292",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0293",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0294",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0295",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0296",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0297",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0298",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0299",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0300",
+    "ward_count": 13
+  },
+  {
+    "local_body_code": "LB0301",
+    "ward_count": 13
+  },
+  {
+    "local_body_code": "LB0302",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0303",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0304",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0305",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0306",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0307",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0308",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0309",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0310",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0311",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0312",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0313",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0314",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0315",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0316",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0317",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0318",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0319",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0320",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0321",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0322",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0323",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0324",
+    "ward_count": 32
+  },
+  {
+    "local_body_code": "LB0325",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0326",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0327",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0328",
+    "ward_count": 15
+  },
+  {
+    "local_body_code": "LB0329",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0330",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0331",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0332",
+    "ward_count": 13
+  },
+  {
+    "local_body_code": "LB0333",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0334",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0335",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0336",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0337",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0338",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0339",
+    "ward_count": 29
+  },
+  {
+    "local_body_code": "LB0340",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0341",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0342",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0343",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0344",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0345",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0346",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0347",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0348",
+    "ward_count": 13
+  },
+  {
+    "local_body_code": "LB0349",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0350",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0351",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0352",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0353",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0354",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0355",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0356",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0357",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0358",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0359",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0360",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0361",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0362",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0363",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0364",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0365",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0366",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0367",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0368",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0369",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0370",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0371",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0372",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0373",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0374",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0375",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0376",
+    "ward_count": 19
+  },
+  {
+    "local_body_code": "LB0377",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0378",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0379",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0380",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0381",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0382",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0383",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0384",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0385",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0386",
+    "ward_count": 29
+  },
+  {
+    "local_body_code": "LB0387",
+    "ward_count": 16
+  },
+  {
+    "local_body_code": "LB0388",
+    "ward_count": 13
+  },
+  {
+    "local_body_code": "LB0389",
+    "ward_count": 13
+  },
+  {
+    "local_body_code": "LB0390",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0391",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0392",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0393",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0394",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0395",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0396",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0397",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0398",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0399",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0400",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0401",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0402",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0403",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0404",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0405",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0406",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0407",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0408",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0409",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0410",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0411",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0412",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0413",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0414",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0415",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0416",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0417",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0418",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0419",
+    "ward_count": 33
+  },
+  {
+    "local_body_code": "LB0420",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0421",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0422",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0423",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0424",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0425",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0426",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0427",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0428",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0429",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0430",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0431",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0432",
+    "ward_count": 13
+  },
+  {
+    "local_body_code": "LB0433",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0434",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0435",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0436",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0437",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0438",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0439",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0440",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0441",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0442",
+    "ward_count": 17
+  },
+  {
+    "local_body_code": "LB0443",
+    "ward_count": 18
+  },
+  {
+    "local_body_code": "LB0444",
+    "ward_count": 15
+  },
+  {
+    "local_body_code": "LB0445",
+    "ward_count": 17
+  },
+  {
+    "local_body_code": "LB0446",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0447",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0448",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0449",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0450",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0451",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0452",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0453",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0454",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0455",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0456",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0457",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0458",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0459",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0460",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0461",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0462",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0463",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0464",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0465",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0466",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0467",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0468",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0469",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0470",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0471",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0472",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0473",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0474",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0475",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0476",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0477",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0478",
+    "ward_count": 16
+  },
+  {
+    "local_body_code": "LB0479",
+    "ward_count": 18
+  },
+  {
+    "local_body_code": "LB0480",
+    "ward_count": 13
+  },
+  {
+    "local_body_code": "LB0481",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0482",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0483",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0484",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0485",
+    "ward_count": 19
+  },
+  {
+    "local_body_code": "LB0486",
+    "ward_count": 13
+  },
+  {
+    "local_body_code": "LB0487",
+    "ward_count": 17
+  },
+  {
+    "local_body_code": "LB0488",
+    "ward_count": 13
+  },
+  {
+    "local_body_code": "LB0489",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0490",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0491",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0492",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0493",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0494",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0495",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0496",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0497",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0498",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0499",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0500",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0501",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0502",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0503",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0504",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0505",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0506",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0507",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0508",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0509",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0510",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0511",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0512",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0513",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0514",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0515",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0516",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0517",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0518",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0519",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0520",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0521",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0522",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0523",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0524",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0525",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0526",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0527",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0528",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0529",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0530",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0531",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0532",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0533",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0534",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0535",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0536",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0537",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0538",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0539",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0540",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0541",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0542",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0543",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0544",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0545",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0546",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0547",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0548",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0549",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0550",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0551",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0552",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0553",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0554",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0555",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0556",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0557",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0558",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0559",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0560",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0561",
+    "ward_count": 19
+  },
+  {
+    "local_body_code": "LB0562",
+    "ward_count": 19
+  },
+  {
+    "local_body_code": "LB0563",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0564",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0565",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0566",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0567",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0568",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0569",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0570",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0571",
+    "ward_count": 23
+  },
+  {
+    "local_body_code": "LB0572",
+    "ward_count": 15
+  },
+  {
+    "local_body_code": "LB0573",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0574",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0575",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0576",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0577",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0578",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0579",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0580",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0581",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0582",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0583",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0584",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0585",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0586",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0587",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0588",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0589",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0590",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0591",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0592",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0593",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0594",
+    "ward_count": 15
+  },
+  {
+    "local_body_code": "LB0595",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0596",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0597",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0598",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0599",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0600",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0601",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0602",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0603",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0604",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0605",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0606",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0607",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0608",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0609",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0610",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0611",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0612",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0613",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0614",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0615",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0616",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0617",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0618",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0619",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0620",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0621",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0622",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0623",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0624",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0625",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0626",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0627",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0628",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0629",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0630",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0631",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0632",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0633",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0634",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0635",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0636",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0637",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0638",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0639",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0640",
+    "ward_count": 13
+  },
+  {
+    "local_body_code": "LB0641",
+    "ward_count": 13
+  },
+  {
+    "local_body_code": "LB0642",
+    "ward_count": 13
+  },
+  {
+    "local_body_code": "LB0643",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0644",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0645",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0646",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0647",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0648",
+    "ward_count": 13
+  },
+  {
+    "local_body_code": "LB0649",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0650",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0651",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0652",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0653",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0654",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0655",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0656",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0657",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0658",
+    "ward_count": 16
+  },
+  {
+    "local_body_code": "LB0659",
+    "ward_count": 13
+  },
+  {
+    "local_body_code": "LB0660",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0661",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0662",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0663",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0664",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0665",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0666",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0667",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0668",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0669",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0670",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0671",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0672",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0673",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0674",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0675",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0676",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0677",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0678",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0679",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0680",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0681",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0682",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0683",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0684",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0685",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0686",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0687",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0688",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0689",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0690",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0691",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0692",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0693",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0694",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0695",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0696",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0697",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0698",
+    "ward_count": 14
+  },
+  {
+    "local_body_code": "LB0699",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0700",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0701",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0702",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0703",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0704",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0705",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0706",
+    "ward_count": 19
+  },
+  {
+    "local_body_code": "LB0707",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0708",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0709",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0710",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0711",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0712",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0713",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0714",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0715",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0716",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0717",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0718",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0719",
+    "ward_count": 19
+  },
+  {
+    "local_body_code": "LB0720",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0721",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0722",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0723",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0724",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0725",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0726",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0727",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0728",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0729",
+    "ward_count": 12
+  },
+  {
+    "local_body_code": "LB0730",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0731",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0732",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0733",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0734",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0735",
+    "ward_count": 11
+  },
+  {
+    "local_body_code": "LB0736",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0737",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0738",
+    "ward_count": 10
+  },
+  {
+    "local_body_code": "LB0739",
+    "ward_count": 7
+  },
+  {
+    "local_body_code": "LB0740",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0741",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0742",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0743",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0744",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0745",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0746",
+    "ward_count": 9
+  },
+  {
+    "local_body_code": "LB0747",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0748",
+    "ward_count": 8
+  },
+  {
+    "local_body_code": "LB0749",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0750",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0751",
+    "ward_count": 5
+  },
+  {
+    "local_body_code": "LB0752",
+    "ward_count": 6
+  },
+  {
+    "local_body_code": "LB0753",
+    "ward_count": 6
+  }
+]

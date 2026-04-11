@@ -103,6 +103,10 @@ export default function AdminShell({ children, title, subtitle }) {
       title: "Provincial Voter Assignments",
       subtitle: "Assign voters to provincial assembly areas",
     },
+    "/admin/voter-assignments/local": {
+      title: "Local Voter Assignments",
+      subtitle: "Assign voters to wards within local bodies",
+    },
     "/admin/results": {
       title: "Election Results",
       subtitle: "Count ballots, view results, finalize and lock elections",

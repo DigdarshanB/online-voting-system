@@ -951,10 +951,10 @@ def get_ballot_info_local(db: Session, election_id: int, voter: User) -> dict:
         if contest:
             head_contests[ct] = contest
 
-    if CONTEST_TYPE_MAYOR not in head_contests:
+    if CONTEST_TYPE_MAYOR not in head_contests or CONTEST_TYPE_DEPUTY_MAYOR not in head_contests:
         raise HTTPException(
             status_code=400,
-            detail="No head contest found for your local body in this election",
+            detail="Head contests (Mayor and Deputy Mayor) not found for your local body in this election",
         )
 
     # ── Ward contests (scoped to voter's ward) ──────────────────
@@ -1043,6 +1043,15 @@ def get_ballot_info_local(db: Session, election_id: int, voter: User) -> dict:
             result[key] = _contest_section(ward_contests[ct])
         else:
             result[key] = None
+
+    # Validate all 6 contest sections are present
+    for key in ("head", "deputy_head", "ward_chair", "ward_woman_member",
+                "ward_dalit_woman_member", "ward_member_open"):
+        if result.get(key) is None:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Incomplete local ballot structure ({key} contest missing); contact the election commission",
+            )
 
     return result
 

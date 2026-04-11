@@ -105,6 +105,10 @@ export const CONTEST_COLORS = {
   PR: { bg: '#F5F3FF', color: '#7C3AED' },
   MAYOR: { bg: '#ECFDF5', color: '#059669' },
   DEPUTY_MAYOR: { bg: '#FFF7ED', color: '#EA580C' },
+  WARD_CHAIR: { bg: '#ECFEFF', color: '#0891B2' },
+  WARD_WOMAN_MEMBER: { bg: '#FDF2F8', color: '#BE185D' },
+  WARD_DALIT_WOMAN: { bg: '#FAF5FF', color: '#7E22CE' },
+  WARD_MEMBER_OPEN: { bg: '#F1F5F9', color: '#475569' },
 };
 
 export const NOM_STATUS_MAP = {
