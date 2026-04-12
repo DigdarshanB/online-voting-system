@@ -6,7 +6,7 @@
  * topbar with title/subtitle, secure badge, and footer.
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -72,6 +72,7 @@ export default function VoterShell({ children, title, subtitle }) {
   const { t } = useLanguage();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
 
   const metaKeys = ROUTE_META_KEYS[location.pathname];
   const displayTitle = title || (metaKeys ? t(metaKeys.title) : t("shell.brand"));
@@ -113,6 +114,7 @@ export default function VoterShell({ children, title, subtitle }) {
   };
 
   return (
+    <>
     <div
       className="voter-shell"
       style={{
@@ -327,7 +329,7 @@ export default function VoterShell({ children, title, subtitle }) {
           <button
             onClick={() => {
               closeSidebar();
-              handleLogout();
+              setShowSignOutConfirm(true);
             }}
             style={{
               display: "flex",
@@ -486,6 +488,138 @@ export default function VoterShell({ children, title, subtitle }) {
           {t("shell.footer")}{" "}
           <span style={{ fontWeight: 800, color: PALETTE.topbarText }}>©</span>
         </footer>
+      </div>
+    </div>
+
+    <SignOutConfirmModal
+      open={showSignOutConfirm}
+      onClose={() => setShowSignOutConfirm(false)}
+      onConfirm={handleLogout}
+    />
+    </>
+  );
+}
+
+/* ── Sign Out Confirmation Modal ─────────────────────────────── */
+function SignOutConfirmModal({ open, onClose, onConfirm }) {
+  const confirmBtnRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.activeElement;
+    const timer = setTimeout(() => confirmBtnRef.current?.focus(), 50);
+    const onKey = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+      if (prev && prev.focus) prev.focus();
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="signout-title"
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 9999,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "rgba(15,23,42,0.45)",
+        backdropFilter: "blur(4px)",
+        padding: 20,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "#FFFFFF",
+          borderRadius: 14,
+          width: "100%",
+          maxWidth: 420,
+          boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
+          overflow: "hidden",
+        }}
+      >
+        {/* Header */}
+        <div style={{ padding: "24px 24px 0", display: "flex", alignItems: "flex-start", gap: 14 }}>
+          <div style={{
+            width: 42,
+            height: 42,
+            borderRadius: 12,
+            flexShrink: 0,
+            background: "#FEE2E2",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}>
+            <LogOut size={20} color="#DC2626" strokeWidth={2.2} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h3
+              id="signout-title"
+              style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#0F172A", lineHeight: 1.3 }}
+            >
+              Sign Out
+            </h3>
+            <p style={{ margin: "8px 0 0", fontSize: 13.5, color: "#64748B", lineHeight: 1.5 }}>
+              Are you sure you want to sign out? You will need to sign in again to continue.
+            </p>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 10,
+          padding: "20px 24px",
+          marginTop: 8,
+          borderTop: "1px solid #F1F5F9",
+        }}>
+          <button
+            onClick={onClose}
+            style={{
+              padding: "9px 18px",
+              borderRadius: 8,
+              border: "1px solid #E2E8F0",
+              background: "#FFFFFF",
+              color: "#475569",
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            ref={confirmBtnRef}
+            onClick={onConfirm}
+            style={{
+              padding: "9px 18px",
+              borderRadius: 8,
+              border: "none",
+              background: "#DC2626",
+              color: "#FFFFFF",
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            Yes, Sign Out
+          </button>
+        </div>
       </div>
     </div>
   );

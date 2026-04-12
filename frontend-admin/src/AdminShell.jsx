@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   ShieldCheck,
@@ -12,8 +12,10 @@ import {
   BarChart3,
   MapPin,
   ScrollText,
+  LogOut,
 } from "lucide-react";
-import { getToken, getTokenRole } from "./lib/auth";
+import { getToken, getTokenRole, clearToken, clearMfaVerified } from "./lib/auth";
+import ConfirmDialog from "./components/ui/ConfirmDialog";
 import "./AdminShell.css";
 import ecnLogo from "./assets/ECN.png";
 
@@ -54,8 +56,10 @@ const ACCOUNT_NAV_ITEMS = [
 
 export default function AdminShell({ children, title, subtitle }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const routeMeta = {
     "/dashboard": {
       title: "Dashboard",
@@ -178,6 +182,12 @@ export default function AdminShell({ children, title, subtitle }) {
     if (isMobile) setIsSidebarOpen(false);
   };
 
+  const handleLogout = () => {
+    clearToken();
+    clearMfaVerified();
+    navigate("/", { replace: true });
+  };
+
   const filteredMainItems = MAIN_NAV_ITEMS.filter(item => {
     if (item.to === "/superadmin/manage-admins") {
       return userRole === "super_admin";
@@ -189,6 +199,7 @@ export default function AdminShell({ children, title, subtitle }) {
   });
 
   return (
+    <>
     <div
       className="admin-shell"
       style={{
@@ -355,6 +366,42 @@ export default function AdminShell({ children, title, subtitle }) {
               </Link>
             );
           })}
+
+          {/* Sign Out */}
+          <button
+            onClick={() => {
+              closeSidebar();
+              setShowSignOutConfirm(true);
+            }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              padding: "10px 14px",
+              borderRadius: 10,
+              border: "none",
+              background: "transparent",
+              color: PALETTE.sidebarText,
+              fontWeight: 500,
+              fontSize: 13.5,
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+              width: "100%",
+              textAlign: "left",
+              marginTop: 4,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(220,44,58,0.12)";
+              e.currentTarget.style.color = "#FCA5A5";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.color = PALETTE.sidebarText;
+            }}
+          >
+            <LogOut size={20} strokeWidth={1.8} color={PALETTE.sidebarMuted} />
+            Sign Out
+          </button>
         </nav>
 
       </aside>
@@ -455,5 +502,17 @@ export default function AdminShell({ children, title, subtitle }) {
         </footer>
       </div>
     </div>
+
+    <ConfirmDialog
+      open={showSignOutConfirm}
+      onClose={() => setShowSignOutConfirm(false)}
+      onConfirm={handleLogout}
+      title="Sign Out"
+      body="Are you sure you want to sign out? You will need to sign in again to continue."
+      confirmLabel="Yes, Sign Out"
+      cancelLabel="Cancel"
+      variant="danger"
+    />
+    </>
   );
 }
