@@ -53,7 +53,6 @@ const WORKSPACES = [
   },
 ];
 
-/* ── Subtle diagonal stripe SVG background ───────────────────── */
 function DiagonalStripe() {
   return (
     <svg
@@ -72,9 +71,6 @@ function DiagonalStripe() {
 }
 
 
-/* ══════════════════════════════════════════════════════════════ */
-/*  MAIN PAGE                                                    */
-/* ══════════════════════════════════════════════════════════════ */
 export default function ManageCandidatesPage() {
   const navigate = useNavigate();
   const [msg, setMsg] = useState(null);
@@ -169,9 +165,6 @@ function HeroStrip({ partyCount }) {
 }
 
 
-/* ══════════════════════════════════════════════════════════════ */
-/*  WORKSPACES SECTION                                           */
-/* ══════════════════════════════════════════════════════════════ */
 function WorkspacesSection({ navigate, setMsg }) {
   return (
     <div>

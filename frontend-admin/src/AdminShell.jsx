@@ -11,6 +11,7 @@ import {
   UserCheck,
   BarChart3,
   MapPin,
+  ScrollText,
 } from "lucide-react";
 import { getToken, getTokenRole } from "./lib/auth";
 import "./AdminShell.css";
@@ -44,6 +45,7 @@ const MAIN_NAV_ITEMS = [
   { label: "Manage Candidates", to: "/admin/manage-candidates", icon: UserCheck },
   { label: "Manage Elections", to: "/admin/manage-elections", icon: Vote },
   { label: "Results", to: "/admin/results", icon: BarChart3 },
+  { label: "Audit Reports", to: "/admin/audit-reports", icon: ScrollText, superAdminOnly: true },
 ];
 
 const ACCOUNT_NAV_ITEMS = [
@@ -111,6 +113,10 @@ export default function AdminShell({ children, title, subtitle }) {
       title: "Election Results",
       subtitle: "Count ballots, view results, finalize and lock elections",
     },
+    "/admin/audit-reports": {
+      title: "Audit Reports",
+      subtitle: "Review system audit trail and security events",
+    },
     "/admin/voter-verifications": {
       title: "Voter Verifications",
       subtitle: "Review identity checks and approval requests",
@@ -162,6 +168,9 @@ export default function AdminShell({ children, title, subtitle }) {
 
   const filteredMainItems = MAIN_NAV_ITEMS.filter(item => {
     if (item.to === "/superadmin/manage-admins") {
+      return userRole === "super_admin";
+    }
+    if (item.superAdminOnly) {
       return userRole === "super_admin";
     }
     return true;

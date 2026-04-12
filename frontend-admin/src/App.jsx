@@ -37,6 +37,7 @@ import VoterAssignmentsPage from "./pages/VoterAssignmentsPage";
 import ProvincialVoterAssignmentsPage from "./pages/ProvincialVoterAssignmentsPage";
 import LocalVoterAssignmentsPage from "./pages/LocalVoterAssignmentsPage";
 import ResultsPage from "./pages/ResultsPage";
+import AuditReportsPage from "./pages/AuditReportsPage";
 
 import {
   RequireDashboardMfa,
@@ -261,6 +262,17 @@ export default function App() {
               <ManageVotersDashboard />
             </AdminShell>
           </RequireAdminOrSuperAdmin>
+        }
+      />
+      {/* Audit Reports — super_admin only */}
+      <Route
+        path="/admin/audit-reports"
+        element={
+          <RequireSuperAdmin>
+            <AdminShell title="Audit Reports" subtitle="Review system audit trail and security events">
+              <AuditReportsPage />
+            </AdminShell>
+          </RequireSuperAdmin>
         }
       />
       {/* Shown after MFA setup when account is awaiting super-admin approval */}
