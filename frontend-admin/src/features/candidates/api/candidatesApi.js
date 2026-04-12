@@ -23,10 +23,11 @@ export async function deleteParty(id) {
 
 // ── Candidate profiles ──────────────────────────────────────────
 
-export async function listProfiles({ partyId, activeOnly } = {}) {
+export async function listProfiles({ partyId, activeOnly, governmentLevel } = {}) {
   const params = {};
   if (partyId) params.party_id = partyId;
   if (activeOnly) params.active_only = true;
+  if (governmentLevel) params.government_level = governmentLevel;
   const res = await apiClient.get("/admin/candidates/profiles", { params });
   return res.data;
 }

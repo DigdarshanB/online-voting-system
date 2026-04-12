@@ -1,8 +1,8 @@
-import React, { useState, useMemo, useEffect, useCallback, useId, Component } from "react";
+import React, { useState, useMemo, useEffect, useCallback, useId, Component, useRef } from "react";
 import {
   Users, UserPlus, ListOrdered, Plus, Trash2, Check, X,
   ChevronDown, ChevronUp, AlertTriangle, Shield, RotateCcw,
-  Search, MoreHorizontal, Camera, FileText, Pencil,
+  MoreHorizontal, Camera, FileText, Pencil, Grid, List, Loader2,
 } from "lucide-react";
 import { T } from "../components/ui/tokens";
 import {
@@ -20,7 +20,6 @@ import {
   listPrSubmissions, createPrSubmission, deletePrSubmission, reviewPrSubmission,
   listPrEntries, addPrEntry, removePrEntry,
   validatePrList, submitPrList,
-  getCandidateReadiness,
   listPrEligibleCandidates,
 } from "../features/candidates/api/candidatesApi";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
@@ -45,16 +44,27 @@ const PR_MAP = {
 };
 
 const TABS = [
-  { key: "candidates", label: "Candidate Profiles", icon: Users, sublabel: "Shared registry" },
-  { key: "nominations", label: "Nominations", icon: UserPlus, sublabel: "Election-scoped" },
-  { key: "prlists", label: "PR Lists", icon: ListOrdered, sublabel: "Election-scoped" },
+  { key: "candidates", label: "Candidate Profiles", icon: Users, sublabel: "Nominate Candidates" },
+  { key: "nominations", label: "Nominations",       icon: UserPlus, sublabel: "Election-scoped" },
+  { key: "prlists",    label: "PR Lists",           icon: ListOrdered, sublabel: "Election-scoped" },
 ];
 const SINGLE_SEAT_TYPES = ["FPTP", "MAYOR", "DEPUTY_MAYOR"];
 
 /* ── Form helpers ── */
 const lbl = { display: "flex", flexDirection: "column", gap: 4, fontSize: 12, fontWeight: 600, color: T.textSecondary };
-const inp = { padding: "8px 12px", borderRadius: T.radius.md, border: `1px solid ${T.border}`, fontSize: 13, outline: "none", width: "100%", boxSizing: "border-box", background: T.surface, color: T.text };
+const inp = { padding: "8px 12px", borderRadius: T.radius.md, border: `1px solid ${T.border}`, fontSize: 13, outline: "none", width: "100%", boxSizing: "border-box", background: "#fff", color: T.text };
 const sel = { ...inp, cursor: "pointer" };
+
+/* ── Age calculation helper ── */
+function calcAge(dob) {
+  if (!dob) return null;
+  const today = new Date();
+  const birth = new Date(dob);
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+}
 
 
 /* ══════════════════════════════════════════════════════════════ */
@@ -64,45 +74,30 @@ export default function ManageFederalCandidatesPage() {
   const [tab, setTab] = useState("candidates");
   const [msg, setMsg] = useState(null);
   const tablistId = useId();
+  const { profiles } = useCandidateProfiles({ governmentLevel: "FEDERAL" });
+
+  // Tab counts — candidates count is always available; others are election-scoped
+  const tabCounts = {
+    candidates: profiles.length,
+    nominations: null,
+    prlists: null,
+  };
 
   return (
     <PageContainer>
       <AdminKeyframes />
       <Toast msg={msg} onClose={() => setMsg(null)} />
 
-      {/* ── Top navigation rail ── */}
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        marginBottom: 8,
-      }}>
-        <BackLink to="/admin/manage-candidates" label="Candidate Management" />
-      </div>
+      {/* ── Workspace header (replaces context band + BackLink) ── */}
+      <WorkspaceHeader />
 
-      {/* ── Context band ── */}
-      <div style={{
-        background: T.surfaceAlt, border: `1px solid ${T.borderLight}`,
-        borderRadius: T.radius.lg, padding: "14px 20px",
-        marginBottom: T.space.xl, display: "flex", gap: 12,
-        alignItems: "flex-start", flexWrap: "wrap",
-      }}>
-        <FileText size={16} color={T.accent} style={{ marginTop: 2, flexShrink: 0 }} />
-        <div style={{ flex: 1, minWidth: 200 }}>
-          <span style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>
-            Federal candidates workspace
-          </span>
-          <p style={{ margin: "4px 0 0", fontSize: 12, color: T.muted, lineHeight: 1.5 }}>
-            <strong>Party registry</strong> and <strong>candidate profiles</strong> are shared master data.{" "}
-            <strong>Nominations</strong> and <strong>PR lists</strong> are scoped to individual elections.
-          </p>
-        </div>
-      </div>
-
-      {/* ── Workspace switcher (WAI Tabs — manual activation) ── */}
+      {/* ── Workspace tab switcher ── */}
       <WorkspaceTabs
         tabs={TABS}
         activeTab={tab}
         onSelect={setTab}
         id={tablistId}
+        counts={tabCounts}
       />
 
       {/* ── Tab panels ── */}
@@ -116,9 +111,9 @@ export default function ManageFederalCandidatesPage() {
         >
           {tab === t.key && (
             <>
-              {t.key === "candidates" && <CandidatesPanel setMsg={setMsg} />}
+              {t.key === "candidates"  && <CandidatesPanel  setMsg={setMsg} />}
               {t.key === "nominations" && <NominationsPanel setMsg={setMsg} />}
-              {t.key === "prlists" && <PRListsPanel setMsg={setMsg} />}
+              {t.key === "prlists"     && <PRListsPanel     setMsg={setMsg} />}
             </>
           )}
         </div>
@@ -129,9 +124,62 @@ export default function ManageFederalCandidatesPage() {
 
 
 /* ══════════════════════════════════════════════════════════════ */
+/*  WORKSPACE HEADER                                             */
+/* ══════════════════════════════════════════════════════════════ */
+function WorkspaceHeader() {
+  return (
+    <div style={{ marginBottom: T.space.xl }}>
+      {/* Breadcrumb */}
+      <BackLink to="/admin/manage-candidates" label="Candidate Management" />
+
+      {/* Header row */}
+      <div style={{
+        background: T.surface,
+        border: `1px solid ${T.border}`,
+        borderLeft: `4px solid ${T.accent}`,
+        borderRadius: T.radius.xl,
+        padding: "20px 28px",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        gap: 20, flexWrap: "wrap",
+        boxShadow: T.shadow.sm,
+      }}>
+        {/* Left: icon + heading */}
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div style={{
+            width: 48, height: 48, borderRadius: T.radius.lg, flexShrink: 0,
+            background: T.accentLight, border: `1px solid ${T.accent}20`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <FileText size={22} color={T.accent} strokeWidth={2.2} />
+          </div>
+          <div>
+            <h1 style={{ margin: 0, fontSize: "clamp(17px, 2vw, 22px)", fontWeight: 800, color: T.navy, lineHeight: 1.2 }}>
+              Federal Candidates Workspace
+            </h1>
+            <p style={{ margin: "4px 0 0", fontSize: 12, color: T.muted }}>
+              Candidate profiles · Nominations · PR lists — all scoped to federal elections
+            </p>
+          </div>
+        </div>
+        {/* Right: accent badge */}
+        <span style={{
+          padding: "6px 14px", borderRadius: 20,
+          fontSize: 11, fontWeight: 700,
+          background: T.accentLight, color: T.accent,
+          border: `1px solid ${T.accent}25`, whiteSpace: "nowrap",
+        }}>
+          House of Representatives
+        </span>
+      </div>
+    </div>
+  );
+}
+
+
+/* ══════════════════════════════════════════════════════════════ */
 /*  WORKSPACE TABS (WAI Tabs — manual activation)               */
 /* ══════════════════════════════════════════════════════════════ */
-function WorkspaceTabs({ tabs, activeTab, onSelect, id }) {
+function WorkspaceTabs({ tabs, activeTab, onSelect, id, counts = {} }) {
   const [focusIdx, setFocusIdx] = useState(() => tabs.findIndex(t => t.key === activeTab));
 
   const handleKeyDown = (e) => {
@@ -154,15 +202,20 @@ function WorkspaceTabs({ tabs, activeTab, onSelect, id }) {
       onKeyDown={handleKeyDown}
       className="admin-workspace-tabs"
       style={{
-        display: "flex", gap: 6, marginBottom: T.space["2xl"],
-        padding: 4, background: T.surfaceAlt, borderRadius: T.radius.xl,
-        border: `1px solid ${T.borderLight}`, overflowX: "auto",
-        flexWrap: "wrap",
+        display: "grid",
+        gridTemplateColumns: `repeat(${tabs.length}, 1fr)`,
+        background: T.surfaceSubtle,
+        borderRadius: T.radius.xl,
+        border: `1px solid ${T.border}`,
+        borderBottom: `2px solid ${T.border}`,
+        marginBottom: T.space["2xl"],
+        overflow: "hidden",
       }}
     >
       {tabs.map((t, i) => {
         const active = activeTab === t.key;
         const Icon = t.icon;
+        const count = counts[t.key];
         return (
           <button
             key={t.key}
@@ -173,47 +226,36 @@ function WorkspaceTabs({ tabs, activeTab, onSelect, id }) {
             tabIndex={focusIdx === i ? 0 : -1}
             onClick={() => { setFocusIdx(i); onSelect(t.key); }}
             style={{
-              display: "flex", alignItems: "center", gap: 8,
-              padding: "12px 20px",
-              borderRadius: T.radius.lg,
-              border: active ? `1.5px solid ${T.accent}` : "1.5px solid transparent",
-              background: active ? T.accentLight : "transparent",
-              boxShadow: active ? `0 2px 8px ${T.accent}15, ${T.shadow.sm}` : "none",
+              display: "flex", alignItems: "center", gap: 12,
+              padding: "16px 20px",
+              background: active ? T.surface : T.surfaceAlt,
+              border: "none",
+              borderBottom: active ? `3px solid ${T.accent}` : "3px solid transparent",
+              borderRight: i < tabs.length - 1 ? `1px solid ${T.borderLight}` : "none",
               cursor: "pointer",
               transition: "all 0.18s ease",
-              flex: "1 1 auto", minWidth: 0,
               outline: "none",
+              transform: "none",
+              boxShadow: active ? T.shadow.sm : "none",
             }}
-            onFocus={e => {
-              if (!active) e.currentTarget.style.boxShadow = T.focusRing;
-            }}
-            onBlur={e => {
-              if (!active) e.currentTarget.style.boxShadow = "none";
-            }}
-            onMouseEnter={e => {
-              if (!active) {
-                e.currentTarget.style.background = T.surface + "80";
-                e.currentTarget.style.borderColor = T.borderLight;
-              }
-            }}
-            onMouseLeave={e => {
-              if (!active) {
-                e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.borderColor = "transparent";
-              }
-            }}
+            onFocus={e => { if (!active) e.currentTarget.style.background = T.surface + "cc"; }}
+            onBlur={e => { if (!active) e.currentTarget.style.background = T.surfaceAlt; }}
+            onMouseEnter={e => { if (!active) { e.currentTarget.style.background = T.surface + "cc"; e.currentTarget.style.transform = "translateY(-1px)"; } }}
+            onMouseLeave={e => { if (!active) { e.currentTarget.style.background = T.surfaceAlt; e.currentTarget.style.transform = "none"; } }}
           >
+            {/* Icon tile (40×40) */}
             <div className="admin-tab-icon" style={{
-              width: 32, height: 32, borderRadius: T.radius.md,
+              width: 40, height: 40, borderRadius: T.radius.md,
               background: active ? T.accentLight : T.borderLight,
               display: "flex", alignItems: "center", justifyContent: "center",
               flexShrink: 0, transition: T.transition,
             }}>
-              <Icon size={15} color={active ? T.accent : T.muted} strokeWidth={2} />
+              <Icon size={18} color={active ? T.accent : T.muted} strokeWidth={2} />
             </div>
-            <div style={{ textAlign: "left", minWidth: 0 }}>
+            {/* Label + sublabel */}
+            <div style={{ textAlign: "left", minWidth: 0, flex: 1 }}>
               <div className="admin-tab-label" style={{
-                fontSize: 13, fontWeight: active ? 700 : 600,
+                fontSize: 14, fontWeight: active ? 700 : 600,
                 color: active ? T.accent : T.textSecondary,
                 lineHeight: 1.3, whiteSpace: "nowrap",
                 overflow: "hidden", textOverflow: "ellipsis",
@@ -221,18 +263,25 @@ function WorkspaceTabs({ tabs, activeTab, onSelect, id }) {
                 {t.label}
               </div>
               <span className="admin-tab-sublabel" style={{
-                fontSize: 10, fontWeight: 600,
-                color: active ? T.accent : T.muted,
-                letterSpacing: "0.02em",
+                fontSize: 11, fontWeight: 500,
+                color: active ? T.accent + "bb" : T.muted,
+                letterSpacing: "0.01em",
               }}>
                 {t.sublabel}
               </span>
             </div>
-            {active && (
+            {/* Count badge */}
+            {count != null && (
               <span style={{
-                width: 6, height: 6, borderRadius: "50%",
-                background: T.accent, flexShrink: 0, marginLeft: "auto",
-              }} />
+                padding: "2px 9px", borderRadius: 20,
+                fontSize: 11, fontWeight: 700,
+                background: active ? T.accentLight : T.surfaceSubtle,
+                color: active ? T.accent : T.muted,
+                border: `1px solid ${active ? T.accent + "25" : T.borderLight}`,
+                flexShrink: 0,
+              }}>
+                {count}
+              </span>
             )}
           </button>
         );
@@ -243,13 +292,13 @@ function WorkspaceTabs({ tabs, activeTab, onSelect, id }) {
 
 
 /* ══════════════════════════════════════════════════════════════ */
-/*  KPI ROW                                                      */
+/*  KPI ROW (redesigned — larger numbers, colored left border)   */
 /* ══════════════════════════════════════════════════════════════ */
 function KPIRow({ items }) {
   return (
     <div className="admin-kpi-row" style={{
       display: "grid",
-      gridTemplateColumns: `repeat(auto-fit, minmax(140px, 1fr))`,
+      gridTemplateColumns: `repeat(auto-fit, minmax(150px, 1fr))`,
       gap: T.space.lg,
       marginBottom: T.space.xl,
     }}>
@@ -258,22 +307,23 @@ function KPIRow({ items }) {
           background: T.surface, border: `1px solid ${T.border}`,
           borderRadius: T.radius.lg, padding: "18px 20px",
           borderLeft: `3px solid ${item.accent || T.accent}`,
+          animation: "adminFadeIn 0.2s ease",
         }}>
           <div style={{
-            fontSize: 11, fontWeight: 700, color: T.muted,
-            textTransform: "uppercase", letterSpacing: "0.05em",
-            marginBottom: 6,
+            fontSize: 10, fontWeight: 700, color: T.muted,
+            textTransform: "uppercase", letterSpacing: "0.06em",
+            marginBottom: 8,
           }}>
             {item.label}
           </div>
           <div className="admin-kpi-value" style={{
-            fontSize: 28, fontWeight: 800, color: item.accent || T.text,
+            fontSize: 32, fontWeight: 800, color: item.accent || T.text,
             lineHeight: 1,
           }}>
             {item.value}
           </div>
           {item.detail && (
-            <div style={{ fontSize: 12, color: T.muted, marginTop: 4 }}>{item.detail}</div>
+            <div style={{ fontSize: 12, color: T.muted, marginTop: 5 }}>{item.detail}</div>
           )}
         </div>
       ))}
@@ -304,11 +354,13 @@ function Toolbar({ left, right }) {
 
 
 /* ══════════════════════════════════════════════════════════════ */
-/*  CANDIDATES PANEL (redesigned)                                */
+/*  CANDIDATES PANEL — grid + list view toggle                  */
 /* ══════════════════════════════════════════════════════════════ */
 function CandidatesPanel({ setMsg }) {
   const { parties } = useParties();
-  const { profiles, loading, reload } = useCandidateProfiles();
+  const { profiles, loading, reload } = useCandidateProfiles({ governmentLevel: "FEDERAL" });
+  const [viewMode, setViewMode] = useState("grid");
+  const [partyFilter, setPartyFilter] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ full_name: "", gender: "", date_of_birth: "", address: "", citizenship_no: "", party_id: "" });
   const [saving, setSaving] = useState(false);
@@ -322,20 +374,28 @@ function CandidatesPanel({ setMsg }) {
   const partyMap = useMemo(() => Object.fromEntries((parties || []).map(p => [p.id, p])), [parties]);
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return profiles;
+    let list = profiles;
+    if (partyFilter) {
+      if (partyFilter === "__independent__") {
+        list = list.filter(c => !c.party_id);
+      } else {
+        list = list.filter(c => String(c.party_id) === partyFilter);
+      }
+    }
+    if (!search.trim()) return list;
     const q = search.toLowerCase();
-    return profiles.filter(c => {
+    return list.filter(c => {
       const pName = partyMap[c.party_id]?.name || "";
       return c.full_name.toLowerCase().includes(q) || pName.toLowerCase().includes(q);
     });
-  }, [profiles, search, partyMap]);
+  }, [profiles, search, partyMap, partyFilter]);
 
   const handleCreate = async () => {
     if (!form.full_name.trim()) {
       setMsg({ type: "error", text: "Full name is required" }); return;
     }
     setSaving(true);
-    const payload = { ...form, party_id: form.party_id ? Number(form.party_id) : null, gender: form.gender || null, date_of_birth: form.date_of_birth || null };
+    const payload = { ...form, party_id: form.party_id ? Number(form.party_id) : null, gender: form.gender || null, date_of_birth: form.date_of_birth || null, government_level: "FEDERAL" };
     try {
       await createProfile(payload);
       setMsg({ type: "success", text: "Candidate profile created" });
@@ -416,22 +476,72 @@ function CandidatesPanel({ setMsg }) {
         <SectionHeader
           icon={Users} iconColor={T.navy}
           title="Candidate Profiles"
-          subtitle="Global registry — shared across all election levels"
+          subtitle="Federal candidate registry — House of Representatives"
         />
 
-        {/* Toolbar */}
-        <Toolbar
-          left={<SearchInput value={search} onChange={setSearch} placeholder="Search candidates..." />}
-          right={
-            <Btn small onClick={() => setShowForm(!showForm)}>
-              <Plus size={13} /> {showForm ? "Cancel" : "New profile"}
+        {/* Toolbar: search + party filter + add + view toggle */}
+        <div className="admin-toolbar" style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          gap: 10, padding: "12px 20px", borderBottom: `1px solid ${T.borderLight}`,
+          flexWrap: "wrap",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0, flexWrap: "wrap" }}>
+            <SearchInput value={search} onChange={setSearch} placeholder="Search candidates…" />
+            {/* Party filter dropdown */}
+            <select
+              value={partyFilter}
+              onChange={e => setPartyFilter(e.target.value)}
+              style={{
+                padding: "7px 12px", borderRadius: T.radius.md, border: `1px solid ${T.border}`,
+                fontSize: 12, fontWeight: 600, color: T.textSecondary, background: T.surface,
+                cursor: "pointer", outline: "none",
+              }}
+            >
+              <option value="">All parties</option>
+              <option value="__independent__">Independent</option>
+              {(parties || []).map(p => (
+                <option key={p.id} value={String(p.id)}>{p.abbreviation} — {p.name}</option>
+              ))}
+            </select>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            <Btn small onClick={() => setShowForm(s => !s)}>
+              <Plus size={13} /> {showForm ? "Cancel" : "Add Candidate"}
             </Btn>
-          }
-        />
+            {/* Grid/list toggle */}
+            <div style={{
+              display: "flex", borderRadius: T.radius.md,
+              border: `1px solid ${T.border}`, overflow: "hidden",
+            }}>
+              <button
+                onClick={() => setViewMode("grid")}
+                title="Grid view"
+                style={{
+                  padding: "6px 10px", background: viewMode === "grid" ? T.accentLight : T.surface,
+                  border: "none", borderRight: `1px solid ${T.border}`, cursor: "pointer",
+                  color: viewMode === "grid" ? T.accent : T.muted, transition: "all 0.15s",
+                }}
+              >
+                <Grid size={15} />
+              </button>
+              <button
+                onClick={() => setViewMode("list")}
+                title="List view"
+                style={{
+                  padding: "6px 10px", background: viewMode === "list" ? T.accentLight : T.surface,
+                  border: "none", cursor: "pointer",
+                  color: viewMode === "list" ? T.accent : T.muted, transition: "all 0.15s",
+                }}
+              >
+                <List size={15} />
+              </button>
+            </div>
+          </div>
+        </div>
 
         {/* Create form */}
         {showForm && (
-          <div style={{ padding: 20, borderBottom: `1px solid ${T.borderLight}`, background: T.surfaceAlt }}>
+          <div style={{ padding: 20, borderBottom: `1px solid ${T.borderLight}`, background: T.surfaceAlt, animation: "adminFadeInDown 0.18s ease" }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 12 }}>
               <label style={lbl}>Full Name *<input style={inp} value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} /></label>
               <label style={lbl}>Gender
@@ -445,7 +555,7 @@ function CandidatesPanel({ setMsg }) {
               <label style={lbl}>Party
                 <select style={sel} value={form.party_id} onChange={e => setForm({ ...form, party_id: e.target.value })}>
                   <option value="">Independent</option>
-                  {parties.filter(p => p.is_active).map(p => <option key={p.id} value={p.id}>{p.name} ({p.abbreviation})</option>)}
+                  {(parties || []).filter(p => p.is_active).map(p => <option key={p.id} value={p.id}>{p.name} ({p.abbreviation})</option>)}
                 </select>
               </label>
             </div>
@@ -453,73 +563,114 @@ function CandidatesPanel({ setMsg }) {
           </div>
         )}
 
-        {/* Table */}
+        {/* Content area: grid or list */}
         {loading ? (
-          <div style={{ padding: 24 }}><TableSkeleton rows={4} cols={5} /></div>
+          viewMode === "grid" ? (
+            <div style={{ padding: 20, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16 }}>
+              {[...Array(6)].map((_, i) => (
+                <div key={i} style={{ borderRadius: T.radius.lg, overflow: "hidden", border: `1px solid ${T.borderLight}` }}>
+                  <div style={{ aspectRatio: "4/3", background: T.surfaceAlt }} />
+                  <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+                    <div style={{ height: 14, background: T.borderLight, borderRadius: 6, width: "70%" }} />
+                    <div style={{ height: 10, background: T.borderLight, borderRadius: 6, width: "40%" }} />
+                    <div style={{ height: 10, background: T.borderLight, borderRadius: 6, width: "55%" }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ padding: 24 }}><TableSkeleton rows={4} cols={5} /></div>
+          )
         ) : filtered.length === 0 ? (
-          <div style={{ padding: 24 }}>
-            <EmptyState icon={Users} title="No candidate profiles" message={search ? "No match for this search." : "Create the first candidate profile."} />
+          <div style={{ padding: 32 }}>
+            <EmptyState icon={Users} title="No candidate profiles" message={search || partyFilter ? "No match for the current filters." : "Create the first candidate profile."} />
+          </div>
+        ) : viewMode === "grid" ? (
+          /* ── Grid view ── */
+          <div className="admin-candidate-grid" style={{
+            padding: 20,
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+            gap: 16,
+          }}>
+            {filtered.map(c => (
+              <CandidateCard
+                key={c.id}
+                candidate={c}
+                party={partyMap[c.party_id]}
+                uploading={uploading[c.id]}
+                onEdit={handleStartEdit}
+                onDelete={setConfirmDel}
+                onPhotoUpload={handlePhotoUpload}
+                onPhotoRemove={handlePhotoRemove}
+              />
+            ))}
           </div>
         ) : (
+          /* ── List view (upgraded) ── */
           <div className="admin-table-wrap" style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr style={{ background: T.surfaceAlt }}>
-                  <th style={thStyle}>Profile</th>
-                  <th style={thStyle}>Candidate</th>
+                <tr style={{ background: T.surfaceAlt, position: "sticky", top: 0, zIndex: 10 }}>
+                  <th style={thStyle}>Name</th>
+                  <th style={thStyle}>Party</th>
                   <th style={thStyle}>Gender</th>
                   <th style={thStyle}>DOB</th>
                   <th style={thStyle}>Citizenship</th>
-                  <th style={thStyle}>Party</th>
-                  <th style={{ ...thStyle, width: 90, textAlign: "center" }}>Actions</th>
+                  <th style={{ ...thStyle, width: 100, textAlign: "center" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(c => {
+                {filtered.map((c, idx) => {
                   const party = partyMap[c.party_id];
                   return (
                     <tr
                       key={c.id}
-                      style={{ transition: "background 0.12s" }}
-                      onMouseEnter={e => { e.currentTarget.style.background = T.surfaceAlt; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+                      style={{ background: idx % 2 === 0 ? T.surface : T.surfaceAlt, transition: "background 0.1s" }}
+                      onMouseEnter={e => { e.currentTarget.style.background = T.accentLight + "55"; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = idx % 2 === 0 ? T.surface : T.surfaceAlt; }}
                     >
                       <td style={tdStyle}>
-                        <ProfileMediaMenu
-                          currentUrl={imageUrl(c.photo_path)}
-                          onUpload={(file) => handlePhotoUpload(c, file)}
-                          onRemove={() => handlePhotoRemove(c)}
-                          uploading={uploading[c.id]}
-                          size={38}
-                        />
-                      </td>
-                      <td style={tdStyle}>
-                        <div style={{ fontWeight: 600, fontSize: 13, color: T.text, lineHeight: 1.3 }}>{c.full_name}</div>
-                        {!c.is_active && <AdminBadge map={{ INACTIVE: { bg: T.errorBg, color: T.error, label: "Inactive" } }} status="INACTIVE" />}
-                      </td>
-                      <td style={{ ...tdStyle, fontSize: 12, color: T.muted }}>{c.gender || "—"}</td>
-                      <td style={{ ...tdStyle, fontSize: 12, color: T.muted }}>{c.date_of_birth || "—"}</td>
-                      <td style={{ ...tdStyle, fontSize: 12, color: T.muted }}>{c.citizenship_no || "—"}</td>
-                      <td style={tdStyle}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                          <span style={{ fontSize: 13, color: T.textSecondary }}>{party?.name || <span style={{ color: T.muted }}>Independent</span>}</span>
-                          {party?.abbreviation && (
-                            <span style={{
-                              fontSize: 10, fontWeight: 700, padding: "2px 7px",
-                              borderRadius: 5, background: T.accentLight, color: T.accent,
-                            }}>
-                              {party.abbreviation}
-                            </span>
-                          )}
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          {/* 36px avatar circle */}
+                          <div style={{
+                            width: 36, height: 36, borderRadius: "50%", flexShrink: 0, overflow: "hidden",
+                            background: c.photo_path ? "transparent" : `linear-gradient(135deg, ${T.navy} 0%, ${T.accent} 100%)`,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                          }}>
+                            {c.photo_path
+                              ? <img src={imageUrl(c.photo_path)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                              : <span style={{ fontSize: 12, fontWeight: 800, color: "#fff" }}>
+                                  {c.full_name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+                                </span>
+                            }
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: 13, color: T.text, lineHeight: 1.3 }}>{c.full_name}</div>
+                            {c.citizenship_no && <div style={{ fontSize: 11, color: T.muted, fontFamily: "monospace" }}>{c.citizenship_no}</div>}
+                          </div>
                         </div>
                       </td>
+                      <td style={tdStyle}>
+                        {party ? (
+                          <span style={{
+                            fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 5,
+                            background: T.accentLight, color: T.accent,
+                          }}>{party.abbreviation}</span>
+                        ) : (
+                          <span style={{ fontSize: 12, color: T.muted }}>Independent</span>
+                        )}
+                      </td>
+                      <td style={{ ...tdStyle, fontSize: 12, color: T.muted }}>{c.gender ? c.gender.charAt(0) + c.gender.slice(1).toLowerCase() : "—"}</td>
+                      <td style={{ ...tdStyle, fontSize: 12, color: T.muted }}>{c.date_of_birth || "—"}</td>
+                      <td style={{ ...tdStyle, fontSize: 11, color: T.muted, fontFamily: "monospace" }}>{c.citizenship_no || "—"}</td>
                       <td style={{ ...tdStyle, textAlign: "center" }}>
-                        <div style={{ display: "flex", gap: 2, justifyContent: "center" }}>
+                        <div style={{ display: "flex", gap: 4, justifyContent: "center" }}>
                           <Btn variant="ghost" small onClick={() => handleStartEdit(c)} style={{ color: T.accent }}>
-                            <Pencil size={14} />
+                            <Pencil size={13} />
                           </Btn>
                           <Btn variant="ghost" small onClick={() => setConfirmDel(c)} style={{ color: T.error }}>
-                            <Trash2 size={14} />
+                            <Trash2 size={13} />
                           </Btn>
                         </div>
                       </td>
@@ -532,64 +683,42 @@ function CandidatesPanel({ setMsg }) {
         )}
       </SectionCard>
 
-      {/* Edit candidate dialog */}
+      {/* Edit candidate modal */}
       {editCandidate && (
         <div
-          style={{
-            position: "fixed", inset: 0, zIndex: 9000,
-            background: "rgba(15,23,42,0.45)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}
+          style={{ position: "fixed", inset: 0, zIndex: 9000, background: "rgba(15,23,42,0.45)", display: "flex", alignItems: "center", justifyContent: "center" }}
           onClick={() => { if (!updating) setEditCandidate(null); }}
         >
           <div
             onClick={e => e.stopPropagation()}
-            className="admin-modal-panel"
             style={{
               background: T.surface, borderRadius: T.radius.xl,
               boxShadow: T.shadow.xl, width: "min(95vw, 560px)",
-              maxHeight: "85vh", overflow: "auto",
-              border: `1px solid ${T.border}`,
+              maxHeight: "85vh", overflow: "auto", border: `1px solid ${T.border}`,
+              animation: "adminFadeInDown 0.2s ease",
             }}
           >
-            <div style={{
-              padding: "20px 24px", borderBottom: `1px solid ${T.borderLight}`,
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-            }}>
+            <div style={{ padding: "20px 24px", borderBottom: `1px solid ${T.borderLight}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: T.navy }}>Edit Candidate Profile</h3>
-              <button
-                onClick={() => setEditCandidate(null)} disabled={updating}
-                style={{ background: "none", border: "none", cursor: "pointer", color: T.muted, padding: 4 }}
-              >
+              <button onClick={() => setEditCandidate(null)} disabled={updating} style={{ background: "none", border: "none", cursor: "pointer", color: T.muted, padding: 4 }}>
                 <X size={18} />
               </button>
             </div>
             <div style={{ padding: 24 }}>
-              <div className="admin-form-grid" style={{
-                display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-                gap: 12, marginBottom: 20,
-              }}>
-                <label style={lbl}>Full Name *
-                  <input style={inp} value={editForm.full_name} onChange={e => setEditForm({ ...editForm, full_name: e.target.value })} />
-                </label>
+              <div className="admin-form-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 20 }}>
+                <label style={lbl}>Full Name *<input style={inp} value={editForm.full_name} onChange={e => setEditForm({ ...editForm, full_name: e.target.value })} /></label>
                 <label style={lbl}>Gender
                   <select style={sel} value={editForm.gender} onChange={e => setEditForm({ ...editForm, gender: e.target.value })}>
                     <option value="">—</option><option value="MALE">Male</option><option value="FEMALE">Female</option><option value="OTHER">Other</option>
                   </select>
                 </label>
-                <label style={lbl}>Date of birth
-                  <input style={inp} type="date" value={editForm.date_of_birth} onChange={e => setEditForm({ ...editForm, date_of_birth: e.target.value })} />
-                </label>
-                <label style={lbl}>Citizenship No
-                  <input style={inp} value={editForm.citizenship_no} onChange={e => setEditForm({ ...editForm, citizenship_no: e.target.value })} />
-                </label>
-                <label style={lbl}>Address
-                  <input style={inp} value={editForm.address} onChange={e => setEditForm({ ...editForm, address: e.target.value })} />
-                </label>
+                <label style={lbl}>Date of birth<input style={inp} type="date" value={editForm.date_of_birth} onChange={e => setEditForm({ ...editForm, date_of_birth: e.target.value })} /></label>
+                <label style={lbl}>Citizenship No<input style={inp} value={editForm.citizenship_no} onChange={e => setEditForm({ ...editForm, citizenship_no: e.target.value })} /></label>
+                <label style={lbl}>Address<input style={inp} value={editForm.address} onChange={e => setEditForm({ ...editForm, address: e.target.value })} /></label>
                 <label style={lbl}>Party
                   <select style={sel} value={editForm.party_id} onChange={e => setEditForm({ ...editForm, party_id: e.target.value })}>
                     <option value="">Independent</option>
-                    {parties.filter(p => p.is_active).map(p => <option key={p.id} value={p.id}>{p.name} ({p.abbreviation})</option>)}
+                    {(parties || []).filter(p => p.is_active).map(p => <option key={p.id} value={p.id}>{p.name} ({p.abbreviation})</option>)}
                   </select>
                 </label>
               </div>
@@ -610,30 +739,149 @@ function CandidatesPanel({ setMsg }) {
 
 
 /* ══════════════════════════════════════════════════════════════ */
-/*  NOMINATIONS PANEL (kept, with toolbar + refined table)       */
+/*  CANDIDATE CARD — photo-first grid card                       */
+/* ══════════════════════════════════════════════════════════════ */
+function CandidateCard({ candidate, party, uploading, onEdit, onDelete, onPhotoUpload, onPhotoRemove }) {
+  const [photoHovered, setPhotoHovered] = useState(false);
+  const fileRef = useRef(null);
+  const age = calcAge(candidate.date_of_birth);
+  const photo = imageUrl(candidate.photo_path);
+  const initials = candidate.full_name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+
+  return (
+    <div
+      style={{
+        background: T.surface, borderRadius: T.radius.xl,
+        border: `1px solid ${T.border}`, overflow: "hidden",
+        boxShadow: T.shadow.sm, transition: "box-shadow 0.18s, transform 0.18s",
+        animation: "adminFadeIn 0.2s ease",
+      }}
+      onMouseEnter={e => { e.currentTarget.style.boxShadow = T.shadow.md; e.currentTarget.style.transform = "translateY(-2px)"; }}
+      onMouseLeave={e => { e.currentTarget.style.boxShadow = T.shadow.sm; e.currentTarget.style.transform = "none"; }}
+    >
+      {/* Photo area (4:3 aspect ratio) */}
+      <div
+        style={{ position: "relative", aspectRatio: "4/3", overflow: "hidden", cursor: "pointer" }}
+        onMouseEnter={() => setPhotoHovered(true)}
+        onMouseLeave={() => setPhotoHovered(false)}
+        onClick={() => fileRef.current?.click()}
+      >
+        {photo ? (
+          <img src={photo} alt={candidate.full_name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+        ) : (
+          <div style={{
+            width: "100%", height: "100%",
+            background: `linear-gradient(135deg, ${T.navy} 0%, ${T.accent} 100%)`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <span style={{ fontSize: 36, fontWeight: 800, color: "#fff", letterSpacing: "-0.03em" }}>{initials}</span>
+          </div>
+        )}
+        {/* Hover overlay */}
+        {photoHovered && (
+          <div style={{
+            position: "absolute", inset: 0, background: "rgba(15,23,42,0.55)",
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+            gap: 6, animation: "adminFadeIn 0.12s ease",
+          }}>
+            {uploading
+              ? <Loader2 size={22} color="#fff" style={{ animation: "adminSpin 0.8s linear infinite" }} />
+              : <><Camera size={20} color="#fff" /><span style={{ fontSize: 12, fontWeight: 700, color: "#fff" }}>Change Photo</span></>
+            }
+          </div>
+        )}
+        <input
+          ref={fileRef} type="file" accept="image/*" style={{ display: "none" }}
+          onChange={e => { const f = e.target.files?.[0]; if (f) onPhotoUpload(candidate, f); e.target.value = ""; }}
+        />
+      </div>
+
+      {/* Card body */}
+      <div style={{ padding: "14px 16px" }}>
+        {/* Name */}
+        <div style={{ fontWeight: 700, fontSize: 15, color: T.text, lineHeight: 1.3, marginBottom: 6 }}>
+          {candidate.full_name}
+        </div>
+        {/* Party badge */}
+        <div style={{ marginBottom: 8 }}>
+          {party ? (
+            <span style={{
+              fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 5,
+              background: T.accentLight, color: T.accent, letterSpacing: "0.03em",
+            }}>
+              {party.abbreviation}
+            </span>
+          ) : (
+            <span style={{
+              fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 5,
+              background: T.surfaceAlt, color: T.muted, letterSpacing: "0.03em",
+            }}>
+              Independent
+            </span>
+          )}
+        </div>
+        {/* Gender + age */}
+        {(candidate.gender || age) && (
+          <div style={{ fontSize: 12, color: T.muted, marginBottom: 4 }}>
+            {[candidate.gender ? candidate.gender.charAt(0) + candidate.gender.slice(1).toLowerCase() : null, age ? `${age} yrs` : null].filter(Boolean).join(" · ")}
+          </div>
+        )}
+        {/* Citizenship */}
+        {candidate.citizenship_no && (
+          <div style={{ fontSize: 11, fontFamily: "monospace", color: T.muted, marginBottom: 10, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {candidate.citizenship_no}
+          </div>
+        )}
+        {/* Divider */}
+        <div style={{ height: 1, background: T.borderLight, margin: "10px 0" }} />
+        {/* Action row */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-around" }}>
+          <Btn variant="ghost" small onClick={() => onEdit(candidate)} title="Edit profile" style={{ color: T.accent }}>
+            <Pencil size={14} />
+          </Btn>
+          <Btn variant="ghost" small onClick={() => fileRef.current?.click()} title="Change photo" style={{ color: T.muted }}>
+            <Camera size={14} />
+          </Btn>
+          {candidate.photo_path && (
+            <Btn variant="ghost" small onClick={() => onPhotoRemove(candidate)} title="Remove photo" style={{ color: T.muted }}>
+              <X size={14} />
+            </Btn>
+          )}
+          <Btn variant="ghost" small onClick={() => onDelete(candidate)} title="Delete profile" style={{ color: T.error }}>
+            <Trash2 size={14} />
+          </Btn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+/* ══════════════════════════════════════════════════════════════ */
+/*  NOMINATIONS PANEL — election pills + hover-reveal actions    */
 /* ══════════════════════════════════════════════════════════════ */
 function NominationsPanel({ setMsg }) {
   const { parties } = useParties();
-  const { profiles } = useCandidateProfiles();
+  const { profiles } = useCandidateProfiles({ governmentLevel: "FEDERAL" });
   const [elections, setElections] = useState([]);
   const [selectedElection, setSelectedElection] = useState("");
   const [contests, setContests] = useState([]);
   const [selectedContest, setSelectedContest] = useState("");
   const [nominations, setNominations] = useState([]);
   const [nomLoading, setNomLoading] = useState(false);
-  const [readiness, setReadiness] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ contest_id: "", candidate_id: "", party_id: "" });
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [confirmDel, setConfirmDel] = useState(null);
+  const [hoveredRow, setHoveredRow] = useState(null);
 
   const profileMap = useMemo(() => Object.fromEntries((profiles || []).map(p => [p.id, p])), [profiles]);
   const partyMap = useMemo(() => Object.fromEntries((parties || []).map(p => [p.id, p])), [parties]);
   const contestMap = useMemo(() => Object.fromEntries(contests.map(c => [c.id, c])), [contests]);
 
   useEffect(() => {
-    (async () => { try { const d = await listElections(); setElections(d || []); } catch {} })();
+    (async () => { try { const d = await listElections(); setElections(d || []); } catch { /* ignore */ } })();
   }, []);
 
   const eligibleElections = useMemo(() =>
@@ -661,11 +909,6 @@ function NominationsPanel({ setMsg }) {
   }, [selectedElection, selectedContest]);
 
   useEffect(() => { loadNominations(); }, [loadNominations]);
-
-  useEffect(() => {
-    if (!selectedElection) { setReadiness(null); return; }
-    (async () => { try { setReadiness(await getCandidateReadiness(selectedElection)); } catch { setReadiness(null); } })();
-  }, [selectedElection]);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return nominations;
@@ -714,21 +957,62 @@ function NominationsPanel({ setMsg }) {
 
   return (
     <>
-      {/* Election & contest selectors */}
-      <div className="admin-election-selector" style={{ display: "flex", gap: 12, marginBottom: T.space.xl, flexWrap: "wrap" }}>
-        <label style={{ ...lbl, minWidth: 200, flex: 1 }}>Election
-          <select style={sel} value={selectedElection} onChange={e => { setSelectedElection(e.target.value); setSelectedContest(""); }}>
-            <option value="">Select election</option>
-            {eligibleElections.map(e => <option key={e.id} value={e.id}>{e.title} — {e.status.replace(/_/g, " ")}</option>)}
-          </select>
-        </label>
-        {selectedElection && (
-          <label style={{ ...lbl, minWidth: 200, flex: 1 }}>Contest filter
-            <select style={sel} value={selectedContest} onChange={e => setSelectedContest(e.target.value)}>
-              <option value="">All contests</option>
-              {contests.map(c => <option key={c.id} value={c.id}>{c.title} ({c.contest_type})</option>)}
-            </select>
-          </label>
+      {/* Election pill strip */}
+      <div style={{ marginBottom: T.space.xl }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: T.muted, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10 }}>
+          Select Election
+        </div>
+        {eligibleElections.length === 0 ? (
+          <div style={{ fontSize: 13, color: T.muted, fontStyle: "italic", padding: "12px 0" }}>
+            No elections currently open for nominations.
+          </div>
+        ) : (
+          <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 6, WebkitOverflowScrolling: "touch" }}>
+            {eligibleElections.map(e => {
+              const isSelected = String(selectedElection) === String(e.id);
+              return (
+                <button
+                  key={e.id}
+                  onClick={() => { setSelectedElection(String(e.id)); setSelectedContest(""); }}
+                  style={{
+                    flexShrink: 0, padding: "12px 18px", borderRadius: T.radius.lg,
+                    cursor: "pointer", textAlign: "left", transition: "all 0.15s",
+                    background: isSelected ? T.accentLight : T.surfaceAlt,
+                    border: `2px solid ${isSelected ? T.accent : T.borderLight}`,
+                    boxShadow: isSelected ? T.shadow.sm : "none",
+                    minWidth: 160,
+                  }}
+                >
+                  <div style={{ fontSize: 13, fontWeight: 700, color: isSelected ? T.accent : T.text, marginBottom: 6, lineHeight: 1.3 }}>
+                    {e.title}
+                  </div>
+                  <span style={{
+                    display: "inline-block", fontSize: 10, fontWeight: 700, letterSpacing: "0.04em",
+                    padding: "2px 8px", borderRadius: 5,
+                    background: isSelected ? T.accent + "25" : T.surfaceSubtle,
+                    color: isSelected ? T.accent : T.muted,
+                  }}>
+                    {e.status.replace(/_/g, " ")}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Contest filter (visible after election is selected) */}
+        {selectedElection && contests.length > 0 && (
+          <div style={{ marginTop: 14 }}>
+            <label style={{ ...lbl, minWidth: 200, maxWidth: 340, display: "inline-flex", flexDirection: "column" }}>
+              <span style={{ marginBottom: 4, fontSize: 11, fontWeight: 700, color: T.muted, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                Filter by contest
+              </span>
+              <select style={sel} value={selectedContest} onChange={e => setSelectedContest(e.target.value)}>
+                <option value="">All contests</option>
+                {contests.map(c => <option key={c.id} value={c.id}>{c.title} ({c.contest_type})</option>)}
+              </select>
+            </label>
+          </div>
         )}
       </div>
 
@@ -749,18 +1033,19 @@ function NominationsPanel({ setMsg }) {
 
         {/* Toolbar */}
         {selectedElection && (
-          <Toolbar
-            left={<SearchInput value={search} onChange={setSearch} placeholder="Search nominations..." />}
-            right={
-              <Btn small onClick={() => setShowForm(!showForm)}>
-                <Plus size={13} /> {showForm ? "Cancel" : "New nomination"}
-              </Btn>
-            }
-          />
+          <div className="admin-toolbar" style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            gap: 10, padding: "12px 20px", borderBottom: `1px solid ${T.borderLight}`, flexWrap: "wrap",
+          }}>
+            <SearchInput value={search} onChange={setSearch} placeholder="Search nominations…" />
+            <Btn small onClick={() => setShowForm(s => !s)}>
+              <Plus size={13} /> {showForm ? "Cancel" : "New nomination"}
+            </Btn>
+          </div>
         )}
 
         {showForm && selectedElection && (
-          <div style={{ padding: 20, borderBottom: `1px solid ${T.borderLight}`, background: T.surfaceAlt }}>
+          <div style={{ padding: 20, borderBottom: `1px solid ${T.borderLight}`, background: T.surfaceAlt, animation: "adminFadeInDown 0.18s ease" }}>
             <div className="admin-form-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 12 }}>
               <label style={lbl}>Contest *
                 <select style={sel} value={form.contest_id} onChange={e => setForm({ ...form, contest_id: e.target.value })}>
@@ -792,7 +1077,7 @@ function NominationsPanel({ setMsg }) {
 
         {/* Table */}
         {!selectedElection ? (
-          <div style={{ padding: 40, textAlign: "center" }}>
+          <div style={{ padding: 40 }}>
             <EmptyState icon={UserPlus} title="No election selected" message="Select an election above to view and manage nominations." />
           </div>
         ) : nomLoading ? (
@@ -805,34 +1090,49 @@ function NominationsPanel({ setMsg }) {
           <div className="admin-table-wrap" style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr style={{ background: T.surfaceAlt }}>
+                <tr style={{ background: T.surfaceAlt, position: "sticky", top: 0, zIndex: 5 }}>
                   <th style={thStyle}>Contest</th>
                   <th style={thStyle}>Candidate</th>
                   <th style={thStyle}>Party</th>
                   <th style={thStyle}>Status</th>
-                  <th style={{ ...thStyle, textAlign: "right" }}>Actions</th>
+                  <th style={{ ...thStyle, minWidth: 200, textAlign: "right" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(n => {
+                {filtered.map((n, idx) => {
                   const prof = profileMap[n.candidate_id];
                   const party = partyMap[n.party_id];
                   const contest = contestMap[n.contest_id];
+                  const isHovered = hoveredRow === n.id;
+                  const rowBg = isHovered ? (T.accentLight + "55") : idx % 2 === 0 ? T.surface : T.surfaceAlt;
                   return (
                     <tr
                       key={n.id}
-                      style={{ transition: "background 0.12s" }}
-                      onMouseEnter={e => { e.currentTarget.style.background = T.surfaceAlt; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+                      style={{ background: rowBg, transition: "background 0.12s" }}
+                      onMouseEnter={() => setHoveredRow(n.id)}
+                      onMouseLeave={() => setHoveredRow(null)}
                     >
                       <td style={{ ...tdStyle, fontSize: 12, color: T.textSecondary }}>{contest?.title || `#${n.contest_id}`}</td>
                       <td style={{ ...tdStyle, fontWeight: 600, color: T.text }}>{prof?.full_name || `#${n.candidate_id}`}</td>
                       <td style={tdStyle}>
-                        <span style={{ fontSize: 12, color: T.textSecondary }}>{party ? party.abbreviation : "Ind."}</span>
+                        {party ? (
+                          <span style={{
+                            fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 5,
+                            background: T.accentLight, color: T.accent,
+                          }}>{party.abbreviation}</span>
+                        ) : (
+                          <span style={{ fontSize: 12, color: T.muted }}>Ind.</span>
+                        )}
                       </td>
                       <td style={tdStyle}><AdminBadge map={NOM_MAP} status={n.status} /></td>
                       <td style={{ ...tdStyle, textAlign: "right" }}>
-                        <div style={{ display: "flex", gap: 4, justifyContent: "flex-end", flexWrap: "wrap" }}>
+                        {/* Actions — always visible on mobile, appear on hover on desktop */}
+                        <div style={{
+                          display: "flex", gap: 4, justifyContent: "flex-end", flexWrap: "wrap",
+                          opacity: isHovered ? 1 : 0,
+                          transition: "opacity 0.15s",
+                          pointerEvents: isHovered ? "auto" : "none",
+                        }}>
                           {n.status === "PENDING" && (
                             <>
                               <Btn variant="success" small onClick={() => handleStatusChange(n, "APPROVED")}><Check size={12} /> Approve</Btn>
@@ -870,7 +1170,7 @@ function NominationsPanel({ setMsg }) {
 /* ══════════════════════════════════════════════════════════════ */
 function PRListsPanel({ setMsg }) {
   const { parties } = useParties();
-  const { profiles } = useCandidateProfiles();
+  const { profiles } = useCandidateProfiles({ governmentLevel: "FEDERAL" });
   const [elections, setElections] = useState([]);
   const [selectedElection, setSelectedElection] = useState("");
   const [submissions, setSubmissions] = useState([]);
@@ -893,7 +1193,7 @@ function PRListsPanel({ setMsg }) {
   const usedPartyIds = useMemo(() => new Set(submissions.map(s => s.party_id)), [submissions]);
 
   useEffect(() => {
-    (async () => { try { const d = await listElections(); setElections(d || []); } catch {} })();
+    (async () => { try { const d = await listElections(); setElections(d || []); } catch { /* ignore */ } })();
   }, []);
 
   const loadSubmissions = useCallback(async () => {
@@ -1125,14 +1425,29 @@ function PRListsPanel({ setMsg }) {
                     padding: "14px 18px", background: "none", border: "none",
                     cursor: "pointer", textAlign: "left",
                   }}>
-                    {isOpen ? <ChevronUp size={14} color={T.accent} /> : <ChevronDown size={14} color={T.muted} />}
-                    <span style={{ fontWeight: 700, fontSize: 14, color: T.text, flex: 1 }}>
+                    {/* Party logo thumbnail */}
+                    <div style={{
+                      width: 36, height: 36, borderRadius: T.radius.md, flexShrink: 0, overflow: "hidden",
+                      background: party?.symbol_path ? "transparent" : T.accentLight,
+                      border: `1px solid ${T.borderLight}`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>
+                      {party?.symbol_path
+                        ? <img src={imageUrl(party.symbol_path)} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                        : <span style={{ fontSize: 12, fontWeight: 800, color: T.accent }}>
+                            {(party?.abbreviation || "?").slice(0, 2).toUpperCase()}
+                          </span>
+                      }
+                    </div>
+                    {/* Party name */}
+                    <span style={{ fontWeight: 700, fontSize: 14, color: T.text, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {party?.name || `Party #${sub.party_id}`}
                     </span>
                     <AdminBadge map={PR_MAP} status={sub.status} />
-                    <span style={{ fontSize: 11, fontWeight: 700, background: T.accentLight, color: T.accent, padding: "2px 8px", borderRadius: 6 }}>
-                      {subEntries.length} entries
+                    <span style={{ fontSize: 11, fontWeight: 700, background: T.accentLight, color: T.accent, padding: "2px 8px", borderRadius: 6, flexShrink: 0 }}>
+                      {subEntries.length} {subEntries.length === 1 ? "entry" : "entries"}
                     </span>
+                    {isOpen ? <ChevronUp size={14} color={T.accent} style={{ flexShrink: 0 }} /> : <ChevronDown size={14} color={T.muted} style={{ flexShrink: 0 }} />}
                   </button>
 
                   {isOpen && (
@@ -1213,7 +1528,7 @@ function PRSubmissionDetail({
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: T.surfaceAlt }}>
-                  <th style={thStyle}>Pos</th>
+                  <th style={{ ...thStyle, width: 60 }}>#</th>
                   <th style={thStyle}>Candidate</th>
                   <th style={thStyle}>Gender</th>
                   <th style={thStyle}>DOB</th>
@@ -1221,12 +1536,22 @@ function PRSubmissionDetail({
                 </tr>
               </thead>
               <tbody>
-                {[...safeEntries].sort((a, b) => (a.list_position || 0) - (b.list_position || 0)).map(entry => {
+                {[...safeEntries].sort((a, b) => (a.list_position || 0) - (b.list_position || 0)).map((entry, idx) => {
                   if (!entry || !entry.id) return null;
                   const prof = profileMap[entry.candidate_id];
                   return (
-                    <tr key={entry.id}>
-                      <td style={{ ...tdStyle, fontFamily: "monospace", fontWeight: 700, color: T.accent }}>{entry.list_position ?? "—"}</td>
+                    <tr key={entry.id} style={{ background: idx % 2 === 0 ? "transparent" : T.surfaceAlt }}>
+                      <td style={tdStyle}>
+                        {/* Rank circle badge */}
+                        <div style={{
+                          width: 28, height: 28, borderRadius: "50%",
+                          background: T.accentLight, color: T.accent,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: 11, fontWeight: 800,
+                        }}>
+                          {entry.list_position ?? "—"}
+                        </div>
+                      </td>
                       <td style={{ ...tdStyle, fontWeight: 600, color: T.text }}>{prof?.full_name || `#${entry.candidate_id}`}</td>
                       <td style={{ ...tdStyle, fontSize: 12, color: T.muted }}>{prof?.gender || "—"}</td>
                       <td style={{ ...tdStyle, fontSize: 12, color: T.muted }}>{prof?.date_of_birth || "—"}</td>

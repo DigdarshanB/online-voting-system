@@ -1,7 +1,7 @@
-import React, { useState, useMemo, useEffect, useCallback, useId, Component } from "react";
+import React, { useState, useMemo, useEffect, useCallback, useId, Component, useRef } from "react";
 import {
   Users, UserPlus, Plus, Trash2, Check, X,
-  AlertTriangle, Shield, Search, Camera, FileText, Pencil, MapPin,
+  AlertTriangle, Shield, Search, Camera, FileText, Pencil, MapPin, Grid, List, Loader2,
 } from "lucide-react";
 import { T } from "../components/ui/tokens";
 import {
@@ -31,7 +31,7 @@ const NOM_MAP = {
 };
 
 const TABS = [
-  { key: "candidates", label: "Candidate Profiles", icon: Users, sublabel: "Shared registry" },
+  { key: "candidates", label: "Candidate Profiles", icon: Users, sublabel: "Local registry" },
   { key: "nominations", label: "Nominations", icon: UserPlus, sublabel: "Election-scoped" },
 ];
 
@@ -57,6 +57,16 @@ const sel = { ...inp, cursor: "pointer" };
 
 const accentColor = T.orange || "#EA580C";
 const accentBg = T.orangeBg || "#FFF7ED";
+
+function calcAge(dob) {
+  if (!dob) return null;
+  const today = new Date();
+  const birth = new Date(dob);
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+}
 
 
 /* ══════════════════════════════════════════════════════════════ */
@@ -196,11 +206,13 @@ function Toolbar({ left, right }) {
 
 
 /* ══════════════════════════════════════════════════════════════ */
-/*  CANDIDATES PANEL (shared registry — same as federal)         */
+/*  CANDIDATES PANEL — local registry                            */
 /* ══════════════════════════════════════════════════════════════ */
 function CandidatesPanel({ setMsg }) {
   const { parties } = useParties();
-  const { profiles, loading, reload } = useCandidateProfiles();
+  const { profiles, loading, reload } = useCandidateProfiles({ governmentLevel: "LOCAL" });
+  const [viewMode, setViewMode] = useState("grid");
+  const [partyFilter, setPartyFilter] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ full_name: "", gender: "", date_of_birth: "", address: "", citizenship_no: "", party_id: "" });
   const [saving, setSaving] = useState(false);
@@ -212,20 +224,30 @@ function CandidatesPanel({ setMsg }) {
   const [updating, setUpdating] = useState(false);
 
   const partyMap = useMemo(() => Object.fromEntries((parties || []).map(p => [p.id, p])), [parties]);
+
   const filtered = useMemo(() => {
-    if (!search.trim()) return profiles;
+    let list = profiles;
+    if (partyFilter) {
+      if (partyFilter === "__independent__") {
+        list = list.filter(c => !c.party_id);
+      } else {
+        list = list.filter(c => String(c.party_id) === partyFilter);
+      }
+    }
+    if (!search.trim()) return list;
     const q = search.toLowerCase();
-    return profiles.filter(c => {
+    return list.filter(c => {
       const pName = partyMap[c.party_id]?.name || "";
       return c.full_name.toLowerCase().includes(q) || pName.toLowerCase().includes(q);
     });
-  }, [profiles, search, partyMap]);
+  }, [profiles, search, partyMap, partyFilter]);
 
   const handleCreate = async () => {
     if (!form.full_name.trim()) { setMsg({ type: "error", text: "Full name is required" }); return; }
     setSaving(true);
+    const payload = { ...form, party_id: form.party_id ? Number(form.party_id) : null, gender: form.gender || null, date_of_birth: form.date_of_birth || null, government_level: "LOCAL" };
     try {
-      await createProfile({ ...form, party_id: form.party_id ? Number(form.party_id) : null, gender: form.gender || null, date_of_birth: form.date_of_birth || null });
+      await createProfile(payload);
       setMsg({ type: "success", text: "Candidate profile created" });
       setShowForm(false); setForm({ full_name: "", gender: "", date_of_birth: "", address: "", citizenship_no: "", party_id: "" }); reload();
     } catch (err) { setMsg({ type: "error", text: errMsg(err) }); }
@@ -271,11 +293,35 @@ function CandidatesPanel({ setMsg }) {
         { label: "Parties represented", value: partyCount, accent: accentColor },
       ]} />
       <SectionCard style={{ border: `1px solid ${T.borderStrong}` }}>
-        <SectionHeader icon={Users} iconColor={T.navy} title="Candidate Profiles" subtitle="Global registry — shared across all election levels" />
-        <Toolbar
-          left={<SearchInput value={search} onChange={setSearch} placeholder="Search candidates..." />}
-          right={<Btn small onClick={() => setShowForm(!showForm)}><Plus size={13} /> {showForm ? "Cancel" : "New profile"}</Btn>}
-        />
+        <SectionHeader icon={Users} iconColor={T.navy} title="Candidate Profiles" subtitle="Local candidate registry — Municipal & Village Elections" />
+        <div className="admin-toolbar" style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          gap: 10, padding: "12px 20px", borderBottom: `1px solid ${T.borderLight}`,
+          flexWrap: "wrap",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0, flexWrap: "wrap" }}>
+            <SearchInput value={search} onChange={setSearch} placeholder="Search candidates…" />
+            <select value={partyFilter} onChange={e => setPartyFilter(e.target.value)}
+              style={{ padding: "7px 12px", borderRadius: T.radius.md, border: `1px solid ${T.border}`, fontSize: 12, fontWeight: 600, color: T.textSecondary, background: T.surface, cursor: "pointer", outline: "none" }}>
+              <option value="">All parties</option>
+              <option value="__independent__">Independent</option>
+              {(parties || []).map(p => <option key={p.id} value={String(p.id)}>{p.abbreviation} — {p.name}</option>)}
+            </select>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            <Btn small onClick={() => setShowForm(s => !s)}><Plus size={13} /> {showForm ? "Cancel" : "Add Candidate"}</Btn>
+            <div style={{ display: "flex", borderRadius: T.radius.md, border: `1px solid ${T.border}`, overflow: "hidden" }}>
+              <button onClick={() => setViewMode("grid")} title="Grid view"
+                style={{ padding: "6px 10px", background: viewMode === "grid" ? accentBg : T.surface, border: "none", borderRight: `1px solid ${T.border}`, cursor: "pointer", color: viewMode === "grid" ? accentColor : T.muted, transition: "all 0.15s" }}>
+                <Grid size={15} />
+              </button>
+              <button onClick={() => setViewMode("list")} title="List view"
+                style={{ padding: "6px 10px", background: viewMode === "list" ? accentBg : T.surface, border: "none", cursor: "pointer", color: viewMode === "list" ? accentColor : T.muted, transition: "all 0.15s" }}>
+                <List size={15} />
+              </button>
+            </div>
+          </div>
+        </div>
         {showForm && (
           <div style={{ padding: 20, borderBottom: `1px solid ${T.borderLight}`, background: T.surfaceAlt }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 12 }}>
@@ -290,34 +336,81 @@ function CandidatesPanel({ setMsg }) {
           </div>
         )}
         {loading ? (
-          <div style={{ padding: 24 }}><TableSkeleton rows={4} cols={5} /></div>
+          viewMode === "grid" ? (
+            <div style={{ padding: 20, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16 }}>
+              {[...Array(6)].map((_, i) => (
+                <div key={i} style={{ borderRadius: T.radius.lg, overflow: "hidden", border: `1px solid ${T.borderLight}` }}>
+                  <div style={{ aspectRatio: "4/3", background: T.surfaceAlt }} />
+                  <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+                    <div style={{ height: 14, background: T.borderLight, borderRadius: 6, width: "70%" }} />
+                    <div style={{ height: 10, background: T.borderLight, borderRadius: 6, width: "40%" }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ padding: 24 }}><TableSkeleton rows={4} cols={5} /></div>
+          )
         ) : filtered.length === 0 ? (
-          <div style={{ padding: 24 }}><EmptyState icon={Users} title="No candidate profiles" message={search ? "No match for this search." : "Create the first candidate profile."} /></div>
+          <div style={{ padding: 32 }}><EmptyState icon={Users} title="No candidate profiles" message={search || partyFilter ? "No match for the current filters." : "Create the first candidate profile."} /></div>
+        ) : viewMode === "grid" ? (
+          <div className="admin-candidate-grid" style={{ padding: 20, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16 }}>
+            {filtered.map(c => (
+              <CandidateCard key={c.id} candidate={c} party={partyMap[c.party_id]} uploading={uploading[c.id]}
+                onEdit={handleStartEdit} onDelete={setConfirmDel} onPhotoUpload={handlePhotoUpload} onPhotoRemove={handlePhotoRemove} />
+            ))}
+          </div>
         ) : (
-          <div style={{ overflowX: "auto" }}>
+          <div className="admin-table-wrap" style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead><tr style={{ background: T.surfaceAlt }}>
-                <th style={thStyle}>Profile</th><th style={thStyle}>Candidate</th><th style={thStyle}>Gender</th>
-                <th style={thStyle}>DOB</th><th style={thStyle}>Citizenship</th><th style={thStyle}>Party</th>
-                <th style={{ ...thStyle, width: 90, textAlign: "center" }}>Actions</th>
-              </tr></thead>
+              <thead>
+                <tr style={{ background: T.surfaceAlt, position: "sticky", top: 0, zIndex: 10 }}>
+                  <th style={thStyle}>Name</th>
+                  <th style={thStyle}>Party</th>
+                  <th style={thStyle}>Gender</th>
+                  <th style={thStyle}>DOB</th>
+                  <th style={thStyle}>Citizenship</th>
+                  <th style={{ ...thStyle, width: 100, textAlign: "center" }}>Actions</th>
+                </tr>
+              </thead>
               <tbody>
-                {filtered.map(c => {
+                {filtered.map((c, idx) => {
                   const party = partyMap[c.party_id];
                   return (
-                    <tr key={c.id} style={{ transition: "background 0.12s" }}
-                      onMouseEnter={e => { e.currentTarget.style.background = T.surfaceAlt; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}>
-                      <td style={tdStyle}><ProfileMediaMenu currentUrl={imageUrl(c.photo_path)} onUpload={(file) => handlePhotoUpload(c, file)} onRemove={() => handlePhotoRemove(c)} uploading={uploading[c.id]} size={38} /></td>
-                      <td style={tdStyle}><div style={{ fontWeight: 600, fontSize: 13, color: T.text }}>{c.full_name}</div>{!c.is_active && <AdminBadge map={{ INACTIVE: { bg: T.errorBg, color: T.error, label: "Inactive" } }} status="INACTIVE" />}</td>
-                      <td style={{ ...tdStyle, fontSize: 12, color: T.muted }}>{c.gender || "—"}</td>
+                    <tr key={c.id}
+                      style={{ background: idx % 2 === 0 ? T.surface : T.surfaceAlt, transition: "background 0.1s" }}
+                      onMouseEnter={e => { e.currentTarget.style.background = accentBg + "88"; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = idx % 2 === 0 ? T.surface : T.surfaceAlt; }}>
+                      <td style={tdStyle}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <div style={{ width: 36, height: 36, borderRadius: "50%", flexShrink: 0, overflow: "hidden",
+                            background: c.photo_path ? "transparent" : `linear-gradient(135deg, ${T.navy} 0%, ${accentColor} 100%)`,
+                            display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            {c.photo_path
+                              ? <img src={imageUrl(c.photo_path)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                              : <span style={{ fontSize: 12, fontWeight: 800, color: "#fff" }}>{c.full_name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}</span>
+                            }
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: 13, color: T.text, lineHeight: 1.3 }}>{c.full_name}</div>
+                            {c.citizenship_no && <div style={{ fontSize: 11, color: T.muted, fontFamily: "monospace" }}>{c.citizenship_no}</div>}
+                          </div>
+                        </div>
+                      </td>
+                      <td style={tdStyle}>
+                        {party ? (
+                          <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 5, background: accentBg, color: accentColor }}>{party.abbreviation}</span>
+                        ) : (
+                          <span style={{ fontSize: 12, color: T.muted }}>Independent</span>
+                        )}
+                      </td>
+                      <td style={{ ...tdStyle, fontSize: 12, color: T.muted }}>{c.gender ? c.gender.charAt(0) + c.gender.slice(1).toLowerCase() : "—"}</td>
                       <td style={{ ...tdStyle, fontSize: 12, color: T.muted }}>{c.date_of_birth || "—"}</td>
-                      <td style={{ ...tdStyle, fontSize: 12, color: T.muted }}>{c.citizenship_no || "—"}</td>
-                      <td style={tdStyle}><div style={{ display: "flex", alignItems: "center", gap: 6 }}><span style={{ fontSize: 13, color: T.textSecondary }}>{party?.name || <span style={{ color: T.muted }}>Independent</span>}</span>{party?.abbreviation && <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 5, background: accentBg, color: accentColor }}>{party.abbreviation}</span>}</div></td>
+                      <td style={{ ...tdStyle, fontSize: 11, color: T.muted, fontFamily: "monospace" }}>{c.citizenship_no || "—"}</td>
                       <td style={{ ...tdStyle, textAlign: "center" }}>
-                        <div style={{ display: "flex", gap: 2, justifyContent: "center" }}>
-                          <Btn variant="ghost" small onClick={() => handleStartEdit(c)} style={{ color: accentColor }}><Pencil size={14} /></Btn>
-                          <Btn variant="ghost" small onClick={() => setConfirmDel(c)} style={{ color: T.error }}><Trash2 size={14} /></Btn>
+                        <div style={{ display: "flex", gap: 4, justifyContent: "center" }}>
+                          <Btn variant="ghost" small onClick={() => handleStartEdit(c)} style={{ color: accentColor }}><Pencil size={13} /></Btn>
+                          <Btn variant="ghost" small onClick={() => setConfirmDel(c)} style={{ color: T.error }}><Trash2 size={13} /></Btn>
                         </div>
                       </td>
                     </tr>
@@ -363,11 +456,81 @@ function CandidatesPanel({ setMsg }) {
 
 
 /* ══════════════════════════════════════════════════════════════ */
+/*  CANDIDATE CARD — local                                       */
+/* ══════════════════════════════════════════════════════════════ */
+function CandidateCard({ candidate, party, uploading, onEdit, onDelete, onPhotoUpload, onPhotoRemove }) {
+  const [photoHovered, setPhotoHovered] = useState(false);
+  const fileRef = useRef(null);
+  const age = calcAge(candidate.date_of_birth);
+  const photo = imageUrl(candidate.photo_path);
+  const initials = candidate.full_name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+
+  return (
+    <div
+      style={{ background: T.surface, borderRadius: T.radius.xl, border: `1px solid ${T.border}`, overflow: "hidden", boxShadow: T.shadow.sm, transition: "box-shadow 0.18s, transform 0.18s", animation: "adminFadeIn 0.2s ease" }}
+      onMouseEnter={e => { e.currentTarget.style.boxShadow = T.shadow.md; e.currentTarget.style.transform = "translateY(-2px)"; }}
+      onMouseLeave={e => { e.currentTarget.style.boxShadow = T.shadow.sm; e.currentTarget.style.transform = "none"; }}
+    >
+      <div
+        style={{ position: "relative", aspectRatio: "4/3", overflow: "hidden", cursor: "pointer" }}
+        onMouseEnter={() => setPhotoHovered(true)}
+        onMouseLeave={() => setPhotoHovered(false)}
+        onClick={() => fileRef.current?.click()}
+      >
+        {photo ? (
+          <img src={photo} alt={candidate.full_name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+        ) : (
+          <div style={{ width: "100%", height: "100%", background: `linear-gradient(135deg, ${T.navy} 0%, ${accentColor} 100%)`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ fontSize: 36, fontWeight: 800, color: "#fff", letterSpacing: "-0.03em" }}>{initials}</span>
+          </div>
+        )}
+        {photoHovered && (
+          <div style={{ position: "absolute", inset: 0, background: "rgba(15,23,42,0.55)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6, animation: "adminFadeIn 0.12s ease" }}>
+            {uploading
+              ? <Loader2 size={22} color="#fff" style={{ animation: "adminSpin 0.8s linear infinite" }} />
+              : <><Camera size={20} color="#fff" /><span style={{ fontSize: 12, fontWeight: 700, color: "#fff" }}>Change Photo</span></>
+            }
+          </div>
+        )}
+        <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }}
+          onChange={e => { const f = e.target.files?.[0]; if (f) onPhotoUpload(candidate, f); e.target.value = ""; }} />
+      </div>
+      <div style={{ padding: "14px 16px" }}>
+        <div style={{ fontWeight: 700, fontSize: 15, color: T.text, lineHeight: 1.3, marginBottom: 6 }}>{candidate.full_name}</div>
+        <div style={{ marginBottom: 8 }}>
+          {party ? (
+            <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 5, background: accentBg, color: accentColor, letterSpacing: "0.03em" }}>{party.abbreviation}</span>
+          ) : (
+            <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 5, background: T.surfaceAlt, color: T.muted, letterSpacing: "0.03em" }}>Independent</span>
+          )}
+        </div>
+        {(candidate.gender || age) && (
+          <div style={{ fontSize: 12, color: T.muted, marginBottom: 4 }}>
+            {[candidate.gender ? candidate.gender.charAt(0) + candidate.gender.slice(1).toLowerCase() : null, age ? `${age} yrs` : null].filter(Boolean).join(" · ")}
+          </div>
+        )}
+        {candidate.citizenship_no && (
+          <div style={{ fontSize: 11, fontFamily: "monospace", color: T.muted, marginBottom: 10, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{candidate.citizenship_no}</div>
+        )}
+        <div style={{ height: 1, background: T.borderLight, margin: "10px 0" }} />
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-around" }}>
+          <Btn variant="ghost" small onClick={() => onEdit(candidate)} title="Edit profile" style={{ color: accentColor }}><Pencil size={14} /></Btn>
+          <Btn variant="ghost" small onClick={() => fileRef.current?.click()} title="Change photo" style={{ color: T.muted }}><Camera size={14} /></Btn>
+          {candidate.photo_path && <Btn variant="ghost" small onClick={() => onPhotoRemove(candidate)} title="Remove photo" style={{ color: T.muted }}><X size={14} /></Btn>}
+          <Btn variant="ghost" small onClick={() => onDelete(candidate)} title="Delete profile" style={{ color: T.error }}><Trash2 size={14} /></Btn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+/* ══════════════════════════════════════════════════════════════ */
 /*  NOMINATIONS PANEL — local elections only                     */
 /* ══════════════════════════════════════════════════════════════ */
 function NominationsPanel({ setMsg }) {
   const { parties } = useParties();
-  const { profiles } = useCandidateProfiles();
+  const { profiles } = useCandidateProfiles({ governmentLevel: "LOCAL" });
   const [elections, setElections] = useState([]);
   const [selectedElection, setSelectedElection] = useState("");
   const [contests, setContests] = useState([]);

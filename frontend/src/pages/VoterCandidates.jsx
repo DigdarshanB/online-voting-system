@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Landmark,
@@ -6,7 +6,25 @@ import {
   MapPin,
   ChevronRight,
   Users,
+  Shield,
+  Info,
 } from "lucide-react";
+import apiClient from "../lib/apiClient";
+
+/* ─── Injected CSS (once) ────────────────────────────────────── */
+const STYLE_ID = "vc-hub-styles";
+if (typeof document !== "undefined" && !document.getElementById(STYLE_ID)) {
+  const tag = document.createElement("style");
+  tag.id = STYLE_ID;
+  tag.textContent = `
+    @keyframes vcPulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    @keyframes vcFadeUp {
+      from { opacity:0; transform:translateY(12px) }
+      to   { opacity:1; transform:translateY(0) }
+    }
+  `;
+  document.head.appendChild(tag);
+}
 
 const PALETTE = {
   appBg: "#F5F7FB",
@@ -26,11 +44,20 @@ const PALETTE = {
   purpleBg: "#F5F3FF",
   orange: "#EA580C",
   orangeBg: "#FFF7ED",
+  success: "#059669",
+  successBg: "#ECFDF5",
+};
+
+const CHIP_COLORS = {
+  federal: { bg: "#DBEAFE", text: "#1E40AF", border: "#93C5FD" },
+  provincial: { bg: "#EDE9FE", text: "#5B21B6", border: "#C4B5FD" },
+  local: { bg: "#FFEDD5", text: "#9A3412", border: "#FDBA74" },
 };
 
 const FAMILIES = [
   {
     key: "federal",
+    level: "FEDERAL",
     label: "Federal Elections",
     description:
       "View nominated candidates for House of Representatives direct elections — FPTP constituency candidates and Proportional Representation party lists.",
@@ -44,6 +71,7 @@ const FAMILIES = [
   },
   {
     key: "provincial",
+    level: "PROVINCIAL",
     label: "Provincial Elections",
     description:
       "View nominated candidates for your Provincial Assembly — constituency candidates and province-wide party lists.",
@@ -57,6 +85,7 @@ const FAMILIES = [
   },
   {
     key: "local",
+    level: "LOCAL",
     label: "Local Elections",
     description:
       "View nominated candidates for your local body — Mayor/Chairperson, Deputy, Ward Chair, and ward-level representatives.",
@@ -72,57 +101,111 @@ const FAMILIES = [
 
 export default function VoterCandidates() {
   const navigate = useNavigate();
+  const [liveMap, setLiveMap] = useState({});
+
+  useEffect(() => {
+    apiClient
+      .get("/voter/elections/")
+      .then((res) => {
+        const map = {};
+        (res.data || []).forEach((e) => {
+          if (e.status === "POLLING_OPEN" && e.government_level) {
+            map[e.government_level] = true;
+          }
+        });
+        setLiveMap(map);
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <div
       style={{
-        maxWidth: 900,
+        maxWidth: 920,
         margin: "0 auto",
         padding: "32px 16px",
         fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
       }}
     >
-      {/* Header */}
-      <div style={{ marginBottom: 28 }}>
+      {/* Hero header */}
+      <div
+        style={{
+          background: `linear-gradient(135deg, ${PALETTE.navy} 0%, #1E4D8C 100%)`,
+          borderRadius: 18,
+          padding: "28px 28px 24px",
+          marginBottom: 28,
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        {/* Nepal flag accent stripe */}
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            marginBottom: 6,
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 4,
+            background: "linear-gradient(90deg, #DC143C 0%, #DC143C 50%, #003893 50%, #003893 100%)",
           }}
-        >
+        />
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <div
             style={{
-              width: 44,
-              height: 44,
-              borderRadius: 12,
-              background: PALETTE.accentLight,
+              width: 52,
+              height: 52,
+              borderRadius: 14,
+              background: "rgba(255,255,255,0.12)",
+              backdropFilter: "blur(8px)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               flexShrink: 0,
+              border: "1px solid rgba(255,255,255,0.15)",
             }}
           >
-            <Users size={22} color={PALETTE.accent} strokeWidth={2.2} />
+            <Shield size={26} color="#fff" strokeWidth={2} />
           </div>
           <div>
-            <h1
+            <div
               style={{
-                fontSize: "clamp(22px, 3vw, 28px)",
-                fontWeight: 800,
-                color: PALETTE.navy,
-                margin: 0,
-                lineHeight: 1.2,
-                letterSpacing: "-0.01em",
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                marginBottom: 4,
               }}
             >
-              Nominated Candidates
-            </h1>
+              <h1
+                style={{
+                  fontSize: "clamp(22px, 3vw, 28px)",
+                  fontWeight: 800,
+                  color: "#FFFFFF",
+                  margin: 0,
+                  lineHeight: 1.2,
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                Nominated Candidates
+              </h1>
+              <span
+                style={{
+                  padding: "2px 10px",
+                  borderRadius: 6,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  background: "rgba(255,255,255,0.15)",
+                  color: "rgba(255,255,255,0.85)",
+                  letterSpacing: "0.04em",
+                  textTransform: "uppercase",
+                }}
+              >
+                Election Commission
+              </span>
+            </div>
             <p
               style={{
-                color: PALETTE.muted,
-                margin: "2px 0 0",
+                color: "rgba(255,255,255,0.7)",
+                margin: 0,
                 fontSize: 14,
                 lineHeight: 1.4,
               }}
@@ -134,41 +217,42 @@ export default function VoterCandidates() {
         </div>
       </div>
 
-      {/* Family cards */}
+      {/* Family cards — responsive grid */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(270px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))",
           gap: 20,
         }}
       >
-        {FAMILIES.map((f) => (
-          <FamilyCard key={f.key} family={f} onClick={() => navigate(f.to)} />
+        {FAMILIES.map((f, idx) => (
+          <FamilyCard
+            key={f.key}
+            family={f}
+            isLive={!!liveMap[f.level]}
+            animDelay={idx * 80}
+            onClick={() => navigate(f.to)}
+          />
         ))}
       </div>
 
-      {/* Info note */}
+      {/* Info callout */}
       <div
         style={{
           marginTop: 32,
           padding: "16px 20px",
-          background: PALETTE.surfaceSubtle,
+          background: PALETTE.accentLight,
           borderRadius: 12,
-          border: `1px solid ${PALETTE.border}`,
+          border: `1px solid ${PALETTE.accent}20`,
           display: "flex",
           gap: 12,
           alignItems: "flex-start",
         }}
       >
-        <div
-          style={{
-            width: 8,
-            height: 8,
-            borderRadius: "50%",
-            background: PALETTE.accent,
-            marginTop: 6,
-            flexShrink: 0,
-          }}
+        <Info
+          size={16}
+          color={PALETTE.accent}
+          style={{ flexShrink: 0, marginTop: 2 }}
         />
         <p
           style={{
@@ -178,17 +262,19 @@ export default function VoterCandidates() {
             lineHeight: 1.55,
           }}
         >
-          Only candidates nominated for elections and contests matching your
-          registered voting area are shown. The list reflects approved
-          nominations for elections currently visible to voters.
+          Only candidates nominated for elections currently open for polling in
+          your registered voting area are shown. Once an election closes,
+          candidates move to the Results section.
         </p>
       </div>
     </div>
   );
 }
 
-function FamilyCard({ family, onClick }) {
+/* ─── Family Card ────────────────────────────────────────────── */
+function FamilyCard({ family, isLive, animDelay, onClick }) {
   const Icon = family.icon;
+  const chipColor = CHIP_COLORS[family.key] || CHIP_COLORS.federal;
 
   return (
     <button
@@ -200,39 +286,43 @@ function FamilyCard({ family, onClick }) {
         padding: 0,
         borderRadius: 16,
         border: `1.5px solid ${family.borderAccent}20`,
+        borderTop: `4px solid ${family.borderAccent}`,
         background: PALETTE.surface,
         cursor: "pointer",
         textAlign: "left",
         overflow: "hidden",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
-        transition: "transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
+        boxShadow:
+          "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
+        transition:
+          "transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
         outline: "none",
+        animation: `vcFadeUp 0.4s ease ${animDelay}ms both`,
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-2px)";
+        e.currentTarget.style.transform = "translateY(-3px)";
         e.currentTarget.style.borderColor = family.borderAccent + "50";
+        e.currentTarget.style.borderTopColor = family.borderAccent;
         e.currentTarget.style.boxShadow =
-          "0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04)";
+          "0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06)";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = "translateY(0)";
         e.currentTarget.style.borderColor = family.borderAccent + "20";
+        e.currentTarget.style.borderTopColor = family.borderAccent;
         e.currentTarget.style.boxShadow =
           "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)";
       }}
       onFocus={(e) => {
-        e.currentTarget.style.borderColor = family.borderAccent;
-        e.currentTarget.style.boxShadow = `0 0 0 3px ${family.borderAccent}20`;
+        e.currentTarget.style.boxShadow = `0 0 0 3px ${family.borderAccent}30`;
       }}
       onBlur={(e) => {
-        e.currentTarget.style.borderColor = family.borderAccent + "20";
         e.currentTarget.style.boxShadow =
           "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)";
       }}
     >
       {/* Card body */}
-      <div style={{ padding: "22px 22px 16px" }}>
-        {/* Icon + title */}
+      <div style={{ padding: "22px 22px 16px", flex: 1 }}>
+        {/* Icon + title row */}
         <div
           style={{
             display: "flex",
@@ -269,6 +359,49 @@ function FamilyCard({ family, onClick }) {
             >
               {family.label}
             </span>
+            {/* Live status */}
+            <div style={{ marginTop: 6 }}>
+              {isLive ? (
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: PALETTE.success,
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      background: PALETTE.success,
+                      display: "inline-block",
+                      animation: "vcPulse 1.5s ease-in-out infinite",
+                    }}
+                  />
+                  Live — Polling Open
+                </span>
+              ) : (
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 5,
+                    padding: "2px 8px",
+                    borderRadius: 5,
+                    fontSize: 10,
+                    fontWeight: 600,
+                    color: PALETTE.muted,
+                    background: PALETTE.surfaceSubtle,
+                  }}
+                >
+                  No active elections
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -284,7 +417,7 @@ function FamilyCard({ family, onClick }) {
           {family.description}
         </p>
 
-        {/* Chips */}
+        {/* Chips — family-colored */}
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           {family.chips.map((chip) => (
             <span
@@ -294,9 +427,9 @@ function FamilyCard({ family, onClick }) {
                 borderRadius: 6,
                 fontSize: 11,
                 fontWeight: 600,
-                color: PALETTE.textSecondary,
-                background: PALETTE.surfaceSubtle,
-                border: `1px solid ${PALETTE.borderLight}`,
+                color: chipColor.text,
+                background: chipColor.bg,
+                border: `1px solid ${chipColor.border}`,
               }}
             >
               {chip}

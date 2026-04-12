@@ -17,6 +17,7 @@ class CandidateProfileCreate(BaseModel):
     photo_path: str | None = None
     qualifications: str | None = None
     party_id: int | None = None
+    government_level: str = Field("FEDERAL", pattern="^(FEDERAL|PROVINCIAL|LOCAL)$")
 
 
 class CandidateProfileUpdate(BaseModel):
@@ -41,6 +42,7 @@ class CandidateProfileRead(BaseModel):
     photo_path: str | None = None
     qualifications: str | None = None
     party_id: int | None = None
+    government_level: str = "FEDERAL"
     is_active: bool
     created_at: datetime
     updated_at: datetime

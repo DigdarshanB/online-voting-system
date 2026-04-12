@@ -68,6 +68,10 @@ VOTER_VISIBLE_STATUSES = (
     "ARCHIVED",
 )
 
+# Candidates view: only show elections where polling is actively open.
+# Closed/counted/finalized elections should not appear on the candidates page.
+CANDIDATE_VIEW_STATUSES = ("POLLING_OPEN",)
+
 
 # ── List elections available to a voter ──────────────────────────
 
@@ -1399,10 +1403,12 @@ def get_eligible_nominations_by_family(
         )
 
     # ── Find eligible elections for this family ──────────────────
+    # Only elections with POLLING_OPEN status — closed/counted/finalized
+    # elections should not appear on the candidates view page.
     elections = (
         db.execute(
             select(Election).where(
-                Election.status.in_(VOTER_VISIBLE_STATUSES),
+                Election.status.in_(CANDIDATE_VIEW_STATUSES),
                 Election.government_level == government_level,
             )
             .order_by(Election.polling_start_at.desc(), Election.created_at.desc())

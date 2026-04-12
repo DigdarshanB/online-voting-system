@@ -104,11 +104,13 @@ def list_profiles(
     offset: int = Query(0, ge=0),
     party_id: int | None = Query(None),
     active_only: bool = Query(False),
+    government_level: str | None = Query(None, pattern="^(FEDERAL|PROVINCIAL|LOCAL)$"),
     db: Session = Depends(get_db),
     user: User = Depends(_require_admin),
 ):
     return candidate_repository.list_profiles(
         db, limit=limit, offset=offset, party_id=party_id, active_only=active_only,
+        government_level=government_level,
     )
 
 
@@ -129,6 +131,7 @@ def create_profile_endpoint(
             photo_path=body.photo_path,
             qualifications=body.qualifications,
             party_id=body.party_id,
+            government_level=body.government_level,
         )
     except CandidateServiceError as e:
         raise HTTPException(status_code=400, detail=str(e))

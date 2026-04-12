@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { listProfiles } from "../api/candidatesApi";
 
-export default function useCandidateProfiles({ partyId } = {}) {
+export default function useCandidateProfiles({ partyId, governmentLevel } = {}) {
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -10,14 +10,14 @@ export default function useCandidateProfiles({ partyId } = {}) {
     setLoading(true);
     setError(null);
     try {
-      const data = await listProfiles({ partyId });
+      const data = await listProfiles({ partyId, governmentLevel });
       setProfiles(data);
     } catch (err) {
       setError(err?.response?.data?.detail || "Failed to load candidates");
     } finally {
       setLoading(false);
     }
-  }, [partyId]);
+  }, [partyId, governmentLevel]);
 
   useEffect(() => { reload(); }, [reload]);
 

@@ -20,6 +20,7 @@ class CandidateProfile(Base):
     party_id: Mapped[int | None] = mapped_column(
         ForeignKey("parties.id", name="fk_cp_party"), nullable=True, index=True,
     )
+    government_level: Mapped[str] = mapped_column(String(20), nullable=False, default="FEDERAL", index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=func.now(),

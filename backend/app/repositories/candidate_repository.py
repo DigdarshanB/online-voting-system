@@ -22,12 +22,15 @@ def list_profiles(
     offset: int = 0,
     party_id: int | None = None,
     active_only: bool = False,
+    government_level: str | None = None,
 ) -> list[CandidateProfile]:
     q = select(CandidateProfile).order_by(CandidateProfile.full_name)
     if party_id is not None:
         q = q.where(CandidateProfile.party_id == party_id)
     if active_only:
         q = q.where(CandidateProfile.is_active == True)  # noqa: E712
+    if government_level is not None:
+        q = q.where(CandidateProfile.government_level == government_level)
     return list(db.execute(q.limit(limit).offset(offset)).scalars().all())
 
 

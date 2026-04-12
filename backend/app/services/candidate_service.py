@@ -62,6 +62,7 @@ def create_profile(
     photo_path: str | None = None,
     qualifications: str | None = None,
     party_id: int | None = None,
+    government_level: str = "FEDERAL",
 ) -> CandidateProfile:
     if party_id is not None:
         party = db.get(Party, party_id)
@@ -79,6 +80,7 @@ def create_profile(
         photo_path=photo_path,
         qualifications=qualifications,
         party_id=party_id,
+        government_level=government_level,
     )
     candidate_repository.create_profile(db, profile)
     db.commit()

@@ -6,11 +6,27 @@ import {
   Building2,
   MapPin,
   Users,
-  User,
   AlertCircle,
   MapPinned,
+  CalendarOff,
+  ChevronRight,
 } from "lucide-react";
 import apiClient from "../lib/apiClient";
+
+/* ─── Injected CSS (once) ────────────────────────────────────── */
+const STYLE_ID = "vcf-shimmer-styles";
+if (typeof document !== "undefined" && !document.getElementById(STYLE_ID)) {
+  const tag = document.createElement("style");
+  tag.id = STYLE_ID;
+  tag.textContent = `
+    @keyframes vcfShimmer {
+      0%   { background-position: -400px 0 }
+      100% { background-position: 400px 0 }
+    }
+    @keyframes vcfPulse { 0%,100%{opacity:1} 50%{opacity:.45} }
+  `;
+  document.head.appendChild(tag);
+}
 
 const PALETTE = {
   appBg: "#F5F7FB",
@@ -71,6 +87,17 @@ const CONTEST_TYPE_LABELS = {
   WARD_MEMBER_OPEN: "Ward Member (Open)",
 };
 
+const CONTEST_ICONS = {
+  MAYOR: "\u{1F3DB}",
+  DEPUTY_MAYOR: "\u{1F3DB}",
+  WARD_CHAIR: "\u{1F3D8}",
+  WARD_WOMAN_MEMBER: "\u{1F465}",
+  WARD_DALIT_WOMAN_MEMBER: "\u{1F465}",
+  WARD_MEMBER_OPEN: "\u{1F465}",
+  FPTP: "\u{1F5F3}",
+  PR: "\u{1F4CA}",
+};
+
 const CONTEST_TYPE_COLORS = {
   FPTP: { bg: "#DBEAFE", text: "#1E40AF", border: "#93C5FD" },
   PR: { bg: "#EDE9FE", text: "#5B21B6", border: "#C4B5FD" },
@@ -91,6 +118,31 @@ const STATUS_DISPLAY = {
 };
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
+/* ─── Shimmer bar helper ─────────────────────────────────────── */
+function ShimmerBar({ width, height, radius = 6, style = {} }) {
+  return (
+    <div
+      style={{
+        width,
+        height,
+        borderRadius: radius,
+        background: `linear-gradient(90deg, ${PALETTE.surfaceSubtle} 25%, ${PALETTE.borderLight} 50%, ${PALETTE.surfaceSubtle} 75%)`,
+        backgroundSize: "800px 100%",
+        animation: "vcfShimmer 1.6s ease-in-out infinite",
+        ...style,
+      }}
+    />
+  );
+}
+
+/* ─── Initials helper ────────────────────────────────────────── */
+function getInitials(name) {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0][0].toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
 
 export default function VoterCandidatesByFamily() {
   const { family } = useParams();
@@ -120,10 +172,12 @@ export default function VoterCandidatesByFamily() {
       });
   }, [family]);
 
+  const hasElections = data && data.elections && data.elections.length > 0;
+
   return (
     <div
       style={{
-        maxWidth: 900,
+        maxWidth: 920,
         margin: "0 auto",
         padding: "32px 16px",
         fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
@@ -160,58 +214,126 @@ export default function VoterCandidatesByFamily() {
         All Election Levels
       </button>
 
-      {/* Page header */}
+      {/* Hero header */}
       <div
         style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 14,
+          background: PALETTE.surface,
+          border: `1px solid ${PALETTE.border}`,
+          borderRadius: 18,
+          padding: "24px 26px",
           marginBottom: 8,
+          borderTop: `4px solid ${meta.color}`,
         }}
       >
         <div
           style={{
-            width: 48,
-            height: 48,
-            borderRadius: 14,
-            background: meta.bgStrong,
-            border: `1px solid ${meta.color}15`,
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
+            gap: 16,
+            flexWrap: "wrap",
           }}
         >
-          <FamilyIcon size={24} color={meta.color} strokeWidth={2.2} />
-        </div>
-        <div>
-          <h1
+          <div
             style={{
-              margin: 0,
-              fontSize: "clamp(22px, 3vw, 28px)",
-              fontWeight: 800,
-              color: PALETTE.navy,
-              lineHeight: 1.2,
-              letterSpacing: "-0.01em",
+              width: 52,
+              height: 52,
+              borderRadius: 14,
+              background: meta.bgStrong,
+              border: `1px solid ${meta.color}20`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
             }}
           >
-            {meta.label}
-          </h1>
-          <p
-            style={{
-              margin: "2px 0 0",
-              color: PALETTE.muted,
-              fontSize: 14,
-            }}
-          >
-            Nominated candidates for your eligible contests
-          </p>
+            <FamilyIcon size={26} color={meta.color} strokeWidth={2.2} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h1
+              style={{
+                margin: 0,
+                fontSize: "clamp(22px, 3vw, 28px)",
+                fontWeight: 800,
+                color: PALETTE.navy,
+                lineHeight: 1.2,
+                letterSpacing: "-0.01em",
+              }}
+            >
+              {meta.label}
+            </h1>
+            <p
+              style={{
+                margin: "4px 0 0",
+                color: PALETTE.muted,
+                fontSize: 14,
+                lineHeight: 1.4,
+              }}
+            >
+              Nominated candidates for your eligible contests
+            </p>
+          </div>
         </div>
       </div>
 
       {/* Voter area badge */}
       {data?.voter_area && (
         <VoterAreaBadge area={data.voter_area} color={meta.color} />
+      )}
+
+      {/* Status banner */}
+      {!loading && !error && data && (
+        <div
+          style={{
+            marginTop: 16,
+            marginBottom: 4,
+            padding: "12px 18px",
+            borderRadius: 12,
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            background: hasElections ? PALETTE.successBg : PALETTE.surfaceSubtle,
+            border: `1px solid ${hasElections ? "#A7F3D0" : PALETTE.border}`,
+          }}
+        >
+          {hasElections ? (
+            <>
+              <span
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: "50%",
+                  background: PALETTE.success,
+                  display: "inline-block",
+                  animation: "vcfPulse 1.5s ease-in-out infinite",
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                style={{
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: "#065F46",
+                }}
+              >
+                Polling is Open
+              </span>
+              <span style={{ fontSize: 13, color: "#047857" }}>
+                — {data.elections.length} election{data.elections.length > 1 ? "s" : ""} active for your area
+              </span>
+            </>
+          ) : (
+            <>
+              <CalendarOff
+                size={16}
+                color={PALETTE.muted}
+                style={{ flexShrink: 0 }}
+              />
+              <span style={{ fontSize: 13, color: PALETTE.muted, fontWeight: 600 }}>
+                No elections are currently open for polling
+              </span>
+            </>
+          )}
+        </div>
       )}
 
       {/* Loading state */}
@@ -265,53 +387,71 @@ export default function VoterCandidatesByFamily() {
         <div
           style={{
             marginTop: 24,
-            padding: "40px 24px",
+            padding: "48px 24px",
             background: PALETTE.surface,
             border: `1px solid ${PALETTE.border}`,
-            borderRadius: 16,
+            borderRadius: 18,
             textAlign: "center",
           }}
         >
           <div
             style={{
-              width: 56,
-              height: 56,
-              borderRadius: 16,
+              width: 64,
+              height: 64,
+              borderRadius: 18,
               background: PALETTE.surfaceSubtle,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              margin: "0 auto 16px",
+              margin: "0 auto 20px",
             }}
           >
-            <Users size={28} color={PALETTE.subtle} strokeWidth={1.8} />
+            <CalendarOff size={32} color={PALETTE.subtle} strokeWidth={1.6} />
           </div>
           <h3
             style={{
-              margin: "0 0 6px",
-              fontSize: 17,
-              fontWeight: 700,
+              margin: "0 0 8px",
+              fontSize: 19,
+              fontWeight: 800,
               color: PALETTE.text,
             }}
           >
-            No eligible nominated candidates
+            No Elections Are Currently Open
           </h3>
           <p
             style={{
-              margin: 0,
+              margin: "0 auto 24px",
               fontSize: 14,
               color: PALETTE.muted,
-              maxWidth: 400,
-              marginLeft: "auto",
-              marginRight: "auto",
-              lineHeight: 1.5,
+              maxWidth: 420,
+              lineHeight: 1.55,
             }}
           >
-            No nominated candidates are available for your registered area in{" "}
-            {meta.label.toLowerCase()}. This may be because no elections are
-            currently active, or you have not been assigned to a voting area for
-            this level.
+            Candidates will appear here once polling begins for your registered
+            area. Check back later or view Results for past elections.
           </p>
+          <button
+            onClick={() => navigate("/results")}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "10px 22px",
+              background: PALETTE.accent,
+              color: "#FFFFFF",
+              border: "none",
+              borderRadius: 10,
+              fontSize: 14,
+              fontWeight: 700,
+              cursor: "pointer",
+              transition: "background 0.15s ease",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#1D5ED9")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = PALETTE.accent)}
+          >
+            View Election Results
+            <ChevronRight size={16} />
+          </button>
         </div>
       )}
 
@@ -347,24 +487,40 @@ function VoterAreaBadge({ area, color }) {
   return (
     <div
       style={{
-        display: "inline-flex",
+        display: "flex",
         alignItems: "center",
-        gap: 8,
-        padding: "8px 14px",
-        background: PALETTE.surfaceSubtle,
-        borderRadius: 10,
+        gap: 10,
+        padding: "10px 16px",
+        background: PALETTE.surface,
+        borderRadius: 12,
         border: `1px solid ${PALETTE.border}`,
         marginTop: 16,
-        marginBottom: 8,
+        marginBottom: 4,
+        boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
       }}
     >
-      <MapPinned size={15} color={color} strokeWidth={2.2} />
-      <span style={{ fontSize: 13, fontWeight: 600, color: PALETTE.text }}>
-        Your Voting Area:
-      </span>
-      <span style={{ fontSize: 13, color: PALETTE.textSecondary }}>
-        {label}
-      </span>
+      <div
+        style={{
+          width: 32,
+          height: 32,
+          borderRadius: 8,
+          background: PALETTE.surfaceSubtle,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        <MapPinned size={16} color={color} strokeWidth={2.2} />
+      </div>
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: PALETTE.muted, letterSpacing: "0.02em", textTransform: "uppercase" }}>
+          Your Voting Area
+        </div>
+        <div style={{ fontSize: 13.5, fontWeight: 700, color: PALETTE.text, marginTop: 1 }}>
+          {label}
+        </div>
+      </div>
     </div>
   );
 }
@@ -378,7 +534,7 @@ function ElectionSection({ election, familyColor }) {
   };
 
   const formatDate = (iso) => {
-    if (!iso) return "—";
+    if (!iso) return "\u2014";
     const d = new Date(iso);
     return d.toLocaleDateString("en-US", {
       year: "numeric",
@@ -399,29 +555,29 @@ function ElectionSection({ election, familyColor }) {
         marginTop: 24,
         background: PALETTE.surface,
         border: `1px solid ${PALETTE.border}`,
-        borderRadius: 16,
+        borderRadius: 18,
         overflow: "hidden",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+        boxShadow: "0 1px 4px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02)",
       }}
     >
-      {/* Election header */}
+      {/* Election header — colored top border */}
       <div
         style={{
-          padding: "18px 22px",
+          borderTop: `4px solid ${familyColor}`,
+          padding: "20px 24px",
           borderBottom: `1px solid ${PALETTE.borderLight}`,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           flexWrap: "wrap",
           gap: 12,
-          borderLeft: `4px solid ${familyColor}`,
         }}
       >
-        <div style={{ minWidth: 0 }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
           <h2
             style={{
               margin: 0,
-              fontSize: 17,
+              fontSize: 18,
               fontWeight: 800,
               color: PALETTE.text,
               lineHeight: 1.3,
@@ -433,17 +589,21 @@ function ElectionSection({ election, familyColor }) {
             style={{
               display: "flex",
               gap: 16,
-              marginTop: 6,
+              marginTop: 8,
               flexWrap: "wrap",
               fontSize: 12,
               color: PALETTE.muted,
             }}
           >
             {election.polling_start_at && (
-              <span>Start: {formatDate(election.polling_start_at)}</span>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                <span style={{ fontWeight: 600 }}>Start:</span> {formatDate(election.polling_start_at)}
+              </span>
             )}
             {election.polling_end_at && (
-              <span>End: {formatDate(election.polling_end_at)}</span>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                <span style={{ fontWeight: 600 }}>End:</span> {formatDate(election.polling_end_at)}
+              </span>
             )}
             {election.province_code && (
               <span>Province: {election.province_code}</span>
@@ -452,21 +612,36 @@ function ElectionSection({ election, familyColor }) {
         </div>
         <span
           style={{
-            padding: "4px 12px",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "5px 14px",
             borderRadius: 8,
-            fontSize: 11,
+            fontSize: 12,
             fontWeight: 700,
             background: statusInfo.bg,
             color: statusInfo.text,
             whiteSpace: "nowrap",
           }}
         >
+          {election.status === "POLLING_OPEN" && (
+            <span
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: "50%",
+                background: "#059669",
+                display: "inline-block",
+                animation: "vcfPulse 1.5s ease-in-out infinite",
+              }}
+            />
+          )}
           {statusInfo.label}
         </span>
       </div>
 
       {/* Contests */}
-      <div style={{ padding: "6px 0" }}>
+      <div style={{ padding: "4px 0 8px" }}>
         {fptpContests.length === 0 && prContests.length === 0 && (
           <div
             style={{
@@ -501,11 +676,13 @@ function ContestBlock({ contest }) {
   };
   const typeLabel =
     CONTEST_TYPE_LABELS[contest.contest_type] || contest.contest_type;
+  const icon = CONTEST_ICONS[contest.contest_type] || "\u{1F5F3}";
+  const count = contest.candidates ? contest.candidates.length : 0;
 
   return (
     <div
       style={{
-        padding: "16px 22px",
+        padding: "18px 24px",
         borderBottom: `1px solid ${PALETTE.borderLight}`,
       }}
     >
@@ -515,14 +692,15 @@ function ContestBlock({ contest }) {
           display: "flex",
           alignItems: "center",
           gap: 10,
-          marginBottom: 12,
+          marginBottom: 14,
           flexWrap: "wrap",
         }}
       >
+        <span style={{ fontSize: 16 }}>{icon}</span>
         <span
           style={{
-            padding: "3px 10px",
-            borderRadius: 6,
+            padding: "4px 12px",
+            borderRadius: 7,
             fontSize: 11,
             fontWeight: 700,
             background: typeColor.bg,
@@ -552,20 +730,30 @@ function ContestBlock({ contest }) {
             ({contest.seat_count} seats)
           </span>
         )}
+        <span
+          style={{
+            fontSize: 11,
+            color: PALETTE.subtle,
+            fontWeight: 600,
+            marginLeft: "auto",
+          }}
+        >
+          {count > 0 ? `${count} candidate${count > 1 ? "s" : ""}` : "No candidates yet"}
+        </span>
       </div>
 
       {/* Candidates */}
-      {(!contest.candidates || contest.candidates.length === 0) && (
+      {count === 0 && (
         <p style={{ fontSize: 13, color: PALETTE.muted, margin: 0 }}>
           No approved candidates for this contest yet.
         </p>
       )}
-      {contest.candidates && contest.candidates.length > 0 && (
+      {count > 0 && (
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-            gap: 10,
+            gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 260px), 1fr))",
+            gap: 12,
           }}
         >
           {contest.candidates.map((c) => (
@@ -580,12 +768,14 @@ function ContestBlock({ contest }) {
 /* ─── PR Contest Block ───────────────────────────────────────── */
 function PrContestBlock({ contest }) {
   const typeColor = CONTEST_TYPE_COLORS.PR;
+  const count = contest.parties ? contest.parties.length : 0;
 
   return (
     <div
       style={{
-        padding: "16px 22px",
+        padding: "18px 24px",
         borderBottom: `1px solid ${PALETTE.borderLight}`,
+        background: "#FDFCFF",
       }}
     >
       {/* Contest header */}
@@ -594,14 +784,15 @@ function PrContestBlock({ contest }) {
           display: "flex",
           alignItems: "center",
           gap: 10,
-          marginBottom: 12,
+          marginBottom: 14,
           flexWrap: "wrap",
         }}
       >
+        <span style={{ fontSize: 16 }}>{CONTEST_ICONS.PR}</span>
         <span
           style={{
-            padding: "3px 10px",
-            borderRadius: 6,
+            padding: "4px 12px",
+            borderRadius: 7,
             fontSize: 11,
             fontWeight: 700,
             background: typeColor.bg,
@@ -631,20 +822,30 @@ function PrContestBlock({ contest }) {
             ({contest.seat_count} seats)
           </span>
         )}
+        <span
+          style={{
+            fontSize: 11,
+            color: PALETTE.subtle,
+            fontWeight: 600,
+            marginLeft: "auto",
+          }}
+        >
+          {count > 0 ? `${count} part${count > 1 ? "ies" : "y"}` : "No parties yet"}
+        </span>
       </div>
 
       {/* Parties */}
-      {(!contest.parties || contest.parties.length === 0) && (
+      {count === 0 && (
         <p style={{ fontSize: 13, color: PALETTE.muted, margin: 0 }}>
           No approved party submissions for this contest yet.
         </p>
       )}
-      {contest.parties && contest.parties.length > 0 && (
+      {count > 0 && (
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-            gap: 10,
+            gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 240px), 1fr))",
+            gap: 12,
           }}
         >
           {contest.parties.map((p) => (
@@ -664,28 +865,40 @@ function CandidateCard({ candidate }) {
   const symbolUrl = candidate.party_symbol_path
     ? `${API_BASE}/uploads/${candidate.party_symbol_path}`
     : null;
+  const initials = getInitials(candidate.candidate_name);
 
   return (
     <div
       style={{
         display: "flex",
         alignItems: "center",
-        gap: 12,
-        padding: "10px 14px",
+        gap: 14,
+        padding: "12px 16px",
         background: PALETTE.surfaceSubtle,
-        borderRadius: 10,
+        borderRadius: 12,
         border: `1px solid ${PALETTE.borderLight}`,
-        transition: "border-color 0.15s ease",
+        transition: "box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease",
+        cursor: "default",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "translateY(-1px)";
+        e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
+        e.currentTarget.style.borderColor = PALETTE.border;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "translateY(0)";
+        e.currentTarget.style.boxShadow = "none";
+        e.currentTarget.style.borderColor = PALETTE.borderLight;
       }}
     >
-      {/* Photo */}
+      {/* Photo — 56×56 with initials fallback */}
       <div
         style={{
-          width: 40,
-          height: 40,
-          borderRadius: 10,
-          background: PALETTE.surface,
-          border: `1px solid ${PALETTE.border}`,
+          width: 56,
+          height: 56,
+          borderRadius: 12,
+          background: photoUrl ? PALETTE.surface : PALETTE.accent + "12",
+          border: `1.5px solid ${photoUrl ? PALETTE.border : PALETTE.accent + "25"}`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -697,10 +910,19 @@ function CandidateCard({ candidate }) {
           <img
             src={photoUrl}
             alt={candidate.candidate_name}
-            style={{ width: 40, height: 40, objectFit: "cover" }}
+            style={{ width: 56, height: 56, objectFit: "cover" }}
           />
         ) : (
-          <User size={20} color={PALETTE.subtle} strokeWidth={1.6} />
+          <span
+            style={{
+              fontSize: 18,
+              fontWeight: 800,
+              color: PALETTE.accent,
+              letterSpacing: "0.02em",
+            }}
+          >
+            {initials}
+          </span>
         )}
       </div>
 
@@ -708,7 +930,7 @@ function CandidateCard({ candidate }) {
       <div style={{ minWidth: 0, flex: 1 }}>
         <div
           style={{
-            fontSize: 13.5,
+            fontSize: 15,
             fontWeight: 700,
             color: PALETTE.text,
             lineHeight: 1.3,
@@ -723,8 +945,8 @@ function CandidateCard({ candidate }) {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 6,
-            marginTop: 3,
+            gap: 7,
+            marginTop: 4,
           }}
         >
           {symbolUrl && (
@@ -732,16 +954,17 @@ function CandidateCard({ candidate }) {
               src={symbolUrl}
               alt=""
               style={{
-                width: 16,
-                height: 16,
+                width: 18,
+                height: 18,
                 objectFit: "contain",
-                borderRadius: 3,
+                borderRadius: 4,
+                border: `1px solid ${PALETTE.borderLight}`,
               }}
             />
           )}
           <span
             style={{
-              fontSize: 12,
+              fontSize: 12.5,
               color: PALETTE.muted,
               fontWeight: 500,
               overflow: "hidden",
@@ -755,6 +978,18 @@ function CandidateCard({ candidate }) {
               : ""}
           </span>
         </div>
+        {candidate.candidate_number && (
+          <div
+            style={{
+              marginTop: 4,
+              fontSize: 11,
+              fontWeight: 600,
+              color: PALETTE.subtle,
+            }}
+          >
+            #{candidate.candidate_number}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -771,21 +1006,31 @@ function PartyCard({ party }) {
       style={{
         display: "flex",
         alignItems: "center",
-        gap: 12,
-        padding: "10px 14px",
+        gap: 14,
+        padding: "12px 16px",
         background: "#F5F3FF",
-        borderRadius: 10,
+        borderRadius: 12,
         border: `1px solid #EDE9FE`,
+        transition: "box-shadow 0.2s ease, transform 0.2s ease",
+        cursor: "default",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "translateY(-1px)";
+        e.currentTarget.style.boxShadow = "0 4px 12px rgba(124,58,237,0.10)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "translateY(0)";
+        e.currentTarget.style.boxShadow = "none";
       }}
     >
-      {/* Symbol */}
+      {/* Symbol — 48×48 */}
       <div
         style={{
-          width: 36,
-          height: 36,
-          borderRadius: 8,
+          width: 48,
+          height: 48,
+          borderRadius: 10,
           background: PALETTE.surface,
-          border: `1px solid ${PALETTE.border}`,
+          border: `1.5px solid ${PALETTE.border}`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -797,10 +1042,10 @@ function PartyCard({ party }) {
           <img
             src={symbolUrl}
             alt={party.party_name}
-            style={{ width: 28, height: 28, objectFit: "contain" }}
+            style={{ width: 36, height: 36, objectFit: "contain" }}
           />
         ) : (
-          <Users size={18} color={PALETTE.subtle} strokeWidth={1.6} />
+          <Users size={22} color={PALETTE.subtle} strokeWidth={1.6} />
         )}
       </div>
 
@@ -808,7 +1053,7 @@ function PartyCard({ party }) {
       <div style={{ minWidth: 0, flex: 1 }}>
         <div
           style={{
-            fontSize: 13.5,
+            fontSize: 14,
             fontWeight: 700,
             color: PALETTE.text,
             lineHeight: 1.3,
@@ -822,10 +1067,14 @@ function PartyCard({ party }) {
         {party.party_abbreviation && (
           <div
             style={{
-              fontSize: 12,
-              color: PALETTE.muted,
-              fontWeight: 500,
-              marginTop: 2,
+              display: "inline-block",
+              marginTop: 4,
+              padding: "2px 8px",
+              borderRadius: 5,
+              fontSize: 11,
+              fontWeight: 600,
+              color: PALETTE.purple,
+              background: "#EDE9FE",
             }}
           >
             {party.party_abbreviation}
@@ -846,73 +1095,55 @@ function LoadingSkeleton() {
           style={{
             background: PALETTE.surface,
             border: `1px solid ${PALETTE.border}`,
-            borderRadius: 16,
+            borderRadius: 18,
             overflow: "hidden",
             marginBottom: 20,
           }}
         >
+          {/* Header skeleton */}
           <div
             style={{
-              padding: "18px 22px",
+              padding: "20px 24px",
               borderBottom: `1px solid ${PALETTE.borderLight}`,
               display: "flex",
               justifyContent: "space-between",
+              alignItems: "center",
             }}
           >
             <div>
-              <div
-                style={{
-                  width: 200,
-                  height: 18,
-                  background: PALETTE.surfaceSubtle,
-                  borderRadius: 6,
-                  marginBottom: 8,
-                }}
-              />
-              <div
-                style={{
-                  width: 300,
-                  height: 14,
-                  background: PALETTE.surfaceSubtle,
-                  borderRadius: 4,
-                }}
-              />
+              <ShimmerBar width={220} height={18} style={{ marginBottom: 10 }} />
+              <ShimmerBar width={320} height={14} />
             </div>
-            <div
-              style={{
-                width: 80,
-                height: 24,
-                background: PALETTE.surfaceSubtle,
-                borderRadius: 8,
-              }}
-            />
+            <ShimmerBar width={90} height={28} radius={8} />
           </div>
-          <div style={{ padding: "16px 22px" }}>
-            <div
-              style={{
-                width: 140,
-                height: 24,
-                background: PALETTE.surfaceSubtle,
-                borderRadius: 6,
-                marginBottom: 12,
-              }}
-            />
+          {/* Contest skeleton */}
+          <div style={{ padding: "18px 24px" }}>
+            <ShimmerBar width={160} height={26} radius={7} style={{ marginBottom: 14 }} />
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-                gap: 10,
+                gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 260px), 1fr))",
+                gap: 12,
               }}
             >
               {[1, 2, 3].map((j) => (
                 <div
                   key={j}
                   style={{
-                    height: 56,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 14,
+                    padding: "12px 16px",
+                    borderRadius: 12,
                     background: PALETTE.surfaceSubtle,
-                    borderRadius: 10,
                   }}
-                />
+                >
+                  <ShimmerBar width={56} height={56} radius={12} />
+                  <div style={{ flex: 1 }}>
+                    <ShimmerBar width="70%" height={15} style={{ marginBottom: 8 }} />
+                    <ShimmerBar width="50%" height={12} />
+                  </div>
+                </div>
               ))}
             </div>
           </div>
