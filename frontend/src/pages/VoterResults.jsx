@@ -1,9 +1,77 @@
 import React, { useEffect, useState } from "react";
-import { Navigate, useParams, Link } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import useAuthGuard from "../hooks/useAuthGuard";
 import apiClient from "../lib/apiClient";
+import { VT } from "../lib/voterTokens";
+import {
+  VoterKeyframes,
+  VoterPageContainer,
+  VoterBackLink,
+  VoterSummaryStrip,
+  VoterMetricCard,
+  VoterStatusBadge,
+} from "../components/VoterUI";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
+/* ── SectionCard ─────────────────────────────────────────────── */
+function SectionCard({ children, style }) {
+  return (
+    <div
+      style={{
+        background: VT.surface,
+        border: `1px solid ${VT.border}`,
+        borderRadius: VT.radius.xl,
+        overflow: "hidden",
+        marginBottom: VT.space["2xl"],
+        boxShadow: VT.shadow.sm,
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function SectionHeader({ title, subtitle, icon: Icon, iconColor }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "14px 24px",
+        borderBottom: `1px solid ${VT.borderLight}`,
+        background: VT.surfaceAlt,
+      }}
+    >
+      {Icon && (
+        <div
+          style={{
+            width: 30, height: 30,
+            borderRadius: VT.radius.md,
+            background: `${iconColor || VT.accent}18`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          <Icon size={15} color={iconColor || VT.accent} strokeWidth={2.2} />
+        </div>
+      )}
+      <div>
+        <h2 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: VT.navy }}>{title}</h2>
+        {subtitle && <p style={{ margin: "1px 0 0", fontSize: 12, color: VT.muted }}>{subtitle}</p>}
+      </div>
+    </div>
+  );
+}
+
+/* ── Level meta ──────────────────────────────────────────────── */
+const LEVEL_META = {
+  FEDERAL:    { label: "Federal",    color: VT.federal.color,    bg: VT.federal.bg,    border: VT.federal.border,    slug: "federal" },
+  PROVINCIAL: { label: "Provincial", color: VT.provincial.color, bg: VT.provincial.bg, border: VT.provincial.border, slug: "provincial" },
+  LOCAL:      { label: "Local",      color: VT.local.color,      bg: VT.local.bg,      border: VT.local.border,      slug: "local" },
+};
 
 export default function VoterResults() {
   const { electionId } = useParams();
@@ -43,119 +111,345 @@ export default function VoterResults() {
       });
   }, [user, electionId]);
 
-  if (authLoading) return <div style={{ textAlign: "center", padding: 40 }}>Loading…</div>;
+  if (authLoading) return <div style={{ textAlign: "center", padding: 40, color: VT.muted }}>Loading…</div>;
   if (!user) return <Navigate to="/" replace />;
 
+  const govLevel = summary?.government_level || localSummary?.government_level;
+  const levelMeta = LEVEL_META[govLevel] || null;
+  const backTo = levelMeta ? `/results/${levelMeta.slug}` : "/results";
+
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto", padding: "32px 16px", fontFamily: "system-ui, -apple-system, sans-serif" }}>
-      {/* Back link */}
-      <Link to="/elections" style={{ color: "#2563eb", fontSize: 14, textDecoration: "none", marginBottom: 16, display: "inline-block" }}>
-        ← Back to Elections
-      </Link>
+    <VoterPageContainer>
+      <VoterKeyframes />
 
-      <h1 style={{ fontSize: 26, fontWeight: 700, color: "#1e293b", marginBottom: 8 }}>
-        Election Results
-      </h1>
+      {/* ── Back link ─────────────────────────────────────────── */}
+      <VoterBackLink to={backTo}>
+        {levelMeta ? `${levelMeta.label} Results` : "Results Hub"}
+      </VoterBackLink>
 
-      {loading && <p style={{ color: "#64748b", padding: 24 }}>Loading results…</p>}
-      {error && <p style={{ color: "#dc2626", padding: 24 }}>{error}</p>}
+      {/* ── Election header card ───────────────────────────────── */}
+      {(summary || loading) && (
+        <div
+          style={{
+            background: VT.surface,
+            border: `1px solid ${VT.border}`,
+            borderRadius: VT.radius.xl,
+            padding: "20px 24px",
+            marginBottom: VT.space["2xl"],
+            boxShadow: VT.shadow.sm,
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 16,
+            flexWrap: "wrap",
+          }}
+        >
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h1
+              style={{
+                margin: 0,
+                fontSize: "clamp(18px, 2.2vw, 24px)",
+                fontWeight: 800,
+                color: VT.navy,
+                lineHeight: 1.2,
+              }}
+            >
+              {summary?.election_title || "Election Results"}
+            </h1>
+            <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+              {levelMeta && (
+                <span
+                  style={{
+                    padding: "3px 10px",
+                    borderRadius: 5,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    background: levelMeta.bg,
+                    color: levelMeta.color,
+                    border: `1px solid ${levelMeta.border}`,
+                    letterSpacing: "0.03em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {levelMeta.label}
+                </span>
+              )}
+              {summary?.election_status && <VoterStatusBadge status={summary.election_status} />}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Loading ───────────────────────────────────────────── */}
+      {loading && (
+        <div style={{ color: VT.muted, padding: 24, fontSize: 14, fontWeight: 500 }}>
+          Loading results…
+        </div>
+      )}
+
+      {/* ── Error ─────────────────────────────────────────────── */}
+      {error && (
+        <div
+          style={{
+            padding: "14px 20px",
+            background: VT.errorBg,
+            border: `1px solid ${VT.errorBorder}`,
+            borderRadius: VT.radius.lg,
+            color: VT.error,
+            fontSize: 14,
+            fontWeight: 600,
+            marginBottom: VT.space.xl,
+          }}
+        >
+          {error}
+        </div>
+      )}
 
       {!loading && !error && summary && (() => {
-        const isLocal = summary.government_level === "LOCAL" || localSummary?.government_level === "LOCAL";
+        const isLocal = govLevel === "LOCAL" || localSummary?.government_level === "LOCAL";
         return (
-        <>
-          {/* Summary cards */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12, marginBottom: 28 }}>
-            <SummaryCard label="Ballots Counted" value={summary.total_ballots_counted?.toLocaleString() ?? "—"} color="#2563eb" />
-            {isLocal ? (
-              <>
-                <SummaryCard label="Contests" value={summary.fptp.total_contests ?? "—"} color="#1e3a5f" />
-                <SummaryCard label="Winners Declared" value={`${summary.fptp.winners_declared} / ${summary.fptp.total_seats ?? summary.fptp.total_contests}`} color="#059669" />
-                <SummaryCard label="Adjudication" value={summary.fptp.adjudication_required ?? 0} color={summary.fptp.adjudication_required > 0 ? "#d97706" : "#94a3b8"} />
-              </>
-            ) : (
-              <>
-                <SummaryCard label="FPTP Winners" value={`${summary.fptp.winners_declared} / ${summary.fptp.total_contests}`} color="#059669" />
-                <SummaryCard label="PR Seats Allocated" value={`${summary.pr.seats_allocated} / ${summary.pr.total_seats ?? "—"}`} color="#7c3aed" />
-                <SummaryCard label="PR Parties Qualified" value={summary.pr.parties_qualified} color="#ea580c" />
-              </>
+          <>
+            {/* ── Summary metrics ─────────────────────────────── */}
+            <VoterSummaryStrip>
+              <VoterMetricCard
+                label="Ballots Counted"
+                value={summary.total_ballots_counted?.toLocaleString() ?? "—"}
+                color={VT.accent}
+              />
+              {isLocal ? (
+                <>
+                  <VoterMetricCard label="Contests" value={summary.fptp.total_contests ?? "—"} color={VT.navy} />
+                  <VoterMetricCard
+                    label="Winners Declared"
+                    value={`${summary.fptp.winners_declared} / ${summary.fptp.total_seats ?? summary.fptp.total_contests}`}
+                    color={VT.success}
+                  />
+                  <VoterMetricCard
+                    label="Adjudication"
+                    value={summary.fptp.adjudication_required ?? 0}
+                    color={summary.fptp.adjudication_required > 0 ? VT.warn : VT.subtle}
+                  />
+                </>
+              ) : (
+                <>
+                  <VoterMetricCard
+                    label="FPTP Winners"
+                    value={`${summary.fptp.winners_declared} / ${summary.fptp.total_contests}`}
+                    color={VT.success}
+                  />
+                  <VoterMetricCard
+                    label="PR Seats Allocated"
+                    value={`${summary.pr.seats_allocated} / ${summary.pr.total_seats ?? "—"}`}
+                    color={VT.provincial.color}
+                  />
+                  <VoterMetricCard
+                    label="PR Parties Qualified"
+                    value={summary.pr.parties_qualified}
+                    color={VT.local.color}
+                  />
+                </>
+              )}
+            </VoterSummaryStrip>
+
+            {/* ── Adjudication notice ─────────────────────────── */}
+            {summary.fptp.adjudication_required > 0 && (
+              <div
+                style={{
+                  padding: "12px 18px",
+                  background: VT.warnBg,
+                  border: `1px solid ${VT.warnBorder}`,
+                  borderRadius: VT.radius.lg,
+                  color: VT.warn,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  marginBottom: VT.space.xl,
+                }}
+              >
+                ⚠ {summary.fptp.adjudication_required} {isLocal ? "contest" : "FPTP constituency"} tie(s) pending adjudication.
+              </div>
             )}
-          </div>
 
-          {summary.fptp.adjudication_required > 0 && (
-            <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 10, padding: "12px 16px", marginBottom: 20, color: "#92400e", fontSize: 14 }}>
-              ⚠ {summary.fptp.adjudication_required} {isLocal ? "contest" : "FPTP constituency"} tie(s) pending adjudication.
-            </div>
-          )}
+            {/* ── Local results ───────────────────────────────── */}
+            {isLocal && localSummary && <LocalResultSection localSummary={localSummary} />}
 
-          {/* Local Results */}
-          {isLocal && localSummary && <LocalResultSection localSummary={localSummary} />}
+            {/* ── FPTP results ─────────────────────────────────── */}
+            {!isLocal && fptpRows.length > 0 && (
+              <SectionCard>
+                <SectionHeader title="FPTP Constituency Results" subtitle="First-past-the-post winners by constituency" />
+                <div style={{ padding: "20px 24px" }}>
+                  <FptpTable rows={fptpRows} />
+                </div>
+              </SectionCard>
+            )}
 
-          {/* FPTP Results (hidden for local — shown in LocalResultSection) */}
-          {!isLocal && fptpRows.length > 0 && (
-            <div style={{ marginBottom: 32 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", marginBottom: 12 }}>
-                FPTP Constituency Results
-              </h2>
-              <FptpTable rows={fptpRows} />
-            </div>
-          )}
+            {/* ── PR results ───────────────────────────────────── */}
+            {!isLocal && prRows.length > 0 && (
+              <SectionCard>
+                <SectionHeader title="Proportional Representation Results" subtitle="Party vote shares, qualification, and seat allocation" />
+                <div style={{ padding: "20px 24px" }}>
+                  <PrTable rows={prRows} />
+                </div>
+              </SectionCard>
+            )}
 
-          {/* PR Results */}
-          {!isLocal && prRows.length > 0 && (
-            <div style={{ marginBottom: 32 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", marginBottom: 12 }}>
-                Proportional Representation Results
-              </h2>
-              <PrTable rows={prRows} />
-            </div>
-          )}
+            {/* ── PR elected members ───────────────────────────── */}
+            {provincialSummary?.government_level === "PROVINCIAL" && prElectedMembers.length > 0 && (
+              <SectionCard>
+                <SectionHeader
+                  title="Elected PR Members"
+                  subtitle="Candidates elected through proportional representation"
+                />
+                <div style={{ padding: "20px 24px" }}>
+                  <PrElectedMembersTable members={prElectedMembers} />
+                </div>
+              </SectionCard>
+            )}
 
-          {/* Provincial: elected PR member roster */}
-          {provincialSummary?.government_level === "PROVINCIAL" && prElectedMembers.length > 0 && (
-            <div style={{ marginBottom: 32 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", marginBottom: 4 }}>
-                Elected PR Members
-              </h2>
-              <p style={{ color: "#64748b", fontSize: 13, marginBottom: 12 }}>
-                Candidates elected through proportional representation
-              </p>
-              <PrElectedMembersTable members={prElectedMembers} />
-            </div>
-          )}
-
-          {/* Provincial: assembly composition */}
-          {provincialSummary?.government_level === "PROVINCIAL" && (provincialSummary.assembly_composition?.length ?? 0) > 0 && (
-            <div style={{ marginBottom: 32 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", marginBottom: 4 }}>
-                Assembly Composition
-              </h2>
-              <p style={{ color: "#64748b", fontSize: 13, marginBottom: 12 }}>
-                Party-wise seat distribution (FPTP + PR) &middot;{" "}
-                {provincialSummary.assembly_seats_filled} / {provincialSummary.assembly_total_seats} seats filled
-              </p>
-              <AssemblyCompositionTable rows={provincialSummary.assembly_composition} />
-            </div>
-          )}
-        </>
+            {/* ── Assembly composition ─────────────────────────── */}
+            {provincialSummary?.government_level === "PROVINCIAL" && (provincialSummary.assembly_composition?.length ?? 0) > 0 && (
+              <SectionCard>
+                <SectionHeader
+                  title="Assembly Composition"
+                  subtitle={`Party-wise seat distribution (FPTP + PR) · ${provincialSummary.assembly_seats_filled} / ${provincialSummary.assembly_total_seats} seats filled`}
+                />
+                <div style={{ padding: "20px 24px" }}>
+                  <AssemblyCompositionTable rows={provincialSummary.assembly_composition} />
+                </div>
+              </SectionCard>
+            )}
+          </>
         );
       })()}
-    </div>
+    </VoterPageContainer>
   );
 }
 
-function SummaryCard({ label, value, color }) {
+/* ══════════════════════════════════════════════════════════════
+   TABLE HELPERS
+   ══════════════════════════════════════════════════════════════ */
+function ResultTable({ children }) {
   return (
-    <div style={{
-      background: "#f8fafc", borderRadius: 12, padding: "16px 18px",
-      border: "1px solid #e2e8f0",
-    }}>
-      <div style={{ fontSize: 12, color: "#64748b", fontWeight: 600, marginBottom: 6 }}>{label}</div>
-      <div style={{ fontSize: 22, fontWeight: 700, color }}>{value}</div>
+    <div style={{ overflowX: "auto", borderRadius: VT.radius.lg, border: `1px solid ${VT.border}` }}>
+      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        {children}
+      </table>
     </div>
   );
 }
 
+function Th({ children, align = "left" }) {
+  return (
+    <th
+      style={{
+        padding: "10px 16px",
+        textAlign: align,
+        fontSize: 11,
+        fontWeight: 700,
+        color: VT.muted,
+        background: VT.surfaceAlt,
+        borderBottom: `2px solid ${VT.border}`,
+        textTransform: "uppercase",
+        letterSpacing: "0.04em",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {children}
+    </th>
+  );
+}
+
+function Td({ children, align = "left", bold = false, style: extra = {} }) {
+  return (
+    <td
+      style={{
+        padding: "11px 16px",
+        textAlign: align,
+        fontSize: 13,
+        color: VT.text,
+        borderBottom: `1px solid ${VT.borderLight}`,
+        fontWeight: bold ? 700 : 400,
+        ...extra,
+      }}
+    >
+      {children}
+    </td>
+  );
+}
+
+/* ── Winner / result badge ───────────────────────────────────── */
+function WinnerBadge() {
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 4,
+        padding: "3px 8px",
+        borderRadius: 5,
+        fontSize: 11,
+        fontWeight: 700,
+        background: VT.successBg,
+        color: VT.success,
+        border: `1px solid ${VT.successBorder}`,
+      }}
+    >
+      ✓ Winner
+    </span>
+  );
+}
+
+function TieBadge() {
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 4,
+        padding: "3px 8px",
+        borderRadius: 5,
+        fontSize: 11,
+        fontWeight: 700,
+        background: VT.warnBg,
+        color: VT.warn,
+        border: `1px solid ${VT.warnBorder}`,
+      }}
+    >
+      ⚠ Tie
+    </span>
+  );
+}
+
+/* ── Vote share bar ──────────────────────────────────────────── */
+function VoteShareBar({ votes, total, isWinner }) {
+  const pct = total > 0 ? Math.round((votes / total) * 1000) / 10 : 0;
+  return (
+    <div style={{ marginTop: 4 }}>
+      <div
+        style={{
+          height: 4,
+          background: VT.borderLight,
+          borderRadius: 2,
+          overflow: "hidden",
+          width: "100%",
+        }}
+      >
+        <div
+          style={{
+            height: "100%",
+            width: `${pct}%`,
+            background: isWinner ? VT.success : VT.accentMuted,
+            borderRadius: 2,
+            transition: "width 0.6s ease",
+          }}
+        />
+      </div>
+      <span style={{ fontSize: 10, color: VT.muted, fontWeight: 500 }}>{pct.toFixed(1)}%</span>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FPTP TABLE
+   ══════════════════════════════════════════════════════════════ */
 function FptpTable({ rows }) {
   const contests = {};
   for (const r of rows) {
@@ -163,15 +457,28 @@ function FptpTable({ rows }) {
     contests[r.contest_id].push(r);
   }
 
-  return Object.entries(contests).map(([contestId, cRows]) => (
-    <div key={contestId} style={{ marginBottom: 16 }}>
-      <div style={{ fontSize: 13, fontWeight: 600, color: "#334155", marginBottom: 6 }}>
-        Constituency #{contestId}
-      </div>
-      <div style={{ overflowX: "auto", borderRadius: 10, border: "1px solid #e2e8f0" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+  return Object.entries(contests).map(([contestId, cRows]) => {
+    const totalVotes = cRows.reduce((sum, r) => sum + (r.vote_count || 0), 0);
+    return (
+      <div key={contestId} style={{ marginBottom: 20 }}>
+        <div
+          style={{
+            fontSize: 12,
+            fontWeight: 700,
+            color: VT.federal.color,
+            marginBottom: 8,
+            padding: "4px 10px",
+            background: VT.federal.bg,
+            border: `1px solid ${VT.federal.border}`,
+            borderRadius: VT.radius.sm,
+            display: "inline-block",
+          }}
+        >
+          Constituency #{contestId}
+        </div>
+        <ResultTable>
           <thead>
-            <tr style={{ background: "#f1f5f9" }}>
+            <tr>
               <Th>Rank</Th>
               <Th>Candidate</Th>
               <Th>Party</Th>
@@ -180,168 +487,209 @@ function FptpTable({ rows }) {
             </tr>
           </thead>
           <tbody>
-            {cRows.map((r) => (
-              <tr key={r.id} style={{ background: r.is_winner ? "#f0fdf4" : r.requires_adjudication ? "#fffbeb" : "transparent" }}>
-                <Td>{r.rank}</Td>
+            {cRows.map((r, idx) => (
+              <tr
+                key={r.id}
+                style={{
+                  background: r.is_winner
+                    ? VT.successBg
+                    : r.requires_adjudication
+                    ? VT.warnBg
+                    : idx % 2 === 1 ? VT.surfaceAlt : VT.surface,
+                }}
+              >
+                <Td style={{ color: VT.muted, fontFamily: "monospace", width: 40 }}>{r.rank}</Td>
                 <Td bold={r.is_winner}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     {r.candidate_photo_path ? (
-                      <img src={`${API_BASE}/${r.candidate_photo_path}`} alt="" style={{ width: 26, height: 26, borderRadius: "50%", objectFit: "cover", border: "1px solid #e2e8f0" }} />
+                      <img
+                        src={`${API_BASE}/${r.candidate_photo_path}`}
+                        alt=""
+                        style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", border: `1px solid ${VT.border}`, flexShrink: 0 }}
+                      />
                     ) : (
-                      <div style={{ width: 26, height: 26, borderRadius: "50%", background: "#e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 600, color: "#64748b", flexShrink: 0 }}>
+                      <div
+                        style={{
+                          width: 28, height: 28, borderRadius: "50%",
+                          background: VT.accentLight,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: 11, fontWeight: 700, color: VT.accent, flexShrink: 0,
+                        }}
+                      >
                         {r.candidate_name?.[0] || "?"}
                       </div>
                     )}
-                    {r.candidate_name}
+                    <div>
+                      <div>{r.candidate_name}</div>
+                      <VoteShareBar votes={r.vote_count} total={totalVotes} isWinner={r.is_winner} />
+                    </div>
                   </div>
                 </Td>
                 <Td>
                   <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                    {r.party_symbol_path && <img src={`${API_BASE}/${r.party_symbol_path}`} alt="" style={{ width: 16, height: 16, objectFit: "contain" }} />}
-                    {r.party_name || "Independent"}
+                    {r.party_symbol_path && (
+                      <img src={`${API_BASE}/${r.party_symbol_path}`} alt="" style={{ width: 18, height: 18, objectFit: "contain" }} />
+                    )}
+                    <span style={{ color: VT.textSecondary }}>{r.party_name || "Independent"}</span>
                   </div>
                 </Td>
                 <Td align="right" bold>{r.vote_count.toLocaleString()}</Td>
                 <Td>
-                  {r.is_winner && <span style={{ color: "#059669", fontWeight: 600 }}>✓ Winner</span>}
-                  {r.requires_adjudication && <span style={{ color: "#d97706", fontWeight: 600 }}>⚠ Tie</span>}
+                  {r.is_winner && <WinnerBadge />}
+                  {r.requires_adjudication && !r.is_winner && <TieBadge />}
                 </Td>
               </tr>
             ))}
           </tbody>
-        </table>
+        </ResultTable>
       </div>
-    </div>
-  ));
+    );
+  });
 }
 
+/* ══════════════════════════════════════════════════════════════
+   PR TABLE
+   ══════════════════════════════════════════════════════════════ */
 function PrTable({ rows }) {
   const sorted = [...rows].sort((a, b) => b.allocated_seats - a.allocated_seats || b.valid_votes - a.valid_votes);
+  const totalVotes = sorted.reduce((sum, r) => sum + (r.valid_votes || 0), 0);
   return (
-    <div style={{ overflowX: "auto", borderRadius: 10, border: "1px solid #e2e8f0" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead>
-          <tr style={{ background: "#f1f5f9" }}>
-            <Th>Party</Th>
-            <Th align="right">Votes</Th>
-            <Th align="right">Share</Th>
-            <Th>Qualified</Th>
-            <Th align="right">Seats</Th>
-          </tr>
-        </thead>
-        <tbody>
-          {sorted.map((r) => (
-            <tr key={r.id} style={{ background: !r.meets_threshold ? "#f9fafb" : "transparent" }}>
-              <Td bold>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  {r.party_symbol_path && <img src={`${API_BASE}/${r.party_symbol_path}`} alt="" style={{ width: 20, height: 20, objectFit: "contain" }} />}
-                  {r.party_name}
+    <ResultTable>
+      <thead>
+        <tr>
+          <Th>Party</Th>
+          <Th align="right">Votes</Th>
+          <Th align="right">Share</Th>
+          <Th>Qualified</Th>
+          <Th align="right">Seats</Th>
+        </tr>
+      </thead>
+      <tbody>
+        {sorted.map((r, idx) => (
+          <tr
+            key={r.id}
+            style={{
+              background: r.meets_threshold
+                ? idx % 2 === 1 ? VT.surfaceAlt : VT.surface
+                : "#F9FAFB",
+              opacity: r.meets_threshold ? 1 : 0.7,
+            }}
+          >
+            <Td bold>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                {r.party_symbol_path && (
+                  <img src={`${API_BASE}/${r.party_symbol_path}`} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />
+                )}
+                <div>
+                  <div>{r.party_name}</div>
+                  <VoteShareBar votes={r.valid_votes} total={totalVotes} isWinner={r.meets_threshold} />
                 </div>
-              </Td>
-              <Td align="right">{r.valid_votes.toLocaleString()}</Td>
-              <Td align="right">{r.vote_share_pct.toFixed(2)}%</Td>
-              <Td>
-                {r.meets_threshold
-                  ? <span style={{ color: "#059669", fontWeight: 600 }}>✓ Yes</span>
-                  : <span style={{ color: "#94a3b8" }}>Below 3%</span>}
-              </Td>
-              <Td align="right" bold style={{ fontSize: 16 }}>{r.allocated_seats}</Td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+              </div>
+            </Td>
+            <Td align="right">{r.valid_votes.toLocaleString()}</Td>
+            <Td align="right">{r.vote_share_pct.toFixed(2)}%</Td>
+            <Td>
+              {r.meets_threshold ? (
+                <span style={{ color: VT.success, fontWeight: 700, fontSize: 12 }}>✓ Yes</span>
+              ) : (
+                <span style={{ color: VT.subtle, fontSize: 12 }}>Below 3%</span>
+              )}
+            </Td>
+            <Td align="right" bold style={{ fontSize: 17, color: r.meets_threshold ? VT.provincial.color : VT.subtle }}>
+              {r.allocated_seats}
+            </Td>
+          </tr>
+        ))}
+      </tbody>
+    </ResultTable>
   );
 }
 
+/* ══════════════════════════════════════════════════════════════
+   PR ELECTED MEMBERS TABLE
+   ══════════════════════════════════════════════════════════════ */
 function PrElectedMembersTable({ members }) {
   const sorted = [...members].sort((a, b) => a.seat_number - b.seat_number);
   return (
-    <div style={{ overflowX: "auto", borderRadius: 10, border: "1px solid #e2e8f0" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead>
-          <tr style={{ background: "#f5f3ff" }}>
-            <Th align="right">#</Th>
-            <Th>Candidate</Th>
-            <Th>Party</Th>
+    <ResultTable>
+      <thead>
+        <tr>
+          <Th align="right">#</Th>
+          <Th>Candidate</Th>
+          <Th>Party</Th>
+        </tr>
+      </thead>
+      <tbody>
+        {sorted.map((m, idx) => (
+          <tr key={m.id} style={{ background: idx % 2 === 1 ? VT.surfaceAlt : VT.surface }}>
+            <Td align="right" bold style={{ color: VT.provincial.color, fontFamily: "monospace", width: 48 }}>
+              {m.seat_number}
+            </Td>
+            <Td bold>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                {m.candidate_photo_path ? (
+                  <img
+                    src={`${API_BASE}/${m.candidate_photo_path}`}
+                    alt=""
+                    style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", border: `1px solid ${VT.border}`, flexShrink: 0 }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: 28, height: 28, borderRadius: "50%",
+                      background: VT.provincial.bg,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 11, fontWeight: 700, color: VT.provincial.color, flexShrink: 0,
+                    }}
+                  >
+                    {m.candidate_name?.[0] || "?"}
+                  </div>
+                )}
+                {m.candidate_name}
+              </div>
+            </Td>
+            <Td>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                {m.party_symbol_path && (
+                  <img src={`${API_BASE}/${m.party_symbol_path}`} alt="" style={{ width: 18, height: 18, objectFit: "contain" }} />
+                )}
+                <span style={{ color: VT.textSecondary }}>{m.party_name}</span>
+              </div>
+            </Td>
           </tr>
-        </thead>
-        <tbody>
-          {sorted.map((m) => (
-            <tr key={m.id}>
-              <Td align="right" bold style={{ color: "#7c3aed", fontFamily: "monospace", width: 48 }}>{m.seat_number}</Td>
-              <Td bold>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  {m.candidate_photo_path ? (
-                    <img src={`${API_BASE}/${m.candidate_photo_path}`} alt="" style={{ width: 26, height: 26, borderRadius: "50%", objectFit: "cover", border: "1px solid #e2e8f0", flexShrink: 0 }} />
-                  ) : (
-                    <div style={{ width: 26, height: 26, borderRadius: "50%", background: "#f3e8ff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#7c3aed", flexShrink: 0 }}>
-                      {m.candidate_name?.[0] || "?"}
-                    </div>
-                  )}
-                  {m.candidate_name}
-                </div>
-              </Td>
-              <Td>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  {m.party_symbol_path && <img src={`${API_BASE}/${m.party_symbol_path}`} alt="" style={{ width: 18, height: 18, objectFit: "contain" }} />}
-                  {m.party_name}
-                </div>
-              </Td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+        ))}
+      </tbody>
+    </ResultTable>
   );
 }
 
+/* ══════════════════════════════════════════════════════════════
+   ASSEMBLY COMPOSITION TABLE
+   ══════════════════════════════════════════════════════════════ */
 function AssemblyCompositionTable({ rows }) {
   return (
-    <div style={{ overflowX: "auto", borderRadius: 10, border: "1px solid #e2e8f0" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead>
-          <tr style={{ background: "#f5f3ff" }}>
-            <Th>Party</Th>
-            <Th align="right">FPTP Seats</Th>
-            <Th align="right">PR Seats</Th>
-            <Th align="right">Total</Th>
+    <ResultTable>
+      <thead>
+        <tr>
+          <Th>Party</Th>
+          <Th align="right">FPTP Seats</Th>
+          <Th align="right">PR Seats</Th>
+          <Th align="right">Total</Th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r, i) => (
+          <tr key={i} style={{ background: i % 2 === 1 ? VT.surfaceAlt : VT.surface }}>
+            <Td bold style={{ color: i === 0 ? VT.provincial.color : VT.text }}>{r.party_name}</Td>
+            <Td align="right">{r.fptp_seats}</Td>
+            <Td align="right" style={{ color: VT.provincial.color, fontWeight: 600 }}>{r.pr_seats}</Td>
+            <Td align="right" bold style={{ fontSize: 15, color: i === 0 ? VT.provincial.color : VT.text }}>
+              {r.total_seats}
+            </Td>
           </tr>
-        </thead>
-        <tbody>
-          {rows.map((r, i) => (
-            <tr key={i} style={{ background: i === 0 ? "#faf5ff" : "transparent" }}>
-              <Td bold>{r.party_name}</Td>
-              <Td align="right">{r.fptp_seats}</Td>
-              <Td align="right" style={{ color: "#7c3aed" }}>{r.pr_seats}</Td>
-              <Td align="right" bold style={{ fontSize: 15, color: i === 0 ? "#7c3aed" : "#1e293b" }}>{r.total_seats}</Td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function Th({ children, align = "left" }) {
-  return (
-    <th style={{
-      padding: "10px 14px", textAlign: align, fontSize: 12, fontWeight: 600,
-      color: "#64748b", borderBottom: "2px solid #e2e8f0",
-    }}>
-      {children}
-    </th>
-  );
-}
-
-function Td({ children, align = "left", bold = false, style = {} }) {
-  return (
-    <td style={{
-      padding: "10px 14px", textAlign: align, fontSize: 13, color: "#1e293b",
-      borderBottom: "1px solid #e2e8f0", fontWeight: bold ? 600 : 400, ...style,
-    }}>
-      {children}
-    </td>
+        ))}
+      </tbody>
+    </ResultTable>
   );
 }
 
@@ -354,19 +702,37 @@ function LocalResultSection({ localSummary }) {
 
   const { head_results = [], ward_results = [], local_summary } = localSummary;
 
-  const ContestTable = ({ contest }) => (
-    <div style={{ marginBottom: 16 }}>
-      <div style={{ fontSize: 13, fontWeight: 600, color: "#334155", marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
-        {contest.contest_title || contest.contest_type}
-        {contest.area_name && <span style={{ fontWeight: 400, color: "#64748b" }}> — {contest.area_name}</span>}
-        <span style={{ fontSize: 11, color: "#64748b", marginLeft: "auto" }}>
-          {contest.seat_count > 1 ? `${contest.seat_count} seats` : "1 seat"}
-        </span>
-      </div>
-      <div style={{ overflowX: "auto", borderRadius: 10, border: "1px solid #e2e8f0" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+  const ContestTable = ({ contest }) => {
+    const total = (contest.candidates || []).reduce((sum, c) => sum + (c.vote_count || 0), 0);
+    return (
+      <div style={{ marginBottom: 16 }}>
+        <div
+          style={{
+            fontSize: 12, fontWeight: 700, color: VT.local.color,
+            marginBottom: 8, display: "flex", alignItems: "center", gap: 6,
+            flexWrap: "wrap",
+          }}
+        >
+          <span
+            style={{
+              padding: "2px 8px", borderRadius: VT.radius.sm,
+              background: VT.local.bg, border: `1px solid ${VT.local.border}`,
+            }}
+          >
+            {contest.contest_title || contest.contest_type}
+          </span>
+          {contest.area_name && (
+            <span style={{ fontWeight: 400, color: VT.muted, fontSize: 12 }}>
+              — {contest.area_name}
+            </span>
+          )}
+          <span style={{ fontSize: 11, color: VT.muted, marginLeft: "auto", fontWeight: 500 }}>
+            {contest.seat_count > 1 ? `${contest.seat_count} seats` : "1 seat"}
+          </span>
+        </div>
+        <ResultTable>
           <thead>
-            <tr style={{ background: "#f1f5f9" }}>
+            <tr>
               <Th>Rank</Th>
               <Th>Candidate</Th>
               <Th>Party</Th>
@@ -375,70 +741,85 @@ function LocalResultSection({ localSummary }) {
             </tr>
           </thead>
           <tbody>
-            {(contest.candidates || []).map((c, i) => (
-              <tr key={c.nomination_id || i} style={{
-                background: c.is_winner ? "#f0fdf4" : c.requires_adjudication ? "#fffbeb" : "transparent",
-              }}>
-                <Td>{c.rank}</Td>
-                <Td bold={c.is_winner}>{c.candidate_name}</Td>
-                <Td>{c.party_name || "Independent"}</Td>
+            {(contest.candidates || []).map((c, idx) => (
+              <tr
+                key={c.nomination_id || idx}
+                style={{
+                  background: c.is_winner
+                    ? VT.successBg
+                    : c.requires_adjudication
+                    ? VT.warnBg
+                    : idx % 2 === 1 ? VT.surfaceAlt : VT.surface,
+                }}
+              >
+                <Td style={{ color: VT.muted, fontFamily: "monospace", width: 40 }}>{c.rank}</Td>
+                <Td bold={c.is_winner}>
+                  <div>
+                    {c.candidate_name}
+                    <VoteShareBar votes={c.vote_count} total={total} isWinner={c.is_winner} />
+                  </div>
+                </Td>
+                <Td style={{ color: VT.textSecondary }}>{c.party_name || "Independent"}</Td>
                 <Td align="right" bold>{c.vote_count.toLocaleString()}</Td>
                 <Td>
-                  {c.is_winner && <span style={{ color: "#059669", fontWeight: 600 }}>✓ Winner</span>}
-                  {c.requires_adjudication && <span style={{ color: "#d97706", fontWeight: 600 }}>⚠ Tie</span>}
+                  {c.is_winner && <WinnerBadge />}
+                  {c.requires_adjudication && !c.is_winner && <TieBadge />}
                 </Td>
               </tr>
             ))}
           </tbody>
-        </table>
+        </ResultTable>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <>
       {/* Local summary totals */}
       {local_summary && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: 24 }}>
-          <SummaryCard label="Total Contests" value={local_summary.total_direct_contests} color="#1e3a5f" />
-          <SummaryCard label="Total Seats" value={local_summary.total_seats} color="#2563eb" />
-          <SummaryCard label="Seats Filled" value={local_summary.seats_filled} color="#059669" />
-          <SummaryCard label="Wards Counted" value={local_summary.wards_counted} color="#7c3aed" />
-        </div>
+        <VoterSummaryStrip>
+          <VoterMetricCard label="Total Contests" value={local_summary.total_direct_contests} color={VT.navy} />
+          <VoterMetricCard label="Total Seats" value={local_summary.total_seats} color={VT.accent} />
+          <VoterMetricCard label="Seats Filled" value={local_summary.seats_filled} color={VT.success} />
+          <VoterMetricCard label="Wards Counted" value={local_summary.wards_counted} color={VT.provincial.color} />
+        </VoterSummaryStrip>
       )}
 
       {/* Head contests (Mayor, Deputy Mayor) */}
       {head_results.length > 0 && (
-        <div style={{ marginBottom: 32 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", marginBottom: 12 }}>
-            Head Positions
-          </h2>
-          {head_results.map((contest) => (
-            <ContestTable key={contest.contest_id} contest={contest} />
-          ))}
-        </div>
+        <SectionCard>
+          <SectionHeader title="Head Positions" subtitle="Mayor, Deputy Mayor and equivalent leadership roles" />
+          <div style={{ padding: "20px 24px" }}>
+            {head_results.map((contest) => (
+              <ContestTable key={contest.contest_id} contest={contest} />
+            ))}
+          </div>
+        </SectionCard>
       )}
 
       {/* Ward results */}
       {ward_results.length > 0 && (
-        <div style={{ marginBottom: 32 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", marginBottom: 12 }}>
-            Ward Results
-          </h2>
-          {ward_results.map((ward) => (
-            <div key={ward.area_id} style={{ marginBottom: 20 }}>
-              <div style={{
-                fontSize: 14, fontWeight: 700, color: "#1e3a5f", marginBottom: 10,
-                padding: "8px 14px", background: "#f1f5f9", borderRadius: 8, border: "1px solid #e2e8f0",
-              }}>
-                {ward.ward_name || `Ward ${ward.ward_number}`}
+        <SectionCard>
+          <SectionHeader title="Ward Results" subtitle="Ward Chair, Ward Member, and representative contests" />
+          <div style={{ padding: "20px 24px" }}>
+            {ward_results.map((ward) => (
+              <div key={ward.area_id} style={{ marginBottom: 24 }}>
+                <div
+                  style={{
+                    fontSize: 13, fontWeight: 700, color: VT.navy, marginBottom: 10,
+                    padding: "8px 14px", background: VT.surfaceSubtle,
+                    borderRadius: VT.radius.md, border: `1px solid ${VT.borderLight}`,
+                  }}
+                >
+                  {ward.ward_name || `Ward ${ward.ward_number}`}
+                </div>
+                {(ward.contests || []).map((contest) => (
+                  <ContestTable key={contest.contest_id} contest={contest} />
+                ))}
               </div>
-              {(ward.contests || []).map((contest) => (
-                <ContestTable key={contest.contest_id} contest={contest} />
-              ))}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </SectionCard>
       )}
     </>
   );

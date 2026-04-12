@@ -1,30 +1,23 @@
 import React from "react";
-import { tokens } from "./tokens";
+import { T } from "../../../components/ui/tokens";
 
-/**
- * A foundational container component for all major sections on a page.
- * It provides consistent padding, border, radius, and shadow to create a
- * unified, institutional look and feel.
- */
-export default function SectionCard({ children, padding, style }) {
-
+export default function SectionCard({ children, padding, style, accentColor }) {
   const cardStyle = {
     width: "100%",
-    backgroundColor: tokens.cardBackground,
-    border: `1px solid ${tokens.cardBorder}`,
-    borderRadius: tokens.borderRadius.xlarge, // Using the new, larger radius
-    boxShadow: tokens.boxShadow.md, // Using the standard medium shadow
-    padding: padding ?? tokens.spacing.xl, // Defaulting to the new 'xl' spacing
+    backgroundColor: T.surface,
+    border: `1px solid ${T.border}`,
+    borderRadius: T.radius.xl,
+    boxShadow: T.shadow.sm,
+    padding: padding ?? `${T.space.xl}px ${T.space.xl}px`,
     boxSizing: "border-box",
-    // Removed hover effects to create a more static, institutional feel.
-    // Interactions should be explicit on controls inside the card, not the card itself.
-    transition: "box-shadow 0.2s ease-in-out",
-    ...style, // Allow for style overrides if absolutely necessary
+    transition: T.transition,
+    ...(accentColor ? { borderTop: `3px solid ${accentColor}` } : {}),
+    ...style,
   };
 
   return (
-    <div style={cardStyle}>
+    <section style={cardStyle}>
       {children}
-    </div>
+    </section>
   );
 }

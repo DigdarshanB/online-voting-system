@@ -4,9 +4,11 @@ import VerificationSummaryStrip from "../features/voter-verifications/components
 import VoterVerificationQueue from "../features/voter-verifications/components/VoterVerificationQueue";
 import VoterVerificationReviewPanel from "../features/voter-verifications/components/VoterVerificationReviewPanel";
 import VerificationEmptyState from "../features/voter-verifications/components/VerificationEmptyState";
-import { tokens } from "../features/voter-verifications/components/tokens";
+import { T } from "../components/ui/tokens";
+import { PageContainer, AdminKeyframes } from "../components/ui/AdminUI";
+import { ShieldCheck, CheckCircle2, AlertTriangle } from "lucide-react";
 
-const API = "http://localhost:8000";
+const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 function authHeaders() {
   const token = localStorage.getItem("access_token");
@@ -19,11 +21,11 @@ class VerificationErrorBoundary extends React.Component {
   render() {
     if (this.state.error) {
       return (
-        <div style={{ padding: 32, textAlign: "center", color: "#b91c1c" }}>
-          <h3>Something went wrong loading Voter Verifications.</h3>
-          <pre style={{ fontSize: 12, marginTop: 8, whiteSpace: "pre-wrap" }}>{this.state.error.message}</pre>
+        <div style={{ padding: 32, textAlign: "center", color: T.error }}>
+          <h3 style={{ fontWeight: 700, fontSize: 16, color: T.text }}>Something went wrong loading Voter Verifications.</h3>
+          <pre style={{ fontSize: 12, marginTop: 8, whiteSpace: "pre-wrap", color: T.muted }}>{this.state.error.message}</pre>
           <button onClick={() => { this.setState({ error: null }); window.location.reload(); }}
-            style={{ marginTop: 16, padding: "8px 20px", borderRadius: 6, border: "1px solid #e2e8f0", cursor: "pointer" }}>
+            style={{ marginTop: 16, padding: "8px 20px", borderRadius: T.radius.md, border: `1px solid ${T.border}`, cursor: "pointer", fontWeight: 600, fontSize: 13, background: T.surface }}>
             Reload
           </button>
         </div>
@@ -102,27 +104,48 @@ export default function ManageVoters() {
 
   return (
     <VerificationErrorBoundary>
-    <div style={{ maxWidth: "1200px", margin: "0 auto", padding: tokens.spacing.lg }}>
+    <PageContainer>
+      <AdminKeyframes />
+      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+      {/* Page header */}
+      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
+        <div style={{
+          width: 48, height: 48, borderRadius: T.radius.lg, display: "flex",
+          alignItems: "center", justifyContent: "center",
+          background: `linear-gradient(135deg, ${T.accent}18, ${T.accent}08)`,
+          border: `1.5px solid ${T.accent}30`,
+        }}><ShieldCheck size={22} color={T.accent} /></div>
+        <div>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: T.text, letterSpacing: "-0.02em" }}>
+            Voter Verification
+          </h1>
+          <p style={{ margin: "2px 0 0", color: T.muted, fontSize: 13.5, fontWeight: 500 }}>
+            Review and verify pending voter identity submissions.
+          </p>
+        </div>
+      </div>
+
       <VerificationSummaryStrip metrics={metrics} />
 
       {statusMessage && (
         <div style={{
-          padding: tokens.spacing.md,
-          marginBottom: tokens.spacing.xl,
-          borderRadius: tokens.borderRadius.medium,
-          background: statusMessage.type === "success" ? tokens.status.success.background : tokens.status.danger.background,
-          color: statusMessage.type === "success" ? tokens.status.success.text : tokens.status.danger.text,
-          border: `1px solid ${statusMessage.type === "success" ? tokens.status.success.border : tokens.status.danger.border}`,
-          fontSize: tokens.fontSizes.sm,
-          fontWeight: 500,
+          padding: "12px 16px",
+          marginBottom: 20,
+          borderRadius: T.radius.md,
+          background: statusMessage.type === "success" ? T.successBg : T.errorBg,
+          color: statusMessage.type === "success" ? T.success : T.error,
+          border: `1px solid ${statusMessage.type === "success" ? T.successBorder : T.errorBorder}`,
+          fontSize: 13,
+          fontWeight: 600,
           display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center"
+          alignItems: "center",
+          gap: 8,
         }}>
+          {statusMessage.type === "success" ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
           <span>{statusMessage.text}</span>
           <button 
             onClick={() => setStatusMessage(null)}
-            style={{ background: "transparent", border: "none", cursor: "pointer", color: "inherit", fontWeight: "bold" }}
+            style={{ marginLeft: "auto", background: "transparent", border: "none", cursor: "pointer", color: "inherit", fontWeight: "bold", fontSize: 16 }}
           >
             ×
           </button>
@@ -152,6 +175,7 @@ export default function ManageVoters() {
         />
       )}
     </div>
+    </PageContainer>
     </VerificationErrorBoundary>
   );
 }

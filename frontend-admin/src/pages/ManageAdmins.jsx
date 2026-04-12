@@ -19,6 +19,9 @@ import {
   rejectTotpRecovery,
 } from "../features/admin-management/api/adminManagementApi";
 
+// Shared design tokens
+import { T } from "../components/ui/tokens";
+
 // Governance Components
 import { tokens } from "../features/manage-admins/components/tokens";
 import ManageAdminsPageShell from "../features/manage-admins/components/ManageAdminsPageShell";
@@ -269,18 +272,19 @@ export default function ManageAdmins() {
 
   // ── 5. Render Logic ───────────────────────────────────────────
 
-  if (authLoading) return <div style={{ padding: 40, textAlign: "center" }}>Initializing Security Context...</div>;
+  if (authLoading) return <div style={{ padding: 40, textAlign: "center", color: T.muted, fontWeight: 600 }}>Initializing Security Context…</div>;
   
   if (!isSuperAdmin) {
     return (
       <div style={{ padding: "80px 40px", textAlign: "center" }}>
-        <h2 style={{ color: tokens.status.danger.text }}>Access Prohibited</h2>
-        <p style={{ color: tokens.text.secondary }}>This console requires super_admin clearance level.</p>
+        <h2 style={{ color: T.error, fontWeight: 800 }}>Access Prohibited</h2>
+        <p style={{ color: T.textSecondary }}>This console requires super_admin clearance level.</p>
         <button 
           onClick={() => navigate("/dashboard")} 
           style={{ 
-            marginTop: 24, padding: "12px 24px", background: tokens.button.primary.background, 
-            color: "#FFF", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 600 
+            marginTop: 24, padding: "12px 24px", background: T.navy, 
+            color: "#FFF", border: "none", borderRadius: T.radius.md, cursor: "pointer", fontWeight: 700, fontSize: 14,
+            boxShadow: T.shadow.sm, transition: T.transition,
           }}
         >
           Return to Secure Dashboard

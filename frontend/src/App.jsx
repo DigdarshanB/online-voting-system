@@ -28,10 +28,12 @@ import VoterResetPassword from "./pages/VoterResetPassword";
 import VoterChangePassword from "./pages/VoterChangePassword";
 import VoterTotpRecovery from "./pages/VoterTotpRecovery";
 import VoterDashboard from "./pages/VoterDashboard";
-import VoterElections from "./pages/VoterElections";
+import VoterElectionsHub from "./pages/VoterElectionsHub";
+import VoterElectionsLevel from "./pages/VoterElectionsLevel";
 import VoterBallot from "./pages/VoterBallot";
 import VoterResults from "./pages/VoterResults";
 import VoterResultsHub from "./pages/VoterResultsHub";
+import VoterResultsLevel from "./pages/VoterResultsLevel";
 import VoterReceipt from "./pages/VoterReceipt";
 import VoterAccount from "./pages/VoterAccount";
 import VoterCandidates from "./pages/VoterCandidates";
@@ -110,16 +112,49 @@ export default function App() {
           </RequireActiveVoter>
         }
       />
+      {/* ── Elections hub ────────────────────────────────── */}
       <Route
         path="/elections"
         element={
           <RequireActiveVoter>
-            <VoterShell title="Elections" subtitle="View available elections and cast your vote">
-              <VoterElections />
+            <VoterShell title="My Elections" subtitle="Nepal's three-tier elections you are eligible to vote in">
+              <VoterElectionsHub />
             </VoterShell>
           </RequireActiveVoter>
         }
       />
+      {/* ── Elections level list (federal | provincial | local) */}
+      <Route
+        path="/elections/federal"
+        element={
+          <RequireActiveVoter>
+            <VoterShell title="Federal Elections" subtitle="House of Representatives elections">
+              <VoterElectionsLevel level="federal" />
+            </VoterShell>
+          </RequireActiveVoter>
+        }
+      />
+      <Route
+        path="/elections/provincial"
+        element={
+          <RequireActiveVoter>
+            <VoterShell title="Provincial Elections" subtitle="Provincial Assembly elections">
+              <VoterElectionsLevel level="provincial" />
+            </VoterShell>
+          </RequireActiveVoter>
+        }
+      />
+      <Route
+        path="/elections/local"
+        element={
+          <RequireActiveVoter>
+            <VoterShell title="Local Elections" subtitle="Municipal and rural municipal elections">
+              <VoterElectionsLevel level="local" />
+            </VoterShell>
+          </RequireActiveVoter>
+        }
+      />
+      {/* ── Ballot (must be before :electionId catch-all) ─── */}
       <Route
         path="/elections/:electionId/ballot"
         element={
@@ -130,16 +165,49 @@ export default function App() {
           </RequireActiveVoter>
         }
       />
+      {/* ── Results hub ──────────────────────────────────── */}
       <Route
         path="/results"
         element={
           <RequireActiveVoter>
-            <VoterShell title="Election Results" subtitle="View published election results and outcomes">
+            <VoterShell title="Election Results" subtitle="Published results across Nepal's three-tier elections">
               <VoterResultsHub />
             </VoterShell>
           </RequireActiveVoter>
         }
       />
+      {/* ── Results level list (federal | provincial | local) */}
+      <Route
+        path="/results/federal"
+        element={
+          <RequireActiveVoter>
+            <VoterShell title="Federal Results" subtitle="Parliamentary election results">
+              <VoterResultsLevel level="federal" />
+            </VoterShell>
+          </RequireActiveVoter>
+        }
+      />
+      <Route
+        path="/results/provincial"
+        element={
+          <RequireActiveVoter>
+            <VoterShell title="Provincial Results" subtitle="Provincial Assembly election results">
+              <VoterResultsLevel level="provincial" />
+            </VoterShell>
+          </RequireActiveVoter>
+        }
+      />
+      <Route
+        path="/results/local"
+        element={
+          <RequireActiveVoter>
+            <VoterShell title="Local Results" subtitle="Municipal and rural municipal results">
+              <VoterResultsLevel level="local" />
+            </VoterShell>
+          </RequireActiveVoter>
+        }
+      />
+      {/* ── Results detail (numeric electionId) ─────────── */}
       <Route
         path="/results/:electionId"
         element={
@@ -150,6 +218,7 @@ export default function App() {
           </RequireActiveVoter>
         }
       />
+      {/* ── Legacy alias ─────────────────────────────────── */}
       <Route
         path="/elections/:electionId/results"
         element={

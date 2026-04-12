@@ -111,7 +111,19 @@ export default function AdminShell({ children, title, subtitle }) {
     },
     "/admin/results": {
       title: "Election Results",
-      subtitle: "Count ballots, view results, finalize and lock elections",
+      subtitle: "Select a government level to view and manage election results",
+    },
+    "/admin/results/federal": {
+      title: "Federal Results",
+      subtitle: "House of Representatives counting and results",
+    },
+    "/admin/results/provincial": {
+      title: "Provincial Results",
+      subtitle: "Provincial Assembly counting and results",
+    },
+    "/admin/results/local": {
+      title: "Local Results",
+      subtitle: "Municipal and Rural Municipal election results",
     },
     "/admin/audit-reports": {
       title: "Audit Reports",

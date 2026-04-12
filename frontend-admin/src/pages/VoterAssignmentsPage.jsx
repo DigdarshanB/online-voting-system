@@ -13,6 +13,8 @@ import {
   Building2,
   Home,
   ChevronRight,
+  ArrowRight,
+  Landmark,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -22,35 +24,23 @@ import {
   listConstituencies,
   listAssignableVoters,
 } from "../features/voter-assignments/api/voterAssignmentsApi";
-
-/* ── Palette — matches existing admin shell design tokens ────── */
-const P = {
-  navy: "#173B72",
-  accent: "#2F6FED",
-  surface: "#FFFFFF",
-  bg: "#F5F7FB",
-  border: "#DCE3EC",
-  text: "#0F172A",
-  muted: "#64748B",
-  success: "#059669",
-  successBg: "#ECFDF5",
-  error: "#DC2626",
-  errorBg: "#FEF2F2",
-};
+import { T } from "../components/ui/tokens";
+import { PageContainer, AdminKeyframes } from "../components/ui/AdminUI";
 
 /* ── Shared styles ───────────────────────────────────────────── */
 const card = {
-  background: P.surface,
-  border: `1px solid ${P.border}`,
-  borderRadius: 12,
+  background: T.surface,
+  border: `1px solid ${T.border}`,
+  borderRadius: T.radius.xl,
   padding: 24,
-  marginBottom: 20,
+  marginBottom: 22,
+  boxShadow: T.shadow.sm,
 };
 const btn = (bg, color) => ({
-  padding: "8px 18px",
-  borderRadius: 8,
+  padding: "9px 18px",
+  borderRadius: T.radius.md,
   border: "none",
-  fontWeight: 600,
+  fontWeight: 700,
   fontSize: 13,
   cursor: "pointer",
   display: "inline-flex",
@@ -58,16 +48,47 @@ const btn = (bg, color) => ({
   gap: 6,
   background: bg,
   color,
+  transition: T.transition,
+  boxShadow: T.shadow.sm,
 });
 const inp = {
-  padding: "8px 12px",
-  borderRadius: 8,
-  border: `1px solid ${P.border}`,
-  fontSize: 13,
+  padding: "10px 12px",
+  borderRadius: T.radius.md,
+  border: `1.5px solid ${T.border}`,
+  fontSize: 13.5,
   outline: "none",
   width: "100%",
   boxSizing: "border-box",
+  transition: T.transition,
 };
+const thStyle = {
+  background: T.surfaceAlt, color: T.muted, fontSize: 11, fontWeight: 700,
+  textTransform: "uppercase", letterSpacing: "0.05em", padding: "11px 14px",
+  borderBottom: `1px solid ${T.border}`, textAlign: "left",
+};
+const tdStyle = {
+  padding: "12px 14px", borderBottom: `1px solid ${T.borderLight}`,
+  fontSize: 13.5, verticalAlign: "middle",
+};
+
+/* ── Level card config ───────────────────────────────────────── */
+const LEVELS = [
+  {
+    key: "federal", label: "Federal Constituencies", description: "House of Representatives — nationwide FPTP constituencies",
+    icon: Landmark, color: T.accent, bg: T.accentLight, borderAccent: T.borderFederal,
+    active: true, chips: ["165 FPTP", "National"],
+  },
+  {
+    key: "provincial", label: "Provincial Assemblies", description: "Assign voters to provincial assembly areas",
+    icon: Building2, color: "#7C3AED", bg: "#F5F3FF", borderAccent: T.borderProvincial,
+    to: "/admin/voter-assignments/provincial", chips: ["7 Provinces"],
+  },
+  {
+    key: "local", label: "Local Wards", description: "Assign voters to wards within municipalities",
+    icon: Home, color: "#C2410C", bg: "#FFF5ED", borderAccent: T.borderLocal,
+    to: "/admin/voter-assignments/local", chips: ["Wards"],
+  },
+];
 
 export default function VoterAssignmentsPage() {
   const navigate = useNavigate();
@@ -172,81 +193,99 @@ export default function VoterAssignmentsPage() {
 
   if (loading) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", padding: 60, color: P.muted }}>
-        <Loader2 size={24} style={{ animation: "spin 1s linear infinite" }} />
-        <span style={{ marginLeft: 8 }}>Loading assignments…</span>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
+      <PageContainer>
+        <div style={{ display: "flex", justifyContent: "center", padding: 60, color: T.muted }}>
+          <Loader2 size={24} style={{ animation: "spin 1s linear infinite" }} />
+          <span style={{ marginLeft: 8, fontWeight: 600 }}>Loading assignments…</span>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-      {/* ── Level switcher ────────────────────────────── */}
-      <div style={{
-        display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap",
-      }}>
-        <div style={{
-          ...card, flex: 1, minWidth: 200, marginBottom: 0, padding: "16px 20px",
-          borderLeft: `3px solid ${P.accent}`, opacity: 1,
-          display: "flex", alignItems: "center", gap: 12,
-        }}>
-          <MapPin size={18} color={P.accent} />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 700, fontSize: 14, color: P.text }}>Federal Constituencies</div>
-            <div style={{ fontSize: 12, color: P.muted }}>Currently viewing</div>
+    <PageContainer>
+      <AdminKeyframes />
+      <div style={{ maxWidth: 1140, margin: "0 auto" }}>
+        {/* ── Page header ──────────────────────────────── */}
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
+          <div style={{
+            width: 48, height: 48, borderRadius: T.radius.lg, display: "flex",
+            alignItems: "center", justifyContent: "center",
+            background: `linear-gradient(135deg, ${T.accent}18, ${T.accent}08)`,
+            border: `1.5px solid ${T.accent}30`,
+          }}><MapPin size={22} color={T.accent} /></div>
+          <div>
+            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: T.text, letterSpacing: "-0.02em" }}>
+              Voter Assignments
+            </h1>
+            <p style={{ margin: "2px 0 0", color: T.muted, fontSize: 14, fontWeight: 500 }}>
+              Assign registered voters to their electoral constituencies, provincial areas, and local wards.
+            </p>
           </div>
         </div>
-        <div
-          onClick={() => navigate("/admin/voter-assignments/provincial")}
-          style={{
-            ...card, flex: 1, minWidth: 200, marginBottom: 0, padding: "16px 20px",
-            cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
-            transition: "border-color 0.2s",
-          }}
-          onMouseEnter={e => e.currentTarget.style.borderColor = "#7C3AED"}
-          onMouseLeave={e => e.currentTarget.style.borderColor = P.border}
-        >
-          <Building2 size={18} color="#7C3AED" />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 700, fontSize: 14, color: P.text }}>Provincial Assemblies</div>
-            <div style={{ fontSize: 12, color: P.muted }}>Assign voters to provincial areas</div>
-          </div>
-          <ChevronRight size={16} color={P.muted} />
+
+        {/* ── Hub-style level switcher ─────────────────── */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, marginBottom: 24 }}>
+          {LEVELS.map(({ key, label, description, icon: Icon, color, bg, borderAccent, active, to, chips }) => (
+            <div key={key}
+              onClick={() => !active && navigate(to)}
+              style={{
+                background: T.surface, borderRadius: T.radius.xl,
+                border: `1px solid ${active ? borderAccent : T.border}`,
+                borderTop: `3px solid ${borderAccent}`,
+                padding: "20px 22px", cursor: active ? "default" : "pointer",
+                boxShadow: active ? T.shadow.md : T.shadow.sm,
+                display: "flex", flexDirection: "column", gap: 12,
+                transition: T.transition, position: "relative", overflow: "hidden",
+              }}
+              onMouseEnter={e => { if (!active) e.currentTarget.style.boxShadow = T.shadow.md; }}
+              onMouseLeave={e => { if (!active) e.currentTarget.style.boxShadow = T.shadow.sm; }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{
+                  width: 40, height: 40, borderRadius: "50%", display: "flex",
+                  alignItems: "center", justifyContent: "center", background: bg, flexShrink: 0,
+                }}><Icon size={20} color={color} /></div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 800, fontSize: 15, color: T.text }}>{label}</div>
+                  <div style={{ fontSize: 12.5, color: T.muted, marginTop: 1 }}>{description}</div>
+                </div>
+                {!active && <ChevronRight size={18} color={T.muted} />}
+              </div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {chips.map(c => (
+                  <span key={c} style={{
+                    fontSize: 11, fontWeight: 700, padding: "2px 10px", borderRadius: 999,
+                    background: bg, color, border: `1px solid ${color}25`,
+                  }}>{c}</span>
+                ))}
+                {active && (
+                  <span style={{
+                    fontSize: 11, fontWeight: 700, padding: "2px 10px", borderRadius: 999,
+                    background: T.successBg, color: T.success, border: `1px solid ${T.successBorder}`,
+                  }}>Currently viewing</span>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
-        <div
-          onClick={() => navigate("/admin/voter-assignments/local")}
-          style={{
-            ...card, flex: 1, minWidth: 200, marginBottom: 0, padding: "16px 20px",
-            cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
-            transition: "border-color 0.2s",
-          }}
-          onMouseEnter={e => e.currentTarget.style.borderColor = "#C2410C"}
-          onMouseLeave={e => e.currentTarget.style.borderColor = P.border}
-        >
-          <Home size={18} color="#C2410C" />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 700, fontSize: 14, color: P.text }}>Local Wards</div>
-            <div style={{ fontSize: 12, color: P.muted }}>Assign voters to wards within local bodies</div>
-          </div>
-          <ChevronRight size={16} color={P.muted} />
-        </div>
-      </div>
 
       {/* ── Message banner ────────────────────────────── */}
       {msg && (
         <div
           style={{
             padding: "12px 16px",
-            borderRadius: 8,
+            borderRadius: T.radius.md,
             marginBottom: 16,
             display: "flex",
             alignItems: "center",
             gap: 8,
-            background: msg.type === "success" ? P.successBg : P.errorBg,
-            color: msg.type === "success" ? P.success : P.error,
+            background: msg.type === "success" ? T.successBg : T.errorBg,
+            color: msg.type === "success" ? T.success : T.error,
             fontSize: 13,
             fontWeight: 600,
+            border: `1px solid ${msg.type === "success" ? T.successBorder : T.errorBorder}`,
           }}
         >
           {msg.type === "success" ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
@@ -262,14 +301,24 @@ export default function VoterAssignmentsPage() {
 
       {/* ── Assign form ───────────────────────────────── */}
       <div style={card}>
-        <h3 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 800, color: P.navy, display: "flex", alignItems: "center", gap: 8 }}>
-          <MapPin size={18} /> Assign Voter to Federal Constituency
+        <h3 style={{ margin: "0 0 18px", fontSize: 17, fontWeight: 800, color: T.navy, display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{
+            width: 32, height: 32, borderRadius: "50%", display: "flex",
+            alignItems: "center", justifyContent: "center",
+            background: T.accentLight,
+          }}><Landmark size={16} color={T.accent} /></div>
+          Assign Voter to Federal Constituency
         </h3>
 
         {/* Step 1: Search voter by citizenship ID */}
-        <div style={{ marginBottom: 16 }}>
-          <label style={{ fontSize: 13, fontWeight: 600, color: P.text, display: "block", marginBottom: 4 }}>
-            1. Search Voter by Citizenship ID
+        <div style={{ marginBottom: 18 }}>
+          <label style={{ fontSize: 13, fontWeight: 700, color: T.text, display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+            <span style={{
+              width: 22, height: 22, borderRadius: "50%", background: T.accent, color: "#fff",
+              display: "inline-flex", alignItems: "center", justifyContent: "center",
+              fontSize: 11, fontWeight: 800,
+            }}>1</span>
+            Search Voter by Citizenship ID
           </label>
           <div style={{ display: "flex", gap: 8 }}>
             <input
@@ -278,8 +327,10 @@ export default function VoterAssignmentsPage() {
               value={voterSearch}
               onChange={(e) => setVoterSearch(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              onFocus={e => { e.target.style.borderColor = T.accent; e.target.style.boxShadow = T.focusRing; }}
+              onBlur={e => { e.target.style.borderColor = T.border; e.target.style.boxShadow = "none"; }}
             />
-            <button style={btn(P.accent, "#fff")} onClick={handleSearch}>
+            <button style={btn(T.accent, "#fff")} onClick={handleSearch}>
               <Search size={14} /> Search
             </button>
           </div>
@@ -289,9 +340,9 @@ export default function VoterAssignmentsPage() {
                 marginTop: 8,
                 maxHeight: 220,
                 overflowY: "auto",
-                border: `1px solid ${P.border}`,
-                borderRadius: 8,
-                background: "#FAFBFC",
+                border: `1px solid ${T.border}`,
+                borderRadius: T.radius.md,
+                background: T.surfaceAlt,
               }}
             >
               {voters.map((v) => (
@@ -301,15 +352,18 @@ export default function VoterAssignmentsPage() {
                   style={{
                     padding: "10px 14px",
                     cursor: "pointer",
-                    borderBottom: `1px solid ${P.border}`,
+                    borderBottom: `1px solid ${T.borderLight}`,
                     background: "transparent",
                     fontSize: 13,
+                    transition: T.transitionFast,
                   }}
+                  onMouseEnter={e => { e.currentTarget.style.background = T.surface; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div>
-                      <span style={{ fontWeight: 600, color: P.navy }}>{v.citizenship_no_normalized || v.citizenship_no_raw}</span>
-                      <span style={{ color: P.muted, marginLeft: 10 }}>{v.full_name}</span>
+                      <span style={{ fontWeight: 700, color: T.navy }}>{v.citizenship_no_normalized || v.citizenship_no_raw}</span>
+                      <span style={{ color: T.muted, marginLeft: 10 }}>{v.full_name}</span>
                     </div>
                     <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                       <span
@@ -317,9 +371,9 @@ export default function VoterAssignmentsPage() {
                           fontSize: 11,
                           padding: "2px 8px",
                           borderRadius: 9999,
-                          background: v.status === "ACTIVE" ? "#ECFDF5" : "#FEF2F2",
-                          color: v.status === "ACTIVE" ? "#059669" : "#DC2626",
-                          fontWeight: 600,
+                          background: v.status === "ACTIVE" ? T.successBg : T.errorBg,
+                          color: v.status === "ACTIVE" ? T.success : T.error,
+                          fontWeight: 700,
                         }}
                       >
                         {v.status}
@@ -330,9 +384,9 @@ export default function VoterAssignmentsPage() {
                             fontSize: 11,
                             padding: "2px 8px",
                             borderRadius: 9999,
-                            background: "#DBEAFE",
-                            color: "#1E40AF",
-                            fontWeight: 600,
+                            background: T.accentLight,
+                            color: T.accent,
+                            fontWeight: 700,
                           }}
                         >
                           {v.assigned_constituency}
@@ -345,7 +399,7 @@ export default function VoterAssignmentsPage() {
             </div>
           )}
           {voters.length === 0 && voterSearch.trim() && !selectedVoter && (
-            <div style={{ marginTop: 8, fontSize: 13, color: P.muted }}>
+            <div style={{ marginTop: 8, fontSize: 13, color: T.muted }}>
               No voters found for "{voterSearch}"
             </div>
           )}
@@ -355,9 +409,9 @@ export default function VoterAssignmentsPage() {
               style={{
                 marginTop: 12,
                 padding: 16,
-                border: `2px solid ${P.accent}`,
-                borderRadius: 10,
-                background: "#F0F6FF",
+                border: `2px solid ${T.accent}`,
+                borderRadius: T.radius.lg,
+                background: T.accentLight,
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
@@ -369,7 +423,7 @@ export default function VoterAssignmentsPage() {
                     width: 44,
                     height: 44,
                     borderRadius: "50%",
-                    background: P.accent,
+                    background: T.accent,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -381,10 +435,10 @@ export default function VoterAssignmentsPage() {
                   {(selectedVoter.full_name || "?")[0].toUpperCase()}
                 </div>
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: 15, color: P.navy }}>
+                  <div style={{ fontWeight: 700, fontSize: 15, color: T.navy }}>
                     {selectedVoter.full_name}
                   </div>
-                  <div style={{ fontSize: 12, color: P.muted, marginTop: 2, display: "flex", gap: 14, alignItems: "center" }}>
+                  <div style={{ fontSize: 12, color: T.muted, marginTop: 2, display: "flex", gap: 14, alignItems: "center" }}>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
                       <CreditCard size={12} /> {selectedVoter.citizenship_no_normalized || selectedVoter.citizenship_no_raw}
                     </span>
@@ -396,16 +450,16 @@ export default function VoterAssignmentsPage() {
                         fontSize: 11,
                         padding: "1px 7px",
                         borderRadius: 9999,
-                        background: selectedVoter.status === "ACTIVE" ? "#ECFDF5" : "#FEF2F2",
-                        color: selectedVoter.status === "ACTIVE" ? "#059669" : "#DC2626",
-                        fontWeight: 600,
+                        background: selectedVoter.status === "ACTIVE" ? T.successBg : T.errorBg,
+                        color: selectedVoter.status === "ACTIVE" ? T.success : T.error,
+                        fontWeight: 700,
                       }}
                     >
                       {selectedVoter.status}
                     </span>
                   </div>
                   {selectedVoter.assigned_constituency && (
-                    <div style={{ fontSize: 12, color: "#1E40AF", marginTop: 4, fontWeight: 600 }}>
+                    <div style={{ fontSize: 12, color: T.accent, marginTop: 4, fontWeight: 600 }}>
                       Currently assigned: {selectedVoter.assigned_constituency}
                     </div>
                   )}
@@ -415,12 +469,12 @@ export default function VoterAssignmentsPage() {
                 onClick={() => setSelectedVoter(null)}
                 style={{
                   background: "none",
-                  border: `1px solid ${P.border}`,
-                  borderRadius: 6,
+                  border: `1px solid ${T.border}`,
+                  borderRadius: T.radius.sm,
                   padding: "4px 10px",
                   cursor: "pointer",
                   fontSize: 12,
-                  color: P.muted,
+                  color: T.muted,
                   fontWeight: 600,
                 }}
               >
@@ -431,9 +485,14 @@ export default function VoterAssignmentsPage() {
         </div>
 
         {/* Step 2: Select constituency */}
-        <div style={{ marginBottom: 16 }}>
-          <label style={{ fontSize: 13, fontWeight: 600, color: P.text, display: "block", marginBottom: 4 }}>
-            2. Select Federal Constituency
+        <div style={{ marginBottom: 18 }}>
+          <label style={{ fontSize: 13, fontWeight: 700, color: T.text, display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+            <span style={{
+              width: 22, height: 22, borderRadius: "50%", background: T.accent, color: "#fff",
+              display: "inline-flex", alignItems: "center", justifyContent: "center",
+              fontSize: 11, fontWeight: 800,
+            }}>2</span>
+            Select Federal Constituency
           </label>
           <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
             <select
@@ -466,7 +525,7 @@ export default function VoterAssignmentsPage() {
         {/* Step 3: Assign */}
         <button
           style={{
-            ...btn(P.navy, "#fff"),
+            ...btn(T.navy, "#fff"),
             opacity: !selectedVoter || !selectedConstituency || submitting ? 0.5 : 1,
           }}
           disabled={!selectedVoter || !selectedConstituency || submitting}
@@ -480,18 +539,18 @@ export default function VoterAssignmentsPage() {
       {/* ── Current assignments table ─────────────────── */}
       <div style={card}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: P.navy, display: "flex", alignItems: "center", gap: 8 }}>
-            <Users size={18} /> Current Assignments ({assignments.length})
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: T.navy, display: "flex", alignItems: "center", gap: 8 }}>
+            <Users size={18} color={T.accent} /> Current Assignments ({assignments.length})
           </h3>
           <div style={{ display: "flex", gap: 8 }}>
             {page > 1 && (
-              <button style={btn("#F1F5F9", P.text)} onClick={() => setPage((p) => p - 1)}>
+              <button style={btn(T.surfaceAlt, T.text)} onClick={() => setPage((p) => p - 1)}>
                 ← Prev
               </button>
             )}
-            <span style={{ fontSize: 13, color: P.muted, padding: "8px 0" }}>Page {page}</span>
+            <span style={{ fontSize: 13, color: T.muted, padding: "8px 0", fontWeight: 600 }}>Page {page}</span>
             {assignments.length === 50 && (
-              <button style={btn("#F1F5F9", P.text)} onClick={() => setPage((p) => p + 1)}>
+              <button style={btn(T.surfaceAlt, T.text)} onClick={() => setPage((p) => p + 1)}>
                 Next →
               </button>
             )}
@@ -499,34 +558,43 @@ export default function VoterAssignmentsPage() {
         </div>
 
         {assignments.length === 0 ? (
-          <div style={{ textAlign: "center", padding: 40, color: P.muted, fontSize: 14 }}>
-            No voter assignments yet. Use the form above to assign voters to constituencies.
+          <div style={{ textAlign: "center", padding: 40, color: T.muted, fontSize: 14 }}>
+            <MapPin size={28} color={T.border} style={{ marginBottom: 8 }} />
+            <p style={{ margin: "0 0 4px", fontWeight: 700, color: T.text }}>No voter assignments yet</p>
+            <p style={{ margin: 0, color: T.muted, fontSize: 13 }}>Use the form above to assign voters to constituencies.</p>
           </div>
         ) : (
-          <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              fontSize: 13,
-            }}
-          >
+          <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 13 }}>
             <thead>
-              <tr style={{ textAlign: "left", borderBottom: `2px solid ${P.border}` }}>
-                <th style={{ padding: "8px 12px", color: P.muted, fontWeight: 600 }}>Voter</th>
-                <th style={{ padding: "8px 12px", color: P.muted, fontWeight: 600 }}>Citizenship ID</th>
-                <th style={{ padding: "8px 12px", color: P.muted, fontWeight: 600 }}>Constituency</th>
-                <th style={{ padding: "8px 12px", color: P.muted, fontWeight: 600, textAlign: "center" }}>Actions</th>
+              <tr>
+                <th style={thStyle}>Voter</th>
+                <th style={thStyle}>Citizenship ID</th>
+                <th style={thStyle}>Constituency</th>
+                <th style={{ ...thStyle, textAlign: "center" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {assignments.map((a) => (
-                <tr key={a.id} style={{ borderBottom: `1px solid ${P.border}` }}>
-                  <td style={{ padding: "10px 12px", fontWeight: 500 }}>{a.voter_name || "—"}</td>
-                  <td style={{ padding: "10px 12px", color: P.muted, fontFamily: "monospace" }}>{a.citizenship_no || "—"}</td>
-                  <td style={{ padding: "10px 12px" }}>{a.constituency_name || "Unknown"}</td>
-                  <td style={{ padding: "10px 12px", textAlign: "center" }}>
+              {assignments.map((a, idx) => (
+                <tr key={a.id} style={{
+                  background: idx % 2 === 0 ? T.surface : T.surfaceAlt,
+                  transition: T.transitionFast,
+                }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "#F0F4FF"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = idx % 2 === 0 ? T.surface : T.surfaceAlt; }}
+                >
+                  <td style={{ ...tdStyle, fontWeight: 600 }}>{a.voter_name || "—"}</td>
+                  <td style={tdStyle}>
+                    <code style={{
+                      background: T.surfaceAlt, padding: "2px 8px", borderRadius: T.radius.sm,
+                      fontSize: 12, fontWeight: 600, color: T.textSecondary,
+                      border: `1px solid ${T.borderLight}`, fontFamily: "monospace",
+                    }}>{a.citizenship_no || "—"}</code>
+                  </td>
+                  <td style={tdStyle}>{a.constituency_name || "Unknown"}</td>
+                  <td style={{ ...tdStyle, textAlign: "center" }}>
                     <button
-                      style={{ ...btn("#FEF2F2", P.error), padding: "4px 12px", fontSize: 12 }}
+                      style={{ ...btn(T.errorBg, T.error), padding: "5px 12px", fontSize: 12, boxShadow: "none", border: `1px solid ${T.errorBorder}` }}
                       onClick={() => handleRemove(a.voter_id, a.voter_name || `Voter #${a.voter_id}`)}
                     >
                       <Trash2 size={12} /> Remove
@@ -536,6 +604,7 @@ export default function VoterAssignmentsPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 
@@ -549,5 +618,6 @@ export default function VoterAssignmentsPage() {
         variant="danger"
       />
     </div>
+    </PageContainer>
   );
 }

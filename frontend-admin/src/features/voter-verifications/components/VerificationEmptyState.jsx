@@ -1,5 +1,5 @@
 import React from "react";
-import { tokens } from "./tokens";
+import { T } from "../../../components/ui/tokens";
 import { Inbox } from "lucide-react";
 
 export default function VerificationEmptyState({ title = "No pending voter submissions", description = "New identity submissions will appear here for review." }) {
@@ -9,33 +9,33 @@ export default function VerificationEmptyState({ title = "No pending voter submi
       flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
-      padding: tokens.spacing.xxxl,
-      background: tokens.cardBackground,
-      border: `1px dashed ${tokens.cardBorder}`,
-      borderRadius: tokens.borderRadius.medium,
+      padding: 48,
+      background: T.surface,
+      border: `1px dashed ${T.border}`,
+      borderRadius: T.radius.xl,
       textAlign: "center",
     }}>
       <div style={{
-        background: `${tokens.colors.secondary}10`,
-        color: tokens.colors.secondary,
-        padding: tokens.spacing.xl,
-        borderRadius: tokens.borderRadius.full,
-        marginBottom: tokens.spacing.lg,
+        background: `${T.muted}10`,
+        color: T.muted,
+        padding: 24,
+        borderRadius: 9999,
+        marginBottom: 16,
       }}>
         <Inbox size={48} />
       </div>
       <h3 style={{ 
-        fontSize: tokens.fontSizes.lg, 
-        fontWeight: 600, 
-        color: tokens.text.primary,
-        marginBottom: tokens.spacing.xs
+        fontSize: 17, 
+        fontWeight: 700, 
+        color: T.text,
+        marginBottom: 4,
       }}>
         {title}
       </h3>
       <p style={{ 
-        fontSize: tokens.fontSizes.base, 
-        color: tokens.text.secondary,
-        maxWidth: "280px"
+        fontSize: 14, 
+        color: T.muted,
+        maxWidth: 280,
       }}>
         {description}
       </p>

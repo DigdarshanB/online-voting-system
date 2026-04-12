@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { tokens } from "./tokens";
+import { T } from "../../../components/ui/tokens";
 import { Maximize2, AlertCircle } from "lucide-react";
 
-const API = "http://localhost:8000";
+const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 function authHeaders() {
   const token = localStorage.getItem("access_token");
@@ -47,29 +47,21 @@ function ImageFrame({ title, userId, endpoint, alt }) {
   }, [userId, endpoint, title]);
 
   return (
-    <div style={{ flex: "1 1 300px", display: "flex", flexDirection: "column", gap: tokens.spacing.sm }}>
+    <div style={{ flex: "1 1 300px", display: "flex", flexDirection: "column", gap: 8 }}>
       <div style={{ 
-        display: "flex", 
-        justifyContent: "space-between", 
-        alignItems: "center",
-        padding: `0 ${tokens.spacing.xs}`
+        display: "flex", justifyContent: "space-between", alignItems: "center",
+        padding: "0 4px",
       }}>
-        <span style={{ fontSize: tokens.fontSizes.sm, fontWeight: 600, color: tokens.text.secondary }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: T.textSecondary }}>
           {title}
         </span>
         {objectUrl && (
             <button 
               onClick={() => window.open(objectUrl, "_blank")}
               style={{
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                color: tokens.colors.accent,
-                display: "flex",
-                alignItems: "center",
-                gap: 4,
-                fontSize: tokens.fontSizes.xs,
-                fontWeight: 500
+                background: "transparent", border: "none", cursor: "pointer",
+                color: T.accent, display: "flex", alignItems: "center",
+                gap: 4, fontSize: 12, fontWeight: 600, transition: T.transition,
               }}
             >
               <Maximize2 size={12} /> View Full
@@ -79,40 +71,30 @@ function ImageFrame({ title, userId, endpoint, alt }) {
 
       <div style={{
         aspectRatio: "4/3",
-        background: tokens.pageBackground,
-        borderRadius: tokens.borderRadius.medium,
-        border: `1px solid ${tokens.colors.border}`,
+        background: T.surfaceAlt,
+        borderRadius: T.radius.lg,
+        border: `1px solid ${T.border}`,
         overflow: "hidden",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        display: "flex", alignItems: "center", justifyContent: "center",
         position: "relative"
       }}>
         {isLoading && (
-          <div style={{ color: tokens.text.muted, fontSize: tokens.fontSizes.xs }}>Loading...</div>
+          <div style={{ color: T.muted, fontSize: 12, fontWeight: 600 }}>Loading…</div>
         )}
         {err && (
           <div style={{ 
-            display: "flex", 
-            flexDirection: "column", 
-            alignItems: "center", 
-            gap: 8,
-            color: tokens.colors.danger
+            display: "flex", flexDirection: "column", alignItems: "center", 
+            gap: 8, color: T.error,
           }}>
             <AlertCircle size={24} />
-            <span style={{ fontSize: tokens.fontSizes.xs }}>{err}</span>
+            <span style={{ fontSize: 12 }}>{err}</span>
           </div>
         )}
         {objectUrl && !isLoading && (
           <img 
             src={objectUrl} 
             alt={alt} 
-            style={{ 
-              width: "100%", 
-              height: "100%", 
-              objectFit: "contain",
-              display: "block"
-            }} 
+            style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} 
           />
         )}
       </div>
@@ -124,22 +106,12 @@ export default function VerificationImagePanel({ userId, hasDocument, hasFace })
   return (
     <div style={{
       display: "flex",
-      gap: tokens.spacing.xl,
+      gap: 24,
       flexWrap: "wrap",
-      marginBottom: tokens.spacing.xl
+      marginBottom: 24,
     }}>
-      <ImageFrame 
-        title="Citizenship Document" 
-        userId={userId} 
-        endpoint="document" 
-        alt="Voter citizenship proof" 
-      />
-      <ImageFrame 
-        title="Live Face Capture" 
-        userId={userId} 
-        endpoint="face" 
-        alt="Voter live face photo" 
-      />
+      <ImageFrame title="Citizenship Document" userId={userId} endpoint="document" alt="Voter citizenship proof" />
+      <ImageFrame title="Live Face Capture" userId={userId} endpoint="face" alt="Voter live face photo" />
     </div>
   );
 }

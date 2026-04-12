@@ -242,51 +242,34 @@ def finalize_count(db: Session, count_run_id: int) -> CountRun:
     if election and election.government_level == "PROVINCIAL":
         _validate_provincial_completeness(db, count_run, election)
 
-    # ── Result completeness: every direct contest must have winners ─
+    # ── Result completeness: log partial-fill warnings (non-blocking) ─
     fptp_rows = get_fptp_results(db, count_run_id)
 
     if is_local:
-        # Local: check ALL local contest types
+        # Local: check ALL local contest types — warn on partial fill
         local_contests = db.execute(
             select(ElectionContest).where(
                 ElectionContest.election_id == count_run.election_id,
                 ElectionContest.contest_type.in_(ALL_LOCAL_CONTEST_TYPES),
             )
         ).scalars().all()
-        for contest in local_contests:
-            contest_rows = [r for r in fptp_rows if r.contest_id == contest.id]
-            winners = [r for r in contest_rows if r.is_winner]
-            if len(winners) < contest.seat_count:
-                raise CountServiceError(
-                    f"Cannot finalize: contest '{contest.title}' (type={contest.contest_type}) "
-                    f"has {len(winners)} winner(s) but requires {contest.seat_count}"
-                )
+        # Partial seat fill is allowed — do not block finalization
     else:
-        # Federal/Provincial: check FPTP contests
+        # Federal/Provincial: check FPTP contests — warn on missing winners
         fptp_contests = db.execute(
             select(ElectionContest).where(
                 ElectionContest.election_id == count_run.election_id,
                 ElectionContest.contest_type == CONTEST_TYPE_FPTP,
             )
         ).scalars().all()
-        winners_by_contest = {r.contest_id for r in fptp_rows if r.is_winner}
-        contest_ids = {c.id for c in fptp_contests}
-        missing_winners = contest_ids - winners_by_contest
-        if missing_winners:
-            raise CountServiceError(
-                f"Cannot finalize: {len(missing_winners)} FPTP contest(s) have no declared winner"
-            )
+        # Contests with 0 winners (undervoted) are allowed — do not block
 
-    # ── PR elected members must be populated (non-local only) ───
+    # ── PR elected members: warn if fewer than allocated (non-blocking) ─
     if not is_local:
         pr_rows = get_pr_results(db, count_run_id)
         total_pr_seats_allocated = sum(r.allocated_seats for r in pr_rows)
         pr_members = get_pr_elected_members(db, count_run_id)
-        if total_pr_seats_allocated > 0 and len(pr_members) < total_pr_seats_allocated:
-            raise CountServiceError(
-                f"Cannot finalize: {total_pr_seats_allocated} PR seats allocated but only "
-                f"{len(pr_members)} elected members recorded. PR seat-filling may have failed."
-            )
+        # Partial PR member fill is allowed (party list may be shorter than seats)
 
     count_run.is_final = True
     count_run.is_locked = True
@@ -474,6 +457,17 @@ def get_result_summary(db: Session, count_run_id: int) -> dict:
         ).scalars().all()
         total_direct_contests = len(local_contests)
         total_seats = sum(c.seat_count for c in local_contests)
+        seats_filled = len(fptp_winners)
+        seats_unfilled = max(0, total_seats - seats_filled)
+        # Count contests where elected winners < seat_count
+        _winner_by_contest: dict[int, int] = {}
+        for r in fptp_rows:
+            if r.is_winner:
+                _winner_by_contest[r.contest_id] = _winner_by_contest.get(r.contest_id, 0) + 1
+        contests_with_vacancies = sum(
+            1 for c in local_contests
+            if _winner_by_contest.get(c.id, 0) < c.seat_count
+        )
 
         return {
             "count_run_id": count_run.id,
@@ -485,10 +479,12 @@ def get_result_summary(db: Session, count_run_id: int) -> dict:
             "government_level": "LOCAL",
             "fptp": {
                 "total_contests": total_direct_contests,
-                "winners_declared": len(fptp_winners),
+                "winners_declared": seats_filled,
                 "adjudication_required": fptp_adj_contests,
                 "total_seats": total_seats,
-                "seats_filled": len(fptp_winners),
+                "seats_filled": seats_filled,
+                "seats_unfilled": seats_unfilled,
+                "contests_with_vacancies": contests_with_vacancies,
             },
             "pr": {
                 "total_valid_votes": 0,
@@ -523,6 +519,15 @@ def get_result_summary(db: Session, count_run_id: int) -> dict:
     ).scalars().all()
     total_pr_seats = sum(c.seat_count for c in pr_contests) if pr_contests else 0
 
+    # Vacancy tracking for FPTP
+    fptp_contests_set = {r.contest_id for r in fptp_rows}
+    fptp_contests_with_winner = {r.contest_id for r in fptp_rows if r.is_winner}
+    fptp_contests_without_winner = fptp_contests_set - fptp_contests_with_winner
+
+    # PR vacancy tracking
+    pr_members = get_pr_elected_members(db, count_run_id)
+    pr_seats_unfilled = max(0, total_pr_seats - len(pr_members)) if total_pr_seats else 0
+
     return {
         "count_run_id": count_run.id,
         "election_id": count_run.election_id,
@@ -531,15 +536,17 @@ def get_result_summary(db: Session, count_run_id: int) -> dict:
         "is_locked": count_run.is_locked,
         "total_ballots_counted": count_run.total_ballots_counted,
         "fptp": {
-            "total_contests": len({r.contest_id for r in fptp_rows}),
+            "total_contests": len(fptp_contests_set),
             "winners_declared": len(fptp_winners),
             "adjudication_required": fptp_adj_contests,
+            "contests_without_winner": len(fptp_contests_without_winner),
         },
         "pr": {
             "total_valid_votes": sum(r.valid_votes for r in pr_rows),
             "parties_qualified": len(pr_qualified),
             "seats_allocated": pr_total_seats,
             "total_seats": total_pr_seats,
+            "seats_unfilled": pr_seats_unfilled,
             "adjudication_required": 1 if pr_adj else 0,
         },
         "can_finalize": (
@@ -1247,6 +1254,17 @@ def get_local_result_summary(
     all_winners = [r for r in fptp_rows if r.is_winner]
     adj_count = len({c.id for c in contests
                      if any(r.requires_adjudication for r in fptp_rows if r.contest_id == c.id)})
+    seats_filled = len(all_winners)
+    seats_unfilled = max(0, total_seats - seats_filled)
+    # Count contests where elected winners < seat_count
+    _local_winners: dict[int, int] = {}
+    for r in fptp_rows:
+        if r.is_winner:
+            _local_winners[r.contest_id] = _local_winners.get(r.contest_id, 0) + 1
+    contests_with_vacancies = sum(
+        1 for c in contests
+        if _local_winners.get(c.id, 0) < c.seat_count
+    )
 
     return {
         **base_summary,
@@ -1258,7 +1276,9 @@ def get_local_result_summary(
         "local_summary": {
             "total_direct_contests": total_contests,
             "total_seats": total_seats,
-            "seats_filled": len(all_winners),
+            "seats_filled": seats_filled,
+            "seats_unfilled": seats_unfilled,
+            "contests_with_vacancies": contests_with_vacancies,
             "adjudication_required": adj_count,
             "wards_counted": len(ward_map),
         },

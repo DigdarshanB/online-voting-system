@@ -61,7 +61,7 @@ export default function VoterReceipt() {
     return {
       electionId: el.id,
       electionTitle: el.title,
-      electionType: el.election_type || "General",
+      electionType: el.election_subtype || "General",
       ballotId: savedReceipt?.ballot_id || null,
       timestamp: savedReceipt?.timestamp || null,
     };

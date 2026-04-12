@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from typing import Optional
 from sqlalchemy.orm import Session
 
 from app.core.jwt import get_current_user
@@ -30,19 +31,19 @@ def _require_active_voter(user: User) -> None:
 
 
 class CastBallotRequest(BaseModel):
-    """Federal / Provincial dual-ballot (FPTP + PR)."""
-    fptp_nomination_id: int
-    pr_party_id: int
+    """Federal / Provincial dual-ballot (FPTP + PR). All fields optional for undervote."""
+    fptp_nomination_id: Optional[int] = None
+    pr_party_id: Optional[int] = None
 
 
 class CastLocalBallotRequest(BaseModel):
-    """Local ballot — 7 selections across 6 contests."""
-    head_nomination_id: int
-    deputy_head_nomination_id: int
-    ward_chair_nomination_id: int
-    ward_woman_member_nomination_id: int
-    ward_dalit_woman_member_nomination_id: int
-    ward_member_open_nomination_ids: list[int]
+    """Local ballot — up to 7 selections across 6 contests. All optional for undervote."""
+    head_nomination_id: Optional[int] = None
+    deputy_head_nomination_id: Optional[int] = None
+    ward_chair_nomination_id: Optional[int] = None
+    ward_woman_member_nomination_id: Optional[int] = None
+    ward_dalit_woman_member_nomination_id: Optional[int] = None
+    ward_member_open_nomination_ids: list[int] = []
 
 
 # ── endpoints ────────────────────────────────────────────────────

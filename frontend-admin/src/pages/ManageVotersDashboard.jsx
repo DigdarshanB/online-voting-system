@@ -1,21 +1,28 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
-import "./AdminAuthPage.css";
-import "./ManageVotersDashboard.css";
+import {
+  Users, UserCheck, UserX, Clock, Shield, Search, Filter, RefreshCw,
+  ChevronDown, ChevronLeft, ChevronRight, Eye, Edit3, Trash2, Mail,
+  KeyRound, Lock, MoreVertical, X, AlertTriangle, CheckCircle2, XCircle,
+  UserMinus, UserPlus, RotateCcw, FileText, Camera, Ban,
+} from "lucide-react";
+import { T } from "../components/ui/tokens";
+import { PageContainer, AdminKeyframes } from "../components/ui/AdminUI";
 
-const API = "http://localhost:8000";
+const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
-const STATUS_CLASS = {
-  Pending: "badge badge-pending",
-  Approved: "badge badge-approved",
-  Rejected: "badge badge-rejected",
-  Suspended: "badge badge-suspended",
-  Verified: "badge badge-verified",
-  Unverified: "badge badge-unverified",
-  Voted: "badge badge-voted",
-  "Not Voted": "badge badge-not-voted",
-  Active: "badge badge-active",
-  Disabled: "badge badge-suspended",
+/* ── Badge colour map ────────────────────────────────────────── */
+const BADGE_STYLES = {
+  Pending:    { bg: "#FFF7ED", color: "#D97706", border: "#FFEDD5" },
+  Approved:   { bg: "#ECFDF5", color: "#059669", border: "#D1FAE5" },
+  Rejected:   { bg: "#FEF2F2", color: "#DC2626", border: "#FEE2E2" },
+  Suspended:  { bg: "#F1F5F9", color: "#475569", border: "#E2E8F0" },
+  Verified:   { bg: "#EBF2FF", color: "#2563EB", border: "#DBEAFE" },
+  Unverified: { bg: "#FEF2F2", color: "#DC2626", border: "#FEE2E2" },
+  Voted:      { bg: "#ECFDF5", color: "#059669", border: "#D1FAE5" },
+  "Not Voted":{ bg: "#F8FAFC", color: "#64748B", border: "#E2E8F0" },
+  Active:     { bg: "#F0FDF4", color: "#16A34A", border: "#DCFCE7" },
+  Disabled:   { bg: "#F1F5F9", color: "#475569", border: "#E2E8F0" },
 };
 
 const APPROVAL_LABELS = {
@@ -26,69 +33,102 @@ const APPROVAL_LABELS = {
   DISABLED: "Suspended",
 };
 
+/* ── Shared mini-components ──────────────────────────────────── */
 function Badge({ label }) {
-  const cls = STATUS_CLASS[label] || "badge";
-  return <span className={cls}>{label}</span>;
+  const s = BADGE_STYLES[label] || { bg: T.surfaceAlt, color: T.muted, border: T.border };
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", padding: "2px 10px",
+      borderRadius: 999, fontSize: 11, fontWeight: 700, letterSpacing: "0.02em",
+      background: s.bg, color: s.color, border: `1px solid ${s.border}`,
+    }}>{label}</span>
+  );
 }
 
 function fmtDate(iso) {
   if (!iso) return "—";
   try {
     return new Date(iso).toLocaleString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+      year: "numeric", month: "short", day: "numeric",
+      hour: "2-digit", minute: "2-digit",
     });
-  } catch {
-    return iso;
-  }
+  } catch { return iso; }
 }
+
+/* ── Avatar initials ─────────────────────────────────────────── */
+const AVATAR_COLORS = ["#2563EB","#7C3AED","#059669","#EA580C","#DC2626","#0891B2","#D97706"];
+function AvatarCircle({ name }) {
+  const initials = (name || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+  const idx = (name || "").length % AVATAR_COLORS.length;
+  return (
+    <div style={{
+      width: 34, height: 34, borderRadius: "50%", display: "flex",
+      alignItems: "center", justifyContent: "center", flexShrink: 0,
+      background: `${AVATAR_COLORS[idx]}14`, color: AVATAR_COLORS[idx],
+      fontSize: 12, fontWeight: 800, letterSpacing: "0.03em",
+      border: `1.5px solid ${AVATAR_COLORS[idx]}30`,
+    }}>{initials}</div>
+  );
+}
+
+/* ── Action menu (three-dot) ─────────────────────────────────── */
+const ACTION_ITEMS = [
+  { label: "View details", icon: Eye },
+  { label: "Approve", icon: CheckCircle2 },
+  { label: "Reject", icon: XCircle },
+  { label: "Suspend", icon: Ban },
+  { label: "Reactivate", icon: UserPlus },
+  { label: "Deactivate", icon: UserMinus },
+  { label: "Resend verification", icon: Mail },
+  { label: "Reset password", icon: KeyRound },
+  { label: "Reset TOTP", icon: RotateCcw },
+  { label: "Edit info", icon: Edit3 },
+  { label: "Delete voter", icon: Trash2, danger: true },
+];
 
 function ActionMenu({ voterId, onAction }) {
   const [open, setOpen] = useState(false);
+  const ref = useRef(null);
 
-  function handleSelect(action) {
-    onAction(action, voterId);
-    setOpen(false);
-  }
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
 
   return (
-    <div className="action-menu">
-      <button
-        className="ghost-button action-trigger"
-        onClick={(e) => {
-          e.stopPropagation();
-          setOpen((v) => !v);
+    <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
+      <button onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}
+        style={{
+          border: `1px solid ${T.border}`, background: T.surface, borderRadius: T.radius.md,
+          width: 32, height: 32, cursor: "pointer", display: "inline-flex",
+          alignItems: "center", justifyContent: "center", transition: T.transition,
         }}
-      >
-        Actions
-        <span style={{ marginLeft: "8px", opacity: 0.5, fontSize: "10px" }}>▼</span>
-      </button>
+        onMouseEnter={e => { e.currentTarget.style.background = T.surfaceAlt; }}
+        onMouseLeave={e => { e.currentTarget.style.background = T.surface; }}
+      ><MoreVertical size={15} color={T.muted} /></button>
       {open && (
-        <div className="action-menu__panel">
-          {[
-            "View details",
-            "Approve",
-            "Reject",
-            "Suspend",
-            "Reactivate",
-            "Deactivate",
-            "Resend verification",
-            "Reset password",
-            "Reset TOTP",
-            "Edit info",
-            "Delete voter",
-          ].map((label) => (
-            <button
-              key={label}
-              className={label === "Delete voter" ? "delete-action" : undefined}
-              onMouseDown={(e) => {
-                e.preventDefault(); // Prevents blur before click
-                handleSelect(label);
+        <div style={{
+          position: "absolute", right: 0, top: "calc(100% + 4px)", background: T.surface,
+          border: `1px solid ${T.border}`, borderRadius: T.radius.lg, minWidth: 190,
+          boxShadow: T.shadow.xl, zIndex: 30, padding: 4,
+          animation: "fadeIn 0.14s ease",
+        }}>
+          {ACTION_ITEMS.map(({ label, icon: Icon, danger }) => (
+            <button key={label}
+              onMouseDown={(e) => { e.preventDefault(); onAction(label, voterId); setOpen(false); }}
+              style={{
+                width: "100%", textAlign: "left", padding: "8px 10px", border: "none",
+                background: "transparent", fontSize: 12.5, fontWeight: 600,
+                color: danger ? T.error : T.text, borderRadius: T.radius.sm,
+                cursor: "pointer", display: "flex", alignItems: "center", gap: 8,
+                transition: T.transitionFast,
               }}
+              onMouseEnter={e => { e.currentTarget.style.background = danger ? T.errorBg : T.surfaceAlt; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
             >
+              <Icon size={14} />
               {label}
             </button>
           ))}
@@ -98,132 +138,201 @@ function ActionMenu({ voterId, onAction }) {
   );
 }
 
+/* ── Toast stack ──────────────────────────────────────────── */
 function ToastStack({ toasts, onDismiss }) {
+  const TOAST_ACCENTS = { success: T.success, danger: T.error, info: T.accent };
   return (
-    <div className="toast-stack">
+    <div style={{
+      position: "fixed", right: 16, bottom: 16, display: "flex",
+      flexDirection: "column", gap: 8, zIndex: 9999,
+    }}>
       {toasts.map((toast) => (
-        <div key={toast.id} className={`toast toast-${toast.tone}`}>
-          <div className="toast-title">{toast.title}</div>
-          {toast.body && <div className="toast-body">{toast.body}</div>}
-          <button className="toast-close" onClick={() => onDismiss(toast.id)} aria-label="Dismiss">
-            ×
-          </button>
+        <div key={toast.id} style={{
+          background: "#0F172A", color: "#E2E8F0", padding: "12px 40px 12px 14px",
+          borderRadius: T.radius.lg, boxShadow: T.shadow.xl,
+          border: `1px solid rgba(226,232,240,0.18)`,
+          borderLeft: `4px solid ${TOAST_ACCENTS[toast.tone] || T.accent}`,
+          minWidth: 260, position: "relative",
+          animation: "slideUpFade 0.28s cubic-bezier(0.22,1,0.36,1)",
+        }}>
+          <div style={{ fontWeight: 800, fontSize: 13.5 }}>{toast.title}</div>
+          {toast.body && <div style={{ marginTop: 4, color: "#CBD5E1", fontSize: 12.5 }}>{toast.body}</div>}
+          <button onClick={() => onDismiss(toast.id)} aria-label="Dismiss"
+            style={{
+              position: "absolute", top: 8, right: 8, background: "transparent",
+              color: "#E2E8F0", border: "none", fontSize: 16, cursor: "pointer", padding: 2,
+            }}>×</button>
         </div>
       ))}
     </div>
   );
 }
 
+/* ── Confirm dialog ──────────────────────────────────────── */
 function ConfirmDialog({ dialog, onCancel, onConfirm, onReasonChange, onPhraseChange }) {
   if (!dialog) return null;
+  const inputStyle = {
+    border: `1.5px solid ${T.border}`, borderRadius: T.radius.md,
+    padding: "10px 12px", fontSize: 14, background: T.surface, width: "100%",
+    transition: T.transition, outline: "none",
+  };
   return (
-    <div className="overlay" role="dialog" aria-modal="true">
-      <div className={`confirm-card ${dialog.destructive ? "confirm-card-danger" : ""}`}>
-        <div className="confirm-header">
-          <h3>{dialog.title}</h3>
-          <button className="icon-button" onClick={onCancel} aria-label="Close dialog">
-            ×
-          </button>
+    <div style={{
+      position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      zIndex: 5000, padding: 20, backdropFilter: "blur(4px)",
+    }} role="dialog" aria-modal="true">
+      <div style={{
+        background: T.surface, borderRadius: T.radius.xl, padding: "20px 22px",
+        width: "min(480px, 96vw)", boxShadow: T.shadow.xl,
+        border: `2px solid ${dialog.destructive ? T.errorBorder : T.border}`,
+        animation: "fadeIn 0.2s ease",
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+          <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: T.text }}>{dialog.title}</h3>
+          <button onClick={onCancel} aria-label="Close dialog" style={{
+            border: "none", background: T.surfaceAlt, width: 30, height: 30,
+            borderRadius: T.radius.sm, cursor: "pointer", display: "inline-flex",
+            alignItems: "center", justifyContent: "center",
+          }}><X size={15} color={T.muted} /></button>
         </div>
-        <p className="confirm-body">{dialog.body}</p>
-        {dialog.destructive && <p className="confirm-warning">This action is intentionally protected and cannot be undone.</p>}
+        <p style={{ margin: "0 0 10px", color: T.textSecondary, fontSize: 14, lineHeight: 1.5 }}>{dialog.body}</p>
+        {dialog.destructive && (
+          <p style={{
+            margin: "0 0 12px", padding: "10px 12px", borderRadius: T.radius.md,
+            background: T.errorBg, color: "#991B1B", fontSize: 13, fontWeight: 700,
+            border: `1px solid ${T.errorBorder}`,
+          }}>This action is intentionally protected and cannot be undone.</p>
+        )}
         {dialog.requireReason && (
-          <div className="field">
-            <label>Reason</label>
-            <textarea
-              rows={3}
-              value={dialog.reason || ""}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
+            <label style={{ fontSize: 12, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>Reason</label>
+            <textarea rows={3} value={dialog.reason || ""} onChange={(e) => onReasonChange(e.target.value)}
               placeholder={dialog.reasonPlaceholder || "Add a short note for the audit log"}
-              onChange={(e) => onReasonChange(e.target.value)}
-            />
+              style={{ ...inputStyle, resize: "vertical" }}
+              onFocus={e => { e.target.style.borderColor = T.accent; e.target.style.boxShadow = T.focusRing; }}
+              onBlur={e => { e.target.style.borderColor = T.border; e.target.style.boxShadow = "none"; }} />
           </div>
         )}
         {dialog.requirePhrase && (
-          <div className="field">
-            <label>Type DELETE to confirm</label>
-            <input
-              value={dialog.confirmationText || ""}
-              placeholder="DELETE"
-              onChange={(e) => onPhraseChange(e.target.value)}
-            />
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
+            <label style={{ fontSize: 12, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>Type DELETE to confirm</label>
+            <input value={dialog.confirmationText || ""} placeholder="DELETE"
+              onChange={(e) => onPhraseChange(e.target.value)} style={inputStyle}
+              onFocus={e => { e.target.style.borderColor = T.accent; e.target.style.boxShadow = T.focusRing; }}
+              onBlur={e => { e.target.style.borderColor = T.border; e.target.style.boxShadow = "none"; }} />
           </div>
         )}
-        <div className="confirm-actions">
-          <button className="ghost-button" onClick={onCancel} disabled={dialog.submitting}>
-            Cancel
-          </button>
-          <button
-            className="primary-button"
-            onClick={onConfirm}
-            disabled={
-              dialog.submitting ||
-              (dialog.requireReason && !dialog.reason) ||
-              (dialog.requirePhrase && (dialog.confirmationText || "").trim().toUpperCase() !== "DELETE")
-            }
-          >
-            {dialog.submitting ? "Working…" : dialog.confirmLabel || "Confirm"}
-          </button>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 4 }}>
+          <button onClick={onCancel} disabled={dialog.submitting} style={{
+            border: `1px solid ${T.border}`, background: T.surface, borderRadius: T.radius.md,
+            padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer",
+            color: T.text, transition: T.transition,
+          }}>Cancel</button>
+          <button onClick={onConfirm} disabled={
+            dialog.submitting ||
+            (dialog.requireReason && !dialog.reason) ||
+            (dialog.requirePhrase && (dialog.confirmationText || "").trim().toUpperCase() !== "DELETE")
+          } style={{
+            border: "none", background: dialog.destructive ? T.error : T.accent,
+            color: "#fff", borderRadius: T.radius.md, padding: "9px 18px",
+            fontSize: 13, fontWeight: 700, cursor: "pointer", transition: T.transition,
+            opacity: dialog.submitting ? 0.6 : 1, boxShadow: T.shadow.md,
+          }}>{dialog.submitting ? "Working…" : dialog.confirmLabel || "Confirm"}</button>
         </div>
       </div>
     </div>
   );
 }
 
+/* ── Detail drawer (slide-in panel) ───────────────────────── */
 function DetailPanel({
-  detail,
-  loading,
-  error,
-  docPreview,
-  facePreview,
-  onClose,
-  onApprove,
-  onReject,
-  onSuspend,
-  onReactivate,
-  onDeactivate,
-  onDelete,
-  onResendVerification,
-  onResetPassword,
-  onResetTotp,
-  onEditStart,
-  editing,
-  editDraft,
-  setEditDraft,
-  onSaveEdit,
+  detail, loading, error, docPreview, facePreview,
+  onClose, onApprove, onReject, onSuspend, onReactivate, onDeactivate,
+  onDelete, onResendVerification, onResetPassword, onResetTotp,
+  onEditStart, editing, editDraft, setEditDraft, onSaveEdit,
 }) {
-  return (
-    <div
-      className="overlay"
-      role="dialog"
-      aria-modal="true"
-      onClick={(e) => {
-        if (e.target.className === "overlay") onClose();
+  const inputStyle = {
+    border: `1.5px solid ${T.border}`, borderRadius: T.radius.md,
+    padding: "10px 12px", fontSize: 14, background: T.surface, width: "100%",
+    transition: T.transition, outline: "none",
+  };
+  const iconBtn = (Icon, label, onClick, color = T.textSecondary) => (
+    <button key={label} onClick={() => onClick(detail)} title={label}
+      style={{
+        border: `1px solid ${T.border}`, background: T.surface,
+        borderRadius: T.radius.md, padding: "7px 12px", fontSize: 12,
+        fontWeight: 600, color, cursor: "pointer", display: "inline-flex",
+        alignItems: "center", gap: 6, transition: T.transition,
       }}
-    >
-      <div className="drawer">
-        <div className="drawer-header">
+      onMouseEnter={e => { e.currentTarget.style.background = T.surfaceAlt; }}
+      onMouseLeave={e => { e.currentTarget.style.background = T.surface; }}
+    ><Icon size={14} />{label}</button>
+  );
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      zIndex: 5000, padding: 20, backdropFilter: "blur(4px)",
+    }} role="dialog" aria-modal="true" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div style={{
+        width: "min(1200px, 94vw)", background: T.bg, borderRadius: 20,
+        boxShadow: "0 25px 50px -12px rgba(0,0,0,0.4)",
+        maxHeight: "94vh", display: "flex", flexDirection: "column",
+        border: `1px solid ${T.border}`, overflow: "hidden",
+        animation: "drawerIn 0.3s cubic-bezier(0.16,1,0.3,1)",
+      }}>
+        {/* Header */}
+        <div style={{
+          display: "flex", justifyContent: "space-between", alignItems: "flex-start",
+          padding: "18px 22px 14px", borderBottom: `1px solid ${T.border}`, background: T.surface,
+        }}>
           <div>
-            <p className="eyebrow" style={{ color: "#2F6FED" }}>Administrative Control</p>
-            <h2 style={{ fontSize: "22px", fontWeight: "800", color: "#0F172A", margin: "4px 0" }}>{detail?.full_name || "Voter Profile"}</h2>
-            <p className="drawer-sub" style={{ fontSize: "13.5px", color: "#64748B" }}>Comprehensive identity and verification record.</p>
+            <p style={{
+              textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700,
+              fontSize: 11, color: T.accent, margin: "0 0 4px",
+            }}>Administrative Control</p>
+            <h2 style={{ fontSize: 22, fontWeight: 800, color: T.text, margin: "0 0 2px" }}>
+              {detail?.full_name || "Voter Profile"}
+            </h2>
+            <p style={{ fontSize: 13, color: T.muted, margin: 0 }}>
+              Comprehensive identity and verification record.
+            </p>
           </div>
-          <button className="icon-button close-drawer" onClick={onClose} aria-label="Close panel">
-            ×
-          </button>
+          <button onClick={onClose} aria-label="Close panel" style={{
+            border: "none", background: T.surfaceAlt, width: 34, height: 34,
+            borderRadius: T.radius.md, cursor: "pointer", display: "inline-flex",
+            alignItems: "center", justifyContent: "center",
+          }}><X size={16} color={T.muted} /></button>
         </div>
 
-        {loading && (
-          <div className="panel-loading">
-            <div className="spinner" />
-            <p>Fetching voter details…</p>
-          </div>
-        )}
+        {/* Body */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "18px 22px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
+          {loading && (
+            <div style={{
+              background: T.surface, padding: 32, borderRadius: T.radius.lg,
+              border: `1px solid ${T.border}`, textAlign: "center",
+            }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: "50%", margin: "0 auto 10px",
+                border: `3px solid ${T.border}`, borderTopColor: T.accent,
+                animation: "spin 0.9s linear infinite",
+              }} />
+              <p style={{ margin: 0, color: T.muted, fontWeight: 600 }}>Fetching voter details…</p>
+            </div>
+          )}
 
-        {error && !loading && <div className="panel-error">{error}</div>}
+          {error && !loading && (
+            <div style={{
+              background: T.errorBg, padding: 16, borderRadius: T.radius.lg,
+              border: `1px solid ${T.errorBorder}`, color: T.error, fontWeight: 600,
+            }}>{error}</div>
+          )}
 
-        {!loading && detail && (
-          <div className="drawer-body">
-            <div className="status-row">
+          {!loading && detail && (<>
+            {/* Status badges row */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               <Badge label={APPROVAL_LABELS[detail.status] || detail.status} />
               <Badge label={detail.account_status === "SUSPENDED" ? "Suspended" : "Active"} />
               <Badge label={detail.email_verified ? "Verified" : "Unverified"} />
@@ -231,129 +340,156 @@ function DetailPanel({
               <Badge label={detail.voting_status} />
             </div>
 
-            <div className="info-grid">
-              <div className="info-card">
-                <h4>Profile</h4>
-                <div className="field-row"><span>ID</span><strong>{detail.id}</strong></div>
-                <div className="field-row"><span>Full name</span><strong>{detail.full_name || "—"}</strong></div>
-                <div className="field-row"><span>Citizenship</span><strong>{detail.citizenship_no_normalized || detail.citizenship_no_raw || "—"}</strong></div>
-                <div className="field-row"><span>Email</span><strong>{detail.email || "—"}</strong></div>
-                <div className="field-row"><span>Phone</span><strong>{detail.phone_number || "—"}</strong></div>
-                <div className="field-row"><span>Registered</span><strong>{fmtDate(detail.created_at)}</strong></div>
-              </div>
-
-              <div className="info-card">
-                <h4>Verification</h4>
-                <div className="field-row"><span>Email verification</span><strong>{detail.email_verified ? "Verified" : "Pending"}</strong></div>
-                <div className="field-row"><span>Email verified at</span><strong>{fmtDate(detail.email_verified_at)}</strong></div>
-                <div className="field-row"><span>Face upload</span><strong>{detail.face_uploaded_at ? "Provided" : "Missing"}</strong></div>
-                <div className="field-row"><span>Document upload</span><strong>{detail.document_uploaded_at ? "Provided" : "Missing"}</strong></div>
-                <div className="field-row"><span>Approval</span><strong>{detail.approved_at ? fmtDate(detail.approved_at) : "Not approved"}</strong></div>
-                <div className="field-row"><span>Rejection note</span><strong>{detail.rejection_reason || "—"}</strong></div>
-              </div>
-
-              <div className="info-card">
-                <h4>Voting</h4>
-                <div className="field-row"><span>Status</span><strong>{detail.voting_status}</strong></div>
-                <div className="field-row"><span>Votes cast</span><strong>{detail.vote_count}</strong></div>
-              </div>
-            </div>
-
-            <div className="preview-grid">
-              <div className="preview-card">
-                <div className="preview-header">
-                  <h4>Citizenship document</h4>
-                  <Badge label={detail.document_uploaded_at ? "Provided" : "Missing"} />
-                </div>
-                {docPreview ? (
-                  <img src={docPreview} alt="Citizenship document" className="preview-image" />
-                ) : (
-                  <div className="preview-empty">No document available</div>
-                )}
-              </div>
-
-              <div className="preview-card">
-                <div className="preview-header">
-                  <h4>Face verification</h4>
-                  <Badge label={detail.face_uploaded_at ? "Provided" : "Missing"} />
-                </div>
-                {facePreview ? (
-                  <img src={facePreview} alt="Face verification" className="preview-image" />
-                ) : (
-                  <div className="preview-empty">No face image available</div>
-                )}
-              </div>
-            </div>
-
-            <div className="action-bar header-actions">
-              <div className="action-bar__left">
-                <button className="ghost-button" onClick={() => onEditStart(detail)}>
-                  Edit
-                </button>
-                <button className="ghost-button" onClick={() => onResendVerification(detail)}>
-                  Resend Email
-                </button>
-                <button className="ghost-button" onClick={() => onResetPassword(detail)}>
-                  Reset PW
-                </button>
-                <button className="ghost-button" onClick={() => onResetTotp(detail)}>
-                  Reset TOTP
-                </button>
-              </div>
-              <div className="action-bar__right">
-                <button className="ghost-button" onClick={() => onReject(detail)} style={{ color: "#DC2626" }}>
-                  Reject
-                </button>
-                <button className="primary-button" onClick={() => onApprove(detail)}>
-                  Approve Voter
-                </button>
-              </div>
-            </div>
-
-            {editing && (
-              <div className="edit-card">
-                <div className="edit-header">
-                  <div>
-                    <h4>Edit voter</h4>
-                    <p>Only safe profile fields are editable.</p>
+            {/* Info cards grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 }}>
+              {[
+                {
+                  title: "Profile", icon: Users, fields: [
+                    ["ID", detail.id],
+                    ["Full name", detail.full_name || "—"],
+                    ["Citizenship", detail.citizenship_no_normalized || detail.citizenship_no_raw || "—"],
+                    ["Email", detail.email || "—"],
+                    ["Phone", detail.phone_number || "—"],
+                    ["Registered", fmtDate(detail.created_at)],
+                  ],
+                },
+                {
+                  title: "Verification", icon: Shield, fields: [
+                    ["Email verification", detail.email_verified ? "Verified" : "Pending"],
+                    ["Email verified at", fmtDate(detail.email_verified_at)],
+                    ["Face upload", detail.face_uploaded_at ? "Provided" : "Missing"],
+                    ["Document upload", detail.document_uploaded_at ? "Provided" : "Missing"],
+                    ["Approval", detail.approved_at ? fmtDate(detail.approved_at) : "Not approved"],
+                    ["Rejection note", detail.rejection_reason || "—"],
+                  ],
+                },
+                {
+                  title: "Voting", icon: CheckCircle2, fields: [
+                    ["Status", detail.voting_status],
+                    ["Votes cast", detail.vote_count],
+                  ],
+                },
+              ].map(({ title, icon: Icon, fields }) => (
+                <div key={title} style={{
+                  background: T.surface, borderRadius: T.radius.lg, padding: "16px 18px",
+                  border: `1px solid ${T.border}`, boxShadow: T.shadow.sm,
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                    <div style={{
+                      width: 28, height: 28, borderRadius: T.radius.sm, background: T.accentLight,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}><Icon size={14} color={T.accent} /></div>
+                    <h4 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: T.text }}>{title}</h4>
                   </div>
+                  {fields.map(([lbl, val], i) => (
+                    <div key={lbl} style={{
+                      display: "flex", justifyContent: "space-between", alignItems: "center",
+                      gap: 10, padding: "7px 0", fontSize: 13.5,
+                      borderBottom: i < fields.length - 1 ? `1px dashed ${T.borderLight}` : "none",
+                    }}>
+                      <span style={{ color: T.muted, fontWeight: 500 }}>{lbl}</span>
+                      <strong style={{ color: T.text, fontWeight: 700, textAlign: "right" }}>{val}</strong>
+                    </div>
+                  ))}
                 </div>
-                <div className="edit-grid">
-                  <label className="field">
-                    <span>Full name</span>
-                    <input
-                      value={editDraft.full_name}
-                      onChange={(e) => setEditDraft((d) => ({ ...d, full_name: e.target.value }))}
-                    />
-                  </label>
-                  <label className="field">
-                    <span>Email</span>
-                    <input
-                      type="email"
-                      value={editDraft.email}
-                      onChange={(e) => setEditDraft((d) => ({ ...d, email: e.target.value }))}
-                    />
-                  </label>
-                  <label className="field">
-                    <span>Phone</span>
-                    <input
-                      value={editDraft.phone_number}
-                      onChange={(e) => setEditDraft((d) => ({ ...d, phone_number: e.target.value }))}
-                    />
-                  </label>
+              ))}
+            </div>
+
+            {/* Document previews */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
+              {[
+                { title: "Citizenship document", preview: docPreview, provided: !!detail.document_uploaded_at, icon: FileText },
+                { title: "Face verification", preview: facePreview, provided: !!detail.face_uploaded_at, icon: Camera },
+              ].map(({ title, preview, provided, icon: Icon }) => (
+                <div key={title} style={{
+                  background: T.surfaceAlt, borderRadius: T.radius.lg, padding: 16,
+                  border: `1px solid ${T.border}`, minHeight: 240,
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <Icon size={15} color={T.muted} />
+                      <h4 style={{ margin: 0, fontSize: 13, fontWeight: 700, color: T.text }}>{title}</h4>
+                    </div>
+                    <Badge label={provided ? "Provided" : "Missing"} />
+                  </div>
+                  {preview ? (
+                    <img src={preview} alt={title} style={{
+                      width: "100%", borderRadius: T.radius.md, objectFit: "contain",
+                      background: T.surface, maxHeight: 280, border: `1px solid ${T.border}`,
+                    }} />
+                  ) : (
+                    <div style={{
+                      background: T.surface, border: `2px dashed ${T.border}`,
+                      borderRadius: T.radius.md, padding: 24, textAlign: "center",
+                      color: T.muted, fontSize: 13,
+                    }}>No {title.toLowerCase()} available</div>
+                  )}
                 </div>
-                <div className="edit-actions">
-                  <button className="ghost-button" onClick={() => onEditStart(null)}>
-                    Cancel
-                  </button>
-                  <button className="primary-button" onClick={onSaveEdit}>
-                    Save changes
-                  </button>
+              ))}
+            </div>
+
+            {/* Action bar */}
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {iconBtn(Edit3, "Edit", onEditStart)}
+                {iconBtn(Mail, "Resend Email", onResendVerification)}
+                {iconBtn(KeyRound, "Reset PW", onResetPassword)}
+                {iconBtn(RotateCcw, "Reset TOTP", onResetTotp)}
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {iconBtn(XCircle, "Reject", onReject, T.error)}
+                <button onClick={() => onApprove(detail)} style={{
+                  border: "none", background: T.accent, color: "#fff",
+                  borderRadius: T.radius.md, padding: "9px 18px", fontSize: 13,
+                  fontWeight: 700, cursor: "pointer", display: "inline-flex",
+                  alignItems: "center", gap: 6, transition: T.transition, boxShadow: T.shadow.md,
+                }}><CheckCircle2 size={14} />Approve Voter</button>
+              </div>
+            </div>
+
+            {/* Edit card */}
+            {editing && (
+              <div style={{
+                background: T.surface, borderRadius: T.radius.lg,
+                border: `2px solid ${T.border}`, padding: "16px 18px",
+                boxShadow: T.shadow.md,
+              }}>
+                <div style={{ marginBottom: 14 }}>
+                  <h4 style={{ margin: "0 0 2px", fontSize: 15, fontWeight: 800, color: T.text }}>Edit voter</h4>
+                  <p style={{ margin: 0, fontSize: 13, color: T.muted }}>Only safe profile fields are editable.</p>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12 }}>
+                  {[
+                    { label: "Full name", key: "full_name", type: "text" },
+                    { label: "Email", key: "email", type: "email" },
+                    { label: "Phone", key: "phone_number", type: "text" },
+                  ].map(({ label, key, type }) => (
+                    <div key={key} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      <label style={{ fontSize: 12, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>{label}</label>
+                      <input type={type} value={editDraft[key]}
+                        onChange={(e) => setEditDraft((d) => ({ ...d, [key]: e.target.value }))}
+                        style={inputStyle}
+                        onFocus={e => { e.target.style.borderColor = T.accent; e.target.style.boxShadow = T.focusRing; }}
+                        onBlur={e => { e.target.style.borderColor = T.border; e.target.style.boxShadow = "none"; }} />
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 14 }}>
+                  <button onClick={() => onEditStart(null)} style={{
+                    border: `1px solid ${T.border}`, background: T.surface,
+                    borderRadius: T.radius.md, padding: "8px 16px", fontSize: 13,
+                    fontWeight: 700, cursor: "pointer", color: T.text,
+                  }}>Cancel</button>
+                  <button onClick={onSaveEdit} style={{
+                    border: "none", background: T.accent, color: "#fff",
+                    borderRadius: T.radius.md, padding: "8px 18px", fontSize: 13,
+                    fontWeight: 700, cursor: "pointer", boxShadow: T.shadow.md,
+                  }}>Save changes</button>
                 </div>
               </div>
             )}
-          </div>
-        )}
+          </>)}
+        </div>
       </div>
     </div>
   );
@@ -847,290 +983,425 @@ export default function ManageVotersDashboard() {
     }
   }
 
+  /* ── KPI config ──────────────────────────────────────────── */
+  const KPI = [
+    { label: "Total Voters", value: total, icon: Users, accent: T.navy, bg: "#EBF2FF" },
+    { label: "Pending Registrations", value: pendingRegs.length, icon: Clock, accent: "#D97706", bg: "#FFFBEB" },
+    { label: "Approved", value: stats[2]?.value ?? 0, icon: UserCheck, accent: T.success, bg: T.successBg },
+    { label: "Rejected", value: stats[3]?.value ?? 0, icon: UserX, accent: T.error, bg: T.errorBg },
+    { label: "Suspended", value: stats[4]?.value ?? 0, icon: Ban, accent: T.accent, bg: T.accentLight },
+  ];
+
+  /* ── Filter chip config ────────────────────────────────── */
+  const APPROVAL_CHIPS = [
+    { label: "All", value: "all" },
+    { label: "Pending", value: "Pending" },
+    { label: "Approved", value: "Approved" },
+    { label: "Rejected", value: "Rejected" },
+  ];
+
   return (
-    <div className="manage-voters-page">
-      <div className="manage-voters-container">
-        <div className="page-header">
-          <div>
-            <h1>Voters Registry</h1>
-            <p className="subtitle">Search, review, and manage official registered voter profiles.</p>
+    <PageContainer>
+      <AdminKeyframes />
+      <style>{`
+        @keyframes drawerIn { from { opacity:0; transform:scale(0.95) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        @keyframes shimmer { 0% { background-position:200% 0; } 100% { background-position:-200% 0; } }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes slideUpFade { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+      `}</style>
+
+      <div style={{ width: "min(1260px, 100%)", margin: "0 auto", padding: "0 24px 40px" }}>
+        {/* ── Page header ─────────────────────────────────────── */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div style={{
+              width: 48, height: 48, borderRadius: T.radius.lg, display: "flex",
+              alignItems: "center", justifyContent: "center",
+              background: `linear-gradient(135deg, ${T.accent}18, ${T.accent}08)`,
+              border: `1.5px solid ${T.accent}30`,
+            }}><Users size={22} color={T.accent} /></div>
+            <div>
+              <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: T.text, letterSpacing: "-0.02em" }}>
+                Voters Registry
+              </h1>
+              <p style={{ margin: "2px 0 0", color: T.muted, fontSize: 14, fontWeight: 500 }}>
+                Search, review, and manage official registered voter profiles.
+              </p>
+            </div>
           </div>
-          <div className="header-actions">
-            <button className="ghost-button" onClick={handleRefresh}>
-              Refresh Data
-            </button>
-          </div>
+          <button onClick={handleRefresh} style={{
+            border: `1px solid ${T.border}`, background: T.surface,
+            borderRadius: T.radius.md, padding: "9px 16px", fontSize: 13,
+            fontWeight: 700, cursor: "pointer", color: T.text,
+            display: "inline-flex", alignItems: "center", gap: 7,
+            transition: T.transition, boxShadow: T.shadow.sm,
+          }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = T.borderHover; e.currentTarget.style.boxShadow = T.shadow.md; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = T.border; e.currentTarget.style.boxShadow = T.shadow.sm; }}
+          ><RefreshCw size={14} />Refresh Data</button>
         </div>
 
-        <div className="stats-grid">
-          {stats.map((card) => (
-            <div key={card.label} className={`stat-card tone-${card.tone}`}>
-              <span className="stat-label">{card.label}</span>
-              <span className="stat-value">{card.value.toLocaleString()}</span>
+        {/* ── KPI strip ──────────────────────────────────────── */}
+        <div style={{
+          display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+          gap: 14, marginBottom: 22,
+        }}>
+          {KPI.map(({ label, value, icon: Icon, accent, bg }) => (
+            <div key={label} style={{
+              background: T.surface, borderRadius: T.radius.lg, padding: "16px 18px",
+              border: `1px solid ${T.border}`, borderLeft: `4px solid ${accent}`,
+              boxShadow: T.shadow.sm, display: "flex", alignItems: "center", gap: 14,
+              transition: T.transition,
+            }}>
+              <div style={{
+                width: 38, height: 38, borderRadius: "50%", display: "flex",
+                alignItems: "center", justifyContent: "center",
+                background: bg, flexShrink: 0,
+              }}><Icon size={18} color={accent} /></div>
+              <div>
+                <div style={{
+                  fontSize: 11, fontWeight: 700, color: T.muted, textTransform: "uppercase",
+                  letterSpacing: "0.04em", marginBottom: 2,
+                }}>{label}</div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: T.text, lineHeight: 1 }}>
+                  {value.toLocaleString()}
+                </div>
+              </div>
             </div>
           ))}
         </div>
 
-        {/* ── Pending Registrations Section ───────────────────── */}
+        {/* ── Pending registrations ──────────────────────────── */}
         {pendingRegs.length > 0 && (
-          <div className="card-surface" style={{ marginBottom: "20px", borderRadius: "10px", border: "1px solid #fbbf24", overflow: "hidden" }}>
-            <div style={{ background: "#fffbeb", padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #fde68a" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <span style={{ fontSize: "18px" }}>⏳</span>
+          <div style={{
+            background: T.surface, borderRadius: T.radius.xl,
+            border: `1px solid #FDE68A`, marginBottom: 22, overflow: "hidden",
+            boxShadow: T.shadow.sm,
+          }}>
+            <div style={{
+              background: "#FFFBEB", padding: "14px 20px", display: "flex",
+              justifyContent: "space-between", alignItems: "center",
+              borderBottom: "1px solid #FDE68A",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{
+                  width: 32, height: 32, borderRadius: "50%", display: "flex",
+                  alignItems: "center", justifyContent: "center", background: "#FEF3C7",
+                }}><Clock size={16} color="#D97706" /></div>
                 <div>
-                  <span style={{ fontWeight: 700, fontSize: "14px", color: "#92400e" }}>Pending Registrations</span>
-                  <span style={{ marginLeft: "8px", fontSize: "12px", fontWeight: 600, background: "#fde68a", color: "#92400e", padding: "2px 8px", borderRadius: "9999px" }}>{pendingRegs.length}</span>
+                  <span style={{ fontWeight: 700, fontSize: 14, color: "#92400E" }}>Pending Registrations</span>
+                  <span style={{
+                    marginLeft: 8, fontSize: 11, fontWeight: 700,
+                    background: "#FDE68A", color: "#92400E",
+                    padding: "2px 8px", borderRadius: 999,
+                  }}>{pendingRegs.length}</span>
                 </div>
               </div>
-              <button className="ghost-button" onClick={fetchPendingRegs} disabled={pendingLoading} style={{ fontSize: "12px" }}>
-                {pendingLoading ? "Loading…" : "Refresh"}
-              </button>
+              <button onClick={fetchPendingRegs} disabled={pendingLoading} style={{
+                border: `1px solid #FDE68A`, background: "#FFFBEB",
+                borderRadius: T.radius.md, padding: "6px 12px", fontSize: 12,
+                fontWeight: 700, cursor: "pointer", color: "#92400E",
+                display: "inline-flex", alignItems: "center", gap: 6,
+              }}><RefreshCw size={12} />{pendingLoading ? "Loading…" : "Refresh"}</button>
             </div>
-            <table className="voters-table" style={{ marginBottom: 0 }}>
-              <thead>
-                <tr>
-                  <th>Voter</th>
-                  <th>Citizenship ID</th>
-                  <th>Documents</th>
-                  <th>Submitted</th>
-                  <th>Status</th>
-                  <th style={{ textAlign: "right" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pendingRegs.map((reg) => (
-                  <tr key={`pending-${reg.id}`}>
-                    <td>
-                      <div className="cell-primary">{reg.full_name}</div>
-                      <div className="cell-sub">{reg.email}</div>
-                    </td>
-                    <td>{reg.citizenship_no_normalized || reg.citizenship_no_raw || "—"}</td>
-                    <td>
-                      <div className="pill-stack">
-                        <Badge label={reg.document_uploaded_at ? "Doc ✓" : "Doc ✗"} />
-                        <Badge label={reg.face_uploaded_at ? "Face ✓" : "Face ✗"} />
-                      </div>
-                    </td>
-                    <td>{fmtDate(reg.submitted_at)}</td>
-                    <td><Badge label="Pending" /></td>
-                    <td style={{ textAlign: "right" }}>
-                      <div style={{ display: "flex", gap: "6px", justifyContent: "flex-end" }}>
-                        <button className="ghost-button" style={{ fontSize: "12px", padding: "4px 10px" }}
-                          onClick={() => loadDetails(reg.id)}>
-                          Review
-                        </button>
-                        {reg.document_uploaded_at && reg.face_uploaded_at && (
-                          <button className="primary-button" style={{ fontSize: "12px", padding: "4px 10px" }}
-                            onClick={() => handleAction("Approve", reg.id)}>
-                            Approve
-                          </button>
-                        )}
-                        <button className="ghost-button" style={{ fontSize: "12px", padding: "4px 10px", color: "#DC2626" }}
-                          onClick={() => handleAction("Reject", reg.id)}>
-                          Reject
-                        </button>
-                      </div>
-                    </td>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0 }}>
+                <thead>
+                  <tr>
+                    {["Voter", "Citizenship ID", "Documents", "Submitted", "Status", "Actions"].map(h => (
+                      <th key={h} style={{
+                        background: T.surfaceAlt, color: T.muted, fontSize: 11, fontWeight: 700,
+                        textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 16px",
+                        borderBottom: `1px solid ${T.border}`, textAlign: h === "Actions" ? "right" : "left",
+                      }}>{h}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {pendingRegs.map((reg) => (
+                    <tr key={`pending-${reg.id}`}>
+                      <td style={{ padding: "12px 16px", borderBottom: `1px solid ${T.borderLight}` }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <AvatarCircle name={reg.full_name} />
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: 13.5, color: T.text }}>{reg.full_name}</div>
+                            <div style={{ fontSize: 12, color: T.muted }}>{reg.email}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td style={{ padding: "12px 16px", borderBottom: `1px solid ${T.borderLight}` }}>
+                        <code style={{
+                          background: T.surfaceAlt, padding: "2px 8px", borderRadius: T.radius.sm,
+                          fontSize: 12, fontWeight: 600, color: T.textSecondary,
+                          border: `1px solid ${T.borderLight}`,
+                        }}>{reg.citizenship_no_normalized || reg.citizenship_no_raw || "—"}</code>
+                      </td>
+                      <td style={{ padding: "12px 16px", borderBottom: `1px solid ${T.borderLight}` }}>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                          <Badge label={reg.document_uploaded_at ? "Verified" : "Unverified"} />
+                          <Badge label={reg.face_uploaded_at ? "Verified" : "Unverified"} />
+                        </div>
+                      </td>
+                      <td style={{ padding: "12px 16px", borderBottom: `1px solid ${T.borderLight}`, fontSize: 13, color: T.textSecondary }}>{fmtDate(reg.submitted_at)}</td>
+                      <td style={{ padding: "12px 16px", borderBottom: `1px solid ${T.borderLight}` }}><Badge label="Pending" /></td>
+                      <td style={{ padding: "12px 16px", borderBottom: `1px solid ${T.borderLight}`, textAlign: "right" }}>
+                        <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                          <button onClick={() => loadDetails(reg.id)} style={{
+                            border: `1px solid ${T.border}`, background: T.surface,
+                            borderRadius: T.radius.sm, padding: "5px 10px", fontSize: 12,
+                            fontWeight: 600, cursor: "pointer", color: T.textSecondary,
+                            display: "inline-flex", alignItems: "center", gap: 4,
+                          }}><Eye size={12} />Review</button>
+                          {reg.document_uploaded_at && reg.face_uploaded_at && (
+                            <button onClick={() => handleAction("Approve", reg.id)} style={{
+                              border: "none", background: T.accent, color: "#fff",
+                              borderRadius: T.radius.sm, padding: "5px 10px", fontSize: 12,
+                              fontWeight: 600, cursor: "pointer",
+                            }}>Approve</button>
+                          )}
+                          <button onClick={() => handleAction("Reject", reg.id)} style={{
+                            border: `1px solid ${T.errorBorder}`, background: T.errorBg,
+                            borderRadius: T.radius.sm, padding: "5px 10px", fontSize: 12,
+                            fontWeight: 600, cursor: "pointer", color: T.error,
+                          }}>Reject</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
-        <div className="toolbar card-surface">
-          <div className="toolbar-head">
-            <div className="search-box">
+        {/* ── Search & filter bar ────────────────────────────── */}
+        <div style={{
+          background: T.surface, borderRadius: T.radius.xl, padding: 20,
+          border: `1px solid ${T.border}`, boxShadow: T.shadow.sm,
+          marginBottom: 22, display: "flex", flexDirection: "column", gap: 16,
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+            {/* Search */}
+            <div style={{ flex: 1, minWidth: 260, position: "relative" }}>
+              <Search size={16} color={T.muted} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }} />
               <input
                 type="search"
                 placeholder="Search by name, email, or citizenship ID..."
                 value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                style={{
+                  width: "100%", padding: "11px 12px 11px 38px",
+                  borderRadius: T.radius.md, border: `1.5px solid ${T.border}`,
+                  background: T.surfaceAlt, fontSize: 14, outline: "none",
+                  transition: T.transition,
                 }}
+                onFocus={e => { e.target.style.borderColor = T.accent; e.target.style.boxShadow = T.focusRing; e.target.style.background = T.surface; }}
+                onBlur={e => { e.target.style.borderColor = T.border; e.target.style.boxShadow = "none"; e.target.style.background = T.surfaceAlt; }}
               />
             </div>
-            <button className="ghost-button" onClick={handleResetFilters}>
-              Reset Filters
-            </button>
+            <button onClick={handleResetFilters} style={{
+              border: `1px solid ${T.border}`, background: T.surface,
+              borderRadius: T.radius.md, padding: "9px 14px", fontSize: 13,
+              fontWeight: 600, cursor: "pointer", color: T.muted,
+              display: "inline-flex", alignItems: "center", gap: 6,
+              transition: T.transition,
+            }}><Filter size={13} />Reset Filters</button>
           </div>
 
-          <div className="filters">
-            <div className="filter-group">
-              <label>Approval</label>
-              <select
-                value={approval}
-                onChange={(e) => {
-                  setApproval(e.target.value);
-                  setPage(1);
-                }}
-              >
-                <option value="all">All Statuses</option>
-                <option value="Pending">Pending</option>
-                <option value="Approved">Approved</option>
-                <option value="Rejected">Rejected</option>
-              </select>
-            </div>
-            <div className="filter-group">
-              <label>Identity</label>
-              <select
-                value={faceStatus}
-                onChange={(e) => {
-                  setFaceStatus(e.target.value);
-                  setPage(1);
-                }}
-              >
-                <option value="all">Face Status</option>
-                <option value="verified">Verified</option>
-                <option value="unverified">Unverified</option>
-              </select>
-            </div>
-            <div className="filter-group">
-              <label>Email</label>
-              <select
-                value={emailStatus}
-                onChange={(e) => {
-                  setEmailStatus(e.target.value);
-                  setPage(1);
-                }}
-              >
-                <option value="all">Email Status</option>
-                <option value="verified">Verified</option>
-                <option value="unverified">Unverified</option>
-              </select>
-            </div>
-            <div className="filter-group">
-              <label>Account</label>
-              <select
-                value={accountStatus}
-                onChange={(e) => {
-                  setAccountStatus(e.target.value);
-                  setPage(1);
-                }}
-              >
-                <option value="all">Account Status</option>
-                <option value="Active">Active</option>
-                <option value="Suspended">Suspended</option>
-                <option value="Rejected">Rejected</option>
-                <option value="Pending">Pending</option>
-              </select>
-            </div>
-            <div className="filter-group">
-              <label>Sort By</label>
-              <select value={sortKey} onChange={(e) => setSortKey(e.target.value)}>
-                <option value="registeredAt">Registration Date</option>
-                <option value="name">Full Name</option>
-              </select>
-            </div>
+          {/* Approval status chips */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: "0.04em", marginRight: 4 }}>Status</span>
+            {APPROVAL_CHIPS.map(c => {
+              const active = approval === c.value;
+              return (
+                <button key={c.value} onClick={() => { setApproval(c.value); setPage(1); }}
+                  style={{
+                    border: `1.5px solid ${active ? T.accent : T.border}`,
+                    background: active ? T.accentLight : T.surface,
+                    color: active ? T.accent : T.textSecondary,
+                    borderRadius: 999, padding: "5px 14px", fontSize: 12.5,
+                    fontWeight: 700, cursor: "pointer", transition: T.transition,
+                  }}>{c.label}</button>
+              );
+            })}
+          </div>
+
+          {/* Additional filters row */}
+          <div style={{
+            display: "flex", flexWrap: "wrap", gap: 14,
+            borderTop: `1px solid ${T.borderLight}`, paddingTop: 14,
+          }}>
+            {[
+              { label: "Identity", value: faceStatus, setter: setFaceStatus, opts: [["all","Face Status"],["verified","Verified"],["unverified","Unverified"]] },
+              { label: "Email", value: emailStatus, setter: setEmailStatus, opts: [["all","Email Status"],["verified","Verified"],["unverified","Unverified"]] },
+              { label: "Account", value: accountStatus, setter: setAccountStatus, opts: [["all","Account Status"],["Active","Active"],["Suspended","Suspended"],["Rejected","Rejected"],["Pending","Pending"]] },
+              { label: "Sort By", value: sortKey, setter: setSortKey, opts: [["registeredAt","Registration Date"],["name","Full Name"]] },
+            ].map(({ label, value, setter, opts }) => (
+              <div key={label} style={{ display: "flex", flexDirection: "column", gap: 5, flex: 1, minWidth: 140 }}>
+                <label style={{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>{label}</label>
+                <select value={value} onChange={(e) => { setter(e.target.value); if (label !== "Sort By") setPage(1); }}
+                  style={{
+                    border: `1.5px solid ${T.border}`, borderRadius: T.radius.md,
+                    padding: "8px 12px", background: T.surface, fontSize: 13,
+                    color: T.text, fontWeight: 600, cursor: "pointer", outline: "none",
+                    transition: T.transition,
+                  }}
+                  onFocus={e => { e.target.style.borderColor = T.accent; }}
+                  onBlur={e => { e.target.style.borderColor = T.border; }}
+                >
+                  {opts.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                </select>
+              </div>
+            ))}
           </div>
         </div>
 
+      {/* ── Bulk action bar ──────────────────────────────────── */}
       {selectedCount > 0 && (
-        <div className="bulk-bar">
-          <div className="bulk-meta">{selectedCount} selected</div>
-          <div className="bulk-actions">
-            <button className="ghost-button" onClick={() => openBulkDialog("approve")}>
-              Bulk approve
-            </button>
-            <button className="ghost-button" onClick={() => openBulkDialog("reject")}>
-              Bulk reject
-            </button>
-            <button className="ghost-button" onClick={() => openBulkDialog("suspend")}>
-              Bulk suspend
-            </button>
-            <button className="ghost-button" onClick={() => openBulkDialog("reactivate")}>
-              Bulk reactivate
-            </button>
-            <button className="ghost-button" onClick={() => openBulkDialog("deactivate")}>
-              Bulk deactivate
-            </button>
+        <div style={{
+          background: T.navy, color: "#fff", padding: "12px 18px",
+          borderRadius: T.radius.lg, display: "flex", justifyContent: "space-between",
+          alignItems: "center", gap: 16, marginBottom: 16,
+          boxShadow: "0 4px 14px rgba(23,59,114,0.2)",
+        }}>
+          <div style={{ fontWeight: 800, fontSize: 13 }}>{selectedCount} selected</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {["approve","reject","suspend","reactivate","deactivate"].map(a => (
+              <button key={a} onClick={() => openBulkDialog(a)} style={{
+                border: "1px solid rgba(255,255,255,0.25)", background: "rgba(255,255,255,0.1)",
+                borderRadius: T.radius.md, padding: "6px 13px", fontSize: 12,
+                fontWeight: 700, color: "#fff", cursor: "pointer", transition: T.transition,
+                textTransform: "capitalize",
+              }}
+                onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.2)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
+              >Bulk {a}</button>
+            ))}
           </div>
         </div>
       )}
 
-      <div className="table-card card-surface">
+      {/* ── Data table card ─────────────────────────────────── */}
+      <div style={{
+        background: T.surface, borderRadius: T.radius.xl, position: "relative",
+        border: `1px solid ${T.border}`, boxShadow: T.shadow.sm, overflow: "hidden",
+      }}>
+        {/* Loading overlay */}
         {loading && (
-          <div className="table-loading">
-            <div className="spinner" />
-            <p>Loading voters… please wait</p>
+          <div style={{
+            position: "absolute", inset: 0, background: "rgba(255,255,255,0.88)",
+            display: "flex", flexDirection: "column", gap: 10,
+            alignItems: "center", justifyContent: "center", zIndex: 5,
+          }}>
+            <div style={{
+              width: 28, height: 28, borderRadius: "50%",
+              border: `3px solid ${T.border}`, borderTopColor: T.accent,
+              animation: "spin 0.9s linear infinite",
+            }} />
+            <p style={{ margin: 0, color: T.muted, fontWeight: 600, fontSize: 13 }}>Loading voters… please wait</p>
           </div>
         )}
-        <div className="desktop-table-wrap">
-          <table className="voters-table">
+
+        {/* Desktop table */}
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0 }}>
             <thead>
               <tr>
-                <th>
-                  <input type="checkbox" checked={allOnPageSelected} onChange={toggleSelectAllOnPage} />
+                <th style={{ ...thStyle, width: 44, paddingLeft: 16 }}>
+                  <input type="checkbox" checked={allOnPageSelected} onChange={toggleSelectAllOnPage}
+                    style={{ width: 16, height: 16, accentColor: T.accent, cursor: "pointer" }} />
                 </th>
-                <th>Voter</th>
-                <th>Citizenship ID</th>
-                <th>Status</th>
-                <th>Verification</th>
-                <th>Voting Status</th>
-                <th>Registered</th>
-                <th>Actions</th>
+                {["Voter", "Citizenship ID", "Status", "Verification", "Voting", "Registered", "Actions"].map(h => (
+                  <th key={h} style={{ ...thStyle, textAlign: h === "Actions" ? "right" : "left" }}>{h}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {loading && items.length === 0 &&
                 Array.from({ length: 6 }).map((_, idx) => (
-                  <tr key={`skeleton-${idx}`} className="skeleton-row">
-                    <td colSpan={8}>
-                      <div className="skeleton-line" />
+                  <tr key={`skeleton-${idx}`}>
+                    <td colSpan={8} style={{ padding: "14px 16px", borderBottom: `1px solid ${T.borderLight}` }}>
+                      <div style={{
+                        height: 14, borderRadius: T.radius.sm,
+                        background: `linear-gradient(90deg, ${T.border} 0%, ${T.surfaceAlt} 50%, ${T.border} 100%)`,
+                        backgroundSize: "200% 100%", animation: "shimmer 1.2s ease-in-out infinite",
+                      }} />
                     </td>
                   </tr>
                 ))}
               {error ? (
                 <tr>
-                  <td colSpan={8} className="empty-cell">
-                    <div className="empty-state">
-                      <p className="empty-title">Could not load voters</p>
-                      <p className="empty-subtitle">{error}</p>
+                  <td colSpan={8} style={{ padding: 32, textAlign: "center" }}>
+                    <div style={{
+                      display: "inline-block", padding: "20px 28px", borderRadius: T.radius.lg,
+                      border: `2px dashed ${T.border}`, background: T.surface,
+                    }}>
+                      <AlertTriangle size={24} color={T.error} style={{ marginBottom: 8 }} />
+                      <p style={{ margin: "0 0 4px", fontWeight: 800, color: T.text }}>Could not load voters</p>
+                      <p style={{ margin: 0, color: T.muted, fontSize: 13 }}>{error}</p>
                     </div>
                   </td>
                 </tr>
               ) : items.length === 0 && !loading ? (
                 <tr>
-                  <td colSpan={8} className="empty-cell">
-                    <div className="empty-state">
-                      <p className="empty-title">No voters match your filters</p>
-                      <p className="empty-subtitle">Adjust filters or refresh once data is connected.</p>
+                  <td colSpan={8} style={{ padding: 32, textAlign: "center" }}>
+                    <div style={{
+                      display: "inline-block", padding: "20px 28px", borderRadius: T.radius.lg,
+                      border: `2px dashed ${T.border}`, background: T.surface,
+                    }}>
+                      <Users size={24} color={T.muted} style={{ marginBottom: 8 }} />
+                      <p style={{ margin: "0 0 4px", fontWeight: 800, color: T.text }}>No voters match your filters</p>
+                      <p style={{ margin: 0, color: T.muted, fontSize: 13 }}>Adjust filters or refresh once data is connected.</p>
                     </div>
                   </td>
                 </tr>
               ) : (
-                items.map((v) => (
-                  <tr key={v.id}>
-                    <td>
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.has(v.id)}
-                        onChange={() => toggleSelect(v.id)}
-                        aria-label="Select voter"
-                      />
+                items.map((v, idx) => (
+                  <tr key={v.id} style={{
+                    background: idx % 2 === 0 ? T.surface : T.surfaceAlt,
+                    transition: T.transitionFast,
+                  }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "#F0F4FF"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = idx % 2 === 0 ? T.surface : T.surfaceAlt; }}
+                  >
+                    <td style={{ ...tdStyle, paddingLeft: 16 }}>
+                      <input type="checkbox" checked={selectedIds.has(v.id)}
+                        onChange={() => toggleSelect(v.id)} aria-label="Select voter"
+                        style={{ width: 16, height: 16, accentColor: T.accent, cursor: "pointer" }} />
                     </td>
-                    <td>
-                      <div className="cell-primary">{v.name}</div>
-                      <div className="cell-sub">{v.email}</div>
-                      <div className="cell-sub">ID #{v.id} · {v.phone}</div>
+                    <td style={tdStyle}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <AvatarCircle name={v.name} />
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: 13.5, color: T.text }}>{v.name}</div>
+                          <div style={{ fontSize: 12, color: T.muted }}>{v.email}</div>
+                          <div style={{ fontSize: 11, color: T.subtle }}>ID #{v.id} · {v.phone}</div>
+                        </div>
+                      </div>
                     </td>
-                    <td>{v.citizenshipId}</td>
-                    <td>
-                      <div className="pill-stack">
+                    <td style={tdStyle}>
+                      <code style={{
+                        background: T.surfaceAlt, padding: "2px 8px", borderRadius: T.radius.sm,
+                        fontSize: 12, fontWeight: 600, color: T.textSecondary,
+                        border: `1px solid ${T.borderLight}`,
+                      }}>{v.citizenshipId}</code>
+                    </td>
+                    <td style={tdStyle}>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
                         <Badge label={v.approvalStatus} />
                         <Badge label={v.accountStatus} />
                       </div>
                     </td>
-                    <td>
-                      <div className="pill-stack">
+                    <td style={tdStyle}>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
                         <Badge label={v.emailVerified ? "Verified" : "Unverified"} />
                         <Badge label={v.faceVerified ? "Verified" : "Unverified"} />
                       </div>
                     </td>
-                    <td><Badge label={v.votingStatus} /></td>
-                    <td>{fmtDate(v.registeredAt)}</td>
-                    <td>
+                    <td style={tdStyle}><Badge label={v.votingStatus} /></td>
+                    <td style={{ ...tdStyle, fontSize: 13, color: T.textSecondary }}>{fmtDate(v.registeredAt)}</td>
+                    <td style={{ ...tdStyle, textAlign: "right" }}>
                       <ActionMenu voterId={v.id} onAction={handleAction} />
                     </td>
                   </tr>
@@ -1140,122 +1411,59 @@ export default function ManageVotersDashboard() {
           </table>
         </div>
 
-        <div className="mobile-voters-list">
-          {error ? (
-            <div className="empty-cell">
-              <div className="empty-state">
-                <p className="empty-title">Could not load voters</p>
-                <p className="empty-subtitle">{error}</p>
-              </div>
-            </div>
-          ) : items.length === 0 && !loading ? (
-            <div className="empty-cell">
-              <div className="empty-state">
-                <p className="empty-title">No voters match your filters</p>
-                <p className="empty-subtitle">Adjust filters or refresh once data is connected.</p>
-              </div>
-            </div>
-          ) : (
-            items.map((v) => (
-              <article key={`mobile-${v.id}`} className="voter-mobile-card">
-                <div className="voter-mobile-top">
-                  <label className="mobile-select">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(v.id)}
-                      onChange={() => toggleSelect(v.id)}
-                      aria-label="Select voter"
-                    />
-                    <span>Select</span>
-                  </label>
-                  <ActionMenu voterId={v.id} onAction={handleAction} />
-                </div>
-
-                <div className="voter-mobile-name">{v.name}</div>
-                <div className="voter-mobile-meta">ID #{v.id} · {v.citizenshipId}</div>
-                <div className="voter-mobile-meta">{v.email}</div>
-                <div className="voter-mobile-meta">{v.phone}</div>
-
-                <div className="voter-mobile-section">
-                  <span className="mobile-label">Status</span>
-                  <div className="pill-stack">
-                    <Badge label={v.approvalStatus} />
-                    <Badge label={v.accountStatus} />
-                  </div>
-                </div>
-
-                <div className="voter-mobile-section">
-                  <span className="mobile-label">Verification</span>
-                  <div className="pill-stack">
-                    <Badge label={v.emailVerified ? "Verified" : "Unverified"} />
-                    <Badge label={v.faceVerified ? "Verified" : "Unverified"} />
-                  </div>
-                </div>
-
-                <div className="voter-mobile-bottom">
-                  <Badge label={v.votingStatus} />
-                  <span>{fmtDate(v.registeredAt)}</span>
-                </div>
-              </article>
-            ))
-          )}
-        </div>
-
-        <div className="table-footer">
-          <div className="footer-meta">
-            Showing {rangeStart}-{rangeEnd} of {total} voters
+        {/* ── Premium pagination footer ────────────────────── */}
+        <div style={{
+          display: "flex", justifyContent: "space-between", alignItems: "center",
+          padding: "12px 18px", borderTop: `1px solid ${T.borderLight}`,
+          background: T.surfaceAlt, flexWrap: "wrap", gap: 10,
+        }}>
+          <div style={{ color: T.muted, fontSize: 12.5, fontWeight: 700 }}>
+            Showing {rangeStart}–{rangeEnd} of {total} voters
           </div>
-          <div className="pagination-area">
-            <label className="page-size-control">
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <label style={{ display: "inline-flex", alignItems: "center", gap: 6, color: T.muted, fontSize: 12, fontWeight: 700 }}>
               Rows
-              <select
-                value={pageSize}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value));
-                  setPage(1);
-                }}
-              >
-                <option value={8}>8</option>
-                <option value={12}>12</option>
-                <option value={20}>20</option>
-                <option value={40}>40</option>
+              <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                style={{
+                  border: `1.5px solid ${T.border}`, borderRadius: T.radius.sm,
+                  background: T.surface, padding: "5px 8px", fontSize: 13,
+                  fontWeight: 700, color: T.text, cursor: "pointer", outline: "none",
+                }}>
+                {[8, 12, 20, 40].map(n => <option key={n} value={n}>{n}</option>)}
               </select>
             </label>
-            <button
-              className="ghost-button"
-              disabled={currentPage === 1 || loading}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-            >
-              Prev
+            <button disabled={currentPage === 1 || loading} onClick={() => setPage(p => Math.max(1, p - 1))}
+              style={{ ...pageBtnStyle, opacity: currentPage === 1 ? 0.4 : 1 }}>
+              <ChevronLeft size={14} />
             </button>
-            <div className="pagination">
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
               {visiblePages.map((pageItem, idx) =>
                 pageItem === "…" ? (
-                  <span key={`dots-${idx}`} className="page-dots">…</span>
+                  <span key={`dots-${idx}`} style={{ color: T.muted, fontWeight: 700, padding: "0 3px" }}>…</span>
                 ) : (
-                  <button
-                    key={pageItem}
-                    className={`page-number ${pageItem === currentPage ? "active" : ""}`}
-                    onClick={() => setPage(pageItem)}
-                    disabled={loading}
-                  >
-                    {pageItem}
-                  </button>
+                  <button key={pageItem} onClick={() => setPage(pageItem)} disabled={loading}
+                    style={{
+                      ...pageBtnStyle,
+                      background: pageItem === currentPage ? T.accent : T.surface,
+                      color: pageItem === currentPage ? "#fff" : T.text,
+                      borderColor: pageItem === currentPage ? T.accent : T.border,
+                    }}>{pageItem}</button>
                 )
               )}
             </div>
-            <button
-              className="ghost-button"
-              disabled={currentPage === totalPages || loading}
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            >
-              Next
+            <button disabled={currentPage === totalPages || loading}
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              style={{ ...pageBtnStyle, opacity: currentPage === totalPages ? 0.4 : 1 }}>
+              <ChevronRight size={14} />
             </button>
-            <span className="page-indicator">Page {currentPage} of {totalPages}</span>
+            <span style={{ fontWeight: 700, color: T.text, fontSize: 12.5 }}>
+              Page {currentPage} of {totalPages}
+            </span>
           </div>
         </div>
       </div>
 
+      {/* ── Detail panel ────────────────────────────────────── */}
       {detailId && (
         <DetailPanel
           detail={detail}
@@ -1281,16 +1489,31 @@ export default function ManageVotersDashboard() {
         />
       )}
 
-      <ConfirmDialog
-        dialog={dialog}
-        onCancel={() => setDialog(null)}
-        onConfirm={handleDialogConfirm}
-        onReasonChange={handleDialogReason}
-        onPhraseChange={handleDialogPhrase}
-      />
-      <ConfirmDialog dialog={bulkDialog} onCancel={() => setBulkDialog(null)} onConfirm={confirmBulkAction} onReasonChange={(value) => setBulkDialog((d) => (d ? { ...d, reason: value } : d))} />
+      <ConfirmDialog dialog={dialog} onCancel={() => setDialog(null)} onConfirm={handleDialogConfirm}
+        onReasonChange={handleDialogReason} onPhraseChange={handleDialogPhrase} />
+      <ConfirmDialog dialog={bulkDialog} onCancel={() => setBulkDialog(null)} onConfirm={confirmBulkAction}
+        onReasonChange={(value) => setBulkDialog((d) => (d ? { ...d, reason: value } : d))} />
       <ToastStack toasts={toasts} onDismiss={handleDismissToast} />
       </div>
-    </div>
+    </PageContainer>
   );
 }
+
+/* ── Shared table styles ─────────────────────────────────────── */
+const thStyle = {
+  background: T.surfaceAlt, color: T.muted, fontSize: 11, fontWeight: 700,
+  textTransform: "uppercase", letterSpacing: "0.05em", padding: "11px 16px",
+  borderBottom: `1px solid ${T.border}`, position: "sticky", top: 0, zIndex: 5,
+  whiteSpace: "nowrap",
+};
+const tdStyle = {
+  padding: "14px 16px", borderBottom: `1px solid ${T.borderLight}`,
+  fontSize: 13.5, verticalAlign: "middle", color: T.text,
+};
+const pageBtnStyle = {
+  border: `1.5px solid ${T.border}`, background: T.surface,
+  color: T.text, minWidth: 30, height: 30, borderRadius: T.radius.sm,
+  fontSize: 13, fontWeight: 800, cursor: "pointer",
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  transition: T.transitionFast,
+};

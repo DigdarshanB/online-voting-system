@@ -1,15 +1,12 @@
 import React from 'react';
-import { tokens } from './tokens';
+import { T } from '../../../components/ui/tokens';
 
 const statusConfig = {
-  // Voter Statuses
-  PENDING_REVIEW: { background: tokens.status.warning.background, text: tokens.status.warning.text, label: "Pending Review" },
-  ACTIVE:         { background: tokens.status.success.background, text: tokens.status.success.text, label: "Verified" },
-  REJECTED:       { background: tokens.status.danger.background, text: tokens.status.danger.text, label: "Rejected" },
-  DISABLED:       { background: tokens.status.danger.background, text: tokens.status.danger.text, label: "Disabled" },
-
-  // Default
-  DEFAULT: { background: tokens.status.info.background, text: tokens.status.info.text, label: "Unknown" },
+  PENDING_REVIEW: { background: T.warnBg, text: T.warn, label: "Pending Review" },
+  ACTIVE:         { background: T.successBg, text: T.success, label: "Verified" },
+  REJECTED:       { background: T.errorBg, text: T.error, label: "Rejected" },
+  DISABLED:       { background: T.errorBg, text: T.error, label: "Disabled" },
+  DEFAULT:        { background: T.infoBg, text: T.info, label: "Unknown" },
 };
 
 export default function StatusPill({ status }) {

@@ -1,5 +1,6 @@
 import React from 'react';
 import { tokens } from './tokens';
+import { T } from '../../../components/ui/tokens';
 
 const containerStyle = {
   border: `1px solid ${tokens.cardBorder}`,

@@ -222,15 +222,40 @@ export default function VoterBallot() {
 
   const canVote = ballot.election_status === "POLLING_OPEN";
   const isLocal = ballot.government_level === "LOCAL";
-  const bothSelected = fptpChoice !== null && prChoice !== null;
-  const localReady =
-    localChoices.head !== null &&
-    localChoices.deputy_head !== null &&
-    localChoices.ward_chair !== null &&
-    localChoices.ward_woman_member !== null &&
-    localChoices.ward_dalit_woman_member !== null &&
-    localChoices.ward_member_open.length === 2;
-  const readyToVote = isLocal ? localReady : bothSelected;
+
+  // ── Generic undervote: ballot is always submittable ──
+  // Voters may leave any contest blank. The only structural requirement
+  // is that multi-seat selections don't exceed the allowed maximum.
+  // We validate max-selections per-contest; zero selections are valid.
+  const openContest = ballot.ward_member_open;
+  const openSeats = openContest?.seat_count || 2;
+  const openCandidates = openContest?.candidates?.length || 0;
+  const maxOpen = Math.min(openSeats, openCandidates);
+
+  // Count how many contests have a selection (for user awareness)
+  const localSelectionCount = isLocal
+    ? [
+        localChoices.head,
+        localChoices.deputy_head,
+        localChoices.ward_chair,
+        localChoices.ward_woman_member,
+        localChoices.ward_dalit_woman_member,
+      ].filter((v) => v !== null).length + localChoices.ward_member_open.length
+    : 0;
+  const localTotalContests = isLocal ? 6 : 0;
+  const dualSelectionCount = !isLocal
+    ? (fptpChoice !== null ? 1 : 0) + (prChoice !== null ? 1 : 0)
+    : 0;
+  const dualTotalContests = !isLocal ? 2 : 0;
+
+  const totalSelections = isLocal ? localSelectionCount : dualSelectionCount;
+  const totalContests = isLocal ? localTotalContests : dualTotalContests;
+  const hasAnySelection = totalSelections > 0;
+  const isPartialBallot = totalSelections > 0 && totalSelections < totalContests;
+  const isBlankBallot = totalSelections === 0;
+
+  // Ballot is always ready to submit — undervoting is allowed
+  const readyToVote = true;
 
   const selectedCandidate = ballot.fptp?.candidates?.find(
     (c) => c.nomination_id === fptpChoice
@@ -240,7 +265,10 @@ export default function VoterBallot() {
   );
 
   function setLocalChoice(key, nominationId) {
-    setLocalChoices((prev) => ({ ...prev, [key]: nominationId }));
+    setLocalChoices((prev) => ({
+      ...prev,
+      [key]: prev[key] === nominationId ? null : nominationId,
+    }));
   }
 
   function toggleOpenMember(nominationId) {
@@ -248,7 +276,7 @@ export default function VoterBallot() {
       const arr = prev.ward_member_open;
       if (arr.includes(nominationId))
         return { ...prev, ward_member_open: arr.filter((id) => id !== nominationId) };
-      if (arr.length >= 2) return prev;
+      if (arr.length >= maxOpen) return prev;
       return { ...prev, ward_member_open: [...arr, nominationId] };
     });
   }
@@ -273,7 +301,10 @@ export default function VoterBallot() {
             ward_dalit_woman_member_nomination_id: localChoices.ward_dalit_woman_member,
             ward_member_open_nomination_ids: localChoices.ward_member_open,
           }
-        : { fptp_nomination_id: fptpChoice, pr_party_id: prChoice };
+        : {
+            fptp_nomination_id: fptpChoice,
+            pr_party_id: prChoice,
+          };
       const res = await apiClient.post(url, payload);
       setCastResult(res.data);
       // Persist receipt for the VoterReceipt page
@@ -403,13 +434,19 @@ export default function VoterBallot() {
           ].map(({ key, color, bg }) => {
             const contest = ballot[key];
             if (!contest) return null;
-            const isMulti = (contest.seat_count || 1) > 1;
+            const seats = contest.seat_count || 1;
+            const available = contest.candidates?.length || 0;
+            const isMulti = seats > 1;
+            const maxSelect = isMulti ? Math.min(seats, available) : 1;
+            const currentCount = isMulti
+              ? localChoices.ward_member_open.length
+              : localChoices[key] !== null ? 1 : 0;
             return (
               <div key={key} style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, overflow: "hidden" }}>
                 <div style={{ background: color, color: "#fff", padding: "14px 20px" }}>
                   <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>{contest.contest_title}</h2>
                   <p style={{ fontSize: 11, opacity: 0.6, margin: "2px 0 0" }}>
-                    {isMulti ? `Select ${contest.seat_count} candidates` : "Select ONE candidate"}
+                    {isMulti ? `Select up to ${maxSelect} candidate${maxSelect !== 1 ? "s" : ""}` : "Select ONE candidate (optional)"}
                   </p>
                 </div>
                 <div style={{ padding: 16 }}>
@@ -420,7 +457,7 @@ export default function VoterBallot() {
                       const checked = isMulti
                         ? localChoices.ward_member_open.includes(c.nomination_id)
                         : localChoices[key] === c.nomination_id;
-                      const maxed = isMulti && localChoices.ward_member_open.length >= contest.seat_count && !checked;
+                      const maxed = isMulti && localChoices.ward_member_open.length >= maxSelect && !checked;
                       return (
                         <label
                           key={c.nomination_id}
@@ -531,7 +568,7 @@ export default function VoterBallot() {
                 margin: "2px 0 0",
               }}
             >
-              Select ONE candidate
+              Select ONE candidate (optional)
             </p>
           </div>
           <div style={{ padding: 16 }}>
@@ -574,7 +611,9 @@ export default function VoterBallot() {
                     value={c.nomination_id}
                     checked={fptpChoice === c.nomination_id}
                     onChange={() =>
-                      setFptpChoice(c.nomination_id)
+                      setFptpChoice((prev) =>
+                        prev === c.nomination_id ? null : c.nomination_id
+                      )
                     }
                     disabled={!canVote}
                     style={{
@@ -676,7 +715,7 @@ export default function VoterBallot() {
                 margin: "2px 0 0",
               }}
             >
-              Select ONE party
+              Select ONE party (optional)
             </p>
           </div>
           <div style={{ padding: 16 }}>
@@ -718,7 +757,11 @@ export default function VoterBallot() {
                     name="pr"
                     value={p.party_id}
                     checked={prChoice === p.party_id}
-                    onChange={() => setPrChoice(p.party_id)}
+                    onChange={() =>
+                      setPrChoice((prev) =>
+                        prev === p.party_id ? null : p.party_id
+                      )
+                    }
                     disabled={!canVote}
                     style={{
                       accentColor: "#7c3aed",
@@ -769,36 +812,62 @@ export default function VoterBallot() {
       {/* ── submit button ────────────────────────────── */}
       {canVote && (
         <div style={{ marginTop: 32, textAlign: "center" }}>
-          <button
-            onClick={handleCast}
-            disabled={!readyToVote || submitting}
-            style={{
-              padding: "14px 40px",
-              borderRadius: 10,
-              fontSize: 16,
-              fontWeight: 700,
-              background: readyToVote ? "#16a34a" : "#d1d5db",
-              color: readyToVote ? "#fff" : "#9ca3af",
-              border: "none",
-              cursor: readyToVote ? "pointer" : "not-allowed",
-              transition: "all 0.2s",
-            }}
-          >
-            {submitting ? "Casting…" : "Cast Your Ballot"}
-          </button>
-          {!readyToVote && (
-            <p
+          {isPartialBallot && (
+            <div
               style={{
-                color: "#94a3b8",
+                display: "inline-block",
+                padding: "10px 20px",
+                background: "#fefce8",
+                border: "1px solid #fde68a",
+                borderRadius: 8,
+                color: "#92400e",
                 fontSize: 13,
-                marginTop: 8,
+                fontWeight: 500,
+                marginBottom: 14,
+                maxWidth: 480,
               }}
             >
-              {isLocal
-                ? "Please make a selection for every contest to proceed."
-                : "Please select both an FPTP candidate and a PR party to proceed."}
-            </p>
+              You have left {totalContests - totalSelections} of {totalContests} contest{totalContests - totalSelections !== 1 ? "s" : ""} blank.
+              Blank contests will be submitted without a selection.
+            </div>
           )}
+          {isBlankBallot && (
+            <div
+              style={{
+                display: "inline-block",
+                padding: "10px 20px",
+                background: "#fef2f2",
+                border: "1px solid #fecaca",
+                borderRadius: 8,
+                color: "#991b1b",
+                fontSize: 13,
+                fontWeight: 500,
+                marginBottom: 14,
+                maxWidth: 480,
+              }}
+            >
+              You have not made any selections. Submitting will record a blank ballot.
+            </div>
+          )}
+          <div>
+            <button
+              onClick={handleCast}
+              disabled={submitting}
+              style={{
+                padding: "14px 40px",
+                borderRadius: 10,
+                fontSize: 16,
+                fontWeight: 700,
+                background: "#16a34a",
+                color: "#fff",
+                border: "none",
+                cursor: submitting ? "wait" : "pointer",
+                transition: "all 0.2s",
+              }}
+            >
+              {submitting ? "Casting…" : "Cast Your Ballot"}
+            </button>
+          </div>
         </div>
       )}
 
@@ -868,21 +937,33 @@ export default function VoterBallot() {
                   const contest = ballot[key];
                   if (!contest) return null;
                   const isMulti = (contest.seat_count || 1) > 1;
-                  const names = isMulti
-                    ? localChoices.ward_member_open.map(
-                        (id) => contest.candidates.find((x) => x.nomination_id === id)?.candidate_name || "?"
-                      )
-                    : [contest.candidates.find((x) => x.nomination_id === localChoices[key])?.candidate_name || "?"];
+                  const choiceVal = isMulti ? localChoices.ward_member_open : localChoices[key];
+                  const hasSelection = isMulti
+                    ? Array.isArray(choiceVal) && choiceVal.length > 0
+                    : choiceVal != null;
+                  const names = hasSelection
+                    ? isMulti
+                      ? choiceVal.map(
+                          (id) => contest.candidates.find((x) => x.nomination_id === id)?.candidate_name || "?"
+                        )
+                      : [contest.candidates.find((x) => x.nomination_id === choiceVal)?.candidate_name || "?"]
+                    : [];
                   return (
                     <div key={key} style={{ marginBottom: idx < 5 ? 10 : 0 }}>
                       <div style={{ fontSize: 12, color: "#64748b", fontWeight: 600, textTransform: "uppercase", marginBottom: 2 }}>
                         {label}
                       </div>
-                      {names.map((n, i) => (
-                        <div key={i} style={{ fontSize: 14, fontWeight: 600, color: "#1e293b" }}>
-                          {isMulti ? `${i + 1}. ` : ""}{n}
+                      {hasSelection ? (
+                        names.map((n, i) => (
+                          <div key={i} style={{ fontSize: 14, fontWeight: 600, color: "#1e293b" }}>
+                            {isMulti ? `${i + 1}. ` : ""}{n}
+                          </div>
+                        ))
+                      ) : (
+                        <div style={{ fontSize: 14, fontStyle: "italic", color: "#94a3b8" }}>
+                          — No selection —
                         </div>
-                      ))}
+                      )}
                     </div>
                   );
                 })
@@ -892,25 +973,37 @@ export default function VoterBallot() {
                     <div style={{ fontSize: 12, color: "#64748b", fontWeight: 600, textTransform: "uppercase", marginBottom: 2 }}>
                       FPTP Candidate
                     </div>
-                    <div style={{ fontSize: 15, fontWeight: 600, color: "#1e40af", display: "flex", alignItems: "center", gap: 8 }}>
-                      {selectedCandidate?.candidate_photo_path ? (
-                        <img src={`${API_BASE}/${selectedCandidate.candidate_photo_path}`} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} />
-                      ) : null}
-                      {selectedCandidate?.candidate_name}
-                      {selectedCandidate?.party_abbreviation ? ` (${selectedCandidate.party_abbreviation})` : ""}
-                    </div>
+                    {selectedCandidate ? (
+                      <div style={{ fontSize: 15, fontWeight: 600, color: "#1e40af", display: "flex", alignItems: "center", gap: 8 }}>
+                        {selectedCandidate.candidate_photo_path ? (
+                          <img src={`${API_BASE}/${selectedCandidate.candidate_photo_path}`} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} />
+                        ) : null}
+                        {selectedCandidate.candidate_name}
+                        {selectedCandidate.party_abbreviation ? ` (${selectedCandidate.party_abbreviation})` : ""}
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: 14, fontStyle: "italic", color: "#94a3b8" }}>
+                        — No selection —
+                      </div>
+                    )}
                   </div>
                   <div>
                     <div style={{ fontSize: 12, color: "#64748b", fontWeight: 600, textTransform: "uppercase", marginBottom: 2 }}>
                       PR Party
                     </div>
-                    <div style={{ fontSize: 15, fontWeight: 600, color: "#7c3aed", display: "flex", alignItems: "center", gap: 8 }}>
-                      {selectedParty?.party_symbol_path ? (
-                        <img src={`${API_BASE}/${selectedParty.party_symbol_path}`} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />
-                      ) : null}
-                      {selectedParty?.party_name}
-                      {selectedParty?.party_abbreviation ? ` (${selectedParty.party_abbreviation})` : ""}
-                    </div>
+                    {selectedParty ? (
+                      <div style={{ fontSize: 15, fontWeight: 600, color: "#7c3aed", display: "flex", alignItems: "center", gap: 8 }}>
+                        {selectedParty.party_symbol_path ? (
+                          <img src={`${API_BASE}/${selectedParty.party_symbol_path}`} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />
+                        ) : null}
+                        {selectedParty.party_name}
+                        {selectedParty.party_abbreviation ? ` (${selectedParty.party_abbreviation})` : ""}
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: 14, fontStyle: "italic", color: "#94a3b8" }}>
+                        — No selection —
+                      </div>
+                    )}
                   </div>
                 </>
               )}

@@ -36,7 +36,10 @@ import ManageLocalCandidatesPage from "./pages/ManageLocalCandidatesPage";
 import VoterAssignmentsPage from "./pages/VoterAssignmentsPage";
 import ProvincialVoterAssignmentsPage from "./pages/ProvincialVoterAssignmentsPage";
 import LocalVoterAssignmentsPage from "./pages/LocalVoterAssignmentsPage";
-import ResultsPage from "./pages/ResultsPage";
+import ResultsHubPage from "./pages/ResultsHubPage";
+import FederalResultsPage from "./pages/FederalResultsPage";
+import ProvincialResultsPage from "./pages/ProvincialResultsPage";
+import LocalResultsPage from "./pages/LocalResultsPage";
 import AuditReportsPage from "./pages/AuditReportsPage";
 
 import {
@@ -237,8 +240,38 @@ export default function App() {
         path="/admin/results"
         element={
           <RequireAdminOrSuperAdmin>
-            <AdminShell title="Election Results" subtitle="Count ballots, view results, finalize and lock elections">
-              <ResultsPage />
+            <AdminShell title="Election Results" subtitle="Select a government level to view and manage election results">
+              <ResultsHubPage />
+            </AdminShell>
+          </RequireAdminOrSuperAdmin>
+        }
+      />
+      <Route
+        path="/admin/results/federal"
+        element={
+          <RequireAdminOrSuperAdmin>
+            <AdminShell title="Federal Results" subtitle="House of Representatives counting and results">
+              <FederalResultsPage />
+            </AdminShell>
+          </RequireAdminOrSuperAdmin>
+        }
+      />
+      <Route
+        path="/admin/results/provincial"
+        element={
+          <RequireAdminOrSuperAdmin>
+            <AdminShell title="Provincial Results" subtitle="Provincial Assembly counting and results">
+              <ProvincialResultsPage />
+            </AdminShell>
+          </RequireAdminOrSuperAdmin>
+        }
+      />
+      <Route
+        path="/admin/results/local"
+        element={
+          <RequireAdminOrSuperAdmin>
+            <AdminShell title="Local Results" subtitle="Municipal and Rural Municipal election results">
+              <LocalResultsPage />
             </AdminShell>
           </RequireAdminOrSuperAdmin>
         }

@@ -1,85 +1,144 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { tokens } from './tokens';
+import { T } from '../../../components/ui/tokens';
 import SectionCard from './SectionCard';
 import SectionHeader from './SectionHeader';
 import EmptyStateBlock from './EmptyStateBlock';
-import { Check, X, RefreshCw, ShieldQuestion, Loader } from 'lucide-react';
+import { Check, X, RefreshCw, ShieldQuestion, Loader, AlertTriangle, KeyRound } from 'lucide-react';
 
 function GovernanceTable({ items, onApprove, onReject }) {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  if (isMobile) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: T.space.md }}>
+        {items.map(item => (
+          <div key={item.id} style={{
+            padding: T.space.lg, border: `1px solid ${T.border}`,
+            borderRadius: T.radius.lg, borderLeft: `3px solid ${T.warn}`,
+            background: T.surface,
+          }}>
+            <div style={{ fontWeight: 600, fontSize: 14, color: T.text }}>{item.name}</div>
+            <div style={{ fontSize: 13, color: T.muted, marginTop: 2 }}>{item.email}</div>
+            <div style={{ fontSize: 12, color: T.muted, marginTop: T.space.sm }}>
+              Requested: {new Date(item.createdAt).toLocaleString()}
+            </div>
+            <div style={{ display: "flex", gap: T.space.sm, marginTop: T.space.md, justifyContent: "flex-end" }}>
+              <button
+                onClick={() => onReject(item)}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 4,
+                  padding: "6px 12px", fontSize: 13, fontWeight: 600,
+                  color: T.error, background: "transparent",
+                  border: `1px solid ${T.border}`, borderRadius: T.radius.md,
+                  cursor: "pointer",
+                }}
+                title="Reject Request"
+              >
+                <X size={14} /> Reject
+              </button>
+              <button
+                onClick={() => onApprove(item)}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 4,
+                  padding: "6px 12px", fontSize: 13, fontWeight: 600,
+                  color: T.success, background: T.successBg,
+                  border: `1px solid ${T.successBorder}`, borderRadius: T.radius.md,
+                  cursor: "pointer",
+                }}
+                title="Approve Request"
+              >
+                <Check size={14} /> Approve
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   const tableStyle = { width: "100%", borderCollapse: "collapse", textAlign: "left" };
   const thStyle = {
-    padding: `${tokens.spacing.md}px ${tokens.spacing.lg}px`,
-    color: tokens.text.secondary,
-    fontSize: 12,
-    textTransform: "uppercase",
-    letterSpacing: "0.05em",
-    fontWeight: 600,
-    borderBottom: `1px solid ${tokens.cardBorder}`,
+    padding: `10px ${T.space.lg}px`,
+    color: T.muted, fontSize: 11, textTransform: "uppercase",
+    letterSpacing: "0.06em", fontWeight: 700,
+    borderBottom: `1px solid ${T.border}`,
+    background: T.surfaceAlt,
   };
-  const trStyle = { borderBottom: `1px solid ${tokens.cardBorder}` };
-  const tdStyle = { padding: `${tokens.spacing.lg}px`, verticalAlign: "middle", fontSize: 14 };
-  const userStyle = { fontWeight: 600, color: tokens.text.primary };
-  const userEmailStyle = { fontSize: 13, color: tokens.text.secondary };
-  const actionsStyle = { display: "flex", justifyContent: "flex-end", gap: tokens.spacing.sm };
-  
-  const actionBaseStyle = {
-    display: "flex",
-    alignItems: "center",
-    gap: tokens.spacing.sm,
-    padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px`,
-    backgroundColor: "transparent",
-    border: `1px solid ${tokens.cardBorder}`,
-    borderRadius: tokens.borderRadius.medium,
-    fontSize: 13,
-    fontWeight: 500,
-    cursor: "pointer",
-    transition: "background-color 0.2s, border-color 0.2s",
+  const tdStyle = {
+    padding: `${T.space.md}px ${T.space.lg}px`,
+    verticalAlign: "middle", fontSize: 13.5,
+    borderBottom: `1px solid ${T.borderLight}`,
   };
-
-  const approveButtonStyle = { ...actionBaseStyle, color: tokens.status.success.text };
-  const rejectButtonStyle = { ...actionBaseStyle, color: tokens.status.danger.text };
 
   return (
-    <div style={{ overflowX: "auto", border: `1px solid ${tokens.cardBorder}`, borderRadius: tokens.borderRadius.large }}>
-      <table style={tableStyle}>
+    <div style={{ overflowX: "auto", border: `1px solid ${T.border}`, borderRadius: T.radius.lg }}>
+      <table style={tableStyle} role="grid" aria-label="MFA Recovery Queue">
         <thead>
           <tr>
             <th style={thStyle}>Administrator</th>
-            <th style={thStyle}>Requested At</th>
+            <th style={thStyle}>Requested</th>
             <th style={{ ...thStyle, textAlign: "right" }}>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {items.map((item) => (
-            <tr key={item.id} style={trStyle}>
+          {items.map((item, idx) => (
+            <tr
+              key={item.id}
+              style={{
+                transition: T.transitionFast,
+                backgroundColor: idx % 2 === 1 ? T.surfaceAlt : "transparent",
+                borderLeft: `3px solid ${T.warn}`,
+              }}
+              onMouseOver={(e) => (e.currentTarget.style.backgroundColor = T.surfaceSubtle)}
+              onMouseOut={(e) => (e.currentTarget.style.backgroundColor = idx % 2 === 1 ? T.surfaceAlt : "transparent")}
+            >
               <td style={tdStyle}>
-                <div style={userStyle}>{item.name}</div>
-                <div style={userEmailStyle}>{item.email}</div>
+                <div style={{ fontWeight: 600, color: T.text }}>{item.name}</div>
+                <div style={{ fontSize: 12.5, color: T.muted, marginTop: 1 }}>{item.email}</div>
               </td>
               <td style={tdStyle}>
-                {new Date(item.createdAt).toLocaleString()}
+                <div style={{ fontSize: 13, color: T.textSecondary }}>{new Date(item.createdAt).toLocaleString()}</div>
               </td>
               <td style={{ ...tdStyle, textAlign: "right" }}>
-                <div style={actionsStyle}>
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: T.space.sm }}>
                   <button
-                    style={rejectButtonStyle}
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: 4,
+                      padding: "5px 10px", backgroundColor: "transparent",
+                      border: `1px solid ${T.border}`, borderRadius: T.radius.sm,
+                      fontSize: 12.5, fontWeight: 600, color: T.error,
+                      cursor: "pointer", transition: T.transition,
+                    }}
                     onClick={() => onReject(item)}
-                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = tokens.status.danger.background}
-                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+                    onMouseOver={(e) => (e.currentTarget.style.backgroundColor = T.errorBg)}
+                    onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
                     title="Reject Request"
+                    aria-label={`Reject recovery for ${item.name}`}
                   >
-                    <X size={16} />
-                    <span>Reject</span>
+                    <X size={14} /> Reject
                   </button>
                   <button
-                    style={approveButtonStyle}
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: 4,
+                      padding: "5px 10px", backgroundColor: T.successBg,
+                      border: `1px solid ${T.successBorder}`, borderRadius: T.radius.sm,
+                      fontSize: 12.5, fontWeight: 600, color: T.success,
+                      cursor: "pointer", transition: T.transition,
+                    }}
                     onClick={() => onApprove(item)}
-                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = tokens.status.success.background}
-                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+                    onMouseOver={(e) => (e.currentTarget.style.backgroundColor = `${T.success}18`)}
+                    onMouseOut={(e) => (e.currentTarget.style.backgroundColor = T.successBg)}
                     title="Approve Request"
+                    aria-label={`Approve recovery for ${item.name}`}
                   >
-                    <Check size={16} />
-                    <span>Approve</span>
+                    <Check size={14} /> Approve
                   </button>
                 </div>
               </td>
@@ -97,21 +156,16 @@ export default function TotpRecoveryQueueTable({
   error = "",
   onRefresh,
   onApprove,
-  onReject
+  onReject,
+  id,
 }) {
-  const actionButtonStyle = {
-    display: "flex",
-    alignItems: "center",
-    gap: tokens.spacing.sm,
-    padding: "6px 10px",
-    backgroundColor: "transparent",
-    border: `1px solid ${tokens.cardBorder}`,
-    borderRadius: tokens.borderRadius.medium,
-    fontSize: 13,
-    fontWeight: 500,
-    color: tokens.text.secondary,
-    cursor: "pointer",
-    transition: "background-color 0.2s",
+  const refreshBtnStyle = {
+    display: "inline-flex", alignItems: "center", gap: 6,
+    padding: "6px 12px", backgroundColor: "transparent",
+    border: `1px solid ${T.border}`, borderRadius: T.radius.md,
+    fontSize: 12.5, fontWeight: 600, color: T.textSecondary,
+    cursor: isLoading ? "not-allowed" : "pointer",
+    transition: T.transition, opacity: isLoading ? 0.6 : 1,
   };
 
   const renderContent = () => {
@@ -119,12 +173,11 @@ export default function TotpRecoveryQueueTable({
       return (
         <EmptyStateBlock
           icon={Loader}
-          title="Loading Recovery Queue..."
+          title="Loading Recovery Queue…"
           description="Fetching pending requests from the secure server."
         />
       );
     }
-
     if (error) {
       return (
         <EmptyStateBlock
@@ -134,40 +187,43 @@ export default function TotpRecoveryQueueTable({
         />
       );
     }
-
     if (items.length === 0) {
       return (
         <EmptyStateBlock
           icon={ShieldQuestion}
           title="Recovery Queue is Clear"
-          description="There are no pending multi-factor authentication recovery requests."
+          description="There are no pending multi-factor authentication recovery requests at this time."
         />
       );
     }
-
     return <GovernanceTable items={items} onApprove={onApprove} onReject={onReject} />;
   };
 
   return (
-    <SectionCard>
-      <SectionHeader
-        title="MFA Recovery Queue"
-        description="Review and process requests from administrators who have lost access to their authenticator."
-        actions={onRefresh && (
-          <button
-            style={actionButtonStyle}
-            onClick={onRefresh}
-            disabled={isLoading}
-            onMouseOver={(e) => !e.currentTarget.disabled && (e.currentTarget.style.backgroundColor = tokens.input.background)}
-            onMouseOut={(e) => !e.currentTarget.disabled && (e.currentTarget.style.backgroundColor = "transparent")}
-          >
-            <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
-            <span>Refresh</span>
-          </button>
-        )}
-      />
-      <div style={{ marginTop: tokens.spacing.lg }}>
-        {renderContent()}
+    <SectionCard accentColor={items.length > 0 ? T.warn : undefined}>
+      <div id={id}>
+        <SectionHeader
+          icon={KeyRound}
+          title="MFA Recovery Queue"
+          description="Review requests from administrators who lost authenticator access."
+          count={items.length}
+          actions={onRefresh && (
+            <button
+              style={refreshBtnStyle}
+              onClick={onRefresh}
+              disabled={isLoading}
+              onMouseOver={(e) => { if (!isLoading) e.currentTarget.style.backgroundColor = T.surfaceAlt; }}
+              onMouseOut={(e) => { if (!isLoading) e.currentTarget.style.backgroundColor = "transparent"; }}
+              aria-label="Refresh recovery queue"
+            >
+              <RefreshCw size={13} style={isLoading ? { animation: "adminSpin 1s linear infinite" } : {}} />
+              Refresh
+            </button>
+          )}
+        />
+        <div style={{ marginTop: T.space.sm }}>
+          {renderContent()}
+        </div>
       </div>
     </SectionCard>
   );

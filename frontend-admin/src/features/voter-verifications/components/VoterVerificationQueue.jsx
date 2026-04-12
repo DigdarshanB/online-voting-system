@@ -1,7 +1,27 @@
 import React from "react";
-import { tokens } from "./tokens";
-import { Search, Filter, ArrowRight, CheckCircle, XCircle, Clock, FileText, Users } from "lucide-react";
-import StatusPill from "./StatusPill"; // Assuming we can reuse it, or we'll create a local one
+import { T } from "../../../components/ui/tokens";
+import { Search, Filter, ArrowRight, CheckCircle, XCircle, Clock, FileText, Users, Loader2 } from "lucide-react";
+import StatusPill from "./StatusPill";
+
+const thStyle = {
+  textAlign: "left",
+  padding: "11px 14px",
+  fontSize: 11,
+  fontWeight: 700,
+  color: T.muted,
+  textTransform: "uppercase",
+  letterSpacing: "0.05em",
+  borderBottom: `1px solid ${T.border}`,
+  background: T.surfaceAlt,
+};
+
+const tdStyle = {
+  padding: "12px 14px",
+  fontSize: 13.5,
+  color: T.text,
+  borderBottom: `1px solid ${T.borderLight}`,
+  verticalAlign: "middle",
+};
 
 export default function VoterVerificationQueue({ 
   items, 
@@ -11,149 +31,127 @@ export default function VoterVerificationQueue({
   searchTerm,
   onSearchChange
 }) {
-  const tableHeaderStyle = {
-    textAlign: "left",
-    padding: tokens.spacing.md,
-    fontSize: tokens.fontSizes.xs,
-    fontWeight: 600,
-    color: tokens.text.secondary,
-    textTransform: "uppercase",
-    letterSpacing: "0.05em",
-    borderBottom: `2px solid ${tokens.colors.border}`,
-  };
-
-  const tableCellStyle = {
-    padding: tokens.spacing.lg,
-    fontSize: tokens.fontSizes.sm,
-    color: tokens.text.primary,
-    borderBottom: `1px solid ${tokens.colors.border}`,
-    verticalAlign: "middle",
-  };
-
   if (isLoading) {
     return (
-      <div style={{ padding: tokens.spacing.xxl, textAlign: "center", color: tokens.text.secondary }}>
-        <div className="animate-pulse">Loading verification queue...</div>
+      <div style={{ padding: 48, textAlign: "center", color: T.muted }}>
+        <Loader2 size={24} style={{ animation: "spin 1s linear infinite", marginBottom: 8 }} />
+        <div style={{ fontWeight: 600 }}>Loading verification queue…</div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
   return (
     <div style={{
-      background: tokens.cardBackground,
-      border: `1px solid ${tokens.cardBorder}`,
-      borderRadius: tokens.borderRadius.medium,
-      boxShadow: tokens.shadows.md,
+      background: T.surface,
+      border: `1px solid ${T.border}`,
+      borderRadius: T.radius.xl,
+      boxShadow: T.shadow.md,
       overflow: "hidden",
     }}>
       <div style={{
-        padding: tokens.spacing.lg,
-        borderBottom: `1px solid ${tokens.colors.border}`,
+        padding: "14px 18px",
+        borderBottom: `1px solid ${T.border}`,
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        background: "#fafafa"
+        background: T.surfaceAlt,
       }}>
-        <div style={{ position: "relative", width: "320px" }}>
-          <Search size={16} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: tokens.text.muted }} />
+        <div style={{ position: "relative", width: 340 }}>
+          <Search size={16} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: T.muted }} />
           <input 
             type="text" 
-            placeholder="Search by name or citizenship ID..." 
+            placeholder="Search by name or citizenship ID…" 
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
             style={{
               width: "100%",
-              padding: "10px 12px 10px 36px",
-              borderRadius: tokens.borderRadius.small,
-              border: `1px solid ${tokens.input.border}`,
-              fontSize: tokens.fontSizes.sm,
+              padding: "10px 12px 10px 38px",
+              borderRadius: T.radius.md,
+              border: `1.5px solid ${T.border}`,
+              fontSize: 13.5,
+              outline: "none",
+              transition: T.transition,
+              boxSizing: "border-box",
             }}
+            onFocus={e => { e.target.style.borderColor = T.accent; e.target.style.boxShadow = T.focusRing; }}
+            onBlur={e => { e.target.style.borderColor = T.border; e.target.style.boxShadow = "none"; }}
           />
         </div>
-        <div style={{ display: "flex", gap: tokens.spacing.md }}>
+        <div style={{ display: "flex", gap: 8 }}>
            <button style={{ 
-             display: "flex", 
-             alignItems: "center", 
-             gap: 8, 
-             padding: "8px 16px", 
-             borderRadius: tokens.borderRadius.small,
-             border: `1px solid ${tokens.colors.border}`,
-             background: tokens.colors.surface,
-             fontSize: tokens.fontSizes.sm,
-             fontWeight: 500,
-             cursor: "pointer"
+             display: "flex", alignItems: "center", gap: 8, 
+             padding: "8px 16px", borderRadius: T.radius.md,
+             border: `1px solid ${T.border}`, background: T.surface,
+             fontSize: 13, fontWeight: 600, cursor: "pointer", transition: T.transition,
            }}>
-             <Filter size={16} /> Filters
+             <Filter size={15} /> Filters
            </button>
         </div>
       </div>
 
       <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0 }}>
           <thead>
             <tr>
-              <th style={tableHeaderStyle}>Voter Identity</th>
-              <th style={tableHeaderStyle}>Citizenship #</th>
-              <th style={tableHeaderStyle}>Artifacts</th>
-              <th style={tableHeaderStyle}>Submitted</th>
-              <th style={tableHeaderStyle}>Status</th>
-              <th style={{ ...tableHeaderStyle, textAlign: "right" }}>Actions</th>
+              <th style={thStyle}>Voter Identity</th>
+              <th style={thStyle}>Citizenship #</th>
+              <th style={thStyle}>Artifacts</th>
+              <th style={thStyle}>Submitted</th>
+              <th style={thStyle}>Status</th>
+              <th style={{ ...thStyle, textAlign: "right" }}>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {items.map((voter) => (
+            {items.map((voter, idx) => (
               <tr 
                 key={voter.id}
                 style={{ 
-                  background: selectedVoterId === voter.id ? "#f1f5f9" : "transparent",
+                  background: selectedVoterId === voter.id ? T.accentLight : idx % 2 === 0 ? T.surface : T.surfaceAlt,
                   cursor: "pointer",
-                  transition: "background 0.2s ease"
+                  transition: T.transitionFast,
                 }}
+                onMouseEnter={e => { e.currentTarget.style.background = T.accentLight; }}
+                onMouseLeave={e => { e.currentTarget.style.background = selectedVoterId === voter.id ? T.accentLight : idx % 2 === 0 ? T.surface : T.surfaceAlt; }}
                 onClick={() => onSelectVoter(voter)}
               >
-                <td style={tableCellStyle}>
-                  <div style={{ fontWeight: 600 }}>{voter.full_name}</div>
-                  <div style={{ fontSize: tokens.fontSizes.xs, color: tokens.text.secondary }}>{voter.email}</div>
+                <td style={tdStyle}>
+                  <div style={{ fontWeight: 700, color: T.text }}>{voter.full_name}</div>
+                  <div style={{ fontSize: 12, color: T.muted, marginTop: 1 }}>{voter.email}</div>
                 </td>
-                <td style={tableCellStyle}>
-                  <code style={{ background: "#f1f5f9", padding: "2px 4px", borderRadius: 4, fontSize: 12 }}>
+                <td style={tdStyle}>
+                  <code style={{ background: T.surfaceAlt, padding: "2px 8px", borderRadius: T.radius.sm, fontSize: 12, fontWeight: 600, color: T.textSecondary, border: `1px solid ${T.borderLight}`, fontFamily: "monospace" }}>
                     {voter.citizenship_no_normalized}
                   </code>
                 </td>
-                <td style={tableCellStyle}>
+                <td style={tdStyle}>
                   <div style={{ display: "flex", gap: 8 }}>
-                    <div title="Document" style={{ color: voter.document_uploaded_at ? tokens.colors.success : tokens.colors.muted }}>
+                    <div title="Document" style={{ color: voter.document_uploaded_at ? T.success : T.border }}>
                       <FileText size={18} />
                     </div>
-                    <div title="Face Photo" style={{ color: voter.face_uploaded_at ? tokens.colors.success : tokens.colors.muted }}>
+                    <div title="Face Photo" style={{ color: voter.face_uploaded_at ? T.success : T.border }}>
                       <Users size={18} />
                     </div>
                   </div>
                 </td>
-                <td style={tableCellStyle}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12 }}>
-                    <Clock size={14} style={{ color: tokens.text.muted }} />
+                <td style={tdStyle}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: T.muted }}>
+                    <Clock size={14} />
                     {new Date(voter.submitted_at || voter.document_uploaded_at).toLocaleDateString()}
                   </div>
                 </td>
-                <td style={tableCellStyle}>
+                <td style={tdStyle}>
                    <StatusPill status={voter.status} />
                 </td>
-                <td style={{ ...tableCellStyle, textAlign: "right" }}>
+                <td style={{ ...tdStyle, textAlign: "right" }}>
                   <button style={{
-                    padding: "6px 12px",
-                    borderRadius: tokens.borderRadius.small,
-                    background: tokens.colors.accent,
-                    color: "#fff",
-                    border: "none",
-                    fontSize: tokens.fontSizes.xs,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 4
+                    padding: "6px 14px", borderRadius: T.radius.md,
+                    background: T.accent, color: "#fff", border: "none",
+                    fontSize: 12, fontWeight: 700, cursor: "pointer",
+                    display: "inline-flex", alignItems: "center", gap: 4,
+                    boxShadow: T.shadow.sm, transition: T.transition,
                   }}>
-                    Review <ArrowRight size={14} />
+                    Review <ArrowRight size={13} />
                   </button>
                 </td>
               </tr>

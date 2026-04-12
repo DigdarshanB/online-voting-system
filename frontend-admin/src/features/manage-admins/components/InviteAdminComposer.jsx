@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { tokens } from './tokens';
+import { T } from '../../../components/ui/tokens';
 import SectionCard from './SectionCard';
 import SectionHeader from './SectionHeader';
 import InviteMethodSwitch from './InviteMethodSwitch';
 import InviteResultCard from './InviteResultCard';
+import { UserPlus, AlertCircle, Send } from 'lucide-react';
 
 export default function InviteAdminComposer({
   recipientEmail,
@@ -14,64 +16,69 @@ export default function InviteAdminComposer({
   resultProps,
 }) {
   const [preferredMethod, setPreferredMethod] = useState("link");
+  const [emailFocused, setEmailFocused] = useState(false);
 
   const formStyle = {
     display: "flex",
     flexDirection: "column",
-    gap: tokens.spacing.xl,
+    gap: T.space.xl,
   };
 
   const inputLabelStyle = {
-    fontSize: "13px",
+    fontSize: 13,
     fontWeight: 600,
-    color: tokens.text.primary,
+    color: T.text,
     display: "block",
-    marginBottom: "8px",
+    marginBottom: 6,
   };
 
   const inputStyle = {
     width: "100%",
-    padding: "12px 16px",
-    borderRadius: tokens.borderRadius.medium,
-    border: `1px solid ${error ? tokens.status.danger.border : tokens.cardBorder}`,
-    fontSize: 15,
-    color: tokens.text.primary,
-    backgroundColor: submitting ? tokens.pageBackground : tokens.cardBackground,
+    padding: "11px 14px",
+    borderRadius: T.radius.md,
+    border: `1px solid ${error ? T.errorBorder : emailFocused ? T.accent : T.border}`,
+    fontSize: 14,
+    color: T.text,
+    backgroundColor: submitting ? T.surfaceAlt : T.surface,
     boxSizing: "border-box",
-    transition: "border-color 0.2s, box-shadow 0.2s",
-  };
-  
-  const inputFocusStyle = {
-    outline: 'none',
-    borderColor: tokens.brand.primary,
-    boxShadow: `0 0 0 3px ${tokens.brand.focusRing}`,
+    transition: `border-color ${T.transitionFast}, box-shadow ${T.transitionFast}`,
+    boxShadow: emailFocused ? T.focusRing : "none",
+    outline: "none",
   };
 
   const helperTextStyle = {
-    fontSize: 13,
-    color: tokens.text.muted,
-    margin: `${tokens.spacing.sm}px 0 0 0`,
+    fontSize: 12,
+    color: T.muted,
+    margin: `6px 0 0 0`,
+    lineHeight: 1.4,
   };
 
+  const isDisabled = submitting || !recipientEmail;
+
   const buttonStyle = {
-    padding: "14px 24px",
-    backgroundColor: tokens.button.primary.background,
-    color: tokens.button.primary.text,
-    border: "none",
-    borderRadius: tokens.borderRadius.medium,
-    fontWeight: 600,
-    fontSize: 15,
-    cursor: submitting || !recipientEmail ? "not-allowed" : "pointer",
-    opacity: submitting || !recipientEmail ? 0.6 : 1,
-    transition: "opacity 0.2s ease, background-color 0.2s ease",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: T.space.sm,
+    padding: "12px 24px",
+    backgroundColor: isDisabled ? T.surfaceSubtle : T.navy,
+    color: isDisabled ? T.muted : "#FFFFFF",
+    border: isDisabled ? `1px solid ${T.border}` : "none",
+    borderRadius: T.radius.md,
+    fontWeight: 700,
+    fontSize: 14,
+    cursor: isDisabled ? "not-allowed" : "pointer",
+    transition: T.transition,
     width: '100%',
+    boxShadow: isDisabled ? "none" : T.shadow.sm,
   };
 
   return (
-    <SectionCard>
+    <SectionCard accentColor={T.navy}>
       <SectionHeader
+        icon={UserPlus}
         title="Provision New Administrator"
-        description="Issue a single-use invitation to a trusted candidate. This action is logged for audit purposes."
+        description="Issue a secure, single-use invitation to a trusted candidate."
       />
       <form style={formStyle} onSubmit={onSubmit}>
         <div>
@@ -82,22 +89,19 @@ export default function InviteAdminComposer({
             id="recipient-email"
             type="email"
             style={inputStyle}
-            onFocus={(e) => {
-              Object.assign(e.target.style, inputFocusStyle);
-            }}
-            onBlur={(e) => {
-              // Reset styles on blur, except for border
-              e.target.style.boxShadow = 'none';
-              e.target.style.borderColor = error ? tokens.status.danger.border : tokens.cardBorder;
-            }}
+            onFocus={() => setEmailFocused(true)}
+            onBlur={() => setEmailFocused(false)}
             placeholder="candidate.name@gov.np"
             value={recipientEmail}
             onChange={(e) => onRecipientEmailChange(e.target.value)}
             disabled={submitting}
             required
             aria-describedby="email-helper-text"
+            aria-invalid={!!error}
           />
-          <p id="email-helper-text" style={helperTextStyle}>The recipient will use this email to log in.</p>
+          <p id="email-helper-text" style={helperTextStyle}>
+            This email becomes the administrator's login credential.
+          </p>
         </div>
 
         <InviteMethodSwitch 
@@ -107,29 +111,35 @@ export default function InviteAdminComposer({
 
         {error && (
           <div style={{
-            backgroundColor: tokens.status.danger.background,
-            color: tokens.status.danger.text,
-            padding: tokens.spacing.md,
-            borderRadius: tokens.borderRadius.medium,
-            fontSize: 14,
+            display: "flex", alignItems: "flex-start", gap: T.space.md,
+            backgroundColor: T.errorBg,
+            color: T.error,
+            padding: `${T.space.md}px ${T.space.lg}px`,
+            borderRadius: T.radius.md,
+            fontSize: 13,
             fontWeight: 500,
-            border: `1px solid ${tokens.status.danger.border}`
+            border: `1px solid ${T.errorBorder}`,
+            lineHeight: 1.5,
           }}>
-            <strong>Invitation Failed:</strong> {error}
+            <AlertCircle size={16} style={{ flexShrink: 0, marginTop: 2 }} />
+            <div><strong>Invitation Failed:</strong> {error}</div>
           </div>
         )}
 
         {resultProps && resultProps.visible ? (
-          <div style={{ marginTop: tokens.spacing.sm }}>
+          <div style={{ marginTop: T.space.xs }}>
             <InviteResultCard {...resultProps} />
           </div>
         ) : (
           <button
             type="submit"
-            disabled={submitting || !recipientEmail}
+            disabled={isDisabled}
             style={buttonStyle}
+            onMouseOver={(e) => { if (!isDisabled) e.currentTarget.style.backgroundColor = T.accentHover; }}
+            onMouseOut={(e) => { if (!isDisabled) e.currentTarget.style.backgroundColor = T.navy; }}
           >
-            {submitting ? "Issuing Invitation..." : "Issue Secure Invitation"}
+            <Send size={15} />
+            {submitting ? "Issuing Invitation…" : "Issue Secure Invitation"}
           </button>
         )}
       </form>

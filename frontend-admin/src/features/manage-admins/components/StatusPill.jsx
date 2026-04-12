@@ -1,65 +1,72 @@
 import React from 'react';
-import { tokens } from './tokens';
+import { T } from '../../../components/ui/tokens';
 
 const statusConfig = {
   // Invite Statuses
-  ISSUED:  { background: tokens.status.info.background, text: tokens.status.info.text, label: "Issued" },
-  SENT:    { background: tokens.status.info.background, text: tokens.status.info.text, label: "Sent" },
-  USED:    { background: tokens.status.success.background, text: tokens.status.success.text, label: "Used" },
-  REVOKED: { background: tokens.status.warning.background, text: tokens.status.warning.text, label: "Revoked" },
-  EXPIRED: { background: tokens.status.neutral.background, text: tokens.status.neutral.text, label: "Expired" },
+  ISSUED:  { background: T.infoBg, text: T.info, label: "Issued" },
+  SENT:    { background: T.infoBg, text: T.info, label: "Sent" },
+  USED:    { background: T.successBg, text: T.success, label: "Used" },
+  REVOKED: { background: T.warnBg, text: T.warn, label: "Revoked" },
+  EXPIRED: { background: T.surfaceAlt, text: T.muted, label: "Expired" },
   
   // Admin/Request Statuses
-  PENDING:          { background: tokens.status.warning.background, text: tokens.status.warning.text, label: "Pending" },
-  PENDING_MFA:      { background: tokens.status.warning.background, text: tokens.status.warning.text, label: "Awaiting MFA" },
-  PENDING_APPROVAL: { background: tokens.status.warning.background, text: tokens.status.warning.text, label: "Awaiting Approval" },
-  ACTIVE:           { background: tokens.status.success.background, text: tokens.status.success.text, label: "Active" },
-  DISABLED:         { background: tokens.status.danger.background, text: tokens.status.danger.text, label: "Disabled" },
-  REJECTED:         { background: tokens.status.danger.background, text: tokens.status.danger.text, label: "Rejected" },
+  PENDING:          { background: T.warnBg, text: T.warn, label: "Pending" },
+  PENDING_MFA:      { background: T.warnBg, text: T.warn, label: "Awaiting MFA" },
+  PENDING_APPROVAL: { background: T.warnBg, text: T.warn, label: "Awaiting Approval" },
+  ACTIVE:           { background: T.successBg, text: T.success, label: "Active" },
+  DISABLED:         { background: T.errorBg, text: T.error, label: "Disabled" },
+  REJECTED:         { background: T.errorBg, text: T.error, label: "Rejected" },
 
   // Admin Roles
-  SUPER_ADMIN: { background: tokens.status.danger.background, text: tokens.status.danger.text, label: "Super Admin" },
-  ADMIN:       { background: tokens.status.info.background, text: tokens.status.info.text, label: "Admin" },
+  super_admin: { background: `${T.navy}12`, text: T.navy, label: "Super Admin" },
+  admin:       { background: T.infoBg, text: T.info, label: "Admin" },
+  SUPER_ADMIN: { background: `${T.navy}12`, text: T.navy, label: "Super Admin" },
+  ADMIN:       { background: T.infoBg, text: T.info, label: "Admin" },
 
   // 2FA Statuses
-  TOTP_ENABLED:  { background: tokens.status.success.background, text: tokens.status.success.text, label: "Enabled" },
-  TOTP_DISABLED: { background: tokens.status.warning.background, text: tokens.status.warning.text, label: "Disabled" },
+  TOTP_ENABLED:  { background: T.successBg, text: T.success, label: "Enabled" },
+  TOTP_DISABLED: { background: T.warnBg, text: T.warn, label: "Not Set Up" },
 
   // Default
-  DEFAULT: { background: tokens.status.neutral.background, text: tokens.status.neutral.text, label: "Unknown" },
+  DEFAULT: { background: T.surfaceAlt, text: T.muted, label: "Unknown" },
 };
 
-export default function StatusPill({ status }) {
+export default function StatusPill({ status, size = "default" }) {
   const config = statusConfig[status] || statusConfig.DEFAULT;
   const { background, text, label } = config;
   const displayLabel = status && !statusConfig[status] ? status : label;
 
+  const isSmall = size === "small";
+
   const pillStyle = {
     display: "inline-flex",
     alignItems: "center",
-    gap: "6px",
-    padding: "2px 8px",
+    gap: isSmall ? "4px" : "5px",
+    padding: isSmall ? "1px 6px" : "3px 10px",
     borderRadius: "9999px",
-    fontSize: "12px",
+    fontSize: isSmall ? "10px" : "11px",
     fontWeight: 600,
     lineHeight: "1.5",
     textTransform: "uppercase",
-    letterSpacing: "0.05em",
+    letterSpacing: "0.04em",
     backgroundColor: background,
     color: text,
+    whiteSpace: "nowrap",
+    border: `1px solid ${text}18`,
   };
 
   const dotStyle = {
-    width: "6px",
-    height: "6px",
+    width: isSmall ? "5px" : "6px",
+    height: isSmall ? "5px" : "6px",
     borderRadius: "50%",
     backgroundColor: text,
+    flexShrink: 0,
   };
 
   return (
-    <div style={pillStyle} title={`Status: ${label}`}>
-      <span style={dotStyle}></span>
+    <span style={pillStyle} title={`Status: ${label}`}>
+      <span style={dotStyle} />
       <span>{displayLabel}</span>
-    </div>
+    </span>
   );
 }

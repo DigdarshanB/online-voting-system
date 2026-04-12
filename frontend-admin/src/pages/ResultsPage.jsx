@@ -437,6 +437,32 @@ function ElectionResultCard({
                 </div>
               )}
 
+              {/* Vacancy / unfilled-seats info banner */}
+              {summary && (() => {
+                const fptpUnfilled = isLocal
+                  ? (summary.fptp.seats_unfilled || 0)
+                  : (summary.fptp.contests_without_winner || 0);
+                const prUnfilled = !isLocal ? (summary.pr.seats_unfilled || 0) : 0;
+                const hasVacancies = fptpUnfilled > 0 || prUnfilled > 0;
+                if (!hasVacancies) return null;
+                return (
+                  <div style={{
+                    padding: "12px 16px", borderRadius: 10, background: "#EFF6FF",
+                    color: "#1E40AF", marginBottom: 16, fontSize: 13, display: "flex", alignItems: "center", gap: 8,
+                    border: "1px solid #BFDBFE",
+                  }}>
+                    <AlertTriangle size={16} />
+                    <span>
+                      <strong>This election contains unfilled seats.</strong>
+                      {isLocal && fptpUnfilled > 0 && ` ${fptpUnfilled} seat(s) across ${summary.fptp.contests_with_vacancies || 0} contest(s) have no winner declared.`}
+                      {!isLocal && fptpUnfilled > 0 && ` ${fptpUnfilled} FPTP contest(s) have no declared winner.`}
+                      {prUnfilled > 0 && ` ${prUnfilled} PR seat(s) remain unfilled.`}
+                      {" "}Finalization will preserve current winners and mark remaining seats as unfilled.
+                    </span>
+                  </div>
+                );
+              })()}
+
               {/* Local-specific sections */}
               {isLocal && localSummary && <LocalResultSection localSummary={localSummary} />}
 
@@ -474,12 +500,13 @@ function SummaryCards({ summary, isLocal = false }) {
   const cards = isLocal ? [
     { icon: Users, label: "Ballots Counted", value: summary.total_ballots_counted ?? "—", color: P.accent },
     { icon: Award, label: "Contests", value: summary.fptp.total_contests ?? "—", color: P.navy },
-    { icon: CheckCircle2, label: "Winners Declared", value: `${summary.fptp.winners_declared} / ${summary.fptp.total_seats ?? summary.fptp.total_contests}`, color: P.success },
+    { icon: CheckCircle2, label: "Seats Filled", value: `${summary.fptp.seats_filled ?? summary.fptp.winners_declared} / ${summary.fptp.total_seats ?? summary.fptp.total_contests}`, color: P.success },
+    { icon: AlertTriangle, label: "Seats Unfilled", value: summary.fptp.seats_unfilled ?? 0, color: (summary.fptp.seats_unfilled || 0) > 0 ? P.warn : P.muted },
     { icon: ShieldAlert, label: "Adjudication", value: summary.fptp.adjudication_required ?? 0, color: summary.fptp.adjudication_required > 0 ? P.warn : P.muted },
   ] : [
     { icon: Users, label: "Ballots Counted", value: summary.total_ballots_counted ?? "—", color: P.accent },
-    { icon: Award, label: "FPTP Winners", value: `${summary.fptp.winners_declared} / ${summary.fptp.total_contests}`, color: P.success },
-    { icon: TrendingUp, label: "PR Seats", value: `${summary.pr.seats_allocated} / ${summary.pr.total_seats ?? "—"}`, color: P.purple },
+    { icon: Award, label: "FPTP Winners", value: `${summary.fptp.winners_declared} / ${summary.fptp.total_contests}`, color: (summary.fptp.contests_without_winner || 0) > 0 ? P.warn : P.success },
+    { icon: TrendingUp, label: "PR Seats Filled", value: `${summary.pr.seats_allocated} / ${summary.pr.total_seats ?? "—"}`, color: (summary.pr.seats_unfilled || 0) > 0 ? P.warn : P.purple },
     { icon: BarChart3, label: "PR Qualified", value: `${summary.pr.parties_qualified} parties`, color: P.orange },
   ];
 

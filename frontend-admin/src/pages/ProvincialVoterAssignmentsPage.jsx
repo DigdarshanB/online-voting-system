@@ -13,24 +13,19 @@ import {
   assignVoterToArea,
   removeAreaAssignment,
 } from "../features/voter-assignments/api/voterAreaAssignmentsApi";
-
-/* ── Palette ── */
-const P = {
-  navy: "#173B72", accent: "#2F6FED", surface: "#FFFFFF", bg: "#F5F7FB",
-  border: "#DCE3EC", text: "#0F172A", muted: "#64748B",
-  success: "#059669", successBg: "#ECFDF5",
-  error: "#DC2626", errorBg: "#FEF2F2",
-  purple: "#7C3AED", purpleBg: "#F5F3FF",
-};
+import { T } from "../components/ui/tokens";
+import { PageContainer, AdminKeyframes } from "../components/ui/AdminUI";
 
 const PROVINCE_NAMES = {
   1: "Koshi", 2: "Madhesh", 3: "Bagmati", 4: "Gandaki",
   5: "Lumbini", 6: "Karnali", 7: "Sudurpashchim",
 };
 
-const card = { background: P.surface, border: `1px solid ${P.border}`, borderRadius: 12, padding: 24, marginBottom: 20 };
-const btn = (bg, color) => ({ padding: "8px 18px", borderRadius: 8, border: "none", fontWeight: 600, fontSize: 13, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, background: bg, color });
-const inp = { padding: "8px 12px", borderRadius: 8, border: `1px solid ${P.border}`, fontSize: 13, outline: "none", width: "100%", boxSizing: "border-box" };
+const card = { background: T.surface, border: `1px solid ${T.border}`, borderRadius: T.radius.xl, padding: 24, marginBottom: 22, boxShadow: T.shadow.sm };
+const btn = (bg, color) => ({ padding: "9px 18px", borderRadius: T.radius.md, border: "none", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, background: bg, color, transition: T.transition, boxShadow: T.shadow.sm });
+const inp = { padding: "10px 12px", borderRadius: T.radius.md, border: `1.5px solid ${T.border}`, fontSize: 13.5, outline: "none", width: "100%", boxSizing: "border-box", transition: T.transition };
+const thStyle = { background: T.surfaceAlt, color: T.muted, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", padding: "11px 14px", borderBottom: `1px solid ${T.border}`, textAlign: "left" };
+const tdStyle = { padding: "12px 14px", borderBottom: `1px solid ${T.borderLight}`, fontSize: 13.5, verticalAlign: "middle" };
 
 export default function ProvincialVoterAssignmentsPage() {
   const navigate = useNavigate();
@@ -123,44 +118,60 @@ export default function ProvincialVoterAssignmentsPage() {
 
   if (loading) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", padding: 60, color: P.muted }}>
-        <Loader2 size={24} style={{ animation: "spin 1s linear infinite" }} />
-        <span style={{ marginLeft: 8 }}>Loading provincial assignments…</span>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
+      <PageContainer>
+        <div style={{ display: "flex", justifyContent: "center", padding: 60, color: T.muted }}>
+          <Loader2 size={24} style={{ animation: "spin 1s linear infinite" }} />
+          <span style={{ marginLeft: 8, fontWeight: 600 }}>Loading provincial assignments…</span>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+    <PageContainer>
+      <AdminKeyframes />
+      <div style={{ maxWidth: 1140, margin: "0 auto" }}>
       {/* Back link */}
       <button
         onClick={() => navigate("/admin/voter-assignments")}
         style={{
           display: "inline-flex", alignItems: "center", gap: 6,
           background: "none", border: "none", cursor: "pointer",
-          fontSize: 13, fontWeight: 600, color: P.muted, padding: 0, marginBottom: 14,
+          fontSize: 13, fontWeight: 600, color: T.muted, padding: 0, marginBottom: 14,
+          transition: T.transition,
         }}
+        onMouseEnter={e => { e.currentTarget.style.color = T.accent; }}
+        onMouseLeave={e => { e.currentTarget.style.color = T.muted; }}
       >
-        <ArrowLeft size={14} /> Federal Voter Assignments
+        <ArrowLeft size={14} /> Back to Voter Assignments
       </button>
-      {/* Province context band */}
-      <div style={{
-        background: P.purpleBg, border: `1px solid ${P.purple}30`,
-        borderRadius: 10, padding: "12px 18px", marginBottom: 20,
-        display: "flex", alignItems: "center", gap: 10, fontSize: 13, fontWeight: 600, color: P.purple,
-      }}>
-        <Building2 size={16} />
-        Provincial voter area assignments — assign voters to provincial assembly areas across all 7 provinces.
+      {/* Page header with icon */}
+      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
+        <div style={{
+          width: 48, height: 48, borderRadius: T.radius.lg, display: "flex",
+          alignItems: "center", justifyContent: "center",
+          background: `linear-gradient(135deg, ${T.purple}18, ${T.purple}08)`,
+          border: `1.5px solid ${T.purple}30`,
+        }}><Building2 size={22} color={T.purple} /></div>
+        <div>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: T.text, letterSpacing: "-0.02em" }}>
+            Provincial Area Assignments
+          </h1>
+          <p style={{ margin: "2px 0 0", color: T.muted, fontSize: 13.5, fontWeight: 500 }}>
+            Assign voters to provincial assembly areas across all 7 provinces.
+          </p>
+        </div>
       </div>
 
       {/* Message banner */}
       {msg && (
         <div style={{
-          padding: "12px 16px", borderRadius: 8, marginBottom: 16,
+          padding: "12px 16px", borderRadius: T.radius.md, marginBottom: 16,
           display: "flex", alignItems: "center", gap: 8,
-          background: msg.type === "success" ? P.successBg : P.errorBg,
-          color: msg.type === "success" ? P.success : P.error,
+          background: msg.type === "success" ? T.successBg : T.errorBg,
+          color: msg.type === "success" ? T.success : T.error,
+          border: `1px solid ${msg.type === "success" ? T.successBorder : T.errorBorder}`,
           fontSize: 13, fontWeight: 600,
         }}>
           {msg.type === "success" ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
@@ -171,34 +182,41 @@ export default function ProvincialVoterAssignmentsPage() {
 
       {/* Assign form */}
       <div style={card}>
-        <h3 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 800, color: P.navy, display: "flex", alignItems: "center", gap: 8 }}>
-          <MapPin size={18} /> Assign Voter to Provincial Area
+        <h3 style={{ margin: "0 0 18px", fontSize: 17, fontWeight: 800, color: T.navy, display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{
+            width: 32, height: 32, borderRadius: "50%", display: "flex",
+            alignItems: "center", justifyContent: "center", background: T.purpleBg,
+          }}><Building2 size={16} color={T.purple} /></div>
+          Assign Voter to Provincial Area
         </h3>
 
         {/* Step 1: Search voter */}
         <div style={{ marginBottom: 16 }}>
-          <label style={{ fontSize: 13, fontWeight: 600, color: P.text, display: "block", marginBottom: 4 }}>
-            1. Search Voter by Citizenship ID
+          <label style={{ fontSize: 13, fontWeight: 700, color: T.text, display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+            <span style={{ width: 22, height: 22, borderRadius: "50%", background: T.purple, color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800 }}>1</span>
+            Search Voter by Citizenship ID
           </label>
           <div style={{ display: "flex", gap: 8 }}>
             <input style={{ ...inp, maxWidth: 350 }} placeholder="Enter citizenship number…"
               value={voterSearch} onChange={e => setVoterSearch(e.target.value)}
               onKeyDown={e => e.key === "Enter" && handleSearch()} />
-            <button style={btn(P.accent, "#fff")} onClick={handleSearch}>
+            <button style={btn(T.accent, "#fff")} onClick={handleSearch}>
               <Search size={14} /> Search
             </button>
           </div>
           {voters.length > 0 && !selectedVoter && (
-            <div style={{ marginTop: 8, maxHeight: 220, overflowY: "auto", border: `1px solid ${P.border}`, borderRadius: 8, background: "#FAFBFC" }}>
+            <div style={{ marginTop: 8, maxHeight: 220, overflowY: "auto", border: `1px solid ${T.border}`, borderRadius: T.radius.md, background: T.surfaceAlt }}>
               {voters.map(v => (
                 <div key={v.id} onClick={() => setSelectedVoter(v)}
-                  style={{ padding: "10px 14px", cursor: "pointer", borderBottom: `1px solid ${P.border}`, background: "transparent", fontSize: 13 }}>
+                  style={{ padding: "10px 14px", cursor: "pointer", borderBottom: `1px solid ${T.borderLight}`, background: "transparent", fontSize: 13, transition: T.transitionFast }}
+                  onMouseEnter={e => { e.currentTarget.style.background = T.accentLight; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div>
-                      <span style={{ fontWeight: 600, color: P.navy }}>{v.citizenship_no_normalized || v.citizenship_no_raw}</span>
-                      <span style={{ color: P.muted, marginLeft: 10 }}>{v.full_name}</span>
+                      <span style={{ fontWeight: 700, color: T.navy }}>{v.citizenship_no_normalized || v.citizenship_no_raw}</span>
+                      <span style={{ color: T.muted, marginLeft: 10 }}>{v.full_name}</span>
                     </div>
-                    <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 9999, background: v.status === "ACTIVE" ? "#ECFDF5" : "#FEF2F2", color: v.status === "ACTIVE" ? "#059669" : "#DC2626", fontWeight: 600 }}>
+                    <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 9999, background: v.status === "ACTIVE" ? T.successBg : T.errorBg, color: v.status === "ACTIVE" ? T.success : T.error, fontWeight: 600 }}>
                       {v.status}
                     </span>
                   </div>
@@ -207,32 +225,33 @@ export default function ProvincialVoterAssignmentsPage() {
             </div>
           )}
           {voters.length === 0 && voterSearch.trim() && !selectedVoter && (
-            <div style={{ marginTop: 8, fontSize: 13, color: P.muted }}>No voters found for "{voterSearch}"</div>
+            <div style={{ marginTop: 8, fontSize: 13, color: T.muted }}>No voters found for "{voterSearch}"</div>
           )}
           {selectedVoter && (
-            <div style={{ marginTop: 12, padding: 16, border: `2px solid ${P.accent}`, borderRadius: 10, background: "#F0F6FF", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ marginTop: 12, padding: 16, border: `2px solid ${T.accent}`, borderRadius: T.radius.lg, background: T.accentLight, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
-                <div style={{ width: 44, height: 44, borderRadius: "50%", background: P.accent, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 18 }}>
+                <div style={{ width: 44, height: 44, borderRadius: "50%", background: T.accent, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 18 }}>
                   {(selectedVoter.full_name || "?")[0].toUpperCase()}
                 </div>
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: 15, color: P.navy }}>{selectedVoter.full_name}</div>
-                  <div style={{ fontSize: 12, color: P.muted, marginTop: 2, display: "flex", gap: 14, alignItems: "center" }}>
+                  <div style={{ fontWeight: 700, fontSize: 15, color: T.navy }}>{selectedVoter.full_name}</div>
+                  <div style={{ fontSize: 12, color: T.muted, marginTop: 2, display: "flex", gap: 14, alignItems: "center" }}>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><CreditCard size={12} /> {selectedVoter.citizenship_no_normalized || selectedVoter.citizenship_no_raw}</span>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><User size={12} /> Voter #{selectedVoter.id}</span>
-                    <span style={{ fontSize: 11, padding: "1px 7px", borderRadius: 9999, background: selectedVoter.status === "ACTIVE" ? "#ECFDF5" : "#FEF2F2", color: selectedVoter.status === "ACTIVE" ? "#059669" : "#DC2626", fontWeight: 600 }}>{selectedVoter.status}</span>
+                    <span style={{ fontSize: 11, padding: "1px 7px", borderRadius: 9999, background: selectedVoter.status === "ACTIVE" ? T.successBg : T.errorBg, color: selectedVoter.status === "ACTIVE" ? T.success : T.error, fontWeight: 600 }}>{selectedVoter.status}</span>
                   </div>
                 </div>
               </div>
-              <button onClick={() => setSelectedVoter(null)} style={{ background: "none", border: `1px solid ${P.border}`, borderRadius: 6, padding: "4px 10px", cursor: "pointer", fontSize: 12, color: P.muted, fontWeight: 600 }}>Clear</button>
+              <button onClick={() => setSelectedVoter(null)} style={{ background: "none", border: `1px solid ${T.border}`, borderRadius: T.radius.sm, padding: "4px 10px", cursor: "pointer", fontSize: 12, color: T.muted, fontWeight: 600 }}>Clear</button>
             </div>
           )}
         </div>
 
         {/* Step 2: Select province + area */}
         <div style={{ marginBottom: 16 }}>
-          <label style={{ fontSize: 13, fontWeight: 600, color: P.text, display: "block", marginBottom: 4 }}>
-            2. Select Provincial Area
+          <label style={{ fontSize: 13, fontWeight: 700, color: T.text, display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+            <span style={{ width: 22, height: 22, borderRadius: "50%", background: T.purple, color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800 }}>2</span>
+            Select Provincial Area
           </label>
           <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
             <select style={{ ...inp, maxWidth: 220 }} value={provinceFilter} onChange={e => setProvinceFilter(e.target.value)}>
@@ -253,7 +272,7 @@ export default function ProvincialVoterAssignmentsPage() {
         </div>
 
         {/* Step 3: Assign */}
-        <button style={{ ...btn(P.navy, "#fff"), opacity: !selectedVoter || !selectedArea || submitting ? 0.5 : 1 }}
+        <button style={{ ...btn(T.navy, "#fff"), opacity: !selectedVoter || !selectedArea || submitting ? 0.5 : 1 }}
           disabled={!selectedVoter || !selectedArea || submitting} onClick={handleAssign}>
           {submitting ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> : <CheckCircle2 size={14} />}
           {submitting ? "Assigning…" : "Assign Voter"}
@@ -263,37 +282,42 @@ export default function ProvincialVoterAssignmentsPage() {
       {/* Current assignments table */}
       <div style={card}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: P.navy, display: "flex", alignItems: "center", gap: 8 }}>
-            <Users size={18} /> Provincial Assignments ({assignments.length})
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: T.navy, display: "flex", alignItems: "center", gap: 8 }}>
+            <Users size={18} color={T.purple} /> Provincial Assignments ({assignments.length})
           </h3>
           <div style={{ display: "flex", gap: 8 }}>
-            {page > 1 && <button style={btn("#F1F5F9", P.text)} onClick={() => setPage(p => p - 1)}>← Prev</button>}
-            <span style={{ fontSize: 13, color: P.muted, padding: "8px 0" }}>Page {page}</span>
-            {assignments.length === 50 && <button style={btn("#F1F5F9", P.text)} onClick={() => setPage(p => p + 1)}>Next →</button>}
+            {page > 1 && <button style={btn(T.surfaceAlt, T.text)} onClick={() => setPage(p => p - 1)}>← Prev</button>}
+            <span style={{ fontSize: 13, color: T.muted, padding: "8px 0", fontWeight: 600 }}>Page {page}</span>
+            {assignments.length === 50 && <button style={btn(T.surfaceAlt, T.text)} onClick={() => setPage(p => p + 1)}>Next →</button>}
           </div>
         </div>
         {assignments.length === 0 ? (
-          <div style={{ textAlign: "center", padding: 40, color: P.muted, fontSize: 14 }}>
-            No provincial voter assignments yet. Use the form above to assign voters to provincial areas.
+          <div style={{ textAlign: "center", padding: 40, color: T.muted, fontSize: 14 }}>
+            <Building2 size={28} color={T.border} style={{ marginBottom: 8 }} />
+            <p style={{ margin: "0 0 4px", fontWeight: 700, color: T.text }}>No provincial assignments yet</p>
+            <p style={{ margin: 0, color: T.muted, fontSize: 13 }}>Use the form above to assign voters to provincial areas.</p>
           </div>
         ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+          <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 13 }}>
             <thead>
-              <tr style={{ textAlign: "left", borderBottom: `2px solid ${P.border}` }}>
-                <th style={{ padding: "8px 12px", color: P.muted, fontWeight: 600 }}>Voter</th>
-                <th style={{ padding: "8px 12px", color: P.muted, fontWeight: 600 }}>Citizenship ID</th>
-                <th style={{ padding: "8px 12px", color: P.muted, fontWeight: 600 }}>Provincial Area</th>
-                <th style={{ padding: "8px 12px", color: P.muted, fontWeight: 600, textAlign: "center" }}>Actions</th>
+              <tr>
+                <th style={thStyle}>Voter</th>
+                <th style={thStyle}>Citizenship ID</th>
+                <th style={thStyle}>Provincial Area</th>
+                <th style={{ ...thStyle, textAlign: "center" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {assignments.map(a => (
-                <tr key={a.id || `${a.voter_id}-${a.area_id}`} style={{ borderBottom: `1px solid ${P.border}` }}>
-                  <td style={{ padding: "10px 12px", fontWeight: 500 }}>{a.voter_name || "—"}</td>
-                  <td style={{ padding: "10px 12px", color: P.muted, fontFamily: "monospace" }}>{a.citizenship_no || "—"}</td>
-                  <td style={{ padding: "10px 12px" }}>{a.area_name || a.constituency_name || "Unknown"}</td>
-                  <td style={{ padding: "10px 12px", textAlign: "center" }}>
-                    <button style={{ ...btn("#FEF2F2", P.error), padding: "4px 12px", fontSize: 12 }}
+              {assignments.map((a, idx) => (
+                <tr key={a.id || `${a.voter_id}-${a.area_id}`} style={{ background: idx % 2 === 0 ? T.surface : T.surfaceAlt, transition: T.transitionFast }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "#F5F0FF"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = idx % 2 === 0 ? T.surface : T.surfaceAlt; }}>
+                  <td style={{ ...tdStyle, fontWeight: 600 }}>{a.voter_name || "—"}</td>
+                  <td style={tdStyle}><code style={{ background: T.surfaceAlt, padding: "2px 8px", borderRadius: T.radius.sm, fontSize: 12, fontWeight: 600, color: T.textSecondary, border: `1px solid ${T.borderLight}`, fontFamily: "monospace" }}>{a.citizenship_no || "—"}</code></td>
+                  <td style={tdStyle}>{a.area_name || a.constituency_name || "Unknown"}</td>
+                  <td style={{ ...tdStyle, textAlign: "center" }}>
+                    <button style={{ ...btn(T.errorBg, T.error), padding: "5px 12px", fontSize: 12, boxShadow: "none", border: `1px solid ${T.errorBorder}` }}
                       onClick={() => setConfirmRemove({ voterId: a.voter_id, voterName: a.voter_name || `Voter #${a.voter_id}` })}>
                       <Trash2 size={12} /> Remove
                     </button>
@@ -302,6 +326,7 @@ export default function ProvincialVoterAssignmentsPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 
@@ -310,5 +335,6 @@ export default function ProvincialVoterAssignmentsPage() {
         body={`Remove provincial area assignment for ${confirmRemove?.voterName}?`}
         confirmLabel="Remove" variant="danger" />
     </div>
+    </PageContainer>
   );
 }

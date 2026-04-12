@@ -172,9 +172,9 @@ export default function VoterDashboard({ user }) {
                     {el.title}
                   </div>
                   <div style={{ fontSize: 13, color: PALETTE.mutedText, marginTop: 2 }}>
-                    {el.election_type || "General"} Election
-                    {el.polling_end && (
-                      <> · Closes {new Date(el.polling_end).toLocaleDateString()}</>
+                    {el.election_subtype || "General"} Election
+                    {el.polling_end_at && (
+                      <> · Closes {new Date(el.polling_end_at).toLocaleDateString()}</>
                     )}
                   </div>
                 </div>

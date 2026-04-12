@@ -1,5 +1,5 @@
 import React from "react";
-import { tokens } from "./tokens";
+import { T } from "../../../components/ui/tokens";
 import { X, User, Mail, Phone, Calendar, ShieldCheck, FileText } from "lucide-react";
 import VerificationImagePanel from "./VerificationImagePanel";
 import VerificationChecklist from "./VerificationChecklist";
@@ -14,24 +14,9 @@ export default function VoterVerificationReviewPanel({
 }) {
   if (!voter) return null;
 
-  const infoItemStyle = {
-    display: "flex",
-    flexDirection: "column",
-    gap: 4,
-  };
-
-  const labelStyle = {
-    fontSize: tokens.fontSizes.xs,
-    color: tokens.text.muted,
-    fontWeight: 600,
-    textTransform: "uppercase",
-  };
-
-  const valueStyle = {
-    fontSize: tokens.fontSizes.sm,
-    color: tokens.text.primary,
-    fontWeight: 500,
-  };
+  const infoItemStyle = { display: "flex", flexDirection: "column", gap: 4 };
+  const labelStyle = { fontSize: 11, color: T.muted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" };
+  const valueStyle = { fontSize: 13.5, color: T.text, fontWeight: 500 };
 
   const checklistItems = [
     { label: "Citizenship document uploaded", ok: !!voter.document_uploaded_at },
@@ -44,10 +29,10 @@ export default function VoterVerificationReviewPanel({
 
   return (
     <div style={{
-      background: tokens.cardBackground,
-      border: `1px solid ${tokens.cardBorder}`,
-      borderRadius: tokens.borderRadius.medium,
-      boxShadow: tokens.shadows.lg,
+      background: T.surface,
+      border: `1px solid ${T.border}`,
+      borderRadius: T.radius.xl,
+      boxShadow: T.shadow.lg,
       display: "flex",
       flexDirection: "column",
       height: "100%",
@@ -56,63 +41,56 @@ export default function VoterVerificationReviewPanel({
     }}>
       {/* Panel Header */}
       <div style={{
-        padding: tokens.spacing.lg,
-        borderBottom: `1px solid ${tokens.colors.border}`,
+        padding: "16px 20px",
+        borderBottom: `1px solid ${T.border}`,
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        background: "#fafafa"
+        background: T.surfaceAlt,
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: tokens.spacing.md }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ 
-            background: tokens.colors.accent, 
-            color: "#fff", 
-            width: 32, 
-            height: 32, 
-            borderRadius: tokens.borderRadius.small,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center"
+            background: `linear-gradient(135deg, ${T.accent}18, ${T.accent}08)`, 
+            border: `1.5px solid ${T.accent}30`,
+            color: T.accent, 
+            width: 36, height: 36, 
+            borderRadius: T.radius.md,
+            display: "flex", alignItems: "center", justifyContent: "center"
           }}>
             <ShieldCheck size={20} />
           </div>
           <div>
-            <h3 style={{ fontSize: tokens.fontSizes.base, fontWeight: 700, margin: 0 }}>Reviewing Application</h3>
-            <p style={{ fontSize: tokens.fontSizes.xs, color: tokens.text.secondary, margin: 0 }}>ID: {voter.id}</p>
+            <h3 style={{ fontSize: 15, fontWeight: 800, margin: 0, color: T.text }}>Reviewing Application</h3>
+            <p style={{ fontSize: 12, color: T.muted, margin: 0, fontWeight: 500 }}>ID: {voter.id}</p>
           </div>
         </div>
         <button 
           onClick={onClose}
           style={{
-            background: "transparent",
-            border: "none",
-            cursor: "pointer",
-            color: tokens.text.muted,
-            padding: 8,
-            borderRadius: "50%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            transition: "background 0.2s"
+            background: "transparent", border: "none", cursor: "pointer",
+            color: T.muted, padding: 8, borderRadius: "50%",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            transition: T.transition,
           }}
-          onMouseEnter={(e) => e.target.style.background = "#f1f5f9"}
-          onMouseLeave={(e) => e.target.style.background = "transparent"}
+          onMouseEnter={(e) => { e.currentTarget.style.background = T.surfaceAlt; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
         >
           <X size={20} />
         </button>
       </div>
 
       {/* Scrollable Content */}
-      <div style={{ flex: 1, overflowY: "auto", padding: tokens.spacing.xl }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: 24 }}>
         {/* Voter Personal Info Grid */}
         <div style={{ 
           display: "grid", 
           gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", 
-          gap: tokens.spacing.xl,
-          marginBottom: tokens.spacing.xxl,
-          padding: tokens.spacing.lg,
-          background: tokens.pageBackground,
-          borderRadius: tokens.borderRadius.medium,
+          gap: 20,
+          marginBottom: 28,
+          padding: 18,
+          background: T.surfaceAlt,
+          borderRadius: T.radius.lg,
+          border: `1px solid ${T.borderLight}`,
         }}>
           <div style={infoItemStyle}>
             <span style={labelStyle}>Full Name</span>
@@ -125,14 +103,14 @@ export default function VoterVerificationReviewPanel({
           <div style={infoItemStyle}>
             <span style={labelStyle}>Email Address</span>
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <Mail size={14} style={{ color: tokens.text.muted }} />
+              <Mail size={14} style={{ color: T.muted }} />
               <span style={valueStyle}>{voter.email}</span>
             </div>
           </div>
           <div style={infoItemStyle}>
             <span style={labelStyle}>Phone Number</span>
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <Phone size={14} style={{ color: tokens.text.muted }} />
+              <Phone size={14} style={{ color: T.muted }} />
               <span style={valueStyle}>{voter.phone_number}</span>
             </div>
           </div>
@@ -142,12 +120,12 @@ export default function VoterVerificationReviewPanel({
         <VerificationImagePanel userId={voter.id} />
 
         {/* Process Controls */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: tokens.spacing.xl }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
            <VerificationChecklist checklistItems={checklistItems} />
-           <div style={{ fontSize: tokens.fontSizes.sm, color: tokens.text.secondary }}>
-              <h4 style={{ fontWeight: 600, color: tokens.text.primary, marginBottom: tokens.spacing.sm }}>Adjudication Guidance</h4>
+           <div style={{ fontSize: 13.5, color: T.textSecondary }}>
+              <h4 style={{ fontWeight: 700, color: T.text, marginBottom: 8 }}>Adjudication Guidance</h4>
               <p>Verify that the photo on the citizenship document matches the live face capture. Ensure names and numbers are perfectly legible and match the submitted record.</p>
-              <p style={{ marginTop: tokens.spacing.sm }}>Rejections should be accompanied by clear, actionable feedback for the voter.</p>
+              <p style={{ marginTop: 8 }}>Rejections should be accompanied by clear, actionable feedback for the voter.</p>
            </div>
         </div>
       </div>

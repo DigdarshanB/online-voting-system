@@ -14,13 +14,16 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
 import AppQueryProvider from "./providers/AppQueryProvider.jsx";
+import { ToastProvider } from "./components/ui/ToastContext.jsx";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <AppQueryProvider>
       <BrowserRouter>
-        <App />
+        <ToastProvider>
+          <App />
+        </ToastProvider>
       </BrowserRouter>
     </AppQueryProvider>
   </React.StrictMode>

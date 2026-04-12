@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { tokens } from './tokens';
-import { AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { T } from '../../../components/ui/tokens';
+import { AlertTriangle, ShieldCheck } from 'lucide-react';
 
 export default function ConfirmActionDialog({
   open,
@@ -13,11 +13,13 @@ export default function ConfirmActionDialog({
   onCancel,
   requiresReason = false,
   reasonLabel = "Reason for Action",
-  reasonPlaceholder = "Provide a justification for the audit log...",
+  reasonPlaceholder = "Provide a justification for the audit log…",
   children,
 }) {
   const [reason, setReason] = useState('');
   const [canConfirm, setCanConfirm] = useState(!requiresReason);
+  const [reasonFocused, setReasonFocused] = useState(false);
+  const dialogRef = useRef(null);
 
   useEffect(() => {
     if (requiresReason) {
@@ -26,105 +28,27 @@ export default function ConfirmActionDialog({
   }, [reason, requiresReason]);
 
   useEffect(() => {
-    // Reset reason when dialog is opened/closed
     if (open) {
       setReason('');
       setCanConfirm(!requiresReason);
     }
   }, [open, requiresReason]);
 
+  // Trap focus & escape key
+  useEffect(() => {
+    if (!open) return;
+    const handleKey = (e) => {
+      if (e.key === 'Escape') onCancel();
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [open, onCancel]);
+
   if (!open) return null;
 
-  const backdropStyle = {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000,
-  };
-
-  const dialogStyle = {
-    backgroundColor: tokens.cardBackground,
-    borderRadius: tokens.borderRadius.large,
-    padding: tokens.spacing.xxl,
-    width: '100%',
-    maxWidth: '480px',
-    boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
-    border: `1px solid ${tokens.cardBorder}`,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: tokens.spacing.lg,
-  };
-
-  const headerStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: tokens.spacing.md,
-  };
-
-  const titleStyle = {
-    fontSize: 18,
-    fontWeight: 600,
-    color: isDestructive ? tokens.status.danger.text : tokens.text.primary,
-  };
-
-  const descriptionStyle = {
-    fontSize: 14,
-    color: tokens.text.secondary,
-    lineHeight: 1.6,
-  };
-
-  const reasonInputStyle = {
-    width: '100%',
-    padding: '10px 12px',
-    fontSize: 14,
-    border: `1px solid ${tokens.cardBorder}`,
-    borderRadius: tokens.borderRadius.medium,
-    backgroundColor: tokens.input.background,
-    color: tokens.text.primary,
-    marginTop: tokens.spacing.md,
-  };
-
-  const footerStyle = {
-    display: 'flex',
-    justifyContent: 'flex-end',
-    gap: tokens.spacing.md,
-    marginTop: tokens.spacing.lg,
-  };
-
-  const buttonBaseStyle = {
-    padding: '10px 20px',
-    fontSize: 14,
-    fontWeight: 600,
-    borderRadius: tokens.borderRadius.medium,
-    border: 'none',
-    cursor: 'pointer',
-    transition: 'background-color 0.2s, opacity 0.2s',
-  };
-
-  const confirmButtonStyle = {
-    ...buttonBaseStyle,
-    backgroundColor: isDestructive ? tokens.status.danger.background : tokens.button.primary.background,
-    color: isDestructive ? tokens.status.danger.text : '#FFFFFF',
-  };
-  
-  const disabledConfirmStyle = {
-    ...confirmButtonStyle,
-    opacity: 0.5,
-    cursor: 'not-allowed',
-  };
-
-  const cancelButtonStyle = {
-    ...buttonBaseStyle,
-    backgroundColor: tokens.input.background,
-    color: tokens.text.secondary,
-    border: `1px solid ${tokens.cardBorder}`,
-  };
+  const accentColor = isDestructive ? T.error : T.navy;
+  const accentBg = isDestructive ? T.errorBg : `${T.navy}0D`;
+  const Icon = isDestructive ? AlertTriangle : ShieldCheck;
 
   const handleConfirm = () => {
     if (requiresReason) {
@@ -135,43 +59,137 @@ export default function ConfirmActionDialog({
   };
 
   return (
-    <div style={backdropStyle} onClick={onCancel}>
-      <div style={dialogStyle} onClick={(e) => e.stopPropagation()}>
-        <div style={headerStyle}>
-          {isDestructive && <AlertTriangle size={24} color={tokens.status.danger.text} />}
-          <h2 style={titleStyle}>{title}</h2>
-        </div>
-        <p style={descriptionStyle}>{description}</p>
-        
-        {children}
-
-        {requiresReason && (
-          <div>
-            <label htmlFor="action-reason" style={{ fontSize: 13, fontWeight: 500, color: tokens.text.secondary }}>
-              {reasonLabel}
-            </label>
-            <textarea
-              id="action-reason"
-              rows="3"
-              style={reasonInputStyle}
-              placeholder={reasonPlaceholder}
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-            />
+    <div
+      style={{
+        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+        backgroundColor: 'rgba(15, 23, 42, 0.55)',
+        backdropFilter: 'blur(4px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 1000,
+        animation: 'fadeIn 0.15s ease-out',
+      }}
+      onClick={onCancel}
+      role="presentation"
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-dialog-title"
+        aria-describedby="confirm-dialog-desc"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          backgroundColor: T.surface,
+          borderRadius: T.radius.xl,
+          width: '100%', maxWidth: 480,
+          boxShadow: T.shadow.xl,
+          border: `1px solid ${T.border}`,
+          overflow: 'hidden',
+          animation: 'slideUp 0.2s ease-out',
+        }}
+      >
+        {/* Accent header band */}
+        <div style={{
+          padding: `${T.space.lg}px ${T.space["2xl"]}px`,
+          display: 'flex', alignItems: 'center', gap: T.space.md,
+          borderBottom: `1px solid ${T.borderLight}`,
+          background: accentBg,
+        }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: T.radius.lg,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            backgroundColor: `${accentColor}18`,
+          }}>
+            <Icon size={18} color={accentColor} />
           </div>
-        )}
+          <h2 id="confirm-dialog-title" style={{
+            fontSize: 17, fontWeight: 700, color: T.text, margin: 0,
+          }}>
+            {title}
+          </h2>
+        </div>
 
-        <div style={footerStyle}>
-          <button style={cancelButtonStyle} onClick={onCancel}>
-            {cancelLabel}
-          </button>
-          <button 
-            style={canConfirm ? confirmButtonStyle : disabledConfirmStyle} 
-            onClick={handleConfirm}
-            disabled={!canConfirm}
-          >
-            {confirmLabel}
-          </button>
+        {/* Body */}
+        <div style={{ padding: T.space["2xl"], display: 'flex', flexDirection: 'column', gap: T.space.lg }}>
+          <p id="confirm-dialog-desc" style={{
+            fontSize: 14, color: T.textSecondary, lineHeight: 1.65, margin: 0,
+          }}>
+            {description}
+          </p>
+
+          {children}
+
+          {requiresReason && (
+            <div>
+              <label htmlFor="action-reason" style={{
+                display: 'block', fontSize: 12.5, fontWeight: 600,
+                color: T.textSecondary, marginBottom: 6,
+                textTransform: 'uppercase', letterSpacing: '0.04em',
+              }}>
+                {reasonLabel}
+              </label>
+              <textarea
+                id="action-reason"
+                rows="3"
+                style={{
+                  width: '100%', padding: '10px 12px',
+                  fontSize: 14, color: T.text,
+                  border: `1px solid ${reasonFocused ? accentColor : T.border}`,
+                  borderRadius: T.radius.md,
+                  backgroundColor: T.surfaceAlt,
+                  boxShadow: reasonFocused ? `0 0 0 3px ${accentColor}1A` : 'none',
+                  outline: 'none', resize: 'vertical',
+                  transition: `border-color ${T.transitionFast}, box-shadow ${T.transitionFast}`,
+                  lineHeight: 1.5,
+                  boxSizing: 'border-box',
+                }}
+                placeholder={reasonPlaceholder}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                onFocus={() => setReasonFocused(true)}
+                onBlur={() => setReasonFocused(false)}
+              />
+            </div>
+          )}
+
+          {/* Footer */}
+          <div style={{
+            display: 'flex', justifyContent: 'flex-end',
+            gap: T.space.md, paddingTop: T.space.md,
+            borderTop: `1px solid ${T.borderLight}`,
+          }}>
+            <button
+              onClick={onCancel}
+              style={{
+                padding: '9px 18px', fontSize: 13.5, fontWeight: 600,
+                borderRadius: T.radius.md,
+                border: `1px solid ${T.border}`,
+                backgroundColor: 'transparent', color: T.textSecondary,
+                cursor: 'pointer', transition: T.transition,
+              }}
+              onMouseOver={(e) => (e.currentTarget.style.backgroundColor = T.surfaceAlt)}
+              onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+            >
+              {cancelLabel}
+            </button>
+            <button
+              onClick={handleConfirm}
+              disabled={!canConfirm}
+              style={{
+                padding: '9px 18px', fontSize: 13.5, fontWeight: 600,
+                borderRadius: T.radius.md, border: 'none',
+                backgroundColor: canConfirm ? (isDestructive ? T.error : T.navy) : T.border,
+                color: canConfirm ? '#FFFFFF' : T.muted,
+                cursor: canConfirm ? 'pointer' : 'not-allowed',
+                transition: T.transition,
+                boxShadow: canConfirm ? T.shadow.sm : 'none',
+              }}
+              onMouseOver={(e) => { if (canConfirm) e.currentTarget.style.opacity = '0.9'; }}
+              onMouseOut={(e) => { if (canConfirm) e.currentTarget.style.opacity = '1'; }}
+            >
+              {confirmLabel}
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { tokens } from './tokens';
+import { T } from '../../../components/ui/tokens';
 import { CheckCircle, AlertTriangle, Copy, ExternalLink } from 'lucide-react';
 
 function CopyButton({ onCopy, valueToCopy }) {

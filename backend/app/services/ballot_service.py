@@ -370,8 +370,8 @@ def cast_dual_ballot(
     db: Session,
     election_id: int,
     voter: User,
-    fptp_nomination_id: int,
-    pr_party_id: int,
+    fptp_nomination_id: int | None,
+    pr_party_id: int | None,
 ) -> dict:
     # 1 — voter eligibility
     if voter.role != "voter":
@@ -426,90 +426,91 @@ def cast_dual_ballot(
             detail="You have already cast your ballot in this election",
         )
 
-    # 7 — FPTP contest matches voter's constituency
-    fptp_contest = db.execute(
-        select(ElectionContest).where(
-            ElectionContest.election_id == election_id,
-            ElectionContest.contest_type == CONTEST_TYPE_FPTP,
-            ElectionContest.constituency_id == assignment.constituency_id,
-        )
-    ).scalar_one_or_none()
-    if not fptp_contest:
-        raise HTTPException(
-            status_code=400,
-            detail="No FPTP contest found for your constituency",
-        )
+    entries = []
 
-    # 8 — FPTP nomination is approved for that contest
-    fptp_nomination = db.execute(
-        select(FptpCandidateNomination).where(
-            FptpCandidateNomination.id == fptp_nomination_id,
-            FptpCandidateNomination.contest_id == fptp_contest.id,
-            FptpCandidateNomination.status == "APPROVED",
-        )
-    ).scalar_one_or_none()
-    if not fptp_nomination:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid FPTP candidate selection for your constituency",
-        )
+    # 7-8 — FPTP: only validate & encrypt if voter made a selection
+    if fptp_nomination_id is not None:
+        fptp_contest = db.execute(
+            select(ElectionContest).where(
+                ElectionContest.election_id == election_id,
+                ElectionContest.contest_type == CONTEST_TYPE_FPTP,
+                ElectionContest.constituency_id == assignment.constituency_id,
+            )
+        ).scalar_one_or_none()
+        if not fptp_contest:
+            raise HTTPException(
+                status_code=400,
+                detail="No FPTP contest found for your constituency",
+            )
 
-    # 9 — PR contest (national)
-    pr_contest = db.execute(
-        select(ElectionContest).where(
-            ElectionContest.election_id == election_id,
-            ElectionContest.contest_type == CONTEST_TYPE_PR,
-            ElectionContest.constituency_id.is_(None),
-        )
-    ).scalar_one_or_none()
-    if not pr_contest:
-        raise HTTPException(
-            status_code=400,
-            detail="No PR contest found for this election",
-        )
+        fptp_nomination = db.execute(
+            select(FptpCandidateNomination).where(
+                FptpCandidateNomination.id == fptp_nomination_id,
+                FptpCandidateNomination.contest_id == fptp_contest.id,
+                FptpCandidateNomination.status == "APPROVED",
+            )
+        ).scalar_one_or_none()
+        if not fptp_nomination:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid FPTP candidate selection for your constituency",
+            )
 
-    # 10 — PR party has approved submission
-    pr_submission = db.execute(
-        select(PrPartySubmission).where(
-            PrPartySubmission.election_id == election_id,
-            PrPartySubmission.party_id == pr_party_id,
-            PrPartySubmission.status == "APPROVED",
+        fptp_ct, fptp_nonce = _encrypt_choice(
+            {"contest_id": fptp_contest.id, "nomination_id": fptp_nomination_id}
         )
-    ).scalar_one_or_none()
-    if not pr_submission:
-        raise HTTPException(
-            status_code=400, detail="Invalid PR party selection"
+        entries.append({
+            "contest_id": fptp_contest.id,
+            "ballot_type": CONTEST_TYPE_FPTP,
+            "encrypted_choice": fptp_ct,
+            "nonce": fptp_nonce,
+        })
+
+    # 9-10 — PR: only validate & encrypt if voter made a selection
+    if pr_party_id is not None:
+        pr_contest = db.execute(
+            select(ElectionContest).where(
+                ElectionContest.election_id == election_id,
+                ElectionContest.contest_type == CONTEST_TYPE_PR,
+                ElectionContest.constituency_id.is_(None),
+            )
+        ).scalar_one_or_none()
+        if not pr_contest:
+            raise HTTPException(
+                status_code=400,
+                detail="No PR contest found for this election",
+            )
+
+        pr_submission = db.execute(
+            select(PrPartySubmission).where(
+                PrPartySubmission.election_id == election_id,
+                PrPartySubmission.party_id == pr_party_id,
+                PrPartySubmission.status == "APPROVED",
+            )
+        ).scalar_one_or_none()
+        if not pr_submission:
+            raise HTTPException(
+                status_code=400, detail="Invalid PR party selection"
+            )
+
+        pr_ct, pr_nonce = _encrypt_choice(
+            {"contest_id": pr_contest.id, "party_id": pr_party_id}
         )
+        entries.append({
+            "contest_id": pr_contest.id,
+            "ballot_type": CONTEST_TYPE_PR,
+            "encrypted_choice": pr_ct,
+            "nonce": pr_nonce,
+        })
 
-    # 11 — encrypt both choices
-    fptp_ct, fptp_nonce = _encrypt_choice(
-        {"contest_id": fptp_contest.id, "nomination_id": fptp_nomination_id}
-    )
-    pr_ct, pr_nonce = _encrypt_choice(
-        {"contest_id": pr_contest.id, "party_id": pr_party_id}
-    )
-
-    # 12 — atomic insert (both entries in one transaction)
+    # 11 — atomic insert (entries may be empty for a fully blank ballot)
     try:
         ballot = ballot_repository.create_ballot_with_entries(
             db,
             election_id=election_id,
             voter_id=voter.id,
             constituency_id=assignment.constituency_id,
-            entries=[
-                {
-                    "contest_id": fptp_contest.id,
-                    "ballot_type": CONTEST_TYPE_FPTP,
-                    "encrypted_choice": fptp_ct,
-                    "nonce": fptp_nonce,
-                },
-                {
-                    "contest_id": pr_contest.id,
-                    "ballot_type": CONTEST_TYPE_PR,
-                    "encrypted_choice": pr_ct,
-                    "nonce": pr_nonce,
-                },
-            ],
+            entries=entries,
         )
         db.commit()
     except IntegrityError:
@@ -523,10 +524,7 @@ def cast_dual_ballot(
         "success": True,
         "ballot_id": ballot.id,
         "election_id": election_id,
-        "message": (
-            "Your dual ballot has been cast successfully. "
-            "Both FPTP and PR votes were recorded."
-        ),
+        "message": "Your ballot has been cast successfully.",
     }
 
 
@@ -693,10 +691,10 @@ def cast_provincial_dual_ballot(
     db: Session,
     election_id: int,
     voter: User,
-    fptp_nomination_id: int,
-    pr_party_id: int,
+    fptp_nomination_id: int | None,
+    pr_party_id: int | None,
 ) -> dict:
-    """Cast a provincial dual ballot (FPTP + PR) atomically."""
+    """Cast a provincial dual ballot (FPTP + PR) atomically. Either may be None (undervote)."""
     # 1 — voter eligibility
     if voter.role != "voter":
         raise HTTPException(status_code=403, detail="Only voters can cast ballots")
@@ -761,89 +759,90 @@ def cast_provincial_dual_ballot(
             detail="You have already cast your ballot in this election",
         )
 
-    # 7 — FPTP contest matches voter's area
-    fptp_contest = db.execute(
-        select(ElectionContest).where(
-            ElectionContest.election_id == election_id,
-            ElectionContest.contest_type == CONTEST_TYPE_FPTP,
-            ElectionContest.area_id == assignment.area_id,
-        )
-    ).scalar_one_or_none()
-    if not fptp_contest:
-        raise HTTPException(
-            status_code=400,
-            detail="No FPTP contest found for your provincial constituency",
-        )
+    entries = []
 
-    # 8 — FPTP nomination is approved for that contest
-    fptp_nomination = db.execute(
-        select(FptpCandidateNomination).where(
-            FptpCandidateNomination.id == fptp_nomination_id,
-            FptpCandidateNomination.contest_id == fptp_contest.id,
-            FptpCandidateNomination.status == "APPROVED",
-        )
-    ).scalar_one_or_none()
-    if not fptp_nomination:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid FPTP candidate selection for your provincial constituency",
-        )
+    # 7-8 — FPTP: only validate & encrypt if voter made a selection
+    if fptp_nomination_id is not None:
+        fptp_contest = db.execute(
+            select(ElectionContest).where(
+                ElectionContest.election_id == election_id,
+                ElectionContest.contest_type == CONTEST_TYPE_FPTP,
+                ElectionContest.area_id == assignment.area_id,
+            )
+        ).scalar_one_or_none()
+        if not fptp_contest:
+            raise HTTPException(
+                status_code=400,
+                detail="No FPTP contest found for your provincial constituency",
+            )
 
-    # 9 — PR contest (province-wide)
-    pr_contest = db.execute(
-        select(ElectionContest).where(
-            ElectionContest.election_id == election_id,
-            ElectionContest.contest_type == CONTEST_TYPE_PR,
-        )
-    ).scalar_one_or_none()
-    if not pr_contest:
-        raise HTTPException(
-            status_code=400,
-            detail="No PR contest found for this provincial election",
-        )
+        fptp_nomination = db.execute(
+            select(FptpCandidateNomination).where(
+                FptpCandidateNomination.id == fptp_nomination_id,
+                FptpCandidateNomination.contest_id == fptp_contest.id,
+                FptpCandidateNomination.status == "APPROVED",
+            )
+        ).scalar_one_or_none()
+        if not fptp_nomination:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid FPTP candidate selection for your provincial constituency",
+            )
 
-    # 10 — PR party has approved submission
-    pr_submission = db.execute(
-        select(PrPartySubmission).where(
-            PrPartySubmission.election_id == election_id,
-            PrPartySubmission.party_id == pr_party_id,
-            PrPartySubmission.status == "APPROVED",
+        fptp_ct, fptp_nonce = _encrypt_choice(
+            {"contest_id": fptp_contest.id, "nomination_id": fptp_nomination_id}
         )
-    ).scalar_one_or_none()
-    if not pr_submission:
-        raise HTTPException(
-            status_code=400, detail="Invalid PR party selection"
+        entries.append({
+            "contest_id": fptp_contest.id,
+            "ballot_type": CONTEST_TYPE_FPTP,
+            "encrypted_choice": fptp_ct,
+            "nonce": fptp_nonce,
+        })
+
+    # 9-10 — PR: only validate & encrypt if voter made a selection
+    if pr_party_id is not None:
+        pr_contest = db.execute(
+            select(ElectionContest).where(
+                ElectionContest.election_id == election_id,
+                ElectionContest.contest_type == CONTEST_TYPE_PR,
+            )
+        ).scalar_one_or_none()
+        if not pr_contest:
+            raise HTTPException(
+                status_code=400,
+                detail="No PR contest found for this provincial election",
+            )
+
+        pr_submission = db.execute(
+            select(PrPartySubmission).where(
+                PrPartySubmission.election_id == election_id,
+                PrPartySubmission.party_id == pr_party_id,
+                PrPartySubmission.status == "APPROVED",
+            )
+        ).scalar_one_or_none()
+        if not pr_submission:
+            raise HTTPException(
+                status_code=400, detail="Invalid PR party selection"
+            )
+
+        pr_ct, pr_nonce = _encrypt_choice(
+            {"contest_id": pr_contest.id, "party_id": pr_party_id}
         )
+        entries.append({
+            "contest_id": pr_contest.id,
+            "ballot_type": CONTEST_TYPE_PR,
+            "encrypted_choice": pr_ct,
+            "nonce": pr_nonce,
+        })
 
-    # 11 — encrypt both choices
-    fptp_ct, fptp_nonce = _encrypt_choice(
-        {"contest_id": fptp_contest.id, "nomination_id": fptp_nomination_id}
-    )
-    pr_ct, pr_nonce = _encrypt_choice(
-        {"contest_id": pr_contest.id, "party_id": pr_party_id}
-    )
-
-    # 12 — atomic insert
+    # 11 — atomic insert (entries may be empty for a fully blank ballot)
     try:
         ballot = ballot_repository.create_ballot_with_entries(
             db,
             election_id=election_id,
             voter_id=voter.id,
             area_id=assignment.area_id,
-            entries=[
-                {
-                    "contest_id": fptp_contest.id,
-                    "ballot_type": CONTEST_TYPE_FPTP,
-                    "encrypted_choice": fptp_ct,
-                    "nonce": fptp_nonce,
-                },
-                {
-                    "contest_id": pr_contest.id,
-                    "ballot_type": CONTEST_TYPE_PR,
-                    "encrypted_choice": pr_ct,
-                    "nonce": pr_nonce,
-                },
-            ],
+            entries=entries,
         )
         db.commit()
     except IntegrityError:
@@ -857,10 +856,7 @@ def cast_provincial_dual_ballot(
         "success": True,
         "ballot_id": ballot.id,
         "election_id": election_id,
-        "message": (
-            "Your provincial dual ballot has been cast successfully. "
-            "Both FPTP and PR votes were recorded."
-        ),
+        "message": "Your provincial ballot has been cast successfully.",
     }
 
 
@@ -1066,15 +1062,16 @@ def cast_local_ballot(
     voter: User,
     selections: dict,
 ) -> dict:
-    """Cast a local ballot (6 contests, 7 selections) atomically.
+    """Cast a local ballot (up to 6 contests, up to 7 selections) atomically.
 
-    selections must contain:
-      head_nomination_id: int
-      deputy_head_nomination_id: int
-      ward_chair_nomination_id: int
-      ward_woman_member_nomination_id: int
-      ward_dalit_woman_member_nomination_id: int
-      ward_member_open_nomination_ids: [int, int]  (two distinct)
+    All selections are optional (undervote / blank ballot supported).
+    selections may contain:
+      head_nomination_id: int | None
+      deputy_head_nomination_id: int | None
+      ward_chair_nomination_id: int | None
+      ward_woman_member_nomination_id: int | None
+      ward_dalit_woman_member_nomination_id: int | None
+      ward_member_open_nomination_ids: list[int]  (0-2 distinct)
     """
     # 1 — voter eligibility
     if voter.role != "voter":
@@ -1141,48 +1138,36 @@ def cast_local_ballot(
             detail="You have already cast your ballot in this election",
         )
 
-    # 7 — validate all seven selections are present
-    required_keys = [
-        "head_nomination_id",
-        "deputy_head_nomination_id",
-        "ward_chair_nomination_id",
-        "ward_woman_member_nomination_id",
-        "ward_dalit_woman_member_nomination_id",
-        "ward_member_open_nomination_ids",
-    ]
-    for key in required_keys:
-        if key not in selections or selections[key] is None:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Missing required selection: {key}",
-            )
-
-    open_ids = selections["ward_member_open_nomination_ids"]
-    if not isinstance(open_ids, list) or len(open_ids) != 2:
+    # 7 — validate open_ids format (if provided)
+    open_ids = selections.get("ward_member_open_nomination_ids") or []
+    if not isinstance(open_ids, list) or len(open_ids) > 2:
         raise HTTPException(
             status_code=400,
-            detail="ward_member_open_nomination_ids must be a list of exactly 2 candidate IDs",
+            detail="ward_member_open_nomination_ids must be a list of up to 2 candidate IDs",
         )
-    if open_ids[0] == open_ids[1]:
+    if len(open_ids) == 2 and open_ids[0] == open_ids[1]:
         raise HTTPException(
             status_code=400,
             detail="The two open ward member selections must be different candidates",
         )
 
-    # 8 — resolve contests and validate each nomination
+    # 8 — resolve contests and validate each provided nomination
 
-    # Map: (contest_type, area_id) → look up
     single_seat_checks = [
-        (CONTEST_TYPE_MAYOR, local_body.id, selections["head_nomination_id"]),
-        (CONTEST_TYPE_DEPUTY_MAYOR, local_body.id, selections["deputy_head_nomination_id"]),
-        (CONTEST_TYPE_WARD_CHAIR, ward.id, selections["ward_chair_nomination_id"]),
-        (CONTEST_TYPE_WARD_WOMAN_MEMBER, ward.id, selections["ward_woman_member_nomination_id"]),
-        (CONTEST_TYPE_WARD_DALIT_WOMAN_MEMBER, ward.id, selections["ward_dalit_woman_member_nomination_id"]),
+        (CONTEST_TYPE_MAYOR, local_body.id, selections.get("head_nomination_id")),
+        (CONTEST_TYPE_DEPUTY_MAYOR, local_body.id, selections.get("deputy_head_nomination_id")),
+        (CONTEST_TYPE_WARD_CHAIR, ward.id, selections.get("ward_chair_nomination_id")),
+        (CONTEST_TYPE_WARD_WOMAN_MEMBER, ward.id, selections.get("ward_woman_member_nomination_id")),
+        (CONTEST_TYPE_WARD_DALIT_WOMAN_MEMBER, ward.id, selections.get("ward_dalit_woman_member_nomination_id")),
     ]
 
     entries = []
 
     for contest_type, area_id, nomination_id in single_seat_checks:
+        # Skip contests where voter made no selection (undervote)
+        if nomination_id is None:
+            continue
+
         contest = db.execute(
             select(ElectionContest).where(
                 ElectionContest.election_id == election_id,
@@ -1219,49 +1204,50 @@ def cast_local_ballot(
             "nonce": nonce,
         })
 
-    # WARD_MEMBER_OPEN (2 selections from one contest)
-    open_contest = db.execute(
-        select(ElectionContest).where(
-            ElectionContest.election_id == election_id,
-            ElectionContest.contest_type == CONTEST_TYPE_WARD_MEMBER_OPEN,
-            ElectionContest.area_id == ward.id,
-        )
-    ).scalar_one_or_none()
-    if not open_contest:
-        raise HTTPException(
-            status_code=400,
-            detail="No ward member open contest found for your ward",
-        )
-
-    for nom_id in open_ids:
-        nomination = db.execute(
-            select(FptpCandidateNomination).where(
-                FptpCandidateNomination.id == nom_id,
-                FptpCandidateNomination.contest_id == open_contest.id,
-                FptpCandidateNomination.status == "APPROVED",
+    # WARD_MEMBER_OPEN — only process if voter selected at least one
+    if open_ids:
+        open_contest = db.execute(
+            select(ElectionContest).where(
+                ElectionContest.election_id == election_id,
+                ElectionContest.contest_type == CONTEST_TYPE_WARD_MEMBER_OPEN,
+                ElectionContest.area_id == ward.id,
             )
         ).scalar_one_or_none()
-        if not nomination:
+        if not open_contest:
             raise HTTPException(
                 status_code=400,
-                detail=f"Invalid candidate selection for WARD_MEMBER_OPEN (nomination {nom_id})",
+                detail="No ward member open contest found for your ward",
             )
 
-    # Store open-member as a single entry with both nomination_ids
-    open_ct, open_nonce = _encrypt_choice(
-        {
-            "contest_id": open_contest.id,
-            "nomination_ids": open_ids,
-        }
-    )
-    entries.append({
-        "contest_id": open_contest.id,
-        "ballot_type": CONTEST_TYPE_WARD_MEMBER_OPEN,
-        "encrypted_choice": open_ct,
-        "nonce": open_nonce,
-    })
+        for nom_id in open_ids:
+            nomination = db.execute(
+                select(FptpCandidateNomination).where(
+                    FptpCandidateNomination.id == nom_id,
+                    FptpCandidateNomination.contest_id == open_contest.id,
+                    FptpCandidateNomination.status == "APPROVED",
+                )
+            ).scalar_one_or_none()
+            if not nomination:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid candidate selection for WARD_MEMBER_OPEN (nomination {nom_id})",
+                )
 
-    # 9 — atomic insert (6 entries in one transaction)
+        # Store open-member as a single entry with nomination_ids list
+        open_ct, open_nonce = _encrypt_choice(
+            {
+                "contest_id": open_contest.id,
+                "nomination_ids": open_ids,
+            }
+        )
+        entries.append({
+            "contest_id": open_contest.id,
+            "ballot_type": CONTEST_TYPE_WARD_MEMBER_OPEN,
+            "encrypted_choice": open_ct,
+            "nonce": open_nonce,
+        })
+
+    # 9 — atomic insert (entries may be empty for a fully blank ballot)
     try:
         ballot = ballot_repository.create_ballot_with_entries(
             db,
@@ -1282,10 +1268,7 @@ def cast_local_ballot(
         "success": True,
         "ballot_id": ballot.id,
         "election_id": election_id,
-        "message": (
-            "Your local ballot has been cast successfully. "
-            "All seven selections were recorded."
-        ),
+        "message": "Your local ballot has been cast successfully.",
     }
 
 
@@ -1311,8 +1294,8 @@ def cast_dual_ballot_dispatch(
     db: Session,
     election_id: int,
     voter: User,
-    fptp_nomination_id: int,
-    pr_party_id: int,
+    fptp_nomination_id: int | None,
+    pr_party_id: int | None,
 ) -> dict:
     """Route to the correct cast function based on election level (federal/provincial)."""
     election = db.get(Election, election_id)
