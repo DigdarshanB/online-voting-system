@@ -1,0 +1,232 @@
+/* VoterGuide.css — responsive layout & interactive states */
+
+.vg-page {
+  padding: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+
+/* ── Two-column layout ─────────────────────────────────── */
+.vg-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 32px;
+  align-items: start;
+}
+
+.vg-main {
+  min-width: 0;
+}
+
+.vg-sidebar {
+  position: sticky;
+  top: 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Hero quick action grid ────────────────────────────── */
+.vg-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* ── Step cards grid (horizontal) ──────────────────────── */
+.vg-step-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+/* ── Voting stepper (vertical) ─────────────────────────── */
+.vg-stepper {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+}
+
+/* ── FAQ accordion ─────────────────────────────────────── */
+.vg-faq-item {
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #FFFFFF;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.vg-faq-item:hover {
+  border-color: #CBD5E1;
+}
+
+.vg-faq-item.open {
+  border-color: #2F6FED40;
+  box-shadow: 0 2px 8px rgba(47, 111, 237, 0.06);
+}
+
+.vg-faq-trigger {
+  width: 100%;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 600;
+  color: #173B72;
+  font-family: inherit;
+  transition: background 0.15s ease;
+}
+
+.vg-faq-trigger:hover {
+  background: #F8FAFC;
+}
+
+.vg-faq-trigger:focus-visible {
+  outline: 2px solid #2F6FED;
+  outline-offset: -2px;
+  border-radius: 12px;
+}
+
+.vg-faq-chevron {
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+}
+
+.vg-faq-item.open .vg-faq-chevron {
+  transform: rotate(180deg);
+}
+
+.vg-faq-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease, padding 0.3s ease;
+}
+
+.vg-faq-item.open .vg-faq-body {
+  max-height: 300px;
+}
+
+.vg-faq-answer {
+  padding: 0 20px 16px;
+  font-size: 13.5px;
+  color: #475569;
+  line-height: 1.7;
+  font-weight: 500;
+}
+
+/* ── Quick action button states ────────────────────────── */
+.vg-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 13px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border: 1px solid #E2E8F0;
+  background: #FFFFFF;
+  color: #173B72;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.vg-action-btn:hover {
+  border-color: #2F6FED;
+  background: #EAF2FF;
+  box-shadow: 0 2px 8px rgba(47, 111, 237, 0.08);
+}
+
+.vg-action-btn:focus-visible {
+  outline: 2px solid #2F6FED;
+  outline-offset: 2px;
+}
+
+.vg-action-btn.primary {
+  background: #2F6FED;
+  color: #FFFFFF;
+  border-color: #2F6FED;
+}
+
+.vg-action-btn.primary:hover {
+  background: #1D5DD4;
+  border-color: #1D5DD4;
+}
+
+/* ── Sidebar nav link ──────────────────────────────────── */
+.vg-sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #475569;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+}
+
+.vg-sidebar-link:hover {
+  background: #F1F5F9;
+  color: #173B72;
+}
+
+.vg-sidebar-link:focus-visible {
+  outline: 2px solid #2F6FED;
+  outline-offset: 2px;
+}
+
+/* ── Responsive ────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .vg-page {
+    padding: 24px 20px;
+  }
+
+  .vg-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .vg-sidebar {
+    position: static;
+    order: -1;
+  }
+
+  .vg-step-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .vg-quick-actions {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .vg-page {
+    padding: 16px 14px;
+  }
+
+  .vg-step-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .vg-quick-actions {
+    grid-template-columns: 1fr;
+  }
+}

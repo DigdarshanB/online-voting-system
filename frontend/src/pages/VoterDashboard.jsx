@@ -36,7 +36,7 @@ export default function VoterDashboard({ user }) {
   }, []);
 
   const openElections = elections.filter((e) => e.status === "POLLING_OPEN");
-  const votedCount = elections.filter((e) => e.user_has_voted).length;
+  const votedCount = elections.filter((e) => e.has_voted).length;
   const resultElections = elections.filter(
     (e) => e.status === "FINALIZED" || e.status === "ARCHIVED"
   );
@@ -179,19 +179,19 @@ export default function VoterDashboard({ user }) {
                   </div>
                 </div>
                 <Link
-                  to={el.user_has_voted ? `/elections/${el.id}/results` : `/elections/${el.id}/ballot`}
+                  to={el.has_voted ? `/elections/${el.id}/results` : `/elections/${el.id}/ballot`}
                   style={{
                     padding: "8px 20px",
                     borderRadius: 8,
-                    background: el.user_has_voted ? "#F0FDF4" : PALETTE.accentBlue,
-                    color: el.user_has_voted ? PALETTE.success : "#FFF",
+                    background: el.has_voted ? "#F0FDF4" : PALETTE.accentBlue,
+                    color: el.has_voted ? PALETTE.success : "#FFF",
                     fontWeight: 700,
                     fontSize: 13,
                     textDecoration: "none",
-                    border: el.user_has_voted ? `1px solid ${PALETTE.success}30` : "none",
+                    border: el.has_voted ? `1px solid ${PALETTE.success}30` : "none",
                   }}
                 >
-                  {el.user_has_voted ? "✓ Voted" : "Cast Vote →"}
+                  {el.has_voted ? "✓ Voted" : "Cast Vote →"}
                 </Link>
               </div>
             ))}

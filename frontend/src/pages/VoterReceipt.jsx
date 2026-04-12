@@ -47,7 +47,7 @@ export default function VoterReceipt() {
       .get("/voter/elections")
       .then((res) => {
         const all = res.data || [];
-        setElections(all.filter((e) => e.user_has_voted));
+        setElections(all.filter((e) => e.has_voted));
       })
       .catch(() => {})
       .finally(() => setLoading(false));

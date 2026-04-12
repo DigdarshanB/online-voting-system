@@ -17,6 +17,7 @@ import {
   LogOut,
   Menu,
   Users,
+  HelpCircle,
 } from "lucide-react";
 import { getToken, clearToken } from "./lib/authStorage";
 import "./VoterShell.css";
@@ -51,6 +52,7 @@ const MAIN_NAV_ITEMS = [
 const ACCOUNT_NAV_ITEMS = [
   { label: "Vote Receipt", to: "/receipt", icon: Receipt },
   { label: "Account & Security", to: "/account", icon: UserCircle2 },
+  { label: "Voter Guide", to: "/guide", icon: HelpCircle },
 ];
 
 const ROUTE_META = {
@@ -77,6 +79,10 @@ const ROUTE_META = {
   "/account": {
     title: "Account & Security",
     subtitle: "Manage your profile, password, and security settings",
+  },
+  "/guide": {
+    title: "Voter Guide & Help",
+    subtitle: "Step-by-step instructions for using the voter portal",
   },
 };
 

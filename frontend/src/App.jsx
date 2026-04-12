@@ -36,6 +36,7 @@ import VoterReceipt from "./pages/VoterReceipt";
 import VoterAccount from "./pages/VoterAccount";
 import VoterCandidates from "./pages/VoterCandidates";
 import VoterCandidatesByFamily from "./pages/VoterCandidatesByFamily";
+import VoterGuide from "./pages/VoterGuide";
 
 import { RequireActiveVoter, RequireAuth } from "./lib/routeGuards";
 
@@ -185,6 +186,16 @@ export default function App() {
           <RequireActiveVoter>
             <VoterShell title="Change Password" subtitle="Update your account password">
               <VoterChangePassword />
+            </VoterShell>
+          </RequireActiveVoter>
+        }
+      />
+      <Route
+        path="/guide"
+        element={
+          <RequireActiveVoter>
+            <VoterShell title="Voter Guide & Help" subtitle="Step-by-step instructions for using the voter portal">
+              <VoterGuide />
             </VoterShell>
           </RequireActiveVoter>
         }
