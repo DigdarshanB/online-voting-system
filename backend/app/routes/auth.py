@@ -228,10 +228,21 @@ class MeResponse(BaseModel):
     totp_enabled: bool
     rejection_reason: Optional[str] = None
     face_uploaded: bool = False
+    full_name: Optional[str] = None
+    phone_number: Optional[str] = None
+    citizenship_number: Optional[str] = None
+    last_login_at: Optional[str] = None
+    member_since: Optional[str] = None
+    approved_at: Optional[str] = None
 
 
 @router.get("/me", response_model=MeResponse)
 def me(current_user: User = Depends(get_current_user)):
+    # Format member_since as "Month YYYY"
+    member_since = None
+    if current_user.created_at:
+        member_since = current_user.created_at.strftime("%B %Y")
+
     return MeResponse(
         id=current_user.id,
         email=current_user.email,
@@ -241,6 +252,12 @@ def me(current_user: User = Depends(get_current_user)):
         totp_enabled=current_user.totp_enabled_at is not None,
         rejection_reason=current_user.rejection_reason,
         face_uploaded=current_user.face_uploaded_at is not None,
+        full_name=current_user.full_name,
+        phone_number=current_user.phone_number,
+        citizenship_number=current_user.citizenship_no_raw,
+        last_login_at=current_user.last_login_at.isoformat() if current_user.last_login_at else None,
+        member_since=member_since,
+        approved_at=current_user.approved_at.isoformat() if current_user.approved_at else None,
     )
 
 

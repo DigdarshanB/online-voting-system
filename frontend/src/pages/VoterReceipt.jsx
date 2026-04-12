@@ -12,6 +12,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Receipt, CheckCircle2, AlertCircle, ExternalLink, ShieldCheck, Clock } from "lucide-react";
 import apiClient from "../lib/apiClient";
+import { useLanguage } from "../lib/LanguageContext";
 
 const PALETTE = {
   navy: "#173B72",
@@ -34,6 +35,7 @@ function getSavedReceipts() {
 }
 
 export default function VoterReceipt() {
+  const { t } = useLanguage();
   const [receipts, setReceipts] = useState([]);
   const [elections, setElections] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -85,7 +87,7 @@ export default function VoterReceipt() {
         <ShieldCheck size={22} color={PALETTE.success} style={{ flexShrink: 0, marginTop: 2 }} />
         <div>
           <div style={{ fontWeight: 700, fontSize: 14, color: "#15803D", marginBottom: 4 }}>
-            Vote Receipt Verification
+            {t("receipt.title")}
           </div>
           <p style={{ fontSize: 13, color: "#166534", margin: 0, lineHeight: 1.6, fontWeight: 500 }}>
             Your vote receipts confirm your participation in elections. Each receipt includes

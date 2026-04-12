@@ -9,6 +9,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Vote, Landmark, Building2, MapPin, CheckCircle2 } from "lucide-react";
 import apiClient from "../lib/apiClient";
+import { useLanguage } from "../lib/LanguageContext";
 import { VT } from "../lib/voterTokens";
 import {
   VoterKeyframes,
@@ -107,6 +108,7 @@ function allVotedForLevel(elections, levelKey) {
 /* ══════════════════════════════════════════════════════════════ */
 export default function VoterElectionsHub() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [elections, setElections] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -131,8 +133,8 @@ export default function VoterElectionsHub() {
       {/* ── Banner ───────────────────────────────────────────── */}
       <VoterHubBanner
         icon={Vote}
-        title="My Elections"
-        subtitle="Nepal's three-tier elections you are eligible to participate in"
+        title={t("elections.title")}
+        subtitle={t("elections.subtitle")}
         badge={progressBadge}
       />
 

@@ -10,6 +10,7 @@ import {
   Info,
 } from "lucide-react";
 import apiClient from "../lib/apiClient";
+import { useLanguage } from "../lib/LanguageContext";
 
 /* ─── Injected CSS (once) ────────────────────────────────────── */
 const STYLE_ID = "vc-hub-styles";
@@ -101,6 +102,7 @@ const FAMILIES = [
 
 export default function VoterCandidates() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [liveMap, setLiveMap] = useState({});
 
   useEffect(() => {
@@ -185,7 +187,7 @@ export default function VoterCandidates() {
                   letterSpacing: "-0.01em",
                 }}
               >
-                Nominated Candidates
+                {t("candidates.title")}
               </h1>
               <span
                 style={{

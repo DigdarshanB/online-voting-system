@@ -243,7 +243,7 @@ export default function App() {
         path="/account"
         element={
           <RequireActiveVoter>
-            <VoterShell title="Account & Security" subtitle="Manage your profile, password, and security settings">
+            <VoterShell>
               <VoterAccount />
             </VoterShell>
           </RequireActiveVoter>

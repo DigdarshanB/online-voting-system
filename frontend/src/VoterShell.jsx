@@ -19,7 +19,8 @@ import {
   Users,
   HelpCircle,
 } from "lucide-react";
-import { getToken, clearToken } from "./lib/authStorage";
+import { clearToken } from "./lib/authStorage";
+import { useLanguage } from "./lib/LanguageContext";
 import "./VoterShell.css";
 import ecnLogo from "./assets/ECN.png";
 
@@ -42,62 +43,39 @@ const PALETTE = {
   nepalRed: "#D42C3A",
 };
 
-const MAIN_NAV_ITEMS = [
-  { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
-  { label: "Candidates", to: "/candidates", icon: Users },
-  { label: "Elections", to: "/elections", icon: Vote },
-  { label: "Results", to: "/results", icon: BarChart3 },
+const MAIN_NAV_KEYS = [
+  { tKey: "nav.dashboard", to: "/dashboard", icon: LayoutDashboard },
+  { tKey: "nav.candidates", to: "/candidates", icon: Users },
+  { tKey: "nav.elections", to: "/elections", icon: Vote },
+  { tKey: "nav.results", to: "/results", icon: BarChart3 },
 ];
 
-const ACCOUNT_NAV_ITEMS = [
-  { label: "Vote Receipt", to: "/receipt", icon: Receipt },
-  { label: "Account & Security", to: "/account", icon: UserCircle2 },
-  { label: "Voter Guide", to: "/guide", icon: HelpCircle },
+const ACCOUNT_NAV_KEYS = [
+  { tKey: "nav.receipt", to: "/receipt", icon: Receipt },
+  { tKey: "nav.account", to: "/account", icon: UserCircle2 },
+  { tKey: "nav.guide", to: "/guide", icon: HelpCircle },
 ];
 
-const ROUTE_META = {
-  "/dashboard": {
-    title: "Voter Dashboard",
-    subtitle: "Overview of your voting activity and upcoming elections",
-  },
-  "/candidates": {
-    title: "Nominated Candidates",
-    subtitle: "View candidates nominated for your eligible elections",
-  },
-  "/elections": {
-    title: "Elections",
-    subtitle: "View available elections and cast your vote",
-  },
-  "/results": {
-    title: "Election Results",
-    subtitle: "View published election results and outcomes",
-  },
-  "/receipt": {
-    title: "Vote Receipt",
-    subtitle: "View and verify your vote confirmations",
-  },
-  "/account": {
-    title: "Account & Security",
-    subtitle: "Manage your profile, password, and security settings",
-  },
-  "/guide": {
-    title: "Voter Guide & Help",
-    subtitle: "Step-by-step instructions for using the voter portal",
-  },
+const ROUTE_META_KEYS = {
+  "/dashboard": { title: "route.dashboard.title", subtitle: "route.dashboard.subtitle" },
+  "/candidates": { title: "route.candidates.title", subtitle: "route.candidates.subtitle" },
+  "/elections": { title: "route.elections.title", subtitle: "route.elections.subtitle" },
+  "/results": { title: "route.results.title", subtitle: "route.results.subtitle" },
+  "/receipt": { title: "route.receipt.title", subtitle: "route.receipt.subtitle" },
+  "/account": { title: "route.account.title", subtitle: "route.account.subtitle" },
+  "/guide": { title: "route.guide.title", subtitle: "route.guide.subtitle" },
 };
 
 export default function VoterShell({ children, title, subtitle }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
 
-  const currentMeta = ROUTE_META[location.pathname] ?? {
-    title: title || "Voter Portal",
-    subtitle: subtitle || "Nepal Election Commission",
-  };
-  const displayTitle = title || currentMeta.title;
-  const displaySubtitle = subtitle || currentMeta.subtitle;
+  const metaKeys = ROUTE_META_KEYS[location.pathname];
+  const displayTitle = title || (metaKeys ? t(metaKeys.title) : t("shell.brand"));
+  const displaySubtitle = subtitle || (metaKeys ? t(metaKeys.subtitle) : "");
 
   useEffect(() => {
     const handleResize = () => {
@@ -203,7 +181,7 @@ export default function VoterShell({ children, title, subtitle }) {
                 lineHeight: 1.2,
               }}
             >
-              Election Portal
+              {t("shell.brand")}
             </div>
             <div
               style={{
@@ -214,7 +192,7 @@ export default function VoterShell({ children, title, subtitle }) {
                 letterSpacing: "0.06em",
               }}
             >
-              Voter
+              {t("shell.brand_role")}
             </div>
           </div>
         </div>
@@ -231,7 +209,7 @@ export default function VoterShell({ children, title, subtitle }) {
             overflowY: "auto",
           }}
         >
-          {MAIN_NAV_ITEMS.map((item) => {
+          {MAIN_NAV_KEYS.map((item) => {
             const active = isRouteActive(item.to);
             const IconComp = item.icon;
             return (
@@ -273,7 +251,7 @@ export default function VoterShell({ children, title, subtitle }) {
                   strokeWidth={active ? 2.2 : 1.8}
                   color={active ? PALETTE.activeIcon : PALETTE.sidebarMuted}
                 />
-                {item.label}
+                {t(item.tKey)}
               </Link>
             );
           })}
@@ -295,10 +273,10 @@ export default function VoterShell({ children, title, subtitle }) {
               gap: 8,
             }}
           >
-            Account
+            {t("nav.section.account")}
           </div>
 
-          {ACCOUNT_NAV_ITEMS.map((item) => {
+          {ACCOUNT_NAV_KEYS.map((item) => {
             const active = isRouteActive(item.to);
             const IconComp = item.icon;
             return (
@@ -340,7 +318,7 @@ export default function VoterShell({ children, title, subtitle }) {
                   strokeWidth={active ? 2.2 : 1.8}
                   color={active ? PALETTE.activeIcon : PALETTE.sidebarMuted}
                 />
-                {item.label}
+                {t(item.tKey)}
               </Link>
             );
           })}
@@ -378,7 +356,7 @@ export default function VoterShell({ children, title, subtitle }) {
             }}
           >
             <LogOut size={20} strokeWidth={1.8} color={PALETTE.sidebarMuted} />
-            Sign Out
+            {t("nav.signout")}
           </button>
         </nav>
       </aside>
@@ -479,7 +457,7 @@ export default function VoterShell({ children, title, subtitle }) {
                   letterSpacing: "0.04em",
                 }}
               >
-                {isMobile ? "Secure" : "Secure Connection"}
+                {isMobile ? t("shell.secure_short") : t("shell.secure")}
               </span>
             </div>
           </div>
@@ -505,7 +483,7 @@ export default function VoterShell({ children, title, subtitle }) {
             background: PALETTE.surface,
           }}
         >
-          Election Commission Nepal{" "}
+          {t("shell.footer")}{" "}
           <span style={{ fontWeight: 800, color: PALETTE.topbarText }}>©</span>
         </footer>
       </div>

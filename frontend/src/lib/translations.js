@@ -1,0 +1,333 @@
+/**
+ * translations.js
+ *
+ * Flat key→value dictionary for English (en) and Nepali (ne).
+ * Covers VoterShell, VoterAccount, VoterDashboard, VoterElections,
+ * VoterReceipt, VoterCandidates, VoterGuide, and inline modals.
+ */
+
+const translations = {
+  en: {
+    // ── Navigation (VoterShell) ──────────────────────────────
+    "nav.dashboard": "Dashboard",
+    "nav.elections": "Elections",
+    "nav.results": "Results",
+    "nav.candidates": "Candidates",
+    "nav.receipt": "Vote Receipt",
+    "nav.account": "Account Centre",
+    "nav.guide": "Voter Guide",
+    "nav.signout": "Sign Out",
+    "nav.section.account": "Account",
+
+    // ── Shell branding / topbar / footer ─────────────────────
+    "shell.brand": "Election Portal",
+    "shell.brand_role": "Voter",
+    "shell.secure": "Secure Connection",
+    "shell.secure_short": "Secure",
+    "shell.footer": "Election Commission Nepal",
+
+    // ── Route meta (topbar titles/subtitles) ─────────────────
+    "route.dashboard.title": "Voter Dashboard",
+    "route.dashboard.subtitle": "Overview of your voting activity and upcoming elections",
+    "route.candidates.title": "Nominated Candidates",
+    "route.candidates.subtitle": "View candidates nominated for your eligible elections",
+    "route.elections.title": "Elections",
+    "route.elections.subtitle": "View available elections and cast your vote",
+    "route.results.title": "Election Results",
+    "route.results.subtitle": "View published election results and outcomes",
+    "route.receipt.title": "Vote Receipt",
+    "route.receipt.subtitle": "View and verify your vote confirmations",
+    "route.account.title": "Account Centre",
+    "route.account.subtitle": "Manage your profile, language and security",
+    "route.guide.title": "Voter Guide & Help",
+    "route.guide.subtitle": "Step-by-step instructions for using the voter portal",
+
+    // ── Account Centre ───────────────────────────────────────
+    "account.title": "Account Centre",
+    "account.subtitle": "Manage your profile, language and security",
+    "account.personal_info": "Personal Information",
+    "account.security": "Security & Actions",
+    "account.language": "Language",
+    "account.change_password": "Change Password",
+    "account.change_password_desc": "Update your account password",
+    "account.totp_recovery": "Authenticator Recovery",
+    "account.totp_recovery_desc": "Recover access to your two-factor authentication",
+    "account.role_voter": "Voter",
+    "account.status_chip.active": "Active",
+    "account.status_chip.inactive": "Inactive",
+
+    "account.label.full_name": "Full Name",
+    "account.label.email": "Email",
+    "account.label.citizenship": "Citizenship No.",
+    "account.label.phone": "Phone",
+    "account.label.status": "Status",
+    "account.label.2fa": "Two-Factor Auth",
+    "account.label.email_verified": "Email Verified",
+    "account.label.member_since": "Member Since",
+    "account.label.last_login": "Last Login",
+
+    "account.status.active": "Active",
+    "account.status.enabled": "Enabled",
+    "account.status.not_setup": "Not Setup",
+    "account.status.verified": "Verified",
+    "account.status.unverified": "Not Verified",
+
+    "lang.english": "English",
+    "lang.nepali": "नेपाली",
+
+    // ── Change Password Modal ────────────────────────────────
+    "cp.title": "Change Password",
+    "cp.subtitle": "Update your password. You will be signed out of all sessions.",
+    "cp.current": "Current Password",
+    "cp.current_placeholder": "Enter your current password",
+    "cp.new": "New Password",
+    "cp.new_placeholder": "At least 8 characters",
+    "cp.confirm": "Confirm New Password",
+    "cp.confirm_placeholder": "Repeat new password",
+    "cp.warning": "Changing your password will sign you out of all active sessions, including this one.",
+    "cp.submit": "Change Password",
+    "cp.saving": "Saving…",
+    "cp.success": "Password changed successfully.",
+    "cp.success_sub": "You have been signed out. Redirecting to login…",
+    "cp.err.current_required": "Please enter your current password.",
+    "cp.err.min_length": "New password must be at least 8 characters.",
+    "cp.err.mismatch": "New passwords do not match.",
+    "cp.err.same": "New password must be different from your current password.",
+    "cp.err.generic": "Something went wrong. Please try again.",
+
+    // ── TOTP Recovery Modal ──────────────────────────────────
+    "totp.title": "Recover Authenticator Access",
+    "totp.subtitle": "Use your verified email to reset authenticator setup.",
+    "totp.email_label": "Registered Email Address",
+    "totp.email_placeholder": "Enter your verified email",
+    "totp.send": "Send Recovery Code",
+    "totp.sending": "Sending…",
+    "totp.code_label": "Recovery Code",
+    "totp.code_placeholder": "6-digit code from email",
+    "totp.complete": "Complete Recovery",
+    "totp.verifying": "Verifying…",
+    "totp.sent_success": "If the account is eligible, a recovery code has been sent.",
+    "totp.err.invalid_email": "Please enter a valid email address.",
+    "totp.err.code_required": "Please enter the recovery code from your email.",
+    "totp.err.generic": "Failed to complete recovery.",
+
+    // ── Dashboard ────────────────────────────────────────────
+    "dash.welcome": "Welcome back",
+    "dash.welcome_sub": "Your voter account is verified and active. Use this portal to participate in elections securely.",
+    "dash.open_elections": "Open Elections",
+    "dash.votes_cast": "Votes Cast",
+    "dash.results_available": "Results Available",
+    "dash.security_status": "Security Status",
+    "dash.security_active": "Active",
+    "dash.quick_actions": "Quick Actions",
+    "dash.view_elections": "View Elections",
+    "dash.view_elections_desc": "Browse and participate in active elections",
+    "dash.view_results": "View Results",
+    "dash.view_results_desc": "Check published election outcomes",
+    "dash.vote_receipt": "Vote Receipt",
+    "dash.vote_receipt_desc": "View confirmation of your cast votes",
+    "dash.account_security": "Account Security",
+    "dash.account_security_desc": "Manage password and authentication settings",
+    "dash.upcoming_elections": "Upcoming & Active Elections",
+    "dash.no_elections": "No elections available at the moment.",
+    "dash.err.load": "Unable to load elections.",
+
+    // ── Elections ─────────────────────────────────────────────
+    "elections.title": "My Elections",
+    "elections.subtitle": "Nepal's three-tier elections you are eligible to vote in",
+    "elections.cast_vote": "Cast Vote",
+    "elections.already_voted": "Already Voted",
+    "elections.view": "View Details",
+    "elections.federal": "Federal Elections",
+    "elections.provincial": "Provincial Elections",
+    "elections.local": "Local Elections",
+
+    // ── Candidates ───────────────────────────────────────────
+    "candidates.title": "Nominated Candidates",
+    "candidates.subtitle": "View candidates nominated for your eligible elections",
+    "candidates.party": "Party",
+    "candidates.independent": "Independent",
+
+    // ── Receipt ──────────────────────────────────────────────
+    "receipt.title": "Vote Receipt",
+    "receipt.subtitle": "View and verify your vote confirmations",
+    "receipt.election": "Election",
+    "receipt.date": "Date",
+    "receipt.status": "Status",
+    "receipt.confirmed": "Confirmed",
+
+    // ── Guide ────────────────────────────────────────────────
+    "guide.title": "Voter Guide & Help",
+    "guide.subtitle": "Step-by-step instructions for using the voter portal",
+
+    // ── Common ───────────────────────────────────────────────
+    "common.loading": "Loading…",
+    "common.error": "An error occurred.",
+    "common.close": "Close",
+    "common.cancel": "Cancel",
+    "common.not_available": "—",
+  },
+
+  ne: {
+    // ── Navigation (VoterShell) ──────────────────────────────
+    "nav.dashboard": "ड्यासबोर्ड",
+    "nav.elections": "निर्वाचन",
+    "nav.results": "परिणाम",
+    "nav.candidates": "उम्मेदवार",
+    "nav.receipt": "मतपत्र रसिद",
+    "nav.account": "खाता केन्द्र",
+    "nav.guide": "मतदाता मार्गदर्शन",
+    "nav.signout": "साइन आउट",
+    "nav.section.account": "खाता",
+
+    // ── Shell branding / topbar / footer ─────────────────────
+    "shell.brand": "निर्वाचन पोर्टल",
+    "shell.brand_role": "मतदाता",
+    "shell.secure": "सुरक्षित जडान",
+    "shell.secure_short": "सुरक्षित",
+    "shell.footer": "नेपाल निर्वाचन आयोग",
+
+    // ── Route meta (topbar titles/subtitles) ─────────────────
+    "route.dashboard.title": "मतदाता ड्यासबोर्ड",
+    "route.dashboard.subtitle": "तपाईंको मतदान गतिविधि र आगामी निर्वाचनको अवलोकन",
+    "route.candidates.title": "मनोनीत उम्मेदवार",
+    "route.candidates.subtitle": "तपाईंको योग्य निर्वाचनका लागि मनोनीत उम्मेदवारहरू हेर्नुहोस्",
+    "route.elections.title": "निर्वाचन",
+    "route.elections.subtitle": "उपलब्ध निर्वाचनहरू हेर्नुहोस् र मतदान गर्नुहोस्",
+    "route.results.title": "निर्वाचन परिणाम",
+    "route.results.subtitle": "प्रकाशित निर्वाचन परिणाम र नतिजाहरू हेर्नुहोस्",
+    "route.receipt.title": "मतपत्र रसिद",
+    "route.receipt.subtitle": "तपाईंको मत पुष्टिकरणहरू हेर्नुहोस् र प्रमाणित गर्नुहोस्",
+    "route.account.title": "खाता केन्द्र",
+    "route.account.subtitle": "आफ्नो प्रोफाइल, भाषा र सुरक्षा व्यवस्थापन गर्नुहोस्",
+    "route.guide.title": "मतदाता गाइड र सहायता",
+    "route.guide.subtitle": "मतदाता पोर्टल प्रयोग गर्नका लागि चरणबद्ध निर्देशनहरू",
+
+    // ── Account Centre ───────────────────────────────────────
+    "account.title": "खाता केन्द्र",
+    "account.subtitle": "आफ्नो प्रोफाइल, भाषा र सुरक्षा व्यवस्थापन गर्नुहोस्",
+    "account.personal_info": "व्यक्तिगत जानकारी",
+    "account.security": "सुरक्षा र कार्यहरू",
+    "account.language": "भाषा",
+    "account.change_password": "पासवर्ड परिवर्तन गर्नुहोस्",
+    "account.change_password_desc": "आफ्नो खाताको पासवर्ड अपडेट गर्नुहोस्",
+    "account.totp_recovery": "प्रमाणीकारक पुनःप्राप्ति",
+    "account.totp_recovery_desc": "तपाईंको दुई-चरण प्रमाणीकरणमा पहुँच पुनःप्राप्त गर्नुहोस्",
+    "account.role_voter": "मतदाता",
+    "account.status_chip.active": "सक्रिय",
+    "account.status_chip.inactive": "निष्क्रिय",
+
+    "account.label.full_name": "पूरा नाम",
+    "account.label.email": "इमेल",
+    "account.label.citizenship": "नागरिकता नम्बर",
+    "account.label.phone": "फोन",
+    "account.label.status": "स्थिति",
+    "account.label.2fa": "दुई-चरण प्रमाणीकरण",
+    "account.label.email_verified": "इमेल प्रमाणित",
+    "account.label.member_since": "सदस्य मिति",
+    "account.label.last_login": "अन्तिम लगइन",
+
+    "account.status.active": "सक्रिय",
+    "account.status.enabled": "सक्षम",
+    "account.status.not_setup": "सेटअप छैन",
+    "account.status.verified": "प्रमाणित",
+    "account.status.unverified": "अप्रमाणित",
+
+    "lang.english": "अंग्रेजी",
+    "lang.nepali": "नेपाली",
+
+    // ── Change Password Modal ────────────────────────────────
+    "cp.title": "पासवर्ड परिवर्तन",
+    "cp.subtitle": "आफ्नो पासवर्ड अपडेट गर्नुहोस्। तपाईं सबै सत्रबाट साइन आउट हुनुहुनेछ।",
+    "cp.current": "हालको पासवर्ड",
+    "cp.current_placeholder": "हालको पासवर्ड प्रविष्ट गर्नुहोस्",
+    "cp.new": "नयाँ पासवर्ड",
+    "cp.new_placeholder": "कम्तिमा ८ अक्षर",
+    "cp.confirm": "नयाँ पासवर्ड पुष्टि",
+    "cp.confirm_placeholder": "नयाँ पासवर्ड दोहोर्याउनुहोस्",
+    "cp.warning": "पासवर्ड परिवर्तन गरेपछि तपाईं सबै सत्रबाट साइन आउट हुनुहुनेछ।",
+    "cp.submit": "पासवर्ड परिवर्तन गर्नुहोस्",
+    "cp.saving": "सुरक्षित गर्दै…",
+    "cp.success": "पासवर्ड सफलतापूर्वक परिवर्तन भयो।",
+    "cp.success_sub": "तपाईं साइन आउट हुनुभयो। लगइनमा पठाउँदैछ…",
+    "cp.err.current_required": "कृपया हालको पासवर्ड प्रविष्ट गर्नुहोस्।",
+    "cp.err.min_length": "नयाँ पासवर्ड कम्तिमा ८ अक्षर हुनुपर्छ।",
+    "cp.err.mismatch": "नयाँ पासवर्डहरू मेल खाँदैनन्।",
+    "cp.err.same": "नयाँ पासवर्ड हालकोभन्दा फरक हुनुपर्छ।",
+    "cp.err.generic": "केही गडबड भयो। कृपया फेरि प्रयास गर्नुहोस्।",
+
+    // ── TOTP Recovery Modal ──────────────────────────────────
+    "totp.title": "प्रमाणीकारक पहुँच पुनःप्राप्ति",
+    "totp.subtitle": "प्रमाणीकारक सेटअप रिसेट गर्न आफ्नो प्रमाणित इमेल प्रयोग गर्नुहोस्।",
+    "totp.email_label": "दर्ता गरिएको इमेल ठेगाना",
+    "totp.email_placeholder": "आफ्नो प्रमाणित इमेल प्रविष्ट गर्नुहोस्",
+    "totp.send": "रिकभरी कोड पठाउनुहोस्",
+    "totp.sending": "पठाउँदैछ…",
+    "totp.code_label": "रिकभरी कोड",
+    "totp.code_placeholder": "इमेलबाट ६-अंकको कोड",
+    "totp.complete": "रिकभरी पूरा गर्नुहोस्",
+    "totp.verifying": "प्रमाणित गर्दैछ…",
+    "totp.sent_success": "खाता योग्य भएमा, रिकभरी कोड पठाइएको छ।",
+    "totp.err.invalid_email": "कृपया मान्य इमेल ठेगाना प्रविष्ट गर्नुहोस्।",
+    "totp.err.code_required": "कृपया इमेलबाट प्राप्त रिकभरी कोड प्रविष्ट गर्नुहोस्।",
+    "totp.err.generic": "रिकभरी पूरा गर्न असफल भयो।",
+
+    // ── Dashboard ────────────────────────────────────────────
+    "dash.welcome": "फेरि स्वागत छ",
+    "dash.welcome_sub": "तपाईंको मतदाता खाता प्रमाणित र सक्रिय छ। सुरक्षित रूपमा निर्वाचनमा भाग लिनुहोस्।",
+    "dash.open_elections": "खुला निर्वाचन",
+    "dash.votes_cast": "दिइएका मतहरू",
+    "dash.results_available": "उपलब्ध परिणाम",
+    "dash.security_status": "सुरक्षा स्थिति",
+    "dash.security_active": "सक्रिय",
+    "dash.quick_actions": "द्रुत कार्यहरू",
+    "dash.view_elections": "निर्वाचन हेर्नुहोस्",
+    "dash.view_elections_desc": "सक्रिय निर्वाचनहरूमा ब्राउज गर्नुहोस् र भाग लिनुहोस्",
+    "dash.view_results": "परिणाम हेर्नुहोस्",
+    "dash.view_results_desc": "प्रकाशित निर्वाचन नतिजाहरू जाँच गर्नुहोस्",
+    "dash.vote_receipt": "मतपत्र रसिद",
+    "dash.vote_receipt_desc": "तपाईंले दिएको मतको पुष्टि हेर्नुहोस्",
+    "dash.account_security": "खाता सुरक्षा",
+    "dash.account_security_desc": "पासवर्ड र प्रमाणीकरण सेटिङ्स व्यवस्थापन गर्नुहोस्",
+    "dash.upcoming_elections": "आगामी र सक्रिय निर्वाचनहरू",
+    "dash.no_elections": "हाल कुनै निर्वाचन उपलब्ध छैन।",
+    "dash.err.load": "निर्वाचनहरू लोड गर्न असमर्थ।",
+
+    // ── Elections ─────────────────────────────────────────────
+    "elections.title": "मेरो निर्वाचन",
+    "elections.subtitle": "तपाईं मतदान गर्न योग्य हुनुहुने नेपालका तीन-तहका निर्वाचनहरू",
+    "elections.cast_vote": "मतदान गर्नुहोस्",
+    "elections.already_voted": "मतदान भइसकेको",
+    "elections.view": "विवरण हेर्नुहोस्",
+    "elections.federal": "सङ्घीय निर्वाचन",
+    "elections.provincial": "प्रदेश निर्वाचन",
+    "elections.local": "स्थानीय निर्वाचन",
+
+    // ── Candidates ───────────────────────────────────────────
+    "candidates.title": "मनोनीत उम्मेदवार",
+    "candidates.subtitle": "तपाईंको योग्य निर्वाचनका लागि मनोनीत उम्मेदवारहरू हेर्नुहोस्",
+    "candidates.party": "पार्टी",
+    "candidates.independent": "स्वतन्त्र",
+
+    // ── Receipt ──────────────────────────────────────────────
+    "receipt.title": "मतपत्र रसिद",
+    "receipt.subtitle": "तपाईंको मत पुष्टिकरणहरू हेर्नुहोस् र प्रमाणित गर्नुहोस्",
+    "receipt.election": "निर्वाचन",
+    "receipt.date": "मिति",
+    "receipt.status": "स्थिति",
+    "receipt.confirmed": "पुष्टि भयो",
+
+    // ── Guide ────────────────────────────────────────────────
+    "guide.title": "मतदाता गाइड र सहायता",
+    "guide.subtitle": "मतदाता पोर्टल प्रयोग गर्नका लागि चरणबद्ध निर्देशनहरू",
+
+    // ── Common ───────────────────────────────────────────────
+    "common.loading": "लोड हुँदैछ…",
+    "common.error": "त्रुटि भयो।",
+    "common.close": "बन्द गर्नुहोस्",
+    "common.cancel": "रद्द गर्नुहोस्",
+    "common.not_available": "—",
+  },
+};
+
+export default translations;

@@ -32,6 +32,7 @@ import {
   ArrowRight,
   CircleDot,
 } from "lucide-react";
+import { useLanguage } from "../lib/LanguageContext";
 import "./VoterGuide.css";
 
 /* ── Palette (matches VoterShell / VoterDashboard) ──────────── */
@@ -134,6 +135,7 @@ export default function VoterGuide() {
    ════════════════════════════════════════════════════════════════ */
 
 function HeroSection() {
+  const { t } = useLanguage();
   return (
     <div
       style={{
@@ -202,7 +204,7 @@ function HeroSection() {
               letterSpacing: "-0.02em",
             }}
           >
-            Voter Guide & Help
+            {t("guide.title")}
           </h2>
         </div>
 

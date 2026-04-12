@@ -10,6 +10,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Vote, BarChart3, Receipt, ShieldCheck, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import apiClient from "../lib/apiClient";
+import { useLanguage } from "../lib/LanguageContext";
 
 const PALETTE = {
   navy: "#173B72",
@@ -23,6 +24,7 @@ const PALETTE = {
 };
 
 export default function VoterDashboard({ user }) {
+  const { t } = useLanguage();
   const [elections, setElections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -31,9 +33,9 @@ export default function VoterDashboard({ user }) {
     apiClient
       .get("/voter/elections")
       .then((res) => setElections(res.data || []))
-      .catch(() => setError("Unable to load elections."))
+      .catch(() => setError(t("dash.err.load")))
       .finally(() => setLoading(false));
-  }, []);
+  }, [t]);
 
   const openElections = elections.filter((e) => e.status === "POLLING_OPEN");
   const votedCount = elections.filter((e) => e.has_voted).length;
@@ -54,10 +56,10 @@ export default function VoterDashboard({ user }) {
         }}
       >
         <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, letterSpacing: "-0.02em" }}>
-          Welcome back{user?.full_name ? `, ${user.full_name}` : ""}
+          {t("dash.welcome")}{user?.full_name ? `, ${user.full_name}` : ""}
         </h2>
         <p style={{ margin: "8px 0 0", fontSize: 14, opacity: 0.85, fontWeight: 500 }}>
-          Your voter account is verified and active. Use this portal to participate in elections securely.
+          {t("dash.welcome_sub")}
         </p>
       </div>
 
@@ -72,26 +74,26 @@ export default function VoterDashboard({ user }) {
       >
         <StatCard
           icon={<Vote size={22} color={PALETTE.accentBlue} />}
-          label="Open Elections"
+          label={t("dash.open_elections")}
           value={loading ? "–" : openElections.length}
           accent={PALETTE.accentBlue}
         />
         <StatCard
           icon={<CheckCircle2 size={22} color={PALETTE.success} />}
-          label="Votes Cast"
+          label={t("dash.votes_cast")}
           value={loading ? "–" : votedCount}
           accent={PALETTE.success}
         />
         <StatCard
           icon={<BarChart3 size={22} color={PALETTE.warning} />}
-          label="Results Available"
+          label={t("dash.results_available")}
           value={loading ? "–" : resultElections.length}
           accent={PALETTE.warning}
         />
         <StatCard
           icon={<ShieldCheck size={22} color={PALETTE.success} />}
-          label="Account Status"
-          value="Active"
+          label={t("dash.security_status")}
+          value={t("dash.security_active")}
           accent={PALETTE.success}
         />
       </div>
@@ -106,7 +108,7 @@ export default function VoterDashboard({ user }) {
           letterSpacing: "-0.01em",
         }}
       >
-        Quick Actions
+        {t("dash.quick_actions")}
       </h3>
       <div
         style={{
@@ -119,20 +121,20 @@ export default function VoterDashboard({ user }) {
         <ActionCard
           to="/elections"
           icon={<Vote size={24} color={PALETTE.accentBlue} />}
-          title="View Elections"
-          description="Browse available elections and cast your ballot"
+          title={t("dash.view_elections")}
+          description={t("dash.view_elections_desc")}
         />
         <ActionCard
           to="/results"
           icon={<BarChart3 size={24} color={PALETTE.warning} />}
-          title="View Results"
-          description="Check published election results and outcomes"
+          title={t("dash.view_results")}
+          description={t("dash.view_results_desc")}
         />
         <ActionCard
           to="/receipt"
           icon={<Receipt size={24} color={PALETTE.success} />}
-          title="Vote Receipts"
-          description="Access your vote confirmation receipts"
+          title={t("dash.vote_receipt")}
+          description={t("dash.vote_receipt_desc")}
         />
       </div>
 
@@ -149,7 +151,7 @@ export default function VoterDashboard({ user }) {
             }}
           >
             <Clock size={18} style={{ verticalAlign: "middle", marginRight: 8 }} />
-            Active Elections
+            {t("dash.upcoming_elections")}
           </h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {openElections.map((el) => (
@@ -191,7 +193,7 @@ export default function VoterDashboard({ user }) {
                     border: el.has_voted ? `1px solid ${PALETTE.success}30` : "none",
                   }}
                 >
-                  {el.has_voted ? "✓ Voted" : "Cast Vote →"}
+                  {el.has_voted ? `✓ ${t("elections.already_voted")}` : `${t("elections.cast_vote")} →`}
                 </Link>
               </div>
             ))}
@@ -234,7 +236,7 @@ export default function VoterDashboard({ user }) {
         >
           <Vote size={40} color="#CBD5E1" style={{ marginBottom: 12 }} />
           <p style={{ color: PALETTE.mutedText, fontSize: 15, fontWeight: 500, margin: 0 }}>
-            No elections are currently available. Check back later.
+            {t("dash.no_elections")}
           </p>
         </div>
       )}
