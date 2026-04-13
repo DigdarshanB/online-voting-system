@@ -20,6 +20,12 @@ export function login(citizenship_number, password) {
     .then((r) => r.data);
 }
 
+export function verifyLoginMfa(mfa_token, code) {
+  return apiClient
+    .post("/auth/login/mfa-verify", { mfa_token, code })
+    .then((r) => r.data);
+}
+
 export function register(payload) {
   return apiClient.post("/auth/register", payload).then((r) => r.data);
 }

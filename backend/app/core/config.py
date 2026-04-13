@@ -40,15 +40,19 @@ class Settings(BaseSettings):
     # MUST be overridden with a securely-generated key in production.
     BALLOT_ENCRYPTION_KEY: str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
-    # ── AWS Rekognition Face Liveness ────────────────────────────
-    AWS_REGION: str = "us-east-1"
-    AWS_ACCESS_KEY_ID: str | None = None
-    AWS_SECRET_ACCESS_KEY: str | None = None
-    AWS_FACE_LIVENESS_ROLE_ARN: str | None = None
+    # ── CompreFace face comparison ────────────────────────────────
+    COMPREFACE_URL: str = "http://localhost:8200"
+    COMPREFACE_VERIFICATION_API_KEY: str = ""
 
-    # Face verification thresholds
-    FACE_LIVENESS_CONFIDENCE_THRESHOLD: float = 90.0
-    FACE_MATCH_CONFIDENCE_THRESHOLD: float = 90.0
+    # Face similarity threshold (0–100).  Reject if below.
+    # Start at 75; do not lower below 65 without strong evidence.
+    FACE_SIMILARITY_THRESHOLD: float = 75.0
+
+    # MediaPipe challenge-response liveness settings
+    FACE_VERIFY_CHALLENGE_POOL: str = "turn_left,turn_right,blink,nod,smile"
+    FACE_VERIFY_CHALLENGE_COUNT: int = 2
+
+    # Face verification session & retry policy
     FACE_VERIFICATION_TOKEN_TTL_SECONDS: int = 300          # 5 minutes
     FACE_VERIFY_MAX_FAILURES: int = 5
     FACE_VERIFY_LOCK_DURATION_MINUTES: int = 15

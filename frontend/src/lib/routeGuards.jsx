@@ -39,21 +39,18 @@ export function RequireActiveVoter({ children }) {
 
     fetchMe()
       .then((data) => {
-        if (!data.email_verified) {
-          setState("redirect");
-          setRedirectTo("/verify-email");
+        if (data.status === "ACTIVE" && data.totp_enabled) {
+          setUser(data);
+          setState("ok");
         } else if (data.status === "ACTIVE" && !data.totp_enabled) {
           setState("redirect");
           setRedirectTo("/totp-setup");
         } else if (data.status === "PENDING_FACE") {
           setState("redirect");
           setRedirectTo("/face-verification");
-        } else if (data.status !== "ACTIVE" || !data.totp_enabled) {
+        } else {
           setState("redirect");
           setRedirectTo("/status");
-        } else {
-          setUser(data);
-          setState("ok");
         }
       })
       .catch(() => {

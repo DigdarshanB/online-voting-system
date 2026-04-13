@@ -25,6 +25,8 @@ export default function VoterBallot() {
 
   // Face verification state
   const [showFaceVerify, setShowFaceVerify] = useState(false);
+  const [faceVerifyKey, setFaceVerifyKey] = useState(0);
+  const [faceVerifyError, setFaceVerifyError] = useState("");
 
   // Local ballot selections
   const [localChoices, setLocalChoices] = useState({
@@ -298,7 +300,7 @@ export default function VoterBallot() {
   }
 
   // Called when face verification challenge completes successfully on the client
-  async function handleFaceVerified(verificationContextToken) {
+  async function handleFaceVerified(verificationContextToken, capturedFrame) {
       setShowFaceVerify(false);
       setSubmitting(true);
       setCastError("");
@@ -310,6 +312,7 @@ export default function VoterBallot() {
         const payload = isLocal
           ? {
               verification_context_token: verificationContextToken,
+              captured_frame: capturedFrame,
               head_nomination_id: localChoices.head,
               deputy_head_nomination_id: localChoices.deputy_head,
               ward_chair_nomination_id: localChoices.ward_chair,
@@ -320,6 +323,7 @@ export default function VoterBallot() {
             }
           : {
               verification_context_token: verificationContextToken,
+              captured_frame: capturedFrame,
               fptp_nomination_id: fptpChoice,
               pr_party_id: prChoice,
             };
@@ -374,6 +378,7 @@ export default function VoterBallot() {
 
   function handleFaceVerifyCancel() {
     setShowFaceVerify(false);
+    setFaceVerifyKey((k) => k + 1);
   }
 
   return (
@@ -1108,6 +1113,7 @@ export default function VoterBallot() {
 
       {/* ── face verification modal ──────────────────── */}
       <PreCastFaceVerificationModal
+        key={faceVerifyKey}
         open={showFaceVerify}
         electionId={electionId}
         onVerified={handleFaceVerified}

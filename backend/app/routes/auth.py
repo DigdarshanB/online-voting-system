@@ -21,6 +21,7 @@ from app.services.auth_service import (
     activate_admin,
     login_voter,
     login_admin,
+    verify_login_mfa,
     forgot_password,
     reset_password,
     change_password,
@@ -114,6 +115,11 @@ class TotpRecoveryCompleteRequest(BaseModel):
         return normalize_email(value)
 
 
+class LoginMfaVerifyRequest(BaseModel):
+    mfa_token: str
+    code: str
+
+
 # ── Endpoints ───────────────────────────────────────────────────
 
 @router.post("/register")
@@ -199,6 +205,18 @@ def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)
     return login_voter(
         citizenship_number=payload.citizenship_number,
         password=payload.password,
+        request=request,
+        db=db,
+    )
+
+
+@router.post("/login/mfa-verify")
+def login_mfa_verify(payload: LoginMfaVerifyRequest, request: Request, db: Session = Depends(get_db)):
+    client_ip = get_client_ip(request)
+    check_named_rate_limit("totp_verify_ip", f"login_mfa:ip:{client_ip}")
+    return verify_login_mfa(
+        mfa_token=payload.mfa_token,
+        code=payload.code,
         request=request,
         db=db,
     )

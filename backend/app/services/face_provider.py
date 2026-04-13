@@ -1,202 +1,155 @@
-"""AWS Rekognition Face Liveness + face comparison provider adapter.
+"""CompreFace face-comparison provider adapter.
 
-All AWS provider logic is isolated here. No election/ballot logic.
-Fail-closed: any missing configuration raises RuntimeError.
+All provider logic is isolated here.  No election / ballot logic.
+Fail-closed: any missing configuration or CompreFace unavailability raises RuntimeError.
 """
 
-import json
+import base64
 import logging
 from pathlib import Path
 from typing import NamedTuple
 
-import boto3
-from botocore.exceptions import ClientError, BotoCoreError
+import requests
 
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-PROVIDER_NAME = "aws_rekognition"
+PROVIDER_NAME = "compreface"
 
 
 # ── Result types ─────────────────────────────────────────────────
 
 
-class LivenessResult(NamedTuple):
-    is_live: bool
-    confidence: float
-    reference_image_bytes: bytes | None
-
-
 class ComparisonResult(NamedTuple):
     is_match: bool
-    confidence: float
-
-
-class TemporaryCredentials(NamedTuple):
-    access_key_id: str
-    secret_access_key: str
-    session_token: str
+    similarity: float
 
 
 # ── Internal helpers ─────────────────────────────────────────────
 
 
 def _require_configured() -> None:
-    """Fail closed if provider configuration is missing or invalid."""
-    if not settings.AWS_ACCESS_KEY_ID or not settings.AWS_SECRET_ACCESS_KEY:
+    """Fail closed if CompreFace configuration is missing."""
+    if not settings.COMPREFACE_URL:
+        raise RuntimeError("COMPREFACE_URL is not configured")
+    if not settings.COMPREFACE_VERIFICATION_API_KEY:
         raise RuntimeError(
-            "AWS Rekognition credentials are not configured. "
-            "Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY."
+            "COMPREFACE_VERIFICATION_API_KEY is not configured. "
+            "Create a Verification service in CompreFace admin "
+            f"({settings.COMPREFACE_URL}) and set the API key in .env."
         )
-    if not settings.AWS_REGION:
-        raise RuntimeError("AWS_REGION is not configured")
 
 
-def _get_rekognition_client():
-    _require_configured()
-    return boto3.client(
-        "rekognition",
-        region_name=settings.AWS_REGION,
-        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-    )
-
-
-def _get_sts_client():
-    _require_configured()
-    return boto3.client(
-        "sts",
-        region_name=settings.AWS_REGION,
-        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-    )
+def _verification_url() -> str:
+    """Build the CompreFace verification endpoint URL."""
+    base = settings.COMPREFACE_URL.rstrip("/")
+    return f"{base}/api/v1/verification/verify"
 
 
 # ── Public API ───────────────────────────────────────────────────
 
 
-def create_liveness_session() -> str:
-    """Create an AWS Rekognition Face Liveness session.
+def validate_enrollment_face(image_path: str) -> bool:
+    """Check that the stored enrollment face file exists and is non-empty.
 
-    Returns the session ID for use with the FaceLivenessDetector on the client.
+    This is a fast local pre-check before starting a session so we don't
+    waste a challenge cycle when the stored image is missing.
     """
-    client = _get_rekognition_client()
-    try:
-        response = client.create_face_liveness_session()
-        session_id = response["SessionId"]
-        logger.info("Created liveness session: %s", session_id)
-        return session_id
-    except (ClientError, BotoCoreError) as exc:
-        logger.error("Failed to create liveness session: %s", exc)
-        raise RuntimeError("Failed to create face liveness session") from exc
-
-
-def get_liveness_session_results(session_id: str) -> LivenessResult:
-    """Fetch the results of a completed liveness session.
-
-    Returns a LivenessResult with is_live, confidence, and reference image bytes.
-    """
-    client = _get_rekognition_client()
-    try:
-        response = client.get_face_liveness_session_results(SessionId=session_id)
-    except (ClientError, BotoCoreError) as exc:
-        logger.error("Failed to get liveness results for %s: %s", session_id, exc)
-        raise RuntimeError("Failed to retrieve liveness results") from exc
-
-    confidence = response.get("Confidence", 0.0)
-    status = response.get("Status", "FAILED")
-
-    is_live = (
-        status == "SUCCEEDED"
-        and confidence >= settings.FACE_LIVENESS_CONFIDENCE_THRESHOLD
-    )
-
-    # Extract the reference image (best face frame from the challenge)
-    ref_image = response.get("ReferenceImage", {})
-    ref_bytes = ref_image.get("Bytes")
-
-    return LivenessResult(
-        is_live=is_live,
-        confidence=round(confidence, 2),
-        reference_image_bytes=ref_bytes,
-    )
+    base_dir = Path(__file__).resolve().parents[2]
+    full_path = base_dir / image_path
+    if not full_path.exists():
+        return False
+    if full_path.stat().st_size == 0:
+        return False
+    return True
 
 
 def compare_faces(
-    source_image_bytes: bytes,
-    target_image_path: str,
+    source_image_path: str,
+    target_image_base64: str,
 ) -> ComparisonResult:
-    """Compare a live face image against a stored enrollment face.
+    """Compare a stored enrollment face against a live captured frame.
 
-    source_image_bytes: live face image bytes from the liveness session.
-    target_image_path: relative path to the stored enrollment face on disk.
+    source_image_path:    relative path to the stored enrollment face on disk.
+    target_image_base64:  base64-encoded JPEG/PNG from the browser camera capture.
+
+    Uses the CompreFace *verification* endpoint (POST with two images).
     """
-    base_dir = Path(__file__).resolve().parents[2]
-    target_full_path = base_dir / target_image_path
+    _require_configured()
 
-    if not target_full_path.exists():
+    # ── Load stored enrollment image from disk ───────────────────
+    base_dir = Path(__file__).resolve().parents[2]
+    source_full_path = base_dir / source_image_path
+
+    if not source_full_path.exists():
         raise RuntimeError("Stored enrollment face image not found on disk")
 
-    target_bytes = target_full_path.read_bytes()
-
-    client = _get_rekognition_client()
+    # ── Decode the live frame ────────────────────────────────────
     try:
-        response = client.compare_faces(
-            SourceImage={"Bytes": source_image_bytes},
-            TargetImage={"Bytes": target_bytes},
-            SimilarityThreshold=settings.FACE_MATCH_CONFIDENCE_THRESHOLD,
-        )
-    except (ClientError, BotoCoreError) as exc:
-        logger.error("Failed to compare faces: %s", exc)
-        raise RuntimeError("Face comparison failed") from exc
+        target_bytes = base64.b64decode(target_image_base64)
+    except Exception:
+        raise RuntimeError("Invalid base64 data for captured frame")
 
-    face_matches = response.get("FaceMatches", [])
-    if face_matches:
-        best = max(face_matches, key=lambda m: m.get("Similarity", 0))
-        similarity = best.get("Similarity", 0.0)
-        return ComparisonResult(
-            is_match=similarity >= settings.FACE_MATCH_CONFIDENCE_THRESHOLD,
-            confidence=round(similarity, 2),
-        )
+    if len(target_bytes) < 1024:
+        raise RuntimeError("Captured frame is too small to be a valid image")
 
-    return ComparisonResult(is_match=False, confidence=0.0)
+    # ── Call CompreFace verification ─────────────────────────────
+    url = _verification_url()
+    headers = {"x-api-key": settings.COMPREFACE_VERIFICATION_API_KEY}
 
-
-def get_temporary_credentials(session_duration_seconds: int = 900) -> TemporaryCredentials:
-    """Get short-lived AWS credentials for the FaceLivenessDetector streaming client.
-
-    Uses STS AssumeRole with an inline policy scoped to Rekognition liveness only.
-    """
-    if not settings.AWS_FACE_LIVENESS_ROLE_ARN:
+    try:
+        with open(source_full_path, "rb") as src_file:
+            files = {
+                "source_image": ("enrollment.jpg", src_file, "image/jpeg"),
+                "target_image": ("live.jpg", target_bytes, "image/jpeg"),
+            }
+            response = requests.post(
+                url,
+                headers=headers,
+                files=files,
+                timeout=15,
+            )
+    except requests.exceptions.ConnectionError:
         raise RuntimeError(
-            "AWS_FACE_LIVENESS_ROLE_ARN is not configured. "
-            "A dedicated IAM role is required for temporary frontend credentials."
+            f"Cannot connect to CompreFace at {url}. "
+            "Ensure the CompreFace containers are running "
+            "(docker compose -f infra/docker-compose.yml up -d)."
         )
+    except requests.exceptions.Timeout:
+        raise RuntimeError("CompreFace request timed out")
+    except requests.exceptions.RequestException as exc:
+        logger.error("CompreFace request failed: %s", exc)
+        raise RuntimeError("Face comparison request failed") from exc
 
-    sts = _get_sts_client()
-    try:
-        response = sts.assume_role(
-            RoleArn=settings.AWS_FACE_LIVENESS_ROLE_ARN,
-            RoleSessionName="vote-face-liveness",
-            DurationSeconds=session_duration_seconds,
-            Policy=json.dumps({
-                "Version": "2012-10-17",
-                "Statement": [
-                    {
-                        "Effect": "Allow",
-                        "Action": ["rekognition:StartFaceLivenessSession"],
-                        "Resource": "*",
-                    }
-                ],
-            }),
+    if response.status_code != 200:
+        detail = ""
+        try:
+            detail = response.json().get("message", response.text[:200])
+        except Exception:
+            detail = response.text[:200]
+        logger.error(
+            "CompreFace returned %d: %s", response.status_code, detail
         )
-        creds = response["Credentials"]
-        return TemporaryCredentials(
-            access_key_id=creds["AccessKeyId"],
-            secret_access_key=creds["SecretAccessKey"],
-            session_token=creds["SessionToken"],
-        )
-    except (ClientError, BotoCoreError) as exc:
-        logger.error("Failed to get temporary credentials: %s", exc)
-        raise RuntimeError("Failed to obtain temporary credentials for face verification") from exc
+        raise RuntimeError(f"CompreFace error ({response.status_code}): {detail}")
+
+    # ── Parse result ─────────────────────────────────────────────
+    data = response.json()
+    result_list = data.get("result", [])
+    if not result_list:
+        return ComparisonResult(is_match=False, similarity=0.0)
+
+    best = max(result_list, key=lambda r: r.get("face_matches", [{}])[0].get("similarity", 0) if r.get("face_matches") else 0)
+    face_matches = best.get("face_matches", [])
+    if not face_matches:
+        return ComparisonResult(is_match=False, similarity=0.0)
+
+    similarity = face_matches[0].get("similarity", 0.0)
+    # CompreFace returns similarity as 0.0–1.0; convert to percentage
+    similarity_pct = round(similarity * 100, 2)
+
+    threshold = settings.FACE_SIMILARITY_THRESHOLD
+    return ComparisonResult(
+        is_match=similarity_pct >= threshold,
+        similarity=similarity_pct,
+    )

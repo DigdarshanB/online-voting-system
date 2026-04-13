@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import OperationalError, SQLAlchemyError
 
 from app.core.config import settings
-from app.core.jwt import create_access_token, decode_activation_token
+from app.core.jwt import create_access_token, create_mfa_challenge_token, decode_activation_token, decode_mfa_challenge_token
 from app.core.security import hash_password, verify_password
 from app.models.admin_invite import AdminInvite
 from app.models.user import User
@@ -354,10 +354,69 @@ def login_voter(
     if user.role != "voter" and user.status != "ACTIVE":
         raise HTTPException(status_code=403, detail="Account is not active")
 
+    # ── MFA gate: if TOTP is enrolled, require a second-factor step ──
+    if user.totp_enabled_at is not None:
+        mfa_token = create_mfa_challenge_token(user.id)
+        audit_auth_event(
+            action="LOGIN_MFA_REQUIRED", actor_user_id=user.id, target_user_id=user.id,
+            request=request, metadata={"role": user.role, "portal": "voter"},
+        )
+        return {"mfa_required": True, "mfa_token": mfa_token}
+
+    # No TOTP enrolled yet – issue a full token so the voter can
+    # proceed to /totp-setup during the onboarding flow.
     token = create_access_token(subject=str(user.id), role=user.role, token_version=user.token_version)
     audit_auth_event(
         action="LOGIN_SUCCESS", actor_user_id=user.id, target_user_id=user.id,
         request=request, metadata={"role": user.role, "portal": "voter"},
+    )
+    return {"access_token": token, "token_type": "bearer"}
+
+
+def verify_login_mfa(
+    *,
+    mfa_token: str,
+    code: str,
+    request: Request,
+    db: Session,
+) -> dict:
+    """Complete the MFA step of voter login.
+
+    Validates the short-lived MFA challenge token, verifies the TOTP
+    code, and only then issues a full access token.
+    """
+    import pyotp
+
+    user_id = decode_mfa_challenge_token(mfa_token)
+
+    user = user_repository.get_user_by_id(db, user_id)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid MFA challenge")
+
+    # Re-check account eligibility (could have changed since credential step)
+    if user.role == "voter" and user.status in {"DISABLED"}:
+        raise HTTPException(status_code=403, detail="Account is disabled")
+    if user.role != "voter" and user.status != "ACTIVE":
+        raise HTTPException(status_code=403, detail="Account is not active")
+
+    if not user.totp_secret:
+        raise HTTPException(status_code=400, detail="TOTP is not configured for this account")
+
+    totp = pyotp.TOTP(user.totp_secret)
+    if not totp.verify(code, valid_window=1):
+        audit_auth_event(
+            action="LOGIN_MFA_FAILURE", outcome="FAILURE",
+            actor_user_id=user.id, target_user_id=user.id,
+            request=request,
+            metadata={"reason": "invalid_totp_code", "portal": "voter"},
+        )
+        raise HTTPException(status_code=400, detail="Invalid authenticator code")
+
+    token = create_access_token(subject=str(user.id), role=user.role, token_version=user.token_version)
+    audit_auth_event(
+        action="LOGIN_SUCCESS", actor_user_id=user.id, target_user_id=user.id,
+        request=request,
+        metadata={"role": user.role, "portal": "voter", "mfa": True},
     )
     return {"access_token": token, "token_type": "bearer"}
 

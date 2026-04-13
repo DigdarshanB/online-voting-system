@@ -54,6 +54,7 @@ class CastLocalBallotRequest(BaseModel):
 class VerifyAndCastRequest(BaseModel):
     """Federal / Provincial dual-ballot with face verification token."""
     verification_context_token: str
+    captured_frame: str
     fptp_nomination_id: Optional[int] = None
     pr_party_id: Optional[int] = None
 
@@ -61,6 +62,7 @@ class VerifyAndCastRequest(BaseModel):
 class VerifyAndCastLocalRequest(BaseModel):
     """Local ballot with face verification token."""
     verification_context_token: str
+    captured_frame: str
     head_nomination_id: Optional[int] = None
     deputy_head_nomination_id: Optional[int] = None
     ward_chair_nomination_id: Optional[int] = None
@@ -166,6 +168,7 @@ def verify_and_cast(
         election_id=election_id,
         voter=current_user,
         verification_context_token=payload.verification_context_token,
+        captured_frame_base64=payload.captured_frame,
         fptp_nomination_id=payload.fptp_nomination_id,
         pr_party_id=payload.pr_party_id,
         request=request,
@@ -182,12 +185,13 @@ def verify_and_cast_local_ballot(
 ):
     """Verify voter face then cast local ballot atomically."""
     _require_active_voter(current_user)
-    selections = payload.model_dump(exclude={"verification_context_token"})
+    selections = payload.model_dump(exclude={"verification_context_token", "captured_frame"})
     return verify_and_cast_local(
         db,
         election_id=election_id,
         voter=current_user,
         verification_context_token=payload.verification_context_token,
+        captured_frame_base64=payload.captured_frame,
         selections=selections,
         request=request,
     )

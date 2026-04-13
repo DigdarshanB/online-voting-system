@@ -11,8 +11,9 @@ Responsibilities:
 - Dispatch to existing ballot-casting functions only after verification passes
 """
 
-import json
 import logging
+import random
+import uuid
 from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException, Request
@@ -234,6 +235,13 @@ def _validate_voter_election_state(
 # ── Public endpoints ─────────────────────────────────────────────
 
 
+def _pick_challenges() -> list[str]:
+    """Randomly select challenge actions from the configured pool."""
+    pool = [c.strip() for c in settings.FACE_VERIFY_CHALLENGE_POOL.split(",") if c.strip()]
+    count = min(settings.FACE_VERIFY_CHALLENGE_COUNT, len(pool))
+    return random.sample(pool, count)
+
+
 def start_face_session(
     db: Session,
     voter: User,
@@ -242,8 +250,9 @@ def start_face_session(
 ) -> dict:
     """Start a face verification session for pre-cast identity check.
 
-    Creates an AWS Rekognition liveness session, issues a signed token,
-    and returns everything the frontend needs to run the live challenge.
+    Validates enrollment face, generates a nonce and challenge actions,
+    issues a signed token, and returns everything the frontend needs
+    to run the MediaPipe challenge-response liveness check.
     """
     election = _load_election(db, election_id)
     _validate_voter_election_state(db, voter, election)
@@ -277,18 +286,25 @@ def start_face_session(
             headers={"Retry-After": str(retry["cooldown_seconds"])},
         )
 
-    # Create provider session
-    provider_session_id = face_provider.create_liveness_session()
+    # Validate stored enrollment face exists on disk
+    if not face_provider.validate_enrollment_face(voter.face_image_path):
+        raise HTTPException(
+            status_code=400,
+            detail="Stored enrollment face image is missing or invalid. Contact support.",
+        )
 
-    # Get temporary credentials for frontend streaming
-    temp_creds = face_provider.get_temporary_credentials()
+    # Generate session nonce (replaces AWS provider session ID)
+    session_nonce = str(uuid.uuid4())
 
-    # Issue signed token
+    # Pick random challenge actions for the frontend liveness check
+    challenges = _pick_challenges()
+
+    # Issue signed token binding voter + election + nonce
     token, expires_at = _create_verification_token(
         voter_id=voter.id,
         election_id=election.id,
         government_level=election.government_level,
-        provider_session_id=provider_session_id,
+        provider_session_id=session_nonce,
     )
 
     # Audit
@@ -301,7 +317,8 @@ def start_face_session(
             "election_id": election.id,
             "government_level": election.government_level,
             "provider": face_provider.PROVIDER_NAME,
-            "provider_session_id": provider_session_id,
+            "session_nonce": session_nonce,
+            "challenges": challenges,
             "remaining_attempts": retry["remaining_attempts"],
         },
     )
@@ -309,18 +326,12 @@ def start_face_session(
 
     return {
         "provider": face_provider.PROVIDER_NAME,
-        "provider_session_id": provider_session_id,
         "verification_context_token": token,
         "expires_at": expires_at.isoformat(),
+        "challenges": challenges,
         "camera_mode": "user",
         "max_attempts": settings.FACE_VERIFY_MAX_FAILURES,
         "remaining_attempts": retry["remaining_attempts"],
-        "region": settings.AWS_REGION,
-        "credentials": {
-            "access_key_id": temp_creds.access_key_id,
-            "secret_access_key": temp_creds.secret_access_key,
-            "session_token": temp_creds.session_token,
-        },
     }
 
 
@@ -332,60 +343,45 @@ def _verify_face(
     voter: User,
     election: Election,
     token_payload: dict,
+    captured_frame_base64: str,
     request: Request | None = None,
 ) -> dict | None:
-    """Run face verification using the provider session results.
+    """Run face verification using CompreFace comparison.
+
+    Liveness is enforced browser-side by MediaPipe challenge-response.
+    This function handles replay protection, face comparison, and audit.
 
     Returns None on success, or a failure dict (with HTTP status code) on failure.
     """
-    provider_session_id = token_payload["psid"]
+    session_nonce = token_payload["psid"]
     meta_base = {
         "election_id": election.id,
         "government_level": election.government_level,
         "provider": face_provider.PROVIDER_NAME,
-        "provider_session_id": provider_session_id,
+        "session_nonce": session_nonce,
     }
 
-    # Replay check
-    if is_provider_session_id_used(db, provider_session_id):
+    # Replay check — nonce must not have been used before
+    if is_provider_session_id_used(db, session_nonce):
         raise HTTPException(
             status_code=400,
             detail="This verification session has already been used",
         )
 
-    # Get liveness results from provider
-    try:
-        liveness = face_provider.get_liveness_session_results(provider_session_id)
-    except RuntimeError as exc:
-        logger.error("Liveness check error: %s", exc)
-        raise HTTPException(
-            status_code=502,
-            detail="Face verification service unavailable. Try again.",
-        )
-
-    if not liveness.is_live:
+    # Validate captured frame is present
+    if not captured_frame_base64 or len(captured_frame_base64) < 100:
         return _record_failure(
             db, voter, election, request,
-            reason_code="LIVENESS_FAILED",
-            liveness_score=liveness.confidence,
+            reason_code="NO_CAPTURED_FRAME",
             match_score=None,
             meta_base=meta_base,
         )
 
-    if not liveness.reference_image_bytes:
-        return _record_failure(
-            db, voter, election, request,
-            reason_code="NO_REFERENCE_IMAGE",
-            liveness_score=liveness.confidence,
-            match_score=None,
-            meta_base=meta_base,
-        )
-
-    # Compare against stored enrollment face
+    # Compare captured frame against stored enrollment face via CompreFace
     try:
         comparison = face_provider.compare_faces(
-            source_image_bytes=liveness.reference_image_bytes,
-            target_image_path=voter.face_image_path,
+            source_image_path=voter.face_image_path,
+            target_image_base64=captured_frame_base64,
         )
     except RuntimeError as exc:
         logger.error("Face comparison error: %s", exc)
@@ -398,8 +394,7 @@ def _verify_face(
         return _record_failure(
             db, voter, election, request,
             reason_code="FACE_MISMATCH",
-            liveness_score=liveness.confidence,
-            match_score=comparison.confidence,
+            match_score=comparison.similarity,
             meta_base=meta_base,
         )
 
@@ -411,8 +406,7 @@ def _verify_face(
         request=request,
         metadata={
             **meta_base,
-            "liveness_score": liveness.confidence,
-            "match_score": comparison.confidence,
+            "match_score": comparison.similarity,
         },
     )
 
@@ -426,7 +420,6 @@ def _record_failure(
     request: Request | None,
     *,
     reason_code: str,
-    liveness_score: float | None,
     match_score: float | None,
     meta_base: dict,
 ) -> dict:
@@ -449,7 +442,6 @@ def _record_failure(
     failure_meta = {
         **meta_base,
         "reason_code": reason_code,
-        "liveness_score": liveness_score,
         "match_score": match_score,
         "remaining_attempts": remaining,
         "locked_until": None,
@@ -524,6 +516,7 @@ def verify_and_cast_dual(
     election_id: int,
     voter: User,
     verification_context_token: str,
+    captured_frame_base64: str,
     fptp_nomination_id: int | None,
     pr_party_id: int | None,
     request: Request | None = None,
@@ -550,7 +543,7 @@ def verify_and_cast_dual(
         )
 
     # Run face verification
-    failure = _verify_face(db, voter, election, token_payload, request)
+    failure = _verify_face(db, voter, election, token_payload, captured_frame_base64, request)
     if failure:
         return JSONResponse(
             status_code=failure["status_code"],
@@ -582,7 +575,7 @@ def verify_and_cast_dual(
             "election_id": election.id,
             "government_level": election.government_level,
             "provider": face_provider.PROVIDER_NAME,
-            "provider_session_id": token_payload["psid"],
+            "session_nonce": token_payload["psid"],
             "ballot_id": result.get("ballot_id"),
         },
     )
@@ -600,6 +593,7 @@ def verify_and_cast_local(
     election_id: int,
     voter: User,
     verification_context_token: str,
+    captured_frame_base64: str,
     selections: dict,
     request: Request | None = None,
 ) -> dict:
@@ -625,7 +619,7 @@ def verify_and_cast_local(
         )
 
     # Run face verification
-    failure = _verify_face(db, voter, election, token_payload, request)
+    failure = _verify_face(db, voter, election, token_payload, captured_frame_base64, request)
     if failure:
         return JSONResponse(
             status_code=failure["status_code"],
@@ -655,7 +649,7 @@ def verify_and_cast_local(
             "election_id": election.id,
             "government_level": election.government_level,
             "provider": face_provider.PROVIDER_NAME,
-            "provider_session_id": token_payload["psid"],
+            "session_nonce": token_payload["psid"],
             "ballot_id": result.get("ballot_id"),
         },
     )

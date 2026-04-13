@@ -27,6 +27,7 @@ import VoterForgotPassword from "./pages/VoterForgotPassword";
 import VoterResetPassword from "./pages/VoterResetPassword";
 import VoterChangePassword from "./pages/VoterChangePassword";
 import VoterTotpRecovery from "./pages/VoterTotpRecovery";
+import VoterLoginMfa from "./pages/VoterLoginMfa";
 import VoterDashboard from "./pages/VoterDashboard";
 import VoterElectionsHub from "./pages/VoterElectionsHub";
 import VoterElectionsLevel from "./pages/VoterElectionsLevel";
@@ -47,6 +48,7 @@ export default function App() {
     <Routes>
       {/* ── Public / pre-login routes ───────────────────────── */}
       <Route path="/" element={<VoterAuthPage />} />
+      <Route path="/login-mfa" element={<VoterLoginMfa />} />
       <Route path="/registration-verify" element={<VoterRegistrationVerify />} />
       <Route path="/verify-email" element={<VoterEmailVerification />} />
       <Route path="/forgot-password" element={<VoterForgotPassword />} />

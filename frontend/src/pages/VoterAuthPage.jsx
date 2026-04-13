@@ -191,6 +191,15 @@ export default function VoterAuthPage() {
     try {
       if (mode === "login") {
         const data = await login(loginForm.citizenshipId, loginForm.password);
+
+        // MFA challenge: backend requires authenticator verification
+        if (data.mfa_required && data.mfa_token) {
+          sessionStorage.setItem("mfa_token", data.mfa_token);
+          navigate("/login-mfa");
+          return;
+        }
+
+        // No MFA yet (TOTP not enrolled) – proceed with onboarding flow
         setToken(data.access_token);
         const me = await fetchMe();
         if (me.status === "ACTIVE" && me.totp_enabled) {

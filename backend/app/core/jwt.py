@@ -25,6 +25,49 @@ def create_access_token(subject: str, role: str, token_version: int = 0) -> str:
     return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
 
 
+# ── MFA challenge tokens ────────────────────────────────────────
+
+_MFA_CHALLENGE_EXPIRE_MINUTES = 5
+
+
+def create_mfa_challenge_token(user_id: int) -> str:
+    """Create a short-lived JWT that represents a pending MFA challenge.
+
+    This token does NOT grant access to protected resources – it only
+    proves that the holder has passed credential verification and
+    must now complete a second-factor check.
+    """
+    now = datetime.now(timezone.utc)
+    exp = now + timedelta(minutes=_MFA_CHALLENGE_EXPIRE_MINUTES)
+    payload = {
+        "sub": str(user_id),
+        "purpose": "mfa_challenge",
+        "iat": int(now.timestamp()),
+        "exp": int(exp.timestamp()),
+    }
+    return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
+
+
+def decode_mfa_challenge_token(token: str) -> int:
+    """Decode an MFA challenge token and return the user_id.
+
+    Raises HTTPException(401) on invalid, expired, or wrong-purpose tokens.
+    """
+    try:
+        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid or expired MFA challenge token")
+
+    if payload.get("purpose") != "mfa_challenge":
+        raise HTTPException(status_code=401, detail="Invalid MFA challenge token")
+
+    user_id = payload.get("sub")
+    if user_id is None:
+        raise HTTPException(status_code=401, detail="Invalid MFA challenge token payload")
+
+    return int(user_id)
+
+
 # ── Activation tokens (invite links) ───────────────────────────
 
 def create_activation_token(invite_id: int, expires_at: datetime) -> str:
