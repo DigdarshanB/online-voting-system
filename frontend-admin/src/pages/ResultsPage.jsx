@@ -358,11 +358,15 @@ function ElectionResultCard({
                       fontSize: 13, color: P.text, background: P.surface,
                     }}
                   >
-                    {countRuns.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        Run #{r.id} — {r.status}{r.is_final ? " ★ FINAL" : ""}{r.is_locked ? " 🔒" : ""}
-                      </option>
-                    ))}
+                    {countRuns.map((r) => {
+                      const statusLabel = r.status.charAt(0) + r.status.slice(1).toLowerCase();
+                      const tags = [statusLabel, r.is_final && "Final", r.is_locked && "Locked"].filter(Boolean);
+                      return (
+                        <option key={r.id} value={r.id}>
+                          Run #{r.id} — {tags.join(" · ")}
+                        </option>
+                      );
+                    })}
                   </select>
                 )}
               </div>

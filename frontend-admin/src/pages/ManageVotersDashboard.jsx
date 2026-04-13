@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import axios from "axios";
 import {
   Users, UserCheck, UserX, Clock, Shield, Search, Filter, RefreshCw,
@@ -86,20 +87,59 @@ const ACTION_ITEMS = [
   { label: "Delete voter", icon: Trash2, danger: true },
 ];
 
+const ACTION_MENU_ITEM_HEIGHT = 34; // approx px per item
+
 function ActionMenu({ voterId, onAction }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef(null);
+  const [menuPos, setMenuPos] = useState(null);
+  const triggerRef = useRef(null);
+  const menuRef = useRef(null);
+
+  const toggleMenu = (e) => {
+    e.stopPropagation();
+    if (open) {
+      setOpen(false);
+      return;
+    }
+    const rect = triggerRef.current.getBoundingClientRect();
+    const approxMenuHeight = ACTION_ITEMS.length * ACTION_MENU_ITEM_HEIGHT + 16;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const openUp = spaceBelow < approxMenuHeight && rect.top > approxMenuHeight;
+    setMenuPos({
+      right: window.innerWidth - rect.right,
+      ...(openUp
+        ? { bottom: window.innerHeight - rect.top + 4 }
+        : { top: rect.bottom + 4 }),
+    });
+    setOpen(true);
+  };
 
   useEffect(() => {
     if (!open) return;
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    const onDown = (e) => {
+      if (
+        triggerRef.current && !triggerRef.current.contains(e.target) &&
+        menuRef.current && !menuRef.current.contains(e.target)
+      ) {
+        setOpen(false);
+      }
+    };
+    const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
   }, [open]);
 
   return (
-    <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
-      <button onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}
+    <div style={{ display: "inline-block" }}>
+      <button
+        ref={triggerRef}
+        onClick={toggleMenu}
+        aria-haspopup="true"
+        aria-expanded={open}
         style={{
           border: `1px solid ${T.border}`, background: T.surface, borderRadius: T.radius.md,
           width: 32, height: 32, cursor: "pointer", display: "inline-flex",
@@ -108,13 +148,24 @@ function ActionMenu({ voterId, onAction }) {
         onMouseEnter={e => { e.currentTarget.style.background = T.surfaceAlt; }}
         onMouseLeave={e => { e.currentTarget.style.background = T.surface; }}
       ><MoreVertical size={15} color={T.muted} /></button>
-      {open && (
-        <div style={{
-          position: "absolute", right: 0, top: "calc(100% + 4px)", background: T.surface,
-          border: `1px solid ${T.border}`, borderRadius: T.radius.lg, minWidth: 190,
-          boxShadow: T.shadow.xl, zIndex: 30, padding: 4,
-          animation: "fadeIn 0.14s ease",
-        }}>
+      {open && menuPos && createPortal(
+        <div
+          ref={menuRef}
+          style={{
+            position: "fixed",
+            right: menuPos.right,
+            ...(menuPos.top !== undefined ? { top: menuPos.top } : {}),
+            ...(menuPos.bottom !== undefined ? { bottom: menuPos.bottom } : {}),
+            background: T.surface,
+            border: `1px solid ${T.border}`,
+            borderRadius: T.radius.lg,
+            minWidth: 190,
+            boxShadow: T.shadow.xl,
+            zIndex: 9999,
+            padding: 4,
+            animation: "fadeIn 0.14s ease",
+          }}
+        >
           {ACTION_ITEMS.map(({ label, icon: Icon, danger }) => (
             <button key={label}
               onMouseDown={(e) => { e.preventDefault(); onAction(label, voterId); setOpen(false); }}
@@ -132,7 +183,8 @@ function ActionMenu({ voterId, onAction }) {
               {label}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

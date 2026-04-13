@@ -62,15 +62,15 @@ def _require_admin(current_user: User = Depends(get_current_user)) -> User:
 
 class PendingVoterItem(BaseModel):
     id: int
-    full_name: Optional[str]
-    phone_number: Optional[str]
-    citizenship_no_raw: Optional[str]
-    citizenship_no_normalized: Optional[str]
-    document_uploaded_at: Optional[datetime]
-    face_uploaded_at: Optional[datetime]
-    submitted_at: Optional[datetime]
-    email: Optional[str]
-    email_verified: bool
+    full_name: Optional[str] = None
+    phone_number: Optional[str] = None
+    citizenship_no_raw: Optional[str] = None
+    citizenship_no_normalized: Optional[str] = None
+    document_uploaded_at: Optional[datetime] = None
+    face_uploaded_at: Optional[datetime] = None
+    submitted_at: Optional[datetime] = None
+    email: Optional[str] = None
+    email_verified: bool = False
     status: str
 
     class Config:
@@ -78,18 +78,18 @@ class PendingVoterItem(BaseModel):
 
 
 class VoterDetail(PendingVoterItem):
-    approved_at: Optional[datetime]
-    rejection_reason: Optional[str]
-    email_verified_at: Optional[datetime]
-    face_uploaded_at: Optional[datetime]
-    document_uploaded_at: Optional[datetime]
+    approved_at: Optional[datetime] = None
+    rejection_reason: Optional[str] = None
+    email_verified_at: Optional[datetime] = None
+    face_uploaded_at: Optional[datetime] = None
+    document_uploaded_at: Optional[datetime] = None
     created_at: datetime
     status: str
-    account_status: str
-    citizenship_image_available: bool
-    face_image_available: bool
-    vote_count: int
-    voting_status: str
+    account_status: str = ""
+    citizenship_image_available: bool = False
+    face_image_available: bool = False
+    vote_count: int = 0
+    voting_status: str = "Not Voted"
 
 
 class RejectRequest(BaseModel):

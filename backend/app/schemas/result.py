@@ -44,6 +44,7 @@ class FptpResultRowRead(BaseModel):
     requires_adjudication: bool = False
     candidate_photo_path: str | None = None
     party_symbol_path: str | None = None
+    contest_title: str | None = None
 
     class Config:
         from_attributes = True

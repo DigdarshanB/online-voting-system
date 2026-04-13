@@ -12,6 +12,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import apiClient from "../lib/apiClient";
+import mediaUrl from "../lib/mediaUrl";
 
 /* ─── Injected CSS (once) ────────────────────────────────────── */
 const STYLE_ID = "vcf-shimmer-styles";
@@ -116,8 +117,6 @@ const STATUS_DISPLAY = {
   FINALIZED: { bg: "#F0FDF4", text: "#166534", label: "Finalized" },
   ARCHIVED: { bg: "#F1F5F9", text: "#475569", label: "Archived" },
 };
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 /* ─── Shimmer bar helper ─────────────────────────────────────── */
 function ShimmerBar({ width, height, radius = 6, style = {} }) {
@@ -859,12 +858,8 @@ function PrContestBlock({ contest }) {
 
 /* ─── Candidate Card ─────────────────────────────────────────── */
 function CandidateCard({ candidate }) {
-  const photoUrl = candidate.candidate_photo_path
-    ? `${API_BASE}/uploads/${candidate.candidate_photo_path}`
-    : null;
-  const symbolUrl = candidate.party_symbol_path
-    ? `${API_BASE}/uploads/${candidate.party_symbol_path}`
-    : null;
+  const photoUrl = mediaUrl(candidate.candidate_photo_path);
+  const symbolUrl = mediaUrl(candidate.party_symbol_path);
   const initials = getInitials(candidate.candidate_name);
 
   return (
@@ -997,9 +992,7 @@ function CandidateCard({ candidate }) {
 
 /* ─── Party Card (PR) ────────────────────────────────────────── */
 function PartyCard({ party }) {
-  const symbolUrl = party.party_symbol_path
-    ? `${API_BASE}/uploads/${party.party_symbol_path}`
-    : null;
+  const symbolUrl = mediaUrl(party.party_symbol_path);
 
   return (
     <div

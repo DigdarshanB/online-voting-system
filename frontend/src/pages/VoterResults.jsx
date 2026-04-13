@@ -474,7 +474,7 @@ function FptpTable({ rows }) {
             display: "inline-block",
           }}
         >
-          Constituency #{contestId}
+          {cRows[0]?.contest_title || `Constituency #${contestId}`}
         </div>
         <ResultTable>
           <thead>

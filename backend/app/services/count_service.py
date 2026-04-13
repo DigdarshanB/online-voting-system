@@ -390,7 +390,7 @@ def get_pr_results(db: Session, count_run_id: int) -> list[PrResultRow]:
 
 
 def enrich_fptp_results(db: Session, rows: list[FptpResultRow]) -> list[dict]:
-    """Hydrate candidate_photo_path and party_symbol_path onto FPTP result rows."""
+    """Hydrate candidate_photo_path, party_symbol_path, and contest_title onto FPTP result rows."""
     if not rows:
         return []
     nomination_ids = list({r.nomination_id for r in rows})
@@ -405,12 +405,22 @@ def enrich_fptp_results(db: Session, rows: list[FptpResultRow]) -> list[dict]:
         .where(FptpCandidateNomination.id.in_(nomination_ids))
     ).all()
     lookup = {row[0]: (row[1], row[2]) for row in img_rows}
+
+    # Fetch contest titles for human-readable display
+    contest_ids = list({r.contest_id for r in rows})
+    contest_rows = db.execute(
+        select(ElectionContest.id, ElectionContest.title)
+        .where(ElectionContest.id.in_(contest_ids))
+    ).all()
+    contest_title_lookup = {row[0]: row[1] for row in contest_rows}
+
     enriched = []
     for r in rows:
         d = {c.name: getattr(r, c.name) for c in r.__table__.columns}
         photo, symbol = lookup.get(r.nomination_id, (None, None))
         d["candidate_photo_path"] = photo
         d["party_symbol_path"] = symbol
+        d["contest_title"] = contest_title_lookup.get(r.contest_id)
         enriched.append(d)
     return enriched
 
