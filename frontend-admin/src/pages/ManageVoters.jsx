@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
+import VerificationOverviewCard from "../features/voter-verifications/components/VerificationOverviewCard";
 import VerificationSummaryStrip from "../features/voter-verifications/components/VerificationSummaryStrip";
-import VoterVerificationQueue from "../features/voter-verifications/components/VoterVerificationQueue";
-import VoterVerificationReviewPanel from "../features/voter-verifications/components/VoterVerificationReviewPanel";
-import VerificationEmptyState from "../features/voter-verifications/components/VerificationEmptyState";
+import VerificationWorkbench from "../features/voter-verifications/components/VerificationWorkbench";
 import { T } from "../components/ui/tokens";
 import { PageContainer, AdminKeyframes } from "../components/ui/AdminUI";
-import { ShieldCheck, CheckCircle2, AlertTriangle } from "lucide-react";
+import { CheckCircle2, AlertTriangle } from "lucide-react";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -38,21 +37,28 @@ class VerificationErrorBoundary extends React.Component {
 export default function ManageVoters() {
   const [voters, setVoters] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedVoter, setSelectedVoter] = useState(null);
   const [statusMessage, setStatusMessage] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [lastRefreshed, setLastRefreshed] = useState(null);
 
-  const fetchVoters = useCallback(async () => {
-    setLoading(true);
+  const fetchVoters = useCallback(async (silent = false) => {
+    if (silent) {
+      setIsRefreshing(true);
+    } else {
+      setLoading(true);
+    }
     try {
       const response = await axios.get(`${API}/admin/voters/pending`, { headers: authHeaders() });
       setVoters(response.data || []);
+      setLastRefreshed(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
     } catch (err) {
       console.error("Fetch error:", err);
       setStatusMessage({ type: "error", text: "Failed to load verification queue." });
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   }, []);
 
@@ -67,8 +73,8 @@ export default function ManageVoters() {
       await axios.post(`${API}/admin/voters/${userId}/approve`, {}, { headers: authHeaders() });
       setStatusMessage({ type: "success", text: "Voter verified successfully." });
       setSelectedVoter(null);
-      fetchVoters();
-    } catch (err) {
+      fetchVoters(true);
+    } catch {
       setStatusMessage({ type: "error", text: "Failed to approve voter." });
     } finally {
       setIsProcessing(false);
@@ -82,18 +88,13 @@ export default function ManageVoters() {
       await axios.post(`${API}/admin/voters/${userId}/reject`, { reason }, { headers: authHeaders() });
       setStatusMessage({ type: "success", text: "Voter submission rejected." });
       setSelectedVoter(null);
-      fetchVoters();
-    } catch (err) {
+      fetchVoters(true);
+    } catch {
       setStatusMessage({ type: "error", text: "Failed to reject voter." });
     } finally {
       setIsProcessing(false);
     }
   };
-
-  const filteredVoters = (voters || []).filter(v => 
-    (v.full_name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (v.citizenship_no_normalized || "").includes(searchTerm)
-  );
 
   const metrics = {
     pending: voters.length,
@@ -104,78 +105,64 @@ export default function ManageVoters() {
 
   return (
     <VerificationErrorBoundary>
-    <PageContainer>
-      <AdminKeyframes />
-      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-      {/* Page header */}
-      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
-        <div style={{
-          width: 48, height: 48, borderRadius: T.radius.lg, display: "flex",
-          alignItems: "center", justifyContent: "center",
-          background: `linear-gradient(135deg, ${T.accent}18, ${T.accent}08)`,
-          border: `1.5px solid ${T.accent}30`,
-        }}><ShieldCheck size={22} color={T.accent} /></div>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: T.text, letterSpacing: "-0.02em" }}>
-            Voter Verification
-          </h1>
-          <p style={{ margin: "2px 0 0", color: T.muted, fontSize: 13.5, fontWeight: 500 }}>
-            Review and verify pending voter identity submissions.
-          </p>
-        </div>
-      </div>
+      <PageContainer>
+        <AdminKeyframes />
+        <div style={{ maxWidth: 1320, margin: "0 auto" }}>
 
-      <VerificationSummaryStrip metrics={metrics} />
-
-      {statusMessage && (
-        <div style={{
-          padding: "12px 16px",
-          marginBottom: 20,
-          borderRadius: T.radius.md,
-          background: statusMessage.type === "success" ? T.successBg : T.errorBg,
-          color: statusMessage.type === "success" ? T.success : T.error,
-          border: `1px solid ${statusMessage.type === "success" ? T.successBorder : T.errorBorder}`,
-          fontSize: 13,
-          fontWeight: 600,
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-        }}>
-          {statusMessage.type === "success" ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
-          <span>{statusMessage.text}</span>
-          <button 
-            onClick={() => setStatusMessage(null)}
-            style={{ marginLeft: "auto", background: "transparent", border: "none", cursor: "pointer", color: "inherit", fontWeight: "bold", fontSize: 16 }}
-          >
-            ×
-          </button>
-        </div>
-      )}
-
-      {!selectedVoter ? (
-        voters.length === 0 && !loading ? (
-          <VerificationEmptyState />
-        ) : (
-          <VoterVerificationQueue 
-            items={filteredVoters}
-            isLoading={loading}
-            selectedVoterId={selectedVoter?.id}
-            onSelectVoter={setSelectedVoter}
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
+          {/* Overview card — replaces the duplicate hero */}
+          <VerificationOverviewCard
+            onRefresh={() => fetchVoters(true)}
+            isRefreshing={isRefreshing}
+            lastRefreshed={lastRefreshed}
           />
-        )
-      ) : (
-        <VoterVerificationReviewPanel 
-          voter={selectedVoter}
-          isBusy={isProcessing}
-          onClose={() => setSelectedVoter(null)}
-          onApprove={handleApprove}
-          onReject={handleReject}
-        />
-      )}
-    </div>
-    </PageContainer>
+
+          {/* Queue health metrics */}
+          <VerificationSummaryStrip metrics={metrics} />
+
+          {/* Status banner */}
+          {statusMessage && (
+            <div style={{
+              padding: "11px 16px",
+              marginBottom: 20,
+              borderRadius: T.radius.md,
+              background: statusMessage.type === "success" ? T.successBg : T.errorBg,
+              color: statusMessage.type === "success" ? T.success : T.error,
+              border: `1px solid ${statusMessage.type === "success" ? T.successBorder : T.errorBorder}`,
+              fontSize: 13,
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}>
+              {statusMessage.type === "success"
+                ? <CheckCircle2 size={15} />
+                : <AlertTriangle size={15} />
+              }
+              <span>{statusMessage.text}</span>
+              <button
+                onClick={() => setStatusMessage(null)}
+                style={{
+                  marginLeft: "auto", background: "transparent", border: "none",
+                  cursor: "pointer", color: "inherit", fontWeight: "bold", fontSize: 16, lineHeight: 1,
+                }}
+              >
+                ×
+              </button>
+            </div>
+          )}
+
+          {/* Master-detail review workbench */}
+          <VerificationWorkbench
+            allItems={voters}
+            isLoading={loading}
+            selectedVoter={selectedVoter}
+            onSelectVoter={setSelectedVoter}
+            isBusy={isProcessing}
+            onApprove={handleApprove}
+            onReject={handleReject}
+          />
+        </div>
+      </PageContainer>
     </VerificationErrorBoundary>
   );
 }

@@ -40,13 +40,16 @@ class Settings(BaseSettings):
     # MUST be overridden with a securely-generated key in production.
     BALLOT_ENCRYPTION_KEY: str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
-    # ── CompreFace face comparison ────────────────────────────────
-    COMPREFACE_URL: str = "http://localhost:8200"
-    COMPREFACE_VERIFICATION_API_KEY: str = ""
-
-    # Face similarity threshold (0–100).  Reject if below.
-    # Start at 75; do not lower below 65 without strong evidence.
+    # Face similarity threshold (0–100).  Legacy display-score setting.
+    # NOT used by DeepFace for match/no-match decisions — DeepFace uses its
+    # own model-specific distance thresholds (see DEEPFACE_* settings below).
     FACE_SIMILARITY_THRESHOLD: float = 75.0
+
+    # DeepFace verification settings (local face-matching engine).
+    # The match decision relies on DeepFace's model-specific distance threshold.
+    DEEPFACE_MODEL_NAME: str = "ArcFace"
+    DEEPFACE_DETECTOR_BACKEND: str = "opencv"
+    DEEPFACE_DISTANCE_METRIC: str = "cosine"
 
     # MediaPipe challenge-response liveness settings
     FACE_VERIFY_CHALLENGE_POOL: str = "turn_left,turn_right,blink,nod,smile"

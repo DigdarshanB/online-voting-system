@@ -18,7 +18,7 @@ from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
-from jose import jwt, JWTError
+from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -81,18 +81,23 @@ def _create_verification_token(
 
 
 def _decode_verification_token(token: str) -> dict:
-    """Decode and validate a verification context token.  Raises HTTPException on failure."""
+    """Decode and validate a verification context token. Raises HTTPException on failure."""
     try:
         payload = jwt.decode(
-            token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM]
+            token,
+            settings.JWT_SECRET,
+            algorithms=[settings.JWT_ALGORITHM],
         )
     except JWTError:
         raise HTTPException(status_code=400, detail="Invalid or expired verification token")
+
     if payload.get("purpose") != "vote_face_verification":
         raise HTTPException(status_code=400, detail="Invalid verification token purpose")
+
     required = ("sub", "eid", "gl", "psid")
     if any(payload.get(k) is None for k in required):
         raise HTTPException(status_code=400, detail="Malformed verification token")
+
     return payload
 
 
@@ -102,14 +107,17 @@ def _decode_verification_token(token: str) -> dict:
 def _compute_retry_state(db: Session, voter_id: int, election_id: int) -> dict:
     """Compute current retry state from audit-log history.
 
-    Returns dict with: is_locked, locked_until, remaining_attempts,
-    cooldown_seconds, failure_count.
+    Returns dict with:
+    - is_locked
+    - locked_until
+    - remaining_attempts
+    - cooldown_seconds
+    - failure_count
     """
     max_failures = settings.FACE_VERIFY_MAX_FAILURES
     window_min = settings.FACE_VERIFY_OBSERVATION_WINDOW_MINUTES
     lock_min = settings.FACE_VERIFY_LOCK_DURATION_MINUTES
 
-    # 1. Active lock?
     locked_until = find_active_vote_face_lock(db, voter_id, election_id)
     if locked_until:
         return {
@@ -120,13 +128,14 @@ def _compute_retry_state(db: Session, voter_id: int, election_id: int) -> dict:
             "failure_count": max_failures,
         }
 
-    # 2. Count failures in window
     failure_count = count_recent_vote_face_failures(
-        db, voter_id, election_id, window_min
+        db,
+        voter_id,
+        election_id,
+        window_min,
     )
     remaining = max(0, max_failures - failure_count)
 
-    # If failures already at max → should be locked (edge case)
     if failure_count >= max_failures:
         lock_until = datetime.now(timezone.utc) + timedelta(minutes=lock_min)
         return {
@@ -137,30 +146,28 @@ def _compute_retry_state(db: Session, voter_id: int, election_id: int) -> dict:
             "failure_count": failure_count,
         }
 
-    # 3. Progressive cooldown based on current failure count
-    #    failure 1-2: immediate retry
-    #    failure 3:   30-second cooldown
-    #    failure 4:   60-second cooldown
     cooldown_seconds = 0
     if failure_count >= 4:
         cooldown_seconds = 60
     elif failure_count >= 3:
         cooldown_seconds = 30
 
-    # If a cooldown is required, check elapsed time since last failure
     if cooldown_seconds > 0:
         last_fail_at = get_last_vote_face_failure_time(
-            db, voter_id, election_id, window_min
+            db,
+            voter_id,
+            election_id,
+            window_min,
         )
         if last_fail_at:
             if last_fail_at.tzinfo is None:
                 last_fail_at = last_fail_at.replace(tzinfo=timezone.utc)
+
             elapsed = (datetime.now(timezone.utc) - last_fail_at).total_seconds()
             if elapsed < cooldown_seconds:
-                # Still in cooldown
                 cooldown_seconds = int(cooldown_seconds - elapsed)
             else:
-                cooldown_seconds = 0  # Cooldown has elapsed
+                cooldown_seconds = 0
 
     return {
         "is_locked": False,
@@ -206,23 +213,30 @@ def _load_election(db: Session, election_id: int) -> Election:
 
 
 def _validate_voter_election_state(
-    db: Session, voter: User, election: Election
+    db: Session,
+    voter: User,
+    election: Election,
 ) -> None:
     """Common pre-checks shared by session-start and verify-and-cast."""
     if election.status != "POLLING_OPEN":
         raise HTTPException(
-            status_code=400, detail="This election is not currently open for voting"
+            status_code=400,
+            detail="This election is not currently open for voting",
         )
+
     now = datetime.now(timezone.utc)
+
     if election.polling_start_at and now < election.polling_start_at.replace(tzinfo=timezone.utc):
         raise HTTPException(status_code=400, detail="Polling has not started yet")
+
     if election.polling_end_at and now > election.polling_end_at.replace(tzinfo=timezone.utc):
         raise HTTPException(status_code=400, detail="Polling has ended")
 
     existing = ballot_repository.get_ballot(db, election.id, voter.id)
     if existing:
         raise HTTPException(
-            status_code=409, detail="You have already cast your ballot in this election"
+            status_code=409,
+            detail="You have already cast your ballot in this election",
         )
 
     if not voter.face_image_path:
@@ -257,7 +271,6 @@ def start_face_session(
     election = _load_election(db, election_id)
     _validate_voter_election_state(db, voter, election)
 
-    # Check retry state
     retry = _compute_retry_state(db, voter.id, election.id)
     if retry["is_locked"]:
         return JSONResponse(
@@ -274,7 +287,6 @@ def start_face_session(
             },
         )
 
-    # Enforce cooldown
     if retry["cooldown_seconds"] > 0:
         return JSONResponse(
             status_code=429,
@@ -286,20 +298,15 @@ def start_face_session(
             headers={"Retry-After": str(retry["cooldown_seconds"])},
         )
 
-    # Validate stored enrollment face exists on disk
     if not face_provider.validate_enrollment_face(voter.face_image_path):
         raise HTTPException(
             status_code=400,
             detail="Stored enrollment face image is missing or invalid. Contact support.",
         )
 
-    # Generate session nonce (replaces AWS provider session ID)
     session_nonce = str(uuid.uuid4())
-
-    # Pick random challenge actions for the frontend liveness check
     challenges = _pick_challenges()
 
-    # Issue signed token binding voter + election + nonce
     token, expires_at = _create_verification_token(
         voter_id=voter.id,
         election_id=election.id,
@@ -307,7 +314,6 @@ def start_face_session(
         provider_session_id=session_nonce,
     )
 
-    # Audit
     _audit(
         db,
         action="VOTE_FACE_SESSION_STARTED",
@@ -346,7 +352,7 @@ def _verify_face(
     captured_frame_base64: str,
     request: Request | None = None,
 ) -> dict | None:
-    """Run face verification using CompreFace comparison.
+    """Run face verification using the configured face comparison provider.
 
     Liveness is enforced browser-side by MediaPipe challenge-response.
     This function handles replay protection, face comparison, and audit.
@@ -361,27 +367,66 @@ def _verify_face(
         "session_nonce": session_nonce,
     }
 
-    # Replay check — nonce must not have been used before
     if is_provider_session_id_used(db, session_nonce):
         raise HTTPException(
             status_code=400,
             detail="This verification session has already been used",
         )
 
-    # Validate captured frame is present
     if not captured_frame_base64 or len(captured_frame_base64) < 100:
         return _record_failure(
-            db, voter, election, request,
+            db,
+            voter,
+            election,
+            request,
             reason_code="NO_CAPTURED_FRAME",
             match_score=None,
             meta_base=meta_base,
         )
 
-    # Compare captured frame against stored enrollment face via CompreFace
     try:
         comparison = face_provider.compare_faces(
             source_image_path=voter.face_image_path,
             target_image_base64=captured_frame_base64,
+        )
+    except face_provider.FaceNotDetectedError as exc:
+        logger.warning("No face detected during verification: %s", exc)
+        return _record_failure(
+            db,
+            voter,
+            election,
+            request,
+            reason_code="NO_FACE_DETECTED",
+            match_score=None,
+            meta_base=meta_base,
+        )
+    except face_provider.MultipleFacesError as exc:
+        logger.warning("Multiple faces detected during verification: %s", exc)
+        return _record_failure(
+            db,
+            voter,
+            election,
+            request,
+            reason_code="MULTIPLE_FACES",
+            match_score=None,
+            meta_base=meta_base,
+        )
+    except face_provider.CapturedFrameInvalidError as exc:
+        logger.warning("Invalid captured frame during verification: %s", exc)
+        return _record_failure(
+            db,
+            voter,
+            election,
+            request,
+            reason_code="NO_CAPTURED_FRAME",
+            match_score=None,
+            meta_base=meta_base,
+        )
+    except face_provider.EnrollmentFaceInvalidError as exc:
+        logger.error("Stored enrollment face image invalid: %s", exc)
+        raise HTTPException(
+            status_code=400,
+            detail="Stored enrollment face image is missing or invalid. Contact support.",
         )
     except RuntimeError as exc:
         logger.error("Face comparison error: %s", exc)
@@ -392,13 +437,15 @@ def _verify_face(
 
     if not comparison.is_match:
         return _record_failure(
-            db, voter, election, request,
+            db,
+            voter,
+            election,
+            request,
             reason_code="FACE_MISMATCH",
             match_score=comparison.similarity,
             meta_base=meta_base,
         )
 
-    # Verification passed — write audit into same session (committed with ballot)
     _audit(
         db,
         action="VOTE_FACE_VERIFY_PASSED",
@@ -410,7 +457,36 @@ def _verify_face(
         },
     )
 
-    return None  # success
+    return None
+
+
+# ── Failure detail messages ──────────────────────────────────────
+
+_FAILURE_MESSAGES = {
+    "FACE_MISMATCH": (
+        "Face verification failed. The captured face does not match "
+        "your registered face. Your vote was not cast."
+    ),
+    "NO_CAPTURED_FRAME": (
+        "No valid face frame was captured. Please try again."
+    ),
+    "NO_FACE_DETECTED": (
+        "No face was detected in the captured frame. "
+        "Please ensure your face is clearly visible and try again."
+    ),
+    "MULTIPLE_FACES": (
+        "Multiple faces were detected. "
+        "Please ensure only your face is visible and try again."
+    ),
+}
+
+
+def _failure_detail(reason_code: str) -> str:
+    """Return a voter-facing message for the given failure reason code."""
+    return _FAILURE_MESSAGES.get(
+        reason_code,
+        "Face verification failed. Your vote was not cast.",
+    )
 
 
 def _record_failure(
@@ -427,13 +503,15 @@ def _record_failure(
 
     Returns a dict describing the failure for the HTTP response.
     """
-    # Pre-count (before adding this failure)
     max_failures = settings.FACE_VERIFY_MAX_FAILURES
     window_min = settings.FACE_VERIFY_OBSERVATION_WINDOW_MINUTES
     lock_min = settings.FACE_VERIFY_LOCK_DURATION_MINUTES
 
     current_count = count_recent_vote_face_failures(
-        db, voter.id, election.id, window_min
+        db,
+        voter.id,
+        election.id,
+        window_min,
     )
     new_count = current_count + 1
     remaining = max(0, max_failures - new_count)
@@ -456,7 +534,6 @@ def _record_failure(
         metadata=failure_meta,
     )
 
-    # Check if this failure triggers a lock
     if new_count >= max_failures:
         locked_until = datetime.now(timezone.utc) + timedelta(minutes=lock_min)
         lock_meta = {
@@ -479,15 +556,16 @@ def _record_failure(
     if locked_until:
         return {
             "status_code": 429,
-            "detail": "Face verification temporarily locked for this election",
+            "detail": "Face verification temporarily locked for this election. Please try again later.",
             "reason_code": "FACE_LOCKED",
             "remaining_attempts": 0,
             "locked_until": locked_until.isoformat(),
         }
 
+    detail = _failure_detail(reason_code)
     return {
         "status_code": 403,
-        "detail": "Face verification failed",
+        "detail": detail,
         "reason_code": reason_code,
         "remaining_attempts": remaining,
         "locked_until": None,
@@ -495,15 +573,24 @@ def _record_failure(
 
 
 def _validate_token_for_cast(
-    token: str, voter: User, election_id: int
+    token: str,
+    voter: User,
+    election_id: int,
 ) -> dict:
     """Decode and validate the verification token against the current request."""
     payload = _decode_verification_token(token)
 
     if int(payload["sub"]) != voter.id:
-        raise HTTPException(status_code=403, detail="Verification token does not match current voter")
+        raise HTTPException(
+            status_code=403,
+            detail="Verification token does not match current voter",
+        )
+
     if payload["eid"] != election_id:
-        raise HTTPException(status_code=403, detail="Verification token does not match this election")
+        raise HTTPException(
+            status_code=403,
+            detail="Verification token does not match this election",
+        )
 
     return payload
 
@@ -526,10 +613,11 @@ def verify_and_cast_dual(
     _validate_voter_election_state(db, voter, election)
 
     token_payload = _validate_token_for_cast(
-        verification_context_token, voter, election_id
+        verification_context_token,
+        voter,
+        election_id,
     )
 
-    # Retry / lock check
     retry = _compute_retry_state(db, voter.id, election.id)
     if retry["is_locked"]:
         return JSONResponse(
@@ -542,8 +630,14 @@ def verify_and_cast_dual(
             },
         )
 
-    # Run face verification
-    failure = _verify_face(db, voter, election, token_payload, captured_frame_base64, request)
+    failure = _verify_face(
+        db,
+        voter,
+        election,
+        token_payload,
+        captured_frame_base64,
+        request,
+    )
     if failure:
         return JSONResponse(
             status_code=failure["status_code"],
@@ -555,8 +649,6 @@ def verify_and_cast_dual(
             },
         )
 
-    # Face passed → cast ballot
-    # VOTE_FACE_VERIFY_PASSED is already db.add()-ed; it will commit with ballot
     result = cast_dual_ballot_dispatch(
         db,
         election_id=election_id,
@@ -565,7 +657,6 @@ def verify_and_cast_dual(
         pr_party_id=pr_party_id,
     )
 
-    # Post-cast audit (separate commit since cast already committed)
     _audit(
         db,
         action="VOTE_CAST_AFTER_FACE_VERIFY",
@@ -602,10 +693,11 @@ def verify_and_cast_local(
     _validate_voter_election_state(db, voter, election)
 
     token_payload = _validate_token_for_cast(
-        verification_context_token, voter, election_id
+        verification_context_token,
+        voter,
+        election_id,
     )
 
-    # Retry / lock check
     retry = _compute_retry_state(db, voter.id, election.id)
     if retry["is_locked"]:
         return JSONResponse(
@@ -618,8 +710,14 @@ def verify_and_cast_local(
             },
         )
 
-    # Run face verification
-    failure = _verify_face(db, voter, election, token_payload, captured_frame_base64, request)
+    failure = _verify_face(
+        db,
+        voter,
+        election,
+        token_payload,
+        captured_frame_base64,
+        request,
+    )
     if failure:
         return JSONResponse(
             status_code=failure["status_code"],
@@ -631,7 +729,6 @@ def verify_and_cast_local(
             },
         )
 
-    # Face passed → cast ballot
     result = cast_local_ballot_dispatch(
         db,
         election_id=election_id,
@@ -639,7 +736,6 @@ def verify_and_cast_local(
         selections=selections,
     )
 
-    # Post-cast audit
     _audit(
         db,
         action="VOTE_CAST_AFTER_FACE_VERIFY",

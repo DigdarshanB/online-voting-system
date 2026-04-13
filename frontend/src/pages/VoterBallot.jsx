@@ -356,10 +356,26 @@ export default function VoterBallot() {
       } catch (err) {
         const resp = err?.response?.data;
         if (resp?.reason_code) {
-          // Structured face verification failure
+          // Structured face verification failure — show specific message
           if (resp.reason_code === "FACE_LOCKED") {
             setCastError(
-              "Face verification is temporarily locked for this election. Please try again later."
+              resp.detail ||
+                "Face verification is temporarily locked for this election. Please try again later."
+            );
+          } else if (resp.reason_code === "FACE_MISMATCH") {
+            setCastError(
+              resp.detail ||
+                "Face verification failed. The captured face does not match your registered face. Your vote was not cast."
+            );
+          } else if (resp.reason_code === "NO_FACE_DETECTED") {
+            setCastError(
+              resp.detail ||
+                "No face was detected in the captured frame. Please ensure your face is clearly visible and try again."
+            );
+          } else if (resp.reason_code === "MULTIPLE_FACES") {
+            setCastError(
+              resp.detail ||
+                "Multiple faces were detected. Please ensure only your face is visible and try again."
             );
           } else {
             setCastError(

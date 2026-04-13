@@ -1,155 +1,234 @@
-"""CompreFace face-comparison provider adapter.
+"""Face-comparison provider adapter — internal service boundary.
 
-All provider logic is isolated here.  No election / ballot logic.
-Fail-closed: any missing configuration or CompreFace unavailability raises RuntimeError.
+Uses DeepFace for local face similarity verification between a stored
+enrollment image and a live captured frame.
+
+All provider logic is isolated here. No election / ballot logic.
+Fail-closed: any provider failure prevents vote casting.
+
+The compare_faces() function is the single integration point used by
+vote_identity_service for pre-cast face identity verification.
 """
 
 import base64
 import logging
+import os
+import re
+import tempfile
 from pathlib import Path
 from typing import NamedTuple
 
-import requests
+import cv2
+import numpy as np
+from deepface import DeepFace
 
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-PROVIDER_NAME = "compreface"
+PROVIDER_NAME = "deepface"
 
 
-# ── Result types ─────────────────────────────────────────────────
+class FaceNotDetectedError(RuntimeError):
+    """No face detected in the submitted image."""
+
+
+class MultipleFacesError(RuntimeError):
+    """Multiple faces detected in the submitted image."""
+
+
+class EnrollmentFaceInvalidError(RuntimeError):
+    """Stored enrollment face image is missing, unreadable, or unusable."""
+
+
+class CapturedFrameInvalidError(RuntimeError):
+    """Submitted captured frame is missing, unreadable, or unusable."""
 
 
 class ComparisonResult(NamedTuple):
     is_match: bool
-    similarity: float
+    similarity: float  # 0–100 display score (higher = more similar)
 
 
-# ── Internal helpers ─────────────────────────────────────────────
+def _resolve_image_path(path_value: str) -> Path:
+    """Resolve an image path robustly.
+
+    Supports:
+    - absolute paths
+    - paths relative to backend root
+    - paths that may already include a leading 'backend/' segment
+    """
+    raw = Path(path_value).expanduser()
+
+    if raw.is_absolute():
+        return raw.resolve()
+
+    backend_dir = Path(__file__).resolve().parents[2]      # .../backend
+    project_root = backend_dir.parent                      # repo root
+
+    candidates = [
+        (backend_dir / raw).resolve(),
+        (project_root / raw).resolve(),
+    ]
+
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+
+    return (backend_dir / raw).resolve()
 
 
-def _require_configured() -> None:
-    """Fail closed if CompreFace configuration is missing."""
-    if not settings.COMPREFACE_URL:
-        raise RuntimeError("COMPREFACE_URL is not configured")
-    if not settings.COMPREFACE_VERIFICATION_API_KEY:
-        raise RuntimeError(
-            "COMPREFACE_VERIFICATION_API_KEY is not configured. "
-            "Create a Verification service in CompreFace admin "
-            f"({settings.COMPREFACE_URL}) and set the API key in .env."
-        )
+def _decode_base64_image(b64_data: str) -> np.ndarray:
+    """Decode a base64 string (with optional data-URI prefix) into a BGR numpy array."""
+    cleaned = re.sub(r"^data:image/[a-zA-Z0-9.+-]+;base64,", "", b64_data)
+
+    try:
+        raw_bytes = base64.b64decode(cleaned)
+    except Exception as exc:
+        raise CapturedFrameInvalidError("Invalid base64 data for captured frame") from exc
+
+    if len(raw_bytes) < 1024:
+        raise CapturedFrameInvalidError("Captured frame is too small to be a valid image")
+
+    img_array = np.frombuffer(raw_bytes, dtype=np.uint8)
+    img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+    if img is None or img.size == 0:
+        raise CapturedFrameInvalidError("Captured frame could not be decoded as an image")
+
+    return img
 
 
-def _verification_url() -> str:
-    """Build the CompreFace verification endpoint URL."""
-    base = settings.COMPREFACE_URL.rstrip("/")
-    return f"{base}/api/v1/verification/verify"
+def _count_faces_quick(img: np.ndarray) -> int:
+    """Quick face count using OpenCV Haar cascade as a lightweight pre-check."""
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    cascade_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+    face_cascade = cv2.CascadeClassifier(cascade_path)
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
+    return len(faces)
 
 
-# ── Public API ───────────────────────────────────────────────────
+def _write_temp_image(img: np.ndarray) -> Path:
+    """Write an OpenCV image to a temporary JPEG file and return its path."""
+    fd, temp_path = tempfile.mkstemp(suffix=".jpg")
+    os.close(fd)
+
+    temp_file = Path(temp_path)
+    ok = cv2.imwrite(str(temp_file), img)
+    if not ok or not temp_file.exists() or temp_file.stat().st_size == 0:
+        raise CapturedFrameInvalidError("Failed to materialize captured frame for verification")
+
+    return temp_file
 
 
 def validate_enrollment_face(image_path: str) -> bool:
-    """Check that the stored enrollment face file exists and is non-empty.
+    """Check that the stored enrollment face file exists, is non-empty, and is readable."""
+    try:
+        full_path = _resolve_image_path(image_path)
+        if not full_path.exists():
+            return False
+        if full_path.stat().st_size == 0:
+            return False
 
-    This is a fast local pre-check before starting a session so we don't
-    waste a challenge cycle when the stored image is missing.
-    """
-    base_dir = Path(__file__).resolve().parents[2]
-    full_path = base_dir / image_path
-    if not full_path.exists():
+        img = cv2.imread(str(full_path))
+        if img is None or img.size == 0:
+            return False
+
+        return True
+    except Exception:
         return False
-    if full_path.stat().st_size == 0:
-        return False
-    return True
 
 
 def compare_faces(
     source_image_path: str,
     target_image_base64: str,
 ) -> ComparisonResult:
-    """Compare a stored enrollment face against a live captured frame.
-
-    source_image_path:    relative path to the stored enrollment face on disk.
-    target_image_base64:  base64-encoded JPEG/PNG from the browser camera capture.
-
-    Uses the CompreFace *verification* endpoint (POST with two images).
-    """
-    _require_configured()
-
-    # ── Load stored enrollment image from disk ───────────────────
-    base_dir = Path(__file__).resolve().parents[2]
-    source_full_path = base_dir / source_image_path
+    """Compare a stored enrollment face against a live captured frame using DeepFace."""
+    source_full_path = _resolve_image_path(source_image_path)
 
     if not source_full_path.exists():
-        raise RuntimeError("Stored enrollment face image not found on disk")
+        raise EnrollmentFaceInvalidError("Stored enrollment face image not found on disk")
 
-    # ── Decode the live frame ────────────────────────────────────
-    try:
-        target_bytes = base64.b64decode(target_image_base64)
-    except Exception:
-        raise RuntimeError("Invalid base64 data for captured frame")
+    source_img = cv2.imread(str(source_full_path))
+    if source_img is None or source_img.size == 0:
+        raise EnrollmentFaceInvalidError("Stored enrollment face image could not be read")
 
-    if len(target_bytes) < 1024:
-        raise RuntimeError("Captured frame is too small to be a valid image")
+    target_img = _decode_base64_image(target_image_base64)
 
-    # ── Call CompreFace verification ─────────────────────────────
-    url = _verification_url()
-    headers = {"x-api-key": settings.COMPREFACE_VERIFICATION_API_KEY}
-
-    try:
-        with open(source_full_path, "rb") as src_file:
-            files = {
-                "source_image": ("enrollment.jpg", src_file, "image/jpeg"),
-                "target_image": ("live.jpg", target_bytes, "image/jpeg"),
-            }
-            response = requests.post(
-                url,
-                headers=headers,
-                files=files,
-                timeout=15,
-            )
-    except requests.exceptions.ConnectionError:
-        raise RuntimeError(
-            f"Cannot connect to CompreFace at {url}. "
-            "Ensure the CompreFace containers are running "
-            "(docker compose -f infra/docker-compose.yml up -d)."
+    face_count = _count_faces_quick(target_img)
+    if face_count > 1:
+        raise MultipleFacesError(
+            f"Multiple faces ({face_count}) detected in the captured frame. "
+            "Only one face should be visible."
         )
-    except requests.exceptions.Timeout:
-        raise RuntimeError("CompreFace request timed out")
-    except requests.exceptions.RequestException as exc:
-        logger.error("CompreFace request failed: %s", exc)
-        raise RuntimeError("Face comparison request failed") from exc
 
-    if response.status_code != 200:
-        detail = ""
+    model = settings.DEEPFACE_MODEL_NAME
+    detector = settings.DEEPFACE_DETECTOR_BACKEND
+    metric = settings.DEEPFACE_DISTANCE_METRIC
+
+    target_temp_path = _write_temp_image(target_img)
+
+    try:
+        result = DeepFace.verify(
+            img1_path=str(source_full_path),
+            img2_path=str(target_temp_path),
+            model_name=model,
+            detector_backend=detector,
+            distance_metric=metric,
+            enforce_detection=True,
+        )
+    except ValueError as exc:
+        msg = str(exc).lower()
+
+        if "img1_path" in msg:
+            raise EnrollmentFaceInvalidError(
+                f"Stored enrollment face image could not be processed by DeepFace: {exc}"
+            ) from exc
+
+        if "img2_path" in msg:
+            if "face" in msg and ("detect" in msg or "found" in msg or "confirm" in msg):
+                raise FaceNotDetectedError(
+                    "No face detected in the captured frame. "
+                    "Please ensure your face is clearly visible and well-lit."
+                ) from exc
+            raise CapturedFrameInvalidError(
+                f"Captured frame could not be processed by DeepFace: {exc}"
+            ) from exc
+
+        if "face" in msg and ("detect" in msg or "found" in msg or "confirm" in msg):
+            raise FaceNotDetectedError(
+                "No face detected in the captured frame. "
+                "Please ensure your face is clearly visible and well-lit."
+            ) from exc
+
+        raise RuntimeError(f"Face verification engine error: {exc}") from exc
+    finally:
         try:
-            detail = response.json().get("message", response.text[:200])
+            target_temp_path.unlink(missing_ok=True)
         except Exception:
-            detail = response.text[:200]
-        logger.error(
-            "CompreFace returned %d: %s", response.status_code, detail
-        )
-        raise RuntimeError(f"CompreFace error ({response.status_code}): {detail}")
+            logger.warning("Could not delete temporary verification image: %s", target_temp_path)
 
-    # ── Parse result ─────────────────────────────────────────────
-    data = response.json()
-    result_list = data.get("result", [])
-    if not result_list:
-        return ComparisonResult(is_match=False, similarity=0.0)
+    is_match = result.get("verified", False)
+    distance = float(result.get("distance", 1.0))
+    threshold = float(result.get("threshold", 0.0))
 
-    best = max(result_list, key=lambda r: r.get("face_matches", [{}])[0].get("similarity", 0) if r.get("face_matches") else 0)
-    face_matches = best.get("face_matches", [])
-    if not face_matches:
-        return ComparisonResult(is_match=False, similarity=0.0)
+    if metric == "cosine":
+        similarity_pct = round(max(0.0, (1.0 - distance)) * 100, 2)
+    else:
+        if threshold > 0:
+            similarity_pct = round(max(0.0, (1.0 - distance / (threshold * 2))) * 100, 2)
+        else:
+            similarity_pct = 0.0
 
-    similarity = face_matches[0].get("similarity", 0.0)
-    # CompreFace returns similarity as 0.0–1.0; convert to percentage
-    similarity_pct = round(similarity * 100, 2)
-
-    threshold = settings.FACE_SIMILARITY_THRESHOLD
-    return ComparisonResult(
-        is_match=similarity_pct >= threshold,
-        similarity=similarity_pct,
+    logger.info(
+        "DeepFace verification: model=%s metric=%s distance=%.4f threshold=%.4f "
+        "verified=%s similarity_display=%.1f%% source=%s",
+        model,
+        metric,
+        distance,
+        threshold,
+        is_match,
+        similarity_pct,
+        source_full_path,
     )
+
+    return ComparisonResult(is_match=is_match, similarity=similarity_pct)
