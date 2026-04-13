@@ -1,0 +1,124 @@
+/* ================================================================
+   VoterBallot.css — Ballot page animations, interactions, responsive
+   ================================================================ */
+
+/* ── Keyframes ─────────────────────────────────────────────────── */
+@keyframes ballotFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes ballotScaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes ballotCheckPop {
+  0%   { transform: scale(0); opacity: 0; }
+  50%  { transform: scale(1.12); }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes ballotShimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Animations ────────────────────────────────────────────────── */
+.ballot-page-enter  { animation: ballotFadeIn  0.3s ease both; }
+.ballot-modal-enter { animation: ballotScaleIn 0.22s ease both; }
+.ballot-success-check { animation: ballotCheckPop 0.5s cubic-bezier(.22,1,.36,1) 0.1s both; }
+.ballot-spinner     { animation: spin 0.8s linear infinite; }
+
+.ballot-skeleton {
+  background: linear-gradient(90deg, #EEF1F6 25%, #F8FAFD 50%, #EEF1F6 75%);
+  background-size: 200% 100%;
+  animation: ballotShimmer 1.6s ease infinite;
+  border-radius: 8px;
+}
+
+/* ── Option card interactions ──────────────────────────────────── */
+.ballot-option {
+  transition: background 0.15s ease, border-color 0.15s ease,
+              box-shadow 0.15s ease, transform 0.1s ease;
+}
+.ballot-option:hover:not([data-disabled="true"]) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(15,23,42,0.06);
+}
+.ballot-option:focus-within:not([data-disabled="true"]) {
+  box-shadow: 0 0 0 3px rgba(47,111,237,0.18);
+}
+.ballot-option[data-disabled="true"] {
+  cursor: default;
+  opacity: 0.55;
+}
+
+/* ── Contest card ──────────────────────────────────────────────── */
+.ballot-card {
+  transition: box-shadow 0.2s ease;
+}
+.ballot-card:hover {
+  box-shadow: 0 2px 12px rgba(15,23,42,0.06);
+}
+
+/* ── Cast button ───────────────────────────────────────────────── */
+.ballot-btn-cast {
+  transition: background 0.18s ease, transform 0.1s ease, box-shadow 0.18s ease;
+}
+.ballot-btn-cast:hover:not(:disabled) {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(4,120,87,0.22);
+}
+.ballot-btn-cast:active:not(:disabled) { transform: translateY(0); }
+.ballot-btn-cast:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(4,120,87,0.3);
+}
+.ballot-btn-cast:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ── Secondary button ──────────────────────────────────────────── */
+.ballot-btn-secondary {
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.ballot-btn-secondary:hover:not(:disabled) {
+  background: #F8FAFC !important;
+  border-color: #94A3B8 !important;
+}
+.ballot-btn-secondary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(47,111,237,0.2);
+}
+
+/* ── Confirm button ────────────────────────────────────────────── */
+.ballot-btn-confirm {
+  transition: background 0.18s ease, transform 0.1s ease, box-shadow 0.18s ease;
+}
+.ballot-btn-confirm:hover:not(:disabled) {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+.ballot-btn-confirm:active:not(:disabled) { transform: translateY(0); }
+.ballot-btn-confirm:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(4,120,87,0.3);
+}
+.ballot-btn-confirm:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ── Responsive ────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .ballot-grid       { grid-template-columns: 1fr !important; }
+  .ballot-local-grid { grid-template-columns: 1fr !important; }
+  .ballot-header-row { flex-direction: column; align-items: flex-start !important; }
+  .ballot-info-strip { flex-direction: column; gap: 8px !important; }
+  .ballot-info-divider { display: none; }
+  .ballot-confirm-btns { flex-direction: column-reverse; }
+  .ballot-confirm-btns > button { width: 100%; }
+  .ballot-success-grid { grid-template-columns: 1fr !important; }
+}
+@media (min-width: 768px) and (max-width: 1024px) {
+  .ballot-local-grid { grid-template-columns: 1fr 1fr !important; }
+}
+
+/* ── Print ──────────────────────────────────────────────────────── */
+@media print {
+  .ballot-cast-area, .ballot-back-link { display: none !important; }
+}

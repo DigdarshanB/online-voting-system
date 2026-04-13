@@ -1,11 +1,34 @@
 import React, { useEffect, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
+import {
+  ArrowLeft, ShieldCheck, CheckCircle2, AlertCircle, AlertTriangle,
+  Info, Landmark, Building2, MapPin, FileText, ChevronRight, Check, User,
+} from "lucide-react";
 import useAuthGuard from "../hooks/useAuthGuard";
 import apiClient from "../lib/apiClient";
+import { VT } from "../lib/voterTokens";
 import { saveVoteReceipt } from "./VoterReceipt";
 import PreCastFaceVerificationModal from "../components/PreCastFaceVerificationModal";
+import "./VoterBallot.css";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
+/* ── Level badge config ───────────────────────────────────────── */
+const LEVEL_META = {
+  FEDERAL:    { label: "Federal Election",    Icon: Landmark,  color: VT.federal.color,    bg: VT.federal.bg,    border: VT.federal.border },
+  PROVINCIAL: { label: "Provincial Election", Icon: Building2, color: VT.provincial.color, bg: VT.provincial.bg, border: VT.provincial.border },
+  LOCAL:      { label: "Local Election",      Icon: MapPin,    color: VT.local.color,      bg: VT.local.bg,      border: VT.local.border },
+};
+
+/* ── Local contest card theming (preserves visual differentiation) */
+const LOCAL_THEME = {
+  head:                    { headerBg: "#C2410C", accent: "#EA580C", selectedBg: "#FFF7ED" },
+  deputy_head:             { headerBg: "#C2410C", accent: "#EA580C", selectedBg: "#FFF7ED" },
+  ward_chair:              { headerBg: "#1E40AF", accent: VT.accent, selectedBg: VT.accentLight },
+  ward_woman_member:       { headerBg: "#6D28D9", accent: "#7C3AED", selectedBg: "#F5F3FF" },
+  ward_dalit_woman_member: { headerBg: "#6D28D9", accent: "#7C3AED", selectedBg: "#F5F3FF" },
+  ward_member_open:        { headerBg: "#047857", accent: "#059669", selectedBg: "#F0FDF4" },
+};
 
 export default function VoterBallot() {
   const { loading: authLoading, user } = useAuthGuard();
@@ -54,191 +77,192 @@ export default function VoterBallot() {
       });
   }, [user, electionId]);
 
+  /* ── Guard: auth loading ──────────────────────────────────── */
   if (authLoading)
-    return <div style={{ textAlign: "center", padding: 40 }}>Loading…</div>;
+    return (
+      <div style={styles.centerBox}>
+        <div className="ballot-spinner" style={styles.spinner} />
+        <span style={{ color: VT.muted, fontSize: 14, fontWeight: 500 }}>Loading…</span>
+      </div>
+    );
+
   if (!user) return <Navigate to="/" replace />;
 
-  /* ── loading / error ──────────────────────────────────────── */
-
+  /* ── Loading state: skeleton ──────────────────────────────── */
   if (loading)
     return (
-      <div
-        style={{
-          maxWidth: 800,
-          margin: "0 auto",
-          padding: 40,
-          textAlign: "center",
-          color: "#64748b",
-          fontFamily: "system-ui, sans-serif",
-        }}
-      >
-        Loading ballot information…
+      <div className="ballot-page-enter" style={styles.pageWrap}>
+        <div style={{ marginBottom: 32 }}>
+          <div className="ballot-skeleton" style={{ width: 120, height: 14, marginBottom: 16 }} />
+          <div className="ballot-skeleton" style={{ width: "55%", height: 24, marginBottom: 12 }} />
+          <div className="ballot-skeleton" style={{ width: "35%", height: 14 }} />
+        </div>
+        <div className="ballot-skeleton" style={{ height: 52, marginBottom: 24, borderRadius: VT.radius.lg }} />
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }} className="ballot-grid">
+          {[0, 1].map((i) => (
+            <div key={i} style={{ background: VT.surface, border: `1px solid ${VT.border}`, borderRadius: VT.radius.lg, overflow: "hidden" }}>
+              <div className="ballot-skeleton" style={{ height: 72, borderRadius: 0 }} />
+              <div style={{ padding: 20 }}>
+                {[0, 1, 2].map((j) => (
+                  <div key={j} className="ballot-skeleton" style={{ height: 56, marginBottom: 10 }} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        <p style={{ textAlign: "center", color: VT.muted, fontSize: 14, marginTop: 32, fontWeight: 500 }}>
+          Loading ballot information…
+        </p>
       </div>
     );
 
+  /* ── Error state ──────────────────────────────────────────── */
   if (error)
     return (
-      <div
-        style={{
-          maxWidth: 800,
-          margin: "0 auto",
-          padding: 40,
-          fontFamily: "system-ui, sans-serif",
-        }}
-      >
-        <div
-          style={{
-            padding: 16,
-            background: "#fef2f2",
-            color: "#b91c1c",
-            borderRadius: 8,
-            marginBottom: 16,
-          }}
-        >
-          {error}
+      <div className="ballot-page-enter" style={{ ...styles.pageWrap, maxWidth: 560, padding: "60px 24px", textAlign: "center" }}>
+        <div style={styles.iconCircle(VT.errorBg, VT.errorBorder)}>
+          <AlertCircle size={28} color={VT.error} />
         </div>
+        <h2 style={{ fontSize: 20, fontWeight: 700, color: VT.text, marginBottom: 8 }}>
+          Unable to Load Ballot
+        </h2>
+        <p style={{ fontSize: 14, color: VT.muted, marginBottom: 28, lineHeight: 1.6 }}>
+          {error}
+        </p>
         <button
+          className="ballot-btn-secondary"
           onClick={() => navigate("/elections")}
-          style={linkBtnStyle}
+          style={styles.backBtn}
         >
-          ← Back to Elections
+          <ArrowLeft size={15} /> Back to Elections
         </button>
       </div>
     );
 
-  /* ── success screen ───────────────────────────────────────── */
-
+  /* ── Success screen ───────────────────────────────────────── */
   if (castResult)
     return (
-      <div
-        style={{
-          maxWidth: 600,
-          margin: "0 auto",
-          padding: "60px 16px",
-          textAlign: "center",
-          fontFamily: "system-ui, sans-serif",
-        }}
-      >
-        <div style={{ fontSize: 72, marginBottom: 24 }}>✅</div>
-        <h1
-          style={{
-            fontSize: 28,
-            fontWeight: 700,
-            color: "#166534",
-            marginBottom: 8,
-          }}
-        >
-          Ballot Cast Successfully
-        </h1>
-        <p style={{ color: "#64748b", fontSize: 16, marginBottom: 32 }}>
-          {castResult.message}
-        </p>
-        <div
-          style={{
-            background: "#f0fdf4",
-            border: "1px solid #bbf7d0",
-            borderRadius: 12,
-            padding: 24,
-            marginBottom: 32,
-            textAlign: "left",
-          }}
-        >
-          <div style={{ margin: "4px 0", fontSize: 14 }}>
-            <strong>Election:</strong> {ballot.election_title}
+      <div className="ballot-page-enter" style={{ ...styles.pageWrap, maxWidth: 640, padding: "48px 24px" }}>
+        {/* Hero card */}
+        <div style={{
+          background: VT.surface, border: `1px solid ${VT.successBorder}`,
+          borderRadius: VT.radius.xl, padding: "48px 32px", textAlign: "center",
+          boxShadow: VT.shadow.md, marginBottom: 24,
+        }}>
+          <div className="ballot-success-check" style={styles.iconCircle(VT.successBg, VT.successBorder)}>
+            <CheckCircle2 size={36} color={VT.success} strokeWidth={2.5} />
           </div>
-          <div style={{ margin: "4px 0", fontSize: 14 }}>
-            <strong>Ballot ID:</strong> {castResult.ballot_id}
-          </div>
-          <div style={{ margin: "4px 0", fontSize: 14 }}>
-            <strong>
-              {ballot.government_level === "LOCAL"
-                ? "Local Body"
-                : ballot.voter_area
-                ? "Provincial constituency"
-                : "Constituency"}:
-            </strong>{" "}
-            {ballot.government_level === "LOCAL"
-              ? ballot.local_body?.name
-              : ballot.voter_area
-              ? ballot.voter_area.name
-              : ballot.voter_constituency?.name}
-          </div>
-          {ballot.government_level === "LOCAL" && ballot.ward && (
-            <div style={{ margin: "4px 0", fontSize: 14 }}>
-              <strong>Ward:</strong> Ward {ballot.ward.ward_number} — {ballot.ward.name}
-            </div>
-          )}
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: VT.success, marginBottom: 8, letterSpacing: "-0.01em" }}>
+            Ballot Cast Successfully
+          </h1>
+          <p style={{ color: VT.muted, fontSize: 15, lineHeight: 1.6, maxWidth: 380, margin: "0 auto" }}>
+            {castResult.message}
+          </p>
         </div>
-        <button
-          onClick={() => navigate("/elections")}
-          style={{
-            padding: "10px 24px",
-            borderRadius: 8,
-            fontSize: 14,
-            fontWeight: 600,
-            background: "#2563eb",
-            color: "#fff",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
-          Back to Elections
-        </button>
+
+        {/* Details card */}
+        <div style={styles.detailCard}>
+          <h3 style={styles.detailHeading}>Ballot Details</h3>
+          <div style={{ display: "grid", gap: 0 }}>
+            {[
+              ["Election", ballot.election_title],
+              ["Ballot ID", <span key="bid" style={{ fontFamily: "monospace", letterSpacing: "0.02em" }}>{castResult.ballot_id}</span>],
+              [
+                ballot.government_level === "LOCAL" ? "Local Body" : ballot.voter_area ? "Provincial Constituency" : "Constituency",
+                ballot.government_level === "LOCAL"
+                  ? ballot.local_body?.name
+                  : ballot.voter_area ? ballot.voter_area.name : ballot.voter_constituency?.name,
+              ],
+              ...(ballot.government_level === "LOCAL" && ballot.ward
+                ? [["Ward", `Ward ${ballot.ward.ward_number} — ${ballot.ward.name}`]]
+                : []),
+            ].map(([label, value], i, arr) => (
+              <div key={label} style={{
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+                padding: "10px 0",
+                borderBottom: i < arr.length - 1 ? `1px solid ${VT.borderLight}` : "none",
+              }}>
+                <span style={{ fontSize: 13, color: VT.muted, fontWeight: 500 }}>{label}</span>
+                <span style={{ fontSize: 14, fontWeight: 600, color: VT.text, textAlign: "right" }}>{value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* What happens next */}
+        <div style={{
+          background: VT.surfaceAlt, border: `1px solid ${VT.borderLight}`,
+          borderRadius: VT.radius.lg, padding: "16px 20px", marginBottom: 32,
+        }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+            <Info size={18} color={VT.accent} style={{ marginTop: 2, flexShrink: 0 }} />
+            <div>
+              <h4 style={{ fontSize: 14, fontWeight: 700, color: VT.text, margin: "0 0 4px" }}>What happens next</h4>
+              <p style={{ fontSize: 13, color: VT.muted, lineHeight: 1.5, margin: 0 }}>
+                Your ballot has been securely recorded. You can view your voting confirmation
+                anytime from the Receipt section in the voter portal.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Action buttons */}
+        <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+          <button
+            className="ballot-btn-confirm"
+            onClick={() => navigate("/elections")}
+            style={{ ...styles.primaryBtn, background: VT.accent }}
+          >
+            Back to Elections <ChevronRight size={16} />
+          </button>
+          <button
+            className="ballot-btn-secondary"
+            onClick={() => navigate("/receipt")}
+            style={styles.backBtn}
+          >
+            <FileText size={15} /> View Receipt
+          </button>
+        </div>
       </div>
     );
 
-  /* ── already voted ────────────────────────────────────────── */
-
+  /* ── Already voted ────────────────────────────────────────── */
   if (ballot.already_voted)
     return (
-      <div
-        style={{
-          maxWidth: 600,
-          margin: "0 auto",
-          padding: "60px 16px",
-          textAlign: "center",
-          fontFamily: "system-ui, sans-serif",
-        }}
-      >
-        <div style={{ fontSize: 72, marginBottom: 24 }}>🗳️</div>
-        <h1
-          style={{
-            fontSize: 24,
-            fontWeight: 700,
-            color: "#1e293b",
-            marginBottom: 8,
-          }}
-        >
+      <div className="ballot-page-enter" style={{ ...styles.pageWrap, maxWidth: 520, padding: "60px 24px", textAlign: "center" }}>
+        <div style={styles.iconCircle(VT.accentLight, `${VT.accent}30`)}>
+          <CheckCircle2 size={28} color={VT.accent} />
+        </div>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: VT.text, marginBottom: 8 }}>
           Already Voted
         </h1>
-        <p style={{ color: "#64748b", fontSize: 16, marginBottom: 32 }}>
+        <p style={{ color: VT.muted, fontSize: 15, marginBottom: 32, lineHeight: 1.6 }}>
           You have already cast your ballot for{" "}
-          <strong>{ballot.election_title}</strong>.
+          <strong style={{ color: VT.text }}>{ballot.election_title}</strong>.
         </p>
         <button
+          className="ballot-btn-secondary"
           onClick={() => navigate("/elections")}
-          style={linkBtnStyle}
+          style={styles.backBtn}
         >
-          ← Back to Elections
+          <ArrowLeft size={15} /> Back to Elections
         </button>
       </div>
     );
 
-  /* ── ballot form ──────────────────────────────────────────── */
+  /* ══════════════════════════════════════════════════════════════
+     BALLOT FORM
+     ══════════════════════════════════════════════════════════════ */
 
   const canVote = ballot.election_status === "POLLING_OPEN";
   const isLocal = ballot.government_level === "LOCAL";
 
-  // ── Generic undervote: ballot is always submittable ──
-  // Voters may leave any contest blank. The only structural requirement
-  // is that multi-seat selections don't exceed the allowed maximum.
-  // We validate max-selections per-contest; zero selections are valid.
+  // Undervote logic — ballot is always submittable
   const openContest = ballot.ward_member_open;
   const openSeats = openContest?.seat_count || 2;
   const openCandidates = openContest?.candidates?.length || 0;
   const maxOpen = Math.min(openSeats, openCandidates);
 
-  // Count how many contests have a selection (for user awareness)
   const localSelectionCount = isLocal
     ? [
         localChoices.head,
@@ -397,117 +421,216 @@ export default function VoterBallot() {
     setFaceVerifyKey((k) => k + 1);
   }
 
+  const level = LEVEL_META[ballot.government_level] || LEVEL_META.FEDERAL;
+  const LevelIcon = level.Icon;
+
+  /* ── Candidate/party option row renderer ────────────────── */
+  function renderCandidateOption(c, { checked, onChange, disabled, accentColor, selectedBg, inputType, inputName }) {
+    return (
+      <label
+        key={c.nomination_id || c.party_id}
+        className="ballot-option"
+        data-disabled={disabled ? "true" : undefined}
+        style={{
+          display: "flex", alignItems: "center", gap: 14,
+          padding: "14px 18px", borderRadius: VT.radius.md, marginBottom: 8,
+          cursor: disabled ? "default" : "pointer",
+          background: checked ? selectedBg : VT.surfaceAlt,
+          border: checked ? `2px solid ${accentColor}` : `2px solid ${VT.borderLight}`,
+        }}
+      >
+        <input
+          type={inputType}
+          name={inputName}
+          checked={checked}
+          onChange={onChange}
+          disabled={disabled}
+          style={{ accentColor, width: 18, height: 18, flexShrink: 0 }}
+        />
+        {c.candidate_photo_path ? (
+          <img
+            src={`${API_BASE}/${c.candidate_photo_path}`}
+            alt=""
+            style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", border: `2px solid ${checked ? accentColor + "40" : VT.border}`, flexShrink: 0 }}
+          />
+        ) : c.party_symbol_path ? (
+          <img
+            src={`${API_BASE}/${c.party_symbol_path}`}
+            alt=""
+            style={{ width: 36, height: 36, objectFit: "contain", flexShrink: 0 }}
+          />
+        ) : (
+          <div style={{
+            width: 40, height: 40, borderRadius: "50%", flexShrink: 0,
+            background: checked ? `${accentColor}18` : VT.surfaceSubtle,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 15, fontWeight: 700, color: checked ? accentColor : VT.muted,
+            border: `2px solid ${checked ? accentColor + "30" : VT.border}`,
+          }}>
+            {(c.candidate_name || c.party_name)?.[0] || "?"}
+          </div>
+        )}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontWeight: 600, fontSize: 14, color: VT.text, lineHeight: 1.3 }}>
+            {c.candidate_name || c.party_name}
+          </div>
+          {c.party_name && c.candidate_name ? (
+            <div style={{ fontSize: 12, color: VT.muted, display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
+              {c.party_symbol_path && (
+                <img src={`${API_BASE}/${c.party_symbol_path}`} alt="" style={{ width: 14, height: 14, objectFit: "contain" }} />
+              )}
+              {c.party_name}
+              {c.party_abbreviation ? ` (${c.party_abbreviation})` : ""}
+            </div>
+          ) : c.party_abbreviation ? (
+            <div style={{ fontSize: 12, color: VT.muted, marginTop: 2 }}>
+              {c.party_abbreviation}
+            </div>
+          ) : !c.party_name && c.candidate_name ? (
+            <div style={{ fontSize: 12, color: VT.subtle, marginTop: 2 }}>Independent</div>
+          ) : null}
+        </div>
+        {checked && (
+          <div style={{
+            width: 22, height: 22, borderRadius: "50%", flexShrink: 0,
+            background: accentColor, display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <Check size={13} color="#fff" strokeWidth={3} />
+          </div>
+        )}
+      </label>
+    );
+  }
+
   return (
-    <div
-      style={{
-        maxWidth: 920,
-        margin: "0 auto",
-        padding: "32px 16px",
-        fontFamily: "system-ui, -apple-system, sans-serif",
-      }}
-    >
-      {/* ── header ───────────────────────────────────── */}
+    <div className="ballot-page-enter" style={styles.pageWrap}>
+
+      {/* ── Page header ──────────────────────────────── */}
       <div style={{ marginBottom: 24 }}>
         <button
+          className="ballot-back-link ballot-btn-secondary"
           onClick={() => navigate("/elections")}
           style={{
-            background: "none",
-            border: "none",
-            color: "#64748b",
-            cursor: "pointer",
-            fontSize: 14,
-            padding: 0,
+            display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 14,
+            padding: "5px 12px", border: `1px solid ${VT.borderLight}`, borderRadius: VT.radius.sm,
+            background: "transparent", color: VT.muted, cursor: "pointer", fontSize: 13, fontWeight: 600,
           }}
         >
-          ← Back to Elections
+          <ArrowLeft size={14} /> Elections
         </button>
-        <h1
-          style={{
-            fontSize: 24,
-            fontWeight: 700,
-            color: "#1e293b",
-            marginTop: 8,
-            marginBottom: 4,
-          }}
-        >
-          {ballot.election_title}
-        </h1>
-        <p style={{ color: "#64748b", fontSize: 14, margin: 0 }}>
-          {isLocal ? (
-            <>Local Body: <strong>{ballot.local_body?.name}</strong> — Ward {ballot.ward?.ward_number}</>
-          ) : (
-            <>
-              {ballot.voter_area ? "Provincial constituency" : "Constituency"}:{" "}
-              <strong>{ballot.voter_area ? ballot.voter_area.name : ballot.voter_constituency?.name}</strong>
-              {ballot.voter_constituency?.district_name
-                ? ` (${ballot.voter_constituency.district_name})`
-                : ballot.voter_area?.province_number
-                ? ` (Province ${ballot.voter_area.province_number})`
-                : ""}
-            </>
-          )}
-        </p>
-        {ballot.government_level === "PROVINCIAL" && (
-          <div style={{ marginTop: 6 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, background: "#f5f3ff", color: "#7c3aed", padding: "2px 10px", borderRadius: 6, border: "1px solid #e9d5ff" }}>
-              {ballot.province_code} · Provincial Assembly Election
+
+        <div className="ballot-header-row" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <h1 style={{
+              fontSize: "clamp(20px, 2.5vw, 26px)", fontWeight: 800, color: VT.navy,
+              margin: "0 0 6px", letterSpacing: "-0.01em", lineHeight: 1.2,
+            }}>
+              {ballot.election_title}
+            </h1>
+            <p style={{ color: VT.muted, fontSize: 14, margin: 0, lineHeight: 1.5 }}>
+              {isLocal ? (
+                <>{ballot.local_body?.name} — Ward {ballot.ward?.ward_number}</>
+              ) : (
+                <>
+                  {ballot.voter_area ? "Provincial Constituency" : "Constituency"}:{" "}
+                  <strong style={{ color: VT.textSecondary }}>
+                    {ballot.voter_area ? ballot.voter_area.name : ballot.voter_constituency?.name}
+                  </strong>
+                  {ballot.voter_constituency?.district_name
+                    ? ` (${ballot.voter_constituency.district_name})`
+                    : ballot.voter_area?.province_number
+                    ? ` (Province ${ballot.voter_area.province_number})`
+                    : ""}
+                </>
+              )}
+            </p>
+          </div>
+
+          {/* Badges */}
+          <div className="ballot-header-meta" style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, flexWrap: "wrap" }}>
+            <span style={{
+              display: "inline-flex", alignItems: "center", gap: 5,
+              padding: "5px 12px", borderRadius: VT.radius.sm, fontSize: 12, fontWeight: 700,
+              background: level.bg, color: level.color, border: `1px solid ${level.border}`,
+            }}>
+              <LevelIcon size={13} /> {level.label}
+            </span>
+            {ballot.government_level === "PROVINCIAL" && ballot.province_code && (
+              <span style={{
+                padding: "5px 10px", borderRadius: VT.radius.sm, fontSize: 11, fontWeight: 700,
+                background: VT.provincial.bg, color: VT.provincial.color, border: `1px solid ${VT.provincial.border}`,
+              }}>
+                {ballot.province_code}
+              </span>
+            )}
+            <span style={{
+              display: "inline-flex", alignItems: "center", gap: 5,
+              padding: "5px 12px", borderRadius: VT.radius.sm, fontSize: 12, fontWeight: 600,
+              background: VT.successBg, color: VT.success, border: `1px solid ${VT.successBorder}`,
+            }}>
+              <ShieldCheck size={13} /> Secure
             </span>
           </div>
-        )}
-        {isLocal && (
-          <div style={{ marginTop: 6 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, background: "#fff7ed", color: "#ea580c", padding: "2px 10px", borderRadius: 6, border: "1px solid #fed7aa" }}>
-              Local Body Election · {ballot.local_body?.name}
-            </span>
-          </div>
-        )}
+        </div>
       </div>
 
-      {/* ── info banners ─────────────────────────────── */}
+      {/* ── Info strip ───────────────────────────────── */}
+      <div className="ballot-info-strip" style={{
+        background: VT.surface, border: `1px solid ${VT.border}`, borderRadius: VT.radius.lg,
+        padding: "13px 20px", marginBottom: 20, display: "flex", alignItems: "center",
+        gap: 16, flexWrap: "wrap", boxShadow: VT.shadow.sm,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Info size={15} color={VT.accent} />
+          <span style={{ fontSize: 13, fontWeight: 600, color: VT.textSecondary }}>
+            {isLocal ? "6 contests on this ballot" : "2 ballots: FPTP + Proportional Representation"}
+          </span>
+        </div>
+        <div className="ballot-info-divider" style={{ width: 1, height: 18, background: VT.borderLight }} />
+        <span style={{ fontSize: 13, color: VT.muted }}>
+          {canVote
+            ? "Your ballot will be submitted after identity verification"
+            : "Preview mode — polling is not currently open"}
+        </span>
+      </div>
+
+      {/* ── Alert zone ───────────────────────────────── */}
       {!canVote && (
-        <div
-          style={{
-            padding: 16,
-            background: "#fef3c7",
-            color: "#92400e",
-            borderRadius: 8,
-            marginBottom: 24,
-            fontSize: 14,
-          }}
-        >
-          This election is not currently open for voting. You can
-          preview the candidates below.
+        <div style={styles.alertBox(VT.warnBg, VT.warnBorder, VT.warn)}>
+          <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: 1 }} />
+          <div>
+            <strong style={{ display: "block", marginBottom: 2 }}>Polling not open</strong>
+            <span style={{ fontSize: 13, opacity: 0.85 }}>
+              This election is not currently open for voting. You can preview the candidates and parties below.
+            </span>
+          </div>
         </div>
       )}
 
       {castError && (
-        <div
-          style={{
-            padding: 16,
-            background: "#fef2f2",
-            color: "#b91c1c",
-            borderRadius: 8,
-            marginBottom: 24,
-            fontSize: 14,
-          }}
-        >
-          {castError}
+        <div style={styles.alertBox(VT.errorBg, VT.errorBorder, VT.error)}>
+          <AlertCircle size={18} style={{ flexShrink: 0, marginTop: 1 }} />
+          <div>
+            <strong style={{ display: "block", marginBottom: 2 }}>Unable to cast ballot</strong>
+            <span style={{ fontSize: 13, opacity: 0.85 }}>{castError}</span>
+          </div>
         </div>
       )}
 
-      {/* ── local ballot ─────────────────────────────── */}
+      {/* ── Local ballot grid ────────────────────────── */}
       {isLocal && (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+        <div className="ballot-local-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
           {[
-            { key: "head", color: "#ea580c", bg: "#fff7ed" },
-            { key: "deputy_head", color: "#ea580c", bg: "#fff7ed" },
-            { key: "ward_chair", color: "#2563eb", bg: "#eff6ff" },
-            { key: "ward_woman_member", color: "#7c3aed", bg: "#f5f3ff" },
-            { key: "ward_dalit_woman_member", color: "#7c3aed", bg: "#f5f3ff" },
-            { key: "ward_member_open", color: "#059669", bg: "#ecfdf5" },
-          ].map(({ key, color, bg }) => {
+            { key: "head" },
+            { key: "deputy_head" },
+            { key: "ward_chair" },
+            { key: "ward_woman_member" },
+            { key: "ward_dalit_woman_member" },
+            { key: "ward_member_open" },
+          ].map(({ key }) => {
             const contest = ballot[key];
             if (!contest) return null;
+            const theme = LOCAL_THEME[key] || LOCAL_THEME.head;
             const seats = contest.seat_count || 1;
             const available = contest.candidates?.length || 0;
             const isMulti = seats > 1;
@@ -516,77 +639,50 @@ export default function VoterBallot() {
               ? localChoices.ward_member_open.length
               : localChoices[key] !== null ? 1 : 0;
             return (
-              <div key={key} style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, overflow: "hidden" }}>
-                <div style={{ background: color, color: "#fff", padding: "14px 20px" }}>
-                  <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>{contest.contest_title}</h2>
-                  <p style={{ fontSize: 11, opacity: 0.6, margin: "2px 0 0" }}>
-                    {isMulti ? `Select up to ${maxSelect} candidate${maxSelect !== 1 ? "s" : ""}` : "Select ONE candidate (optional)"}
+              <div key={key} className="ballot-card" style={{
+                background: VT.surface, border: `1px solid ${VT.border}`,
+                borderRadius: VT.radius.lg, overflow: "hidden", boxShadow: VT.shadow.sm,
+              }}>
+                {/* Header */}
+                <div style={{
+                  background: theme.headerBg, color: "#fff", padding: "16px 22px",
+                }}>
+                  <h2 style={{ fontSize: 15, fontWeight: 700, margin: 0, lineHeight: 1.3 }}>
+                    {contest.contest_title}
+                  </h2>
+                  <p style={{ fontSize: 12, opacity: 0.7, margin: "4px 0 0" }}>
+                    {isMulti
+                      ? `Select up to ${maxSelect} candidate${maxSelect !== 1 ? "s" : ""}`
+                      : "Select ONE candidate (optional)"}
                   </p>
                 </div>
-                <div style={{ padding: 16 }}>
+                {/* Options */}
+                <div style={{ padding: "14px 16px 8px" }}>
                   {contest.candidates.length === 0 ? (
-                    <p style={{ color: "#94a3b8", textAlign: "center", padding: 20 }}>No candidates available</p>
+                    <div style={styles.emptyState}>
+                      <User size={24} color={VT.subtle} />
+                      <p style={{ color: VT.subtle, fontSize: 13, margin: "8px 0 0", fontWeight: 500 }}>
+                        No candidates available
+                      </p>
+                    </div>
                   ) : (
                     contest.candidates.map((c) => {
                       const checked = isMulti
                         ? localChoices.ward_member_open.includes(c.nomination_id)
                         : localChoices[key] === c.nomination_id;
                       const maxed = isMulti && localChoices.ward_member_open.length >= maxSelect && !checked;
-                      return (
-                        <label
-                          key={c.nomination_id}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 12,
-                            padding: "12px 16px",
-                            borderRadius: 8,
-                            marginBottom: 8,
-                            cursor: canVote && !maxed ? "pointer" : "default",
-                            background: checked ? bg : "#f8fafc",
-                            border: checked ? `2px solid ${color}` : "2px solid transparent",
-                            transition: "all 0.15s",
-                          }}
-                        >
-                          <input
-                            type={isMulti ? "checkbox" : "radio"}
-                            name={`local_${key}`}
-                            checked={checked}
-                            onChange={() =>
-                              isMulti
-                                ? toggleOpenMember(c.nomination_id)
-                                : setLocalChoice(key, c.nomination_id)
-                            }
-                            disabled={!canVote || maxed}
-                            style={{ accentColor: color, width: 18, height: 18 }}
-                          />
-                          {c.candidate_photo_path ? (
-                            <img
-                              src={`${API_BASE}/${c.candidate_photo_path}`}
-                              alt=""
-                              style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", border: "1px solid #e2e8f0", flexShrink: 0 }}
-                            />
-                          ) : (
-                            <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 600, color: "#64748b", flexShrink: 0 }}>
-                              {c.candidate_name?.[0] || "?"}
-                            </div>
-                          )}
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontWeight: 600, fontSize: 14, color: "#1e293b" }}>{c.candidate_name}</div>
-                            {c.party_name ? (
-                              <div style={{ fontSize: 12, color: "#64748b", display: "flex", alignItems: "center", gap: 4 }}>
-                                {c.party_symbol_path && (
-                                  <img src={`${API_BASE}/${c.party_symbol_path}`} alt="" style={{ width: 14, height: 14, objectFit: "contain" }} />
-                                )}
-                                {c.party_name}
-                                {c.party_abbreviation ? ` (${c.party_abbreviation})` : ""}
-                              </div>
-                            ) : (
-                              <div style={{ fontSize: 12, color: "#94a3b8" }}>Independent</div>
-                            )}
-                          </div>
-                        </label>
-                      );
+                      return renderCandidateOption(c, {
+                        checked,
+                        onChange: () =>
+                          isMulti
+                            ? toggleOpenMember(c.nomination_id)
+                            : setLocalChoice(key, c.nomination_id),
+                        disabled: !canVote || maxed,
+                        accentColor: theme.accent,
+                        selectedBg: theme.selectedBg,
+                        inputType: isMulti ? "checkbox" : "radio",
+                        inputName: `local_${key}`,
+                      });
                     })
                   )}
                 </div>
@@ -596,409 +692,203 @@ export default function VoterBallot() {
         </div>
       )}
 
-      {/* ── two-column ballot (federal / provincial) ── */}
+      {/* ── Dual ballot grid (federal / provincial) ─── */}
       {!isLocal && (
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 24,
-        }}
-      >
-        {/* FPTP */}
-        <div
-          style={{
-            background: "#fff",
-            border: "1px solid #e2e8f0",
-            borderRadius: 12,
-            overflow: "hidden",
-          }}
-        >
-          <div
-            style={{
-              background: ballot.government_level === "PROVINCIAL" ? "#6d28d9" : "#1e40af",
-              color: "#fff",
-              padding: "14px 20px",
-            }}
-          >
-            <h2
-              style={{ fontSize: 16, fontWeight: 700, margin: 0 }}
-            >
-              FPTP Ballot
-            </h2>
-            <p
-              style={{
-                fontSize: 12,
-                opacity: 0.8,
-                margin: "4px 0 0",
-              }}
-            >
-              {ballot.fptp.contest_title}
-            </p>
-            <p
-              style={{
-                fontSize: 11,
-                opacity: 0.6,
-                margin: "2px 0 0",
-              }}
-            >
-              Select ONE candidate (optional)
-            </p>
-          </div>
-          <div style={{ padding: 16 }}>
-            {ballot.fptp.candidates.length === 0 ? (
-              <p
-                style={{
-                  color: "#94a3b8",
-                  textAlign: "center",
-                  padding: 20,
-                }}
-              >
-                No candidates available
+        <div className="ballot-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+          {/* FPTP */}
+          <div className="ballot-card" style={{
+            background: VT.surface, border: `1px solid ${VT.border}`,
+            borderRadius: VT.radius.lg, overflow: "hidden", boxShadow: VT.shadow.sm,
+          }}>
+            <div style={{
+              background: ballot.government_level === "PROVINCIAL" ? "#6D28D9" : VT.navy,
+              color: "#fff", padding: "16px 22px",
+            }}>
+              <h2 style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>FPTP Ballot</h2>
+              <p style={{ fontSize: 12, opacity: 0.8, margin: "4px 0 0" }}>
+                {ballot.fptp.contest_title}
               </p>
-            ) : (
-              ballot.fptp.candidates.map((c) => (
-                <label
-                  key={c.nomination_id}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    padding: "12px 16px",
-                    borderRadius: 8,
-                    marginBottom: 8,
-                    cursor: canVote ? "pointer" : "default",
-                    background:
-                      fptpChoice === c.nomination_id
-                        ? "#eff6ff"
-                        : "#f8fafc",
-                    border:
-                      fptpChoice === c.nomination_id
-                        ? "2px solid #2563eb"
-                        : "2px solid transparent",
-                    transition: "all 0.15s",
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="fptp"
-                    value={c.nomination_id}
-                    checked={fptpChoice === c.nomination_id}
-                    onChange={() =>
+              <p style={{ fontSize: 11, opacity: 0.6, margin: "2px 0 0" }}>
+                Select ONE candidate (optional)
+              </p>
+            </div>
+            <div style={{ padding: "14px 16px 8px" }}>
+              {ballot.fptp.candidates.length === 0 ? (
+                <div style={styles.emptyState}>
+                  <User size={24} color={VT.subtle} />
+                  <p style={{ color: VT.subtle, fontSize: 13, margin: "8px 0 0", fontWeight: 500 }}>
+                    No candidates available
+                  </p>
+                </div>
+              ) : (
+                ballot.fptp.candidates.map((c) =>
+                  renderCandidateOption(c, {
+                    checked: fptpChoice === c.nomination_id,
+                    onChange: () =>
                       setFptpChoice((prev) =>
                         prev === c.nomination_id ? null : c.nomination_id
-                      )
-                    }
-                    disabled={!canVote}
-                    style={{
-                      accentColor: "#2563eb",
-                      width: 18,
-                      height: 18,
-                    }}
-                  />
-                  {c.candidate_photo_path ? (
-                    <img
-                      src={`${API_BASE}/${c.candidate_photo_path}`}
-                      alt=""
-                      style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", border: "1px solid #e2e8f0", flexShrink: 0 }}
-                    />
-                  ) : (
-                    <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 600, color: "#64748b", flexShrink: 0 }}>
-                      {c.candidate_name?.[0] || "?"}
-                    </div>
-                  )}
-                  <div style={{ flex: 1 }}>
-                    <div
-                      style={{
-                        fontWeight: 600,
-                        fontSize: 14,
-                        color: "#1e293b",
-                      }}
-                    >
-                      {c.candidate_name}
-                    </div>
-                    {c.party_name ? (
-                      <div
-                        style={{
-                          fontSize: 12,
-                          color: "#64748b",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 4,
-                        }}
-                      >
-                        {c.party_symbol_path && (
-                          <img src={`${API_BASE}/${c.party_symbol_path}`} alt="" style={{ width: 14, height: 14, objectFit: "contain" }} />
-                        )}
-                        {c.party_name}
-                        {c.party_abbreviation
-                          ? ` (${c.party_abbreviation})`
-                          : ""}
-                      </div>
-                    ) : (
-                      <div
-                        style={{
-                          fontSize: 12,
-                          color: "#94a3b8",
-                        }}
-                      >
-                        Independent
-                      </div>
-                    )}
-                  </div>
-                </label>
-              ))
-            )}
+                      ),
+                    disabled: !canVote,
+                    accentColor: VT.accent,
+                    selectedBg: VT.accentLight,
+                    inputType: "radio",
+                    inputName: "fptp",
+                  })
+                )
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* PR */}
-        <div
-          style={{
-            background: "#fff",
-            border: "1px solid #e2e8f0",
-            borderRadius: 12,
-            overflow: "hidden",
-          }}
-        >
-          <div
-            style={{
-              background: "#7c3aed",
-              color: "#fff",
-              padding: "14px 20px",
-            }}
-          >
-            <h2
-              style={{ fontSize: 16, fontWeight: 700, margin: 0 }}
-            >
-              PR Ballot
-            </h2>
-            <p
-              style={{
-                fontSize: 12,
-                opacity: 0.8,
-                margin: "4px 0 0",
-              }}
-            >
-              {ballot.pr.contest_title}
-            </p>
-            <p
-              style={{
-                fontSize: 11,
-                opacity: 0.6,
-                margin: "2px 0 0",
-              }}
-            >
-              Select ONE party (optional)
-            </p>
-          </div>
-          <div style={{ padding: 16 }}>
-            {ballot.pr.parties.length === 0 ? (
-              <p
-                style={{
-                  color: "#94a3b8",
-                  textAlign: "center",
-                  padding: 20,
-                }}
-              >
-                No parties available
+          {/* PR */}
+          <div className="ballot-card" style={{
+            background: VT.surface, border: `1px solid ${VT.border}`,
+            borderRadius: VT.radius.lg, overflow: "hidden", boxShadow: VT.shadow.sm,
+          }}>
+            <div style={{
+              background: "#7C3AED", color: "#fff", padding: "16px 22px",
+            }}>
+              <h2 style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>PR Ballot</h2>
+              <p style={{ fontSize: 12, opacity: 0.8, margin: "4px 0 0" }}>
+                {ballot.pr.contest_title}
               </p>
-            ) : (
-              ballot.pr.parties.map((p) => (
-                <label
-                  key={p.party_id}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    padding: "12px 16px",
-                    borderRadius: 8,
-                    marginBottom: 8,
-                    cursor: canVote ? "pointer" : "default",
-                    background:
-                      prChoice === p.party_id
-                        ? "#f5f3ff"
-                        : "#f8fafc",
-                    border:
-                      prChoice === p.party_id
-                        ? "2px solid #7c3aed"
-                        : "2px solid transparent",
-                    transition: "all 0.15s",
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="pr"
-                    value={p.party_id}
-                    checked={prChoice === p.party_id}
-                    onChange={() =>
-                      setPrChoice((prev) =>
-                        prev === p.party_id ? null : p.party_id
-                      )
+              <p style={{ fontSize: 11, opacity: 0.6, margin: "2px 0 0" }}>
+                Select ONE party (optional)
+              </p>
+            </div>
+            <div style={{ padding: "14px 16px 8px" }}>
+              {ballot.pr.parties.length === 0 ? (
+                <div style={styles.emptyState}>
+                  <User size={24} color={VT.subtle} />
+                  <p style={{ color: VT.subtle, fontSize: 13, margin: "8px 0 0", fontWeight: 500 }}>
+                    No parties available
+                  </p>
+                </div>
+              ) : (
+                ballot.pr.parties.map((p) =>
+                  renderCandidateOption(
+                    { ...p, candidate_name: null, candidate_photo_path: null },
+                    {
+                      checked: prChoice === p.party_id,
+                      onChange: () =>
+                        setPrChoice((prev) =>
+                          prev === p.party_id ? null : p.party_id
+                        ),
+                      disabled: !canVote,
+                      accentColor: "#7C3AED",
+                      selectedBg: "#F5F3FF",
+                      inputType: "radio",
+                      inputName: "pr",
                     }
-                    disabled={!canVote}
-                    style={{
-                      accentColor: "#7c3aed",
-                      width: 18,
-                      height: 18,
-                    }}
-                  />
-                  {p.party_symbol_path ? (
-                    <img
-                      src={`${API_BASE}/${p.party_symbol_path}`}
-                      alt=""
-                      style={{ width: 32, height: 32, objectFit: "contain", flexShrink: 0 }}
-                    />
-                  ) : (
-                    <div style={{ width: 32, height: 32, borderRadius: 6, background: "#f3e8ff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 600, color: "#7c3aed", flexShrink: 0 }}>
-                      {p.party_name?.[0] || "?"}
-                    </div>
-                  )}
-                  <div>
-                    <div
-                      style={{
-                        fontWeight: 600,
-                        fontSize: 14,
-                        color: "#1e293b",
-                      }}
-                    >
-                      {p.party_name}
-                    </div>
-                    {p.party_abbreviation && (
-                      <div
-                        style={{
-                          fontSize: 12,
-                          color: "#64748b",
-                        }}
-                      >
-                        {p.party_abbreviation}
-                      </div>
-                    )}
-                  </div>
-                </label>
-              ))
-            )}
+                  )
+                )
+              )}
+            </div>
           </div>
         </div>
-      </div>
       )}
 
-      {/* ── submit button ────────────────────────────── */}
+      {/* ── Cast action area ─────────────────────────── */}
       {canVote && (
-        <div style={{ marginTop: 32, textAlign: "center" }}>
+        <div className="ballot-cast-area" style={{
+          marginTop: 28, padding: "24px 0", borderTop: `1px solid ${VT.border}`, textAlign: "center",
+        }}>
+          {/* Selection summary strip */}
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 10,
+            padding: "8px 18px", borderRadius: VT.radius.md,
+            background: VT.surfaceAlt, border: `1px solid ${VT.borderLight}`,
+            marginBottom: 16, fontSize: 13, color: VT.textSecondary, fontWeight: 500,
+          }}>
+            <CheckCircle2 size={15} color={hasAnySelection ? VT.success : VT.subtle} />
+            {totalSelections} of {totalContests} contest{totalContests !== 1 ? "s" : ""} selected
+            {isBlankBallot && <span style={{ color: VT.warn, fontWeight: 600 }}> · Blank ballot</span>}
+          </div>
+
+          {/* Undervote warnings */}
           {isPartialBallot && (
-            <div
-              style={{
-                display: "inline-block",
-                padding: "10px 20px",
-                background: "#fefce8",
-                border: "1px solid #fde68a",
-                borderRadius: 8,
-                color: "#92400e",
-                fontSize: 13,
-                fontWeight: 500,
-                marginBottom: 14,
-                maxWidth: 480,
-              }}
-            >
-              You have left {totalContests - totalSelections} of {totalContests} contest{totalContests - totalSelections !== 1 ? "s" : ""} blank.
-              Blank contests will be submitted without a selection.
+            <div style={styles.inlineWarning(VT.warnBg, VT.warnBorder, VT.warn)}>
+              <AlertTriangle size={14} />
+              <span>
+                You have left {totalContests - totalSelections} of {totalContests} contest{totalContests - totalSelections !== 1 ? "s" : ""} blank.
+                Blank contests will be submitted without a selection.
+              </span>
             </div>
           )}
           {isBlankBallot && (
-            <div
-              style={{
-                display: "inline-block",
-                padding: "10px 20px",
-                background: "#fef2f2",
-                border: "1px solid #fecaca",
-                borderRadius: 8,
-                color: "#991b1b",
-                fontSize: 13,
-                fontWeight: 500,
-                marginBottom: 14,
-                maxWidth: 480,
-              }}
-            >
-              You have not made any selections. Submitting will record a blank ballot.
+            <div style={styles.inlineWarning(VT.errorBg, VT.errorBorder, "#991B1B")}>
+              <AlertCircle size={14} />
+              <span>
+                You have not made any selections. Submitting will record a blank ballot.
+              </span>
             </div>
           )}
-          <div>
+
+          {/* CTA */}
+          <div style={{ marginTop: 8 }}>
             <button
+              className="ballot-btn-cast"
               onClick={handleCast}
               disabled={submitting}
               style={{
-                padding: "14px 40px",
-                borderRadius: 10,
-                fontSize: 16,
-                fontWeight: 700,
-                background: "#16a34a",
-                color: "#fff",
-                border: "none",
+                padding: "15px 44px", borderRadius: VT.radius.md, fontSize: 16, fontWeight: 700,
+                background: "#16A34A", color: "#fff", border: "none",
                 cursor: submitting ? "wait" : "pointer",
-                transition: "all 0.2s",
+                display: "inline-flex", alignItems: "center", gap: 10,
               }}
             >
-              {submitting ? "Casting…" : "Cast Your Ballot"}
+              {submitting ? (
+                <>
+                  <div className="ballot-spinner" style={{ width: 18, height: 18, border: "2.5px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%" }} />
+                  Casting…
+                </>
+              ) : (
+                <>
+                  <ShieldCheck size={18} />
+                  Cast Your Ballot
+                </>
+              )}
             </button>
+            <p style={{ fontSize: 12, color: VT.muted, marginTop: 10 }}>
+              Identity verification will be required before submission
+            </p>
           </div>
         </div>
       )}
 
-      {/* ── confirmation modal ───────────────────────── */}
+      {/* ── Confirmation modal ───────────────────────── */}
       {confirming && (
         <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-          }}
+          style={styles.overlay}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="confirm-title"
+          onClick={(e) => { if (e.target === e.currentTarget) setConfirming(false); }}
         >
-          <div
-            style={{
-              background: "#fff",
-              borderRadius: 16,
-              padding: 32,
-              maxWidth: 480,
-              width: "90%",
-              boxShadow: "0 25px 50px rgba(0,0,0,0.25)",
-            }}
-          >
-            <h2
-              style={{
-                fontSize: 20,
-                fontWeight: 700,
-                color: "#1e293b",
-                marginBottom: 16,
-              }}
-            >
-              Confirm Your Vote
-            </h2>
-            <p
-              style={{
-                color: "#64748b",
-                fontSize: 14,
-                marginBottom: 20,
-              }}
-            >
-              This action <strong>cannot be undone</strong>. Please
-              verify your selections:
-            </p>
+          <div className="ballot-modal-enter" style={styles.confirmModal}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+              <div style={{
+                width: 44, height: 44, borderRadius: VT.radius.md, flexShrink: 0,
+                background: VT.warnBg, border: `1px solid ${VT.warnBorder}`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <ShieldCheck size={22} color={VT.warn} />
+              </div>
+              <div>
+                <h2 id="confirm-title" style={{ fontSize: 19, fontWeight: 700, color: VT.text, margin: 0 }}>
+                  Confirm Your Vote
+                </h2>
+                <p style={{ fontSize: 13, color: VT.muted, margin: "2px 0 0" }}>
+                  This action <strong>cannot be undone</strong>. Please review your selections.
+                </p>
+              </div>
+            </div>
 
-            <div
-              style={{
-                background: "#f8fafc",
-                borderRadius: 8,
-                padding: 16,
-                marginBottom: 20,
-                maxHeight: 320,
-                overflowY: "auto",
-              }}
-            >
+            {/* Selection summary */}
+            <div style={{
+              background: VT.surfaceAlt, borderRadius: VT.radius.md,
+              padding: 18, marginBottom: 20, maxHeight: 340, overflowY: "auto",
+              border: `1px solid ${VT.borderLight}`,
+            }}>
               {isLocal ? (
                 [
                   { key: "head", label: "Head (Mayor/Chairperson)" },
@@ -1023,18 +913,19 @@ export default function VoterBallot() {
                       : [contest.candidates.find((x) => x.nomination_id === choiceVal)?.candidate_name || "?"]
                     : [];
                   return (
-                    <div key={key} style={{ marginBottom: idx < 5 ? 10 : 0 }}>
-                      <div style={{ fontSize: 12, color: "#64748b", fontWeight: 600, textTransform: "uppercase", marginBottom: 2 }}>
+                    <div key={key} style={{ marginBottom: idx < 5 ? 14 : 0 }}>
+                      <div style={{ fontSize: 11, color: VT.muted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>
                         {label}
                       </div>
                       {hasSelection ? (
                         names.map((n, i) => (
-                          <div key={i} style={{ fontSize: 14, fontWeight: 600, color: "#1e293b" }}>
+                          <div key={i} style={{ fontSize: 14, fontWeight: 600, color: VT.text, display: "flex", alignItems: "center", gap: 6 }}>
+                            <Check size={14} color={VT.success} />
                             {isMulti ? `${i + 1}. ` : ""}{n}
                           </div>
                         ))
                       ) : (
-                        <div style={{ fontSize: 14, fontStyle: "italic", color: "#94a3b8" }}>
+                        <div style={{ fontSize: 13, fontStyle: "italic", color: VT.subtle }}>
                           — No selection —
                         </div>
                       )}
@@ -1043,38 +934,40 @@ export default function VoterBallot() {
                 })
               ) : (
                 <>
-                  <div style={{ marginBottom: 12 }}>
-                    <div style={{ fontSize: 12, color: "#64748b", fontWeight: 600, textTransform: "uppercase", marginBottom: 2 }}>
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ fontSize: 11, color: VT.muted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>
                       FPTP Candidate
                     </div>
                     {selectedCandidate ? (
-                      <div style={{ fontSize: 15, fontWeight: 600, color: "#1e40af", display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: VT.navy, display: "flex", alignItems: "center", gap: 8 }}>
                         {selectedCandidate.candidate_photo_path ? (
                           <img src={`${API_BASE}/${selectedCandidate.candidate_photo_path}`} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} />
                         ) : null}
+                        <Check size={14} color={VT.success} />
                         {selectedCandidate.candidate_name}
                         {selectedCandidate.party_abbreviation ? ` (${selectedCandidate.party_abbreviation})` : ""}
                       </div>
                     ) : (
-                      <div style={{ fontSize: 14, fontStyle: "italic", color: "#94a3b8" }}>
+                      <div style={{ fontSize: 13, fontStyle: "italic", color: VT.subtle }}>
                         — No selection —
                       </div>
                     )}
                   </div>
                   <div>
-                    <div style={{ fontSize: 12, color: "#64748b", fontWeight: 600, textTransform: "uppercase", marginBottom: 2 }}>
+                    <div style={{ fontSize: 11, color: VT.muted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>
                       PR Party
                     </div>
                     {selectedParty ? (
-                      <div style={{ fontSize: 15, fontWeight: 600, color: "#7c3aed", display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: "#7C3AED", display: "flex", alignItems: "center", gap: 8 }}>
                         {selectedParty.party_symbol_path ? (
                           <img src={`${API_BASE}/${selectedParty.party_symbol_path}`} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />
                         ) : null}
+                        <Check size={14} color={VT.success} />
                         {selectedParty.party_name}
                         {selectedParty.party_abbreviation ? ` (${selectedParty.party_abbreviation})` : ""}
                       </div>
                     ) : (
-                      <div style={{ fontSize: 14, fontStyle: "italic", color: "#94a3b8" }}>
+                      <div style={{ fontSize: 13, fontStyle: "italic", color: VT.subtle }}>
                         — No selection —
                       </div>
                     )}
@@ -1083,51 +976,50 @@ export default function VoterBallot() {
               )}
             </div>
 
-            <div
-              style={{
-                display: "flex",
-                gap: 12,
-                justifyContent: "flex-end",
-              }}
-            >
+            {/* Advisory */}
+            <div style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "10px 14px", borderRadius: VT.radius.sm,
+              background: VT.warnBg, border: `1px solid ${VT.warnBorder}`,
+              marginBottom: 20, fontSize: 12, color: VT.warn,
+            }}>
+              <AlertTriangle size={14} style={{ flexShrink: 0 }} />
+              Once submitted, your ballot cannot be changed or withdrawn.
+            </div>
+
+            {/* Actions */}
+            <div className="ballot-confirm-btns" style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
               <button
+                className="ballot-btn-secondary"
                 onClick={() => setConfirming(false)}
                 disabled={submitting}
                 style={{
-                  padding: "10px 20px",
-                  borderRadius: 8,
-                  fontSize: 14,
-                  fontWeight: 600,
-                  background: "#fff",
-                  color: "#64748b",
-                  border: "1px solid #e2e8f0",
-                  cursor: "pointer",
+                  padding: "11px 22px", borderRadius: VT.radius.md, fontSize: 14, fontWeight: 600,
+                  background: VT.surface, color: VT.textSecondary, border: `1px solid ${VT.border}`, cursor: "pointer",
                 }}
               >
-                Cancel
+                Go Back
               </button>
               <button
+                className="ballot-btn-confirm"
                 onClick={confirmCast}
                 disabled={submitting}
                 style={{
-                  padding: "10px 20px",
-                  borderRadius: 8,
-                  fontSize: 14,
-                  fontWeight: 600,
-                  background: "#16a34a",
-                  color: "#fff",
-                  border: "none",
+                  padding: "11px 22px", borderRadius: VT.radius.md, fontSize: 14, fontWeight: 700,
+                  background: "#16A34A", color: "#fff", border: "none",
                   cursor: submitting ? "wait" : "pointer",
+                  display: "inline-flex", alignItems: "center", gap: 8,
                 }}
               >
-                {submitting ? "Casting…" : "Confirm & Cast"}
+                <ShieldCheck size={16} />
+                {submitting ? "Processing…" : "Confirm & Cast"}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── face verification modal ──────────────────── */}
+      {/* ── Face verification modal ──────────────────── */}
       <PreCastFaceVerificationModal
         key={faceVerifyKey}
         open={showFaceVerify}
@@ -1139,14 +1031,68 @@ export default function VoterBallot() {
   );
 }
 
-/* ── shared style ──────────────────────────────────────────── */
-
-const linkBtnStyle = {
-  padding: "8px 20px",
-  borderRadius: 8,
-  fontSize: 14,
-  background: "transparent",
-  color: "#64748b",
-  border: "1px solid #e2e8f0",
-  cursor: "pointer",
+/* ══════════════════════════════════════════════════════════════════
+   Shared style helpers
+   ══════════════════════════════════════════════════════════════════ */
+const styles = {
+  pageWrap: {
+    maxWidth: 960, margin: "0 auto", padding: "28px 24px 48px",
+    fontFamily: "system-ui, -apple-system, sans-serif",
+  },
+  centerBox: {
+    display: "flex", alignItems: "center", justifyContent: "center",
+    padding: 60, gap: 12,
+  },
+  spinner: {
+    width: 24, height: 24, borderRadius: "50%",
+    border: `3px solid ${VT.border}`, borderTopColor: VT.accent,
+  },
+  iconCircle: (bg, border) => ({
+    width: 64, height: 64, borderRadius: "50%", margin: "0 auto 20px",
+    background: bg, border: `2px solid ${border}`,
+    display: "flex", alignItems: "center", justifyContent: "center",
+  }),
+  backBtn: {
+    display: "inline-flex", alignItems: "center", gap: 6,
+    padding: "10px 22px", borderRadius: VT.radius.md, fontSize: 14, fontWeight: 600,
+    background: VT.surface, color: VT.textSecondary, border: `1px solid ${VT.border}`, cursor: "pointer",
+  },
+  primaryBtn: {
+    display: "inline-flex", alignItems: "center", gap: 8,
+    padding: "12px 28px", borderRadius: VT.radius.md, fontSize: 14, fontWeight: 700,
+    color: "#fff", border: "none", cursor: "pointer",
+  },
+  detailCard: {
+    background: VT.surface, border: `1px solid ${VT.border}`,
+    borderRadius: VT.radius.lg, padding: 24, marginBottom: 24,
+  },
+  detailHeading: {
+    fontSize: 12, fontWeight: 700, color: VT.muted,
+    textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 16, margin: "0 0 16px",
+  },
+  emptyState: {
+    textAlign: "center", padding: "28px 16px",
+    display: "flex", flexDirection: "column", alignItems: "center",
+  },
+  alertBox: (bg, border, color) => ({
+    display: "flex", alignItems: "flex-start", gap: 12,
+    padding: "14px 18px", borderRadius: VT.radius.md,
+    background: bg, border: `1px solid ${border}`, color,
+    marginBottom: 20, fontSize: 14,
+  }),
+  inlineWarning: (bg, border, color) => ({
+    display: "inline-flex", alignItems: "center", gap: 8,
+    padding: "10px 20px", borderRadius: VT.radius.md,
+    background: bg, border: `1px solid ${border}`, color,
+    fontSize: 13, fontWeight: 500, marginBottom: 14, maxWidth: 520, textAlign: "left",
+  }),
+  overlay: {
+    position: "fixed", inset: 0, background: "rgba(15,23,42,0.55)",
+    backdropFilter: "blur(4px)", display: "flex", alignItems: "center",
+    justifyContent: "center", zIndex: 1000, padding: 16,
+  },
+  confirmModal: {
+    background: VT.surface, borderRadius: VT.radius.xl, padding: 28,
+    maxWidth: 500, width: "100%", boxShadow: VT.shadow.xl,
+  },
 };

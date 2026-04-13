@@ -1,6 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
+import {
+  Shield, Camera, CameraOff, RefreshCw, X, AlertCircle, Lock,
+  CheckCircle2, Clock, Fingerprint,
+} from "lucide-react";
 import apiClient from "../lib/apiClient";
+import { VT } from "../lib/voterTokens";
 
 /**
  * Pre-cast face verification modal — MediaPipe challenge-response liveness.
@@ -25,6 +30,22 @@ const BLINK_EAR_THRESHOLD = 0.21;
 
 // Stable set for this pass — nod excluded
 const SUPPORTED_CHALLENGES = new Set(["blink", "turn_left", "turn_right", "smile"]);
+
+/* ── User-facing phase mapping (presentation only) ─────────── */
+const PHASES = [
+  { key: "prepare", label: "Prepare" },
+  { key: "camera",  label: "Camera" },
+  { key: "verify",  label: "Liveness" },
+  { key: "confirm", label: "Confirm" },
+];
+
+function getPhaseIndex(state) {
+  if (state === "starting_session") return 0;
+  if (state === "requesting_camera" || state === "attaching_stream") return 1;
+  if (state === "camera_ready" || state === "running_challenge" || state === "capturing_frame") return 2;
+  if (state === "submitting") return 3;
+  return -1; // failure/locked states — hide indicator
+}
 
 export default function PreCastFaceVerificationModal({
   open,
@@ -54,31 +75,25 @@ export default function PreCastFaceVerificationModal({
 
   // ── Full cleanup ──────────────────────────────────────────────
   function _stopAll() {
-    // Cancel animation frame
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     }
-    // Clear all pending timers
     for (const tid of timersRef.current) clearTimeout(tid);
     timersRef.current = [];
-    // Stop camera tracks
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
-    // Detach video source
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
-    // Destroy MediaPipe instance
     if (landmarkerRef.current) {
       try { landmarkerRef.current.close(); } catch { /* ignore */ }
       landmarkerRef.current = null;
     }
   }
 
-  /** Schedule a setTimeout and track its id for cleanup */
   function _setTimeout(fn, ms) {
     const id = setTimeout(fn, ms);
     timersRef.current.push(id);
@@ -86,8 +101,6 @@ export default function PreCastFaceVerificationModal({
   }
 
   // ── Lifecycle effects ─────────────────────────────────────────
-
-  // Mark mounted on mount, full cleanup on unmount
   useEffect(() => {
     mountedRef.current = true;
     return () => {
@@ -97,7 +110,6 @@ export default function PreCastFaceVerificationModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Auto-start when modal opens (driven by parent `key` remount)
   useEffect(() => {
     if (open) {
       _startSession();
@@ -141,11 +153,10 @@ export default function PreCastFaceVerificationModal({
         return;
       }
 
-      // Filter challenges to supported set
       if (data.challenges) {
         data.challenges = data.challenges.filter((c) => SUPPORTED_CHALLENGES.has(c));
         if (data.challenges.length === 0) {
-          data.challenges = ["blink"]; // guaranteed safe fallback
+          data.challenges = ["blink"];
         }
       }
 
@@ -188,11 +199,9 @@ export default function PreCastFaceVerificationModal({
       streamRef.current = stream;
       setDebugStage("stream_acquired");
 
-      // Transition to attaching_stream so the video element renders
       setState("attaching_stream");
       setDebugStage("attaching_stream");
 
-      // Wait a tick for React to mount the <video> then attach
       _setTimeout(() => {
         if (!mountedRef.current) return;
         _attachStreamToVideo(session);
@@ -205,7 +214,7 @@ export default function PreCastFaceVerificationModal({
     }
   }
 
-  // ── STEP 2b: Attach stream after video element is in DOM ──────
+  // ── STEP 2b: Attach stream ────────────────────────────────────
   function _attachStreamToVideo(session) {
     const video = videoRef.current;
     if (!video || !streamRef.current) {
@@ -218,28 +227,21 @@ export default function PreCastFaceVerificationModal({
     video.srcObject = streamRef.current;
     setDebugStage("stream_attached");
 
-    // Wait for the video to actually be ready to render frames
     function onCanPlay() {
       video.removeEventListener("canplay", onCanPlay);
       if (!mountedRef.current) return;
       setDebugStage("video_ready");
-      // Now load MediaPipe, then go camera_ready
       _loadLandmarkerThenReady(session);
     }
 
     video.addEventListener("canplay", onCanPlay);
-
-    // Also call play() — it returns a promise
-    video.play().catch(() => {
-      // Autoplay may fail silently on some browsers; canplay still fires
-    });
+    video.play().catch(() => {});
   }
 
-  // ── STEP 3: Load MediaPipe, then transition to camera_ready ───
+  // ── STEP 3: Load MediaPipe ────────────────────────────────────
   async function _loadLandmarkerThenReady(session) {
     try {
       setDebugStage("loading_mediapipe");
-      // Always create a fresh instance (old one was destroyed on cleanup)
       const vision = await FilesetResolver.forVisionTasks(
         "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
       );
@@ -258,7 +260,6 @@ export default function PreCastFaceVerificationModal({
       setDebugStage("mediapipe_ready");
       setState("camera_ready");
       setInstruction("Camera ready — starting challenge…");
-      // Short pause to let user see their face, then begin
       _setTimeout(() => {
         if (mountedRef.current) _beginChallenges(session);
       }, 1200);
@@ -491,198 +492,253 @@ export default function PreCastFaceVerificationModal({
   const challenges = sessionData?.challenges || [];
   const totalChallenges = challenges.length;
 
-  // Show the video container (always in DOM) for these states
   const showCamera =
     state === "attaching_stream" ||
     state === "camera_ready" ||
     state === "running_challenge" ||
     state === "capturing_frame";
 
+  const phaseIdx = getPhaseIndex(state);
+  const showPhases = phaseIdx >= 0;
+
   return (
-    <div style={overlayStyle}>
-      <div style={modalStyle}>
-        {/* ── Header ── */}
-        <div style={headerStyle}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={shieldIconStyle}>🛡️</div>
-            <div>
-              <h2 style={titleStyle}>Identity Verification</h2>
-              <p style={subtitleStyle}>
-                For vote security, complete a live face check.
-              </p>
-            </div>
-          </div>
-        </div>
+    <>
+      {/* Keyframes for spinner */}
+      <style>{`@keyframes fvSpin { to { transform: rotate(360deg); } }`}</style>
 
-        {/* ── Debug stage indicator ── */}
-        <div style={debugBarStyle}>
-          stage: <strong>{debugStage}</strong> &nbsp;|&nbsp; state: <strong>{state}</strong>
-        </div>
-
-        {/* ── Body ── */}
-        <div style={bodyStyle}>
-          {/* STARTING SESSION */}
-          {state === "starting_session" && (
-            <div style={centeredStyle}>
-              <div style={spinnerStyle} />
-              <p style={statusText}>Preparing secure verification…</p>
-            </div>
-          )}
-
-          {/* REQUESTING CAMERA */}
-          {state === "requesting_camera" && (
-            <div style={centeredStyle}>
-              <div style={spinnerStyle} />
-              <p style={statusText}>Requesting camera access…</p>
-              <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 4 }}>
-                Please allow camera access when prompted.
-              </p>
-            </div>
-          )}
-
-          {/* CAMERA / CHALLENGE VIEW — video is in DOM for attaching_stream onward */}
-          {showCamera && (
-            <div style={{ width: "100%" }}>
-              <div style={cameraBannerStyle}>
-                Please look at the camera and follow the on-screen instructions.
+      <div
+        style={S.overlay}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="fv-title"
+        aria-describedby="fv-subtitle"
+      >
+        <div style={S.modal}>
+          {/* ── Header ── */}
+          <div style={S.header}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1 }}>
+              <div style={S.shieldIcon}>
+                <Shield size={22} color={VT.accent} strokeWidth={2.2} />
               </div>
-
-              {/* Challenge progress indicator */}
-              {totalChallenges > 0 && state === "running_challenge" && (
-                <div style={challengeBarOuter}>
-                  {challenges.map((_, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        ...challengeBarStep,
-                        background:
-                          i < challengeIndex
-                            ? "#16a34a"
-                            : i === challengeIndex
-                            ? "#2563eb"
-                            : "#e2e8f0",
-                      }}
-                    >
-                      {i === challengeIndex && (
-                        <div
-                          style={{
-                            position: "absolute",
-                            left: 0,
-                            top: 0,
-                            bottom: 0,
-                            width: `${challengeProgress}%`,
-                            background: "#60a5fa",
-                            borderRadius: 4,
-                            transition: "width 0.1s linear",
-                          }}
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Video container */}
-              <div style={videoContainerStyle}>
-                <video
-                  ref={videoRef}
-                  style={videoStyle}
-                  autoPlay
-                  playsInline
-                  muted
-                />
-                <canvas ref={canvasRef} style={{ display: "none" }} />
-                {/* Face oval guide */}
-                <div style={ovalGuideStyle} />
-              </div>
-
-              {/* Instruction text */}
-              {instruction && (
-                <div style={instructionStyle}>
-                  {instruction}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* SUBMITTING */}
-          {state === "submitting" && (
-            <div style={centeredStyle}>
-              <div style={spinnerStyle} />
-              <p style={statusText}>Verifying your identity…</p>
-              <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 4 }}>
-                Please wait, do not close this window.
-              </p>
-            </div>
-          )}
-
-          {/* CHALLENGE FAILED */}
-          {state === "challenge_failed" && (
-            <div style={centeredStyle}>
-              <div style={{ fontSize: 48, marginBottom: 12 }}>❌</div>
-              <h3 style={{ fontSize: 18, fontWeight: 700, color: "#dc2626", marginBottom: 8 }}>
-                Verification Failed
-              </h3>
-              <p style={{ fontSize: 14, color: "#64748b", marginBottom: 4, textAlign: "center" }}>
-                {error || "Verification did not pass. You can try again."}
-              </p>
-              {failureInfo?.remaining_attempts != null && (
-                <p style={attemptsStyle}>
-                  {failureInfo.remaining_attempts > 0
-                    ? `${failureInfo.remaining_attempts} attempt${failureInfo.remaining_attempts !== 1 ? "s" : ""} remaining`
-                    : "No attempts remaining"}
+              <div>
+                <h2 id="fv-title" style={S.title}>Identity Verification</h2>
+                <p id="fv-subtitle" style={S.subtitle}>
+                  Live face check required to secure your ballot
                 </p>
-              )}
-              <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
-                <button onClick={handleCancel} style={secondaryBtnStyle}>
-                  Cancel
-                </button>
-                {(!failureInfo || failureInfo.remaining_attempts > 0) && (
-                  <button onClick={handleRetry} style={primaryBtnStyle}>
-                    Try Again
-                  </button>
+              </div>
+            </div>
+            {/* Close / cancel X button - only in non-critical states */}
+            {(state === "starting_session" || state === "requesting_camera" || showCamera) && (
+              <button onClick={handleCancel} style={S.closeBtn} aria-label="Cancel verification">
+                <X size={18} />
+              </button>
+            )}
+          </div>
+
+          {/* ── Phase indicator ── */}
+          {showPhases && (
+            <div style={S.phaseBar}>
+              {PHASES.map((p, i) => {
+                const isActive = i === phaseIdx;
+                const isDone = i < phaseIdx;
+                return (
+                  <div key={p.key} style={{ display: "flex", alignItems: "center", gap: 6, flex: 1 }}>
+                    <div style={{
+                      width: 22, height: 22, borderRadius: "50%", flexShrink: 0, fontSize: 11, fontWeight: 700,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      background: isDone ? VT.success : isActive ? VT.accent : VT.surfaceSubtle,
+                      color: isDone || isActive ? "#fff" : VT.subtle,
+                      transition: "all 0.25s ease",
+                    }}>
+                      {isDone ? <CheckCircle2 size={13} /> : i + 1}
+                    </div>
+                    <span style={{
+                      fontSize: 12, fontWeight: isActive ? 700 : 500,
+                      color: isActive ? VT.text : isDone ? VT.success : VT.muted,
+                      transition: "color 0.2s",
+                    }}>
+                      {p.label}
+                    </span>
+                    {i < PHASES.length - 1 && (
+                      <div style={{
+                        flex: 1, height: 2, borderRadius: 1, marginLeft: 4,
+                        background: isDone ? VT.successBorder : VT.borderLight,
+                        transition: "background 0.25s",
+                      }} />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* ── Body ── */}
+          <div style={S.body}>
+            {/* STARTING SESSION */}
+            {state === "starting_session" && (
+              <div style={S.centered}>
+                <div style={S.spinnerWrap}>
+                  <Fingerprint size={24} color={VT.accent} />
+                </div>
+                <p style={S.statusLabel}>Preparing secure verification…</p>
+                <p style={S.statusHint}>Setting up your liveness session</p>
+              </div>
+            )}
+
+            {/* REQUESTING CAMERA */}
+            {state === "requesting_camera" && (
+              <div style={S.centered}>
+                <div style={S.spinnerWrap}>
+                  <Camera size={24} color={VT.accent} />
+                </div>
+                <p style={S.statusLabel}>Requesting camera access…</p>
+                <p style={S.statusHint}>
+                  Please allow camera access when prompted by your browser.
+                </p>
+              </div>
+            )}
+
+            {/* CAMERA / CHALLENGE VIEW */}
+            {showCamera && (
+              <div style={{ width: "100%" }}>
+                {/* Camera guidance banner */}
+                <div style={S.cameraBanner}>
+                  <Camera size={14} style={{ flexShrink: 0 }} />
+                  Look at the camera and follow the on-screen instructions
+                </div>
+
+                {/* Challenge progress indicator */}
+                {totalChallenges > 0 && state === "running_challenge" && (
+                  <div style={S.challengeBar}>
+                    {challenges.map((_, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          flex: 1, height: 6, borderRadius: 3,
+                          position: "relative", overflow: "hidden",
+                          background: i < challengeIndex ? VT.success
+                            : i === challengeIndex ? `${VT.accent}30`
+                            : VT.surfaceSubtle,
+                          transition: "background 0.3s",
+                        }}
+                      >
+                        {i === challengeIndex && (
+                          <div style={{
+                            position: "absolute", left: 0, top: 0, bottom: 0,
+                            width: `${challengeProgress}%`,
+                            background: VT.accent, borderRadius: 3,
+                            transition: "width 0.1s linear",
+                          }} />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Video container */}
+                <div style={S.videoContainer}>
+                  <video ref={videoRef} style={S.video} autoPlay playsInline muted />
+                  <canvas ref={canvasRef} style={{ display: "none" }} />
+                  {/* Face oval guide */}
+                  <div style={S.ovalGuide} />
+                  {/* Stage label overlay */}
+                  {state === "camera_ready" && (
+                    <div style={S.cameraOverlayLabel}>
+                      <CheckCircle2 size={14} /> Camera ready
+                    </div>
+                  )}
+                </div>
+
+                {/* Instruction text */}
+                {instruction && (
+                  <div style={S.instruction}>
+                    {instruction}
+                  </div>
                 )}
               </div>
-            </div>
-          )}
+            )}
 
-          {/* LOCKED */}
-          {state === "locked" && (
-            <div style={centeredStyle}>
-              <div style={{ fontSize: 48, marginBottom: 12 }}>🔒</div>
-              <h3 style={{ fontSize: 18, fontWeight: 700, color: "#dc2626", marginBottom: 8 }}>
-                Temporarily Locked
-              </h3>
-              <p style={{ fontSize: 14, color: "#64748b", textAlign: "center", marginBottom: 12 }}>
-                Too many failed attempts. Voting is temporarily locked for this
-                election.
-              </p>
-              {lockRemaining > 0 && (
-                <div style={lockBadgeStyle}>
-                  Try again in approximately {lockMinutes} minute
-                  {lockMinutes !== 1 ? "s" : ""}
+            {/* SUBMITTING */}
+            {state === "submitting" && (
+              <div style={S.centered}>
+                <div style={S.spinnerWrap}>
+                  <Fingerprint size={24} color={VT.accent} />
                 </div>
-              )}
-              <button
-                onClick={handleCancel}
-                style={{ ...secondaryBtnStyle, marginTop: 20 }}
-              >
-                Close
+                <p style={S.statusLabel}>Verifying your identity…</p>
+                <p style={S.statusHint}>
+                  Please wait. Do not close this window.
+                </p>
+              </div>
+            )}
+
+            {/* CHALLENGE FAILED */}
+            {state === "challenge_failed" && (
+              <div style={S.centered}>
+                <div style={S.resultIcon(VT.errorBg, VT.errorBorder)}>
+                  <AlertCircle size={28} color={VT.error} />
+                </div>
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: VT.error, marginBottom: 8 }}>
+                  Verification Failed
+                </h3>
+                <p style={{ fontSize: 14, color: VT.muted, marginBottom: 6, textAlign: "center", lineHeight: 1.5, maxWidth: 360 }}>
+                  {error || "Verification did not pass. You can try again."}
+                </p>
+                {failureInfo?.remaining_attempts != null && (
+                  <div style={S.attemptsBadge}>
+                    {failureInfo.remaining_attempts > 0
+                      ? `${failureInfo.remaining_attempts} attempt${failureInfo.remaining_attempts !== 1 ? "s" : ""} remaining`
+                      : "No attempts remaining"}
+                  </div>
+                )}
+                <div style={{ display: "flex", gap: 10, marginTop: 22 }}>
+                  <button onClick={handleCancel} style={S.secondaryBtn}>
+                    Cancel
+                  </button>
+                  {(!failureInfo || failureInfo.remaining_attempts > 0) && (
+                    <button onClick={handleRetry} style={S.primaryBtn}>
+                      <RefreshCw size={15} /> Try Again
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* LOCKED */}
+            {state === "locked" && (
+              <div style={S.centered}>
+                <div style={S.resultIcon(VT.errorBg, VT.errorBorder)}>
+                  <Lock size={28} color={VT.error} />
+                </div>
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: VT.error, marginBottom: 8 }}>
+                  Temporarily Locked
+                </h3>
+                <p style={{ fontSize: 14, color: VT.muted, textAlign: "center", marginBottom: 14, lineHeight: 1.5, maxWidth: 360 }}>
+                  Too many failed attempts. Voting is temporarily locked for this election.
+                </p>
+                {lockRemaining > 0 && (
+                  <div style={S.lockBadge}>
+                    <Clock size={14} />
+                    Try again in approximately {lockMinutes} minute{lockMinutes !== 1 ? "s" : ""}
+                  </div>
+                )}
+                <button onClick={handleCancel} style={{ ...S.secondaryBtn, marginTop: 22 }}>
+                  Close
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* ── Footer — cancel shown in active camera states ── */}
+          {(showCamera || state === "starting_session" || state === "requesting_camera") && (
+            <div style={S.footer}>
+              <button onClick={handleCancel} style={S.secondaryBtn}>
+                Cancel Verification
               </button>
             </div>
           )}
         </div>
-
-        {/* ── Footer — cancel shown in camera states ── */}
-        {(showCamera || state === "starting_session" || state === "requesting_camera") && (
-          <div style={footerStyle}>
-            <button onClick={handleCancel} style={secondaryBtnStyle}>
-              Cancel
-            </button>
-          </div>
-        )}
       </div>
-    </div>
+    </>
   );
 }
 
@@ -697,200 +753,136 @@ PreCastFaceVerificationModal.parseVerifyError = function (responseData) {
   return { type: "error", data: responseData };
 };
 
-/* ── Styles ── */
-
-const overlayStyle = {
-  position: "fixed",
-  inset: 0,
-  background: "rgba(0,0,0,0.6)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  zIndex: 2000,
-  backdropFilter: "blur(4px)",
-};
-
-const modalStyle = {
-  background: "#fff",
-  borderRadius: 16,
-  maxWidth: 560,
-  width: "94%",
-  maxHeight: "90vh",
-  overflow: "auto",
-  boxShadow: "0 25px 50px rgba(0,0,0,0.25)",
-  display: "flex",
-  flexDirection: "column",
-};
-
-const headerStyle = {
-  padding: "20px 24px 16px",
-  borderBottom: "1px solid #e2e8f0",
-};
-
-const shieldIconStyle = {
-  fontSize: 28,
-  lineHeight: 1,
-};
-
-const titleStyle = {
-  fontSize: 18,
-  fontWeight: 700,
-  color: "#1e293b",
-  margin: 0,
-};
-
-const subtitleStyle = {
-  fontSize: 13,
-  color: "#64748b",
-  margin: "4px 0 0",
-};
-
-const debugBarStyle = {
-  padding: "4px 24px",
-  fontSize: 11,
-  fontFamily: "monospace",
-  color: "#64748b",
-  background: "#f1f5f9",
-  borderBottom: "1px solid #e2e8f0",
-};
-
-const bodyStyle = {
-  padding: 24,
-  flex: 1,
-  minHeight: 200,
-};
-
-const footerStyle = {
-  padding: "12px 24px 20px",
-  borderTop: "1px solid #e2e8f0",
-  display: "flex",
-  justifyContent: "flex-end",
-};
-
-const centeredStyle = {
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: "32px 0",
-};
-
-const statusText = {
-  fontSize: 15,
-  color: "#475569",
-  fontWeight: 500,
-  marginTop: 16,
-};
-
-const spinnerStyle = {
-  width: 40,
-  height: 40,
-  border: "4px solid #e2e8f0",
-  borderTopColor: "#2563eb",
-  borderRadius: "50%",
-  animation: "spin 0.8s linear infinite",
-};
-
-const primaryBtnStyle = {
-  padding: "10px 24px",
-  borderRadius: 8,
-  fontSize: 14,
-  fontWeight: 600,
-  background: "#2563eb",
-  color: "#fff",
-  border: "none",
-  cursor: "pointer",
-};
-
-const secondaryBtnStyle = {
-  padding: "10px 24px",
-  borderRadius: 8,
-  fontSize: 14,
-  fontWeight: 600,
-  background: "#fff",
-  color: "#64748b",
-  border: "1px solid #e2e8f0",
-  cursor: "pointer",
-};
-
-const cameraBannerStyle = {
-  padding: "8px 12px",
-  background: "#eff6ff",
-  borderRadius: 8,
-  marginBottom: 12,
-  fontSize: 13,
-  color: "#1e40af",
-  textAlign: "center",
-};
-
-const challengeBarOuter = {
-  display: "flex",
-  gap: 6,
-  marginBottom: 12,
-};
-
-const challengeBarStep = {
-  flex: 1,
-  height: 6,
-  borderRadius: 4,
-  position: "relative",
-  overflow: "hidden",
-  transition: "background 0.3s",
-};
-
-const videoContainerStyle = {
-  position: "relative",
-  width: "100%",
-  aspectRatio: "4/3",
-  borderRadius: 12,
-  overflow: "hidden",
-  background: "#0f172a",
-};
-
-const videoStyle = {
-  width: "100%",
-  height: "100%",
-  objectFit: "cover",
-  transform: "scaleX(-1)",
-};
-
-const ovalGuideStyle = {
-  position: "absolute",
-  top: "10%",
-  left: "20%",
-  right: "20%",
-  bottom: "10%",
-  border: "3px dashed rgba(255,255,255,0.4)",
-  borderRadius: "50%",
-  pointerEvents: "none",
-};
-
-const instructionStyle = {
-  marginTop: 12,
-  padding: "10px 16px",
-  background: "#f8fafc",
-  borderRadius: 8,
-  fontSize: 15,
-  fontWeight: 600,
-  color: "#1e293b",
-  textAlign: "center",
-};
-
-const attemptsStyle = {
-  fontSize: 13,
-  color: "#92400e",
-  background: "#fef3c7",
-  padding: "6px 16px",
-  borderRadius: 6,
-  marginTop: 8,
-};
-
-const lockBadgeStyle = {
-  background: "#fef2f2",
-  border: "1px solid #fecaca",
-  borderRadius: 8,
-  padding: "10px 20px",
-  fontSize: 14,
-  fontWeight: 600,
-  color: "#991b1b",
+/* ══════════════════════════════════════════════════════════════════
+   Styles
+   ══════════════════════════════════════════════════════════════════ */
+const S = {
+  overlay: {
+    position: "fixed", inset: 0,
+    background: "rgba(15,23,42,0.6)",
+    backdropFilter: "blur(6px)",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    zIndex: 2000, padding: 16,
+  },
+  modal: {
+    background: VT.surface, borderRadius: VT.radius.xl,
+    maxWidth: 540, width: "100%", maxHeight: "92vh", overflow: "auto",
+    boxShadow: VT.shadow.xl,
+    display: "flex", flexDirection: "column",
+    animation: "ballotScaleIn 0.22s ease both",
+  },
+  header: {
+    padding: "20px 24px 16px",
+    borderBottom: `1px solid ${VT.border}`,
+    display: "flex", alignItems: "center", gap: 8,
+  },
+  shieldIcon: {
+    width: 44, height: 44, borderRadius: VT.radius.md, flexShrink: 0,
+    background: VT.accentLight, border: `1px solid ${VT.accent}20`,
+    display: "flex", alignItems: "center", justifyContent: "center",
+  },
+  title: {
+    fontSize: 18, fontWeight: 700, color: VT.text, margin: 0, lineHeight: 1.2,
+  },
+  subtitle: {
+    fontSize: 13, color: VT.muted, margin: "3px 0 0", lineHeight: 1.4,
+  },
+  closeBtn: {
+    width: 34, height: 34, borderRadius: VT.radius.sm, border: `1px solid ${VT.borderLight}`,
+    background: "transparent", color: VT.muted, cursor: "pointer",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    flexShrink: 0, transition: "all 0.15s",
+  },
+  phaseBar: {
+    display: "flex", alignItems: "center", gap: 4, padding: "12px 24px",
+    borderBottom: `1px solid ${VT.borderLight}`, background: VT.surfaceAlt,
+  },
+  body: {
+    padding: 24, flex: 1, minHeight: 200,
+  },
+  footer: {
+    padding: "14px 24px 20px",
+    borderTop: `1px solid ${VT.border}`,
+    display: "flex", justifyContent: "flex-end",
+  },
+  centered: {
+    display: "flex", flexDirection: "column", alignItems: "center",
+    justifyContent: "center", padding: "28px 0",
+  },
+  statusLabel: {
+    fontSize: 15, color: VT.textSecondary, fontWeight: 600, marginTop: 18, marginBottom: 0,
+  },
+  statusHint: {
+    fontSize: 13, color: VT.muted, marginTop: 6,
+  },
+  spinnerWrap: {
+    width: 56, height: 56, borderRadius: "50%",
+    border: `3px solid ${VT.border}`, borderTopColor: VT.accent,
+    display: "flex", alignItems: "center", justifyContent: "center",
+    animation: "fvSpin 0.8s linear infinite",
+  },
+  resultIcon: (bg, border) => ({
+    width: 64, height: 64, borderRadius: "50%",
+    background: bg, border: `2px solid ${border}`,
+    display: "flex", alignItems: "center", justifyContent: "center",
+    marginBottom: 16,
+  }),
+  primaryBtn: {
+    padding: "11px 24px", borderRadius: VT.radius.md, fontSize: 14, fontWeight: 600,
+    background: VT.accent, color: "#fff", border: "none", cursor: "pointer",
+    display: "inline-flex", alignItems: "center", gap: 7,
+    transition: "background 0.15s, transform 0.1s",
+  },
+  secondaryBtn: {
+    padding: "11px 24px", borderRadius: VT.radius.md, fontSize: 14, fontWeight: 600,
+    background: VT.surface, color: VT.textSecondary, border: `1px solid ${VT.border}`,
+    cursor: "pointer", transition: "all 0.15s",
+  },
+  cameraBanner: {
+    padding: "9px 14px", borderRadius: VT.radius.md, marginBottom: 12,
+    fontSize: 13, fontWeight: 500, color: VT.accent,
+    background: VT.accentLight, border: `1px solid ${VT.accent}20`,
+    display: "flex", alignItems: "center", gap: 8, justifyContent: "center",
+  },
+  challengeBar: {
+    display: "flex", gap: 6, marginBottom: 12,
+  },
+  videoContainer: {
+    position: "relative", width: "100%", aspectRatio: "4/3",
+    borderRadius: VT.radius.lg, overflow: "hidden",
+    background: "#0F172A", border: `2px solid ${VT.border}`,
+  },
+  video: {
+    width: "100%", height: "100%", objectFit: "cover",
+    transform: "scaleX(-1)",
+  },
+  ovalGuide: {
+    position: "absolute", top: "8%", left: "18%", right: "18%", bottom: "8%",
+    border: "2.5px dashed rgba(255,255,255,0.35)",
+    borderRadius: "50%", pointerEvents: "none",
+  },
+  cameraOverlayLabel: {
+    position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)",
+    display: "inline-flex", alignItems: "center", gap: 6,
+    padding: "6px 14px", borderRadius: 20,
+    background: "rgba(4,120,87,0.85)", color: "#fff",
+    fontSize: 12, fontWeight: 600, backdropFilter: "blur(4px)",
+  },
+  instruction: {
+    marginTop: 12, padding: "12px 18px",
+    background: VT.surfaceAlt, border: `1px solid ${VT.borderLight}`,
+    borderRadius: VT.radius.md, fontSize: 15, fontWeight: 600,
+    color: VT.text, textAlign: "center",
+  },
+  attemptsBadge: {
+    fontSize: 13, fontWeight: 600, color: VT.warn,
+    background: VT.warnBg, border: `1px solid ${VT.warnBorder}`,
+    padding: "6px 16px", borderRadius: VT.radius.sm, marginTop: 8,
+  },
+  lockBadge: {
+    display: "inline-flex", alignItems: "center", gap: 8,
+    background: VT.errorBg, border: `1px solid ${VT.errorBorder}`,
+    borderRadius: VT.radius.md, padding: "10px 20px",
+    fontSize: 14, fontWeight: 600, color: VT.error,
+  },
 };
