@@ -127,3 +127,20 @@
   gap: 10px;
   margin-left: auto;
 }
+
+/* ── Print styles ────────────────────────────────────────────── */
+@media print {
+  .voter-sidebar,
+  .voter-topbar,
+  .voter-mobile-topbar,
+  .voter-footer {
+    display: none !important;
+  }
+  .voter-main-area {
+    margin-left: 0 !important;
+    padding: 0 !important;
+  }
+  body {
+    background: #fff !important;
+  }
+}

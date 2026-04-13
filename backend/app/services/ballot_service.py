@@ -1651,3 +1651,55 @@ def _build_local_contests(
                 "seat_count": contest.seat_count,
                 "candidates": _format_candidates(rows),
             })
+
+
+# ── Voter receipt listing ────────────────────────────────────────
+
+
+def list_voter_receipts(db: Session, voter: User) -> list[dict]:
+    """Return receipt DTOs for every ballot the voter has cast.
+
+    Joins Ballot → Election and resolves area context from
+    constituency_id or area_id.  **Never touches ballot_entries.**
+    """
+    rows = db.execute(
+        select(Ballot, Election)
+        .join(Election, Election.id == Ballot.election_id)
+        .where(Ballot.voter_id == voter.id)
+        .order_by(Ballot.cast_at.desc())
+    ).all()
+
+    receipts: list[dict] = []
+    for ballot, election in rows:
+        area_label = None
+        area_code = None
+        area_type = None
+
+        if ballot.constituency_id is not None:
+            constituency = db.get(Constituency, ballot.constituency_id)
+            if constituency:
+                area_label = constituency.name
+                area_code = constituency.code
+                area_type = "CONSTITUENCY"
+        elif ballot.area_id is not None:
+            area = db.get(AreaUnit, ballot.area_id)
+            if area:
+                area_label = area.name
+                area_code = area.code
+                area_type = area.category
+
+        receipts.append({
+            "ballot_id": ballot.id,
+            "election_id": election.id,
+            "election_title": election.title,
+            "government_level": election.government_level,
+            "election_subtype": election.election_subtype,
+            "election_status": election.status,
+            "cast_at": ballot.cast_at.isoformat(),
+            "area_label": area_label,
+            "area_code": area_code,
+            "area_type": area_type,
+            "receipt_status": "CONFIRMED",
+        })
+
+    return receipts

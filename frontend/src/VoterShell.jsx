@@ -12,7 +12,7 @@ import {
   LayoutDashboard,
   Vote,
   BarChart3,
-  Receipt,
+  FileCheck2,
   UserCircle2,
   LogOut,
   Menu,
@@ -51,7 +51,7 @@ const MAIN_NAV_KEYS = [
 ];
 
 const ACCOUNT_NAV_KEYS = [
-  { tKey: "nav.receipt", to: "/receipt", icon: Receipt },
+  { tKey: "nav.receipt", to: "/receipt", icon: FileCheck2 },
   { tKey: "nav.account", to: "/account", icon: UserCircle2 },
   { tKey: "nav.guide", to: "/guide", icon: HelpCircle },
 ];
