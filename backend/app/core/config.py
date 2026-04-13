@@ -40,6 +40,20 @@ class Settings(BaseSettings):
     # MUST be overridden with a securely-generated key in production.
     BALLOT_ENCRYPTION_KEY: str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
+    # ── AWS Rekognition Face Liveness ────────────────────────────
+    AWS_REGION: str = "us-east-1"
+    AWS_ACCESS_KEY_ID: str | None = None
+    AWS_SECRET_ACCESS_KEY: str | None = None
+    AWS_FACE_LIVENESS_ROLE_ARN: str | None = None
+
+    # Face verification thresholds
+    FACE_LIVENESS_CONFIDENCE_THRESHOLD: float = 90.0
+    FACE_MATCH_CONFIDENCE_THRESHOLD: float = 90.0
+    FACE_VERIFICATION_TOKEN_TTL_SECONDS: int = 300          # 5 minutes
+    FACE_VERIFY_MAX_FAILURES: int = 5
+    FACE_VERIFY_LOCK_DURATION_MINUTES: int = 15
+    FACE_VERIFY_OBSERVATION_WINDOW_MINUTES: int = 30
+
     @model_validator(mode="after")
     def _strip_and_validate(cls, values: "Settings") -> "Settings":
         # Strip incidental whitespace from string settings to avoid subtle auth failures.

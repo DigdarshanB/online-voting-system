@@ -1,11 +1,11 @@
 """Repository for querying auth_audit_logs.
 
-All methods are read-only. Audit records are never modified or deleted
-through this layer.
+All methods are read-only except for the inline audit helper used by
+the vote-identity-verification service.
 """
 
 import json
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 from sqlalchemy import func, distinct, or_, cast, Date, select
@@ -47,6 +47,12 @@ _ACTION_CATEGORIES: dict[str, str] = {
     "election_close-nomination": "election_management",
     "election_publish": "election_management",
     "candidate_created": "candidate_management",
+    # vote security
+    "VOTE_FACE_SESSION_STARTED": "vote_security",
+    "VOTE_FACE_VERIFY_FAILED": "vote_security",
+    "VOTE_FACE_VERIFY_PASSED": "vote_security",
+    "VOTE_FACE_VERIFY_LOCKED": "vote_security",
+    "VOTE_CAST_AFTER_FACE_VERIFY": "vote_security",
 }
 
 HIGH_RISK_ACTIONS = {
@@ -57,6 +63,8 @@ HIGH_RISK_ACTIONS = {
     "ACCOUNT_DISABLED",
     "PASSWORD_RESET_REQUESTED_BY_ADMIN",
     "TOTP_RESET_BY_ADMIN",
+    "VOTE_FACE_VERIFY_FAILED",
+    "VOTE_FACE_VERIFY_LOCKED",
 }
 
 SECURITY_ACTIONS = {
@@ -389,3 +397,124 @@ def export_audit_logs(db: Session, **filters) -> list[dict[str, Any]]:
         }
         for r in rows
     ]
+
+
+# ── Vote security helpers ────────────────────────────────────────
+
+
+def count_recent_vote_face_failures(
+    db: Session,
+    voter_id: int,
+    election_id: int,
+    window_minutes: int = 30,
+) -> int:
+    """Count VOTE_FACE_VERIFY_FAILED events for a voter+election within the window."""
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=window_minutes)
+    q = (
+        select(func.count(AuthAuditLog.id))
+        .where(
+            AuthAuditLog.actor_user_id == voter_id,
+            AuthAuditLog.action == "VOTE_FACE_VERIFY_FAILED",
+            AuthAuditLog.created_at >= cutoff,
+            func.json_extract(AuthAuditLog.metadata_json, "$.election_id") == election_id,
+        )
+    )
+    return db.execute(q).scalar() or 0
+
+
+def get_last_vote_face_failure_time(
+    db: Session,
+    voter_id: int,
+    election_id: int,
+    window_minutes: int = 30,
+) -> datetime | None:
+    """Return the timestamp of the most recent failure, or None."""
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=window_minutes)
+    q = (
+        select(AuthAuditLog.created_at)
+        .where(
+            AuthAuditLog.actor_user_id == voter_id,
+            AuthAuditLog.action == "VOTE_FACE_VERIFY_FAILED",
+            AuthAuditLog.created_at >= cutoff,
+            func.json_extract(AuthAuditLog.metadata_json, "$.election_id") == election_id,
+        )
+        .order_by(AuthAuditLog.created_at.desc())
+        .limit(1)
+    )
+    return db.execute(q).scalar_one_or_none()
+
+
+def find_active_vote_face_lock(
+    db: Session,
+    voter_id: int,
+    election_id: int,
+) -> datetime | None:
+    """Return `locked_until` datetime if the voter is currently locked, else None."""
+    q = (
+        select(AuthAuditLog.metadata_json)
+        .where(
+            AuthAuditLog.actor_user_id == voter_id,
+            AuthAuditLog.action == "VOTE_FACE_VERIFY_LOCKED",
+            func.json_extract(AuthAuditLog.metadata_json, "$.election_id") == election_id,
+        )
+        .order_by(AuthAuditLog.created_at.desc())
+        .limit(1)
+    )
+    row = db.execute(q).scalar_one_or_none()
+    if not row:
+        return None
+    try:
+        meta = json.loads(row)
+        locked_str = meta.get("locked_until")
+        if not locked_str:
+            return None
+        locked_until = datetime.fromisoformat(locked_str)
+        if locked_until.tzinfo is None:
+            locked_until = locked_until.replace(tzinfo=timezone.utc)
+        if locked_until > datetime.now(timezone.utc):
+            return locked_until
+    except (json.JSONDecodeError, TypeError, ValueError):
+        pass
+    return None
+
+
+def is_provider_session_id_used(db: Session, provider_session_id: str) -> bool:
+    """Check whether a provider session ID has already been used in a successful cast."""
+    q = (
+        select(func.count(AuthAuditLog.id))
+        .where(
+            AuthAuditLog.action.in_(["VOTE_FACE_VERIFY_PASSED", "VOTE_CAST_AFTER_FACE_VERIFY"]),
+            AuthAuditLog.outcome == "SUCCESS",
+            func.json_extract(AuthAuditLog.metadata_json, "$.provider_session_id")
+            == provider_session_id,
+        )
+    )
+    return (db.execute(q).scalar() or 0) > 0
+
+
+def create_audit_log_inline(
+    db: Session,
+    *,
+    action: str,
+    actor_user_id: int | None = None,
+    target_user_id: int | None = None,
+    outcome: str = "SUCCESS",
+    ip_address: str | None = None,
+    user_agent: str | None = None,
+    metadata: dict | None = None,
+) -> AuthAuditLog:
+    """Add an audit row to the current session without committing.
+
+    The caller is responsible for committing the session.
+    """
+    row = AuthAuditLog(
+        actor_user_id=actor_user_id,
+        target_user_id=target_user_id,
+        action=action,
+        outcome=outcome,
+        ip_address=ip_address,
+        user_agent=user_agent,
+        metadata_json=json.dumps(metadata or {}, default=str),
+    )
+    db.add(row)
+    return row

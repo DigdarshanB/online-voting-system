@@ -3,6 +3,7 @@ import { Navigate, useNavigate, useParams } from "react-router-dom";
 import useAuthGuard from "../hooks/useAuthGuard";
 import apiClient from "../lib/apiClient";
 import { saveVoteReceipt } from "./VoterReceipt";
+import PreCastFaceVerificationModal from "../components/PreCastFaceVerificationModal";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
@@ -21,6 +22,9 @@ export default function VoterBallot() {
   const [submitting, setSubmitting] = useState(false);
   const [castResult, setCastResult] = useState(null);
   const [castError, setCastError] = useState("");
+
+  // Face verification state
+  const [showFaceVerify, setShowFaceVerify] = useState(false);
 
   // Local ballot selections
   const [localChoices, setLocalChoices] = useState({
@@ -286,41 +290,90 @@ export default function VoterBallot() {
   }
 
   async function confirmCast() {
-    setSubmitting(true);
+    // Close the confirmation modal and open face verification modal
+    setConfirming(false);
     setCastError("");
-    try {
-      const url = isLocal
-        ? `/voter/elections/${electionId}/cast-local`
-        : `/voter/elections/${electionId}/cast`;
-      const payload = isLocal
-        ? {
-            head_nomination_id: localChoices.head,
-            deputy_head_nomination_id: localChoices.deputy_head,
-            ward_chair_nomination_id: localChoices.ward_chair,
-            ward_woman_member_nomination_id: localChoices.ward_woman_member,
-            ward_dalit_woman_member_nomination_id: localChoices.ward_dalit_woman_member,
-            ward_member_open_nomination_ids: localChoices.ward_member_open,
+    setFaceVerifyError("");
+    setShowFaceVerify(true);
+  }
+
+  // Called when face verification challenge completes successfully on the client
+  async function handleFaceVerified(verificationContextToken) {
+      setShowFaceVerify(false);
+      setSubmitting(true);
+      setCastError("");
+      try {
+        const url = isLocal
+          ? `/voter/elections/${electionId}/verify-and-cast-local`
+          : `/voter/elections/${electionId}/verify-and-cast`;
+
+        const payload = isLocal
+          ? {
+              verification_context_token: verificationContextToken,
+              head_nomination_id: localChoices.head,
+              deputy_head_nomination_id: localChoices.deputy_head,
+              ward_chair_nomination_id: localChoices.ward_chair,
+              ward_woman_member_nomination_id: localChoices.ward_woman_member,
+              ward_dalit_woman_member_nomination_id:
+                localChoices.ward_dalit_woman_member,
+              ward_member_open_nomination_ids: localChoices.ward_member_open,
+            }
+          : {
+              verification_context_token: verificationContextToken,
+              fptp_nomination_id: fptpChoice,
+              pr_party_id: prChoice,
+            };
+
+        const res = await apiClient.post(url, payload);
+
+        // Check for verification failure responses (status 403/429 return JSON body)
+        if (res.data?.reason_code) {
+          const parsed = PreCastFaceVerificationModal.parseVerifyError(res.data);
+          if (parsed.type === "locked") {
+            setFaceVerifyError(
+              `Face verification locked. ${parsed.data.locked_until ? "Try again later." : ""}`
+            );
+          } else {
+            setFaceVerifyError(
+              parsed.data.detail ||
+                "Face verification failed. Please try again."
+            );
           }
-        : {
-            fptp_nomination_id: fptpChoice,
-            pr_party_id: prChoice,
-          };
-      const res = await apiClient.post(url, payload);
-      setCastResult(res.data);
-      // Persist receipt for the VoterReceipt page
-      saveVoteReceipt({
-        election_id: electionId,
-        ballot_id: res.data?.ballot_id,
-      });
-    } catch (err) {
-      setCastError(
-        err?.response?.data?.detail ||
-          "Failed to cast ballot. Please try again."
-      );
-    } finally {
-      setSubmitting(false);
-      setConfirming(false);
-    }
+          setCastError(res.data.detail || "Face verification failed.");
+          return;
+        }
+
+        setCastResult(res.data);
+        // Persist receipt for the VoterReceipt page
+        saveVoteReceipt({
+          election_id: electionId,
+          ballot_id: res.data?.ballot_id,
+        });
+      } catch (err) {
+        const resp = err?.response?.data;
+        if (resp?.reason_code) {
+          // Structured face verification failure
+          if (resp.reason_code === "FACE_LOCKED") {
+            setCastError(
+              "Face verification is temporarily locked for this election. Please try again later."
+            );
+          } else {
+            setCastError(
+              resp.detail || "Face verification failed. Please try again."
+            );
+          }
+        } else {
+          setCastError(
+            resp?.detail || "Failed to cast ballot. Please try again."
+          );
+        }
+      } finally {
+        setSubmitting(false);
+      }
+  }
+
+  function handleFaceVerifyCancel() {
+    setShowFaceVerify(false);
   }
 
   return (
@@ -1052,6 +1105,14 @@ export default function VoterBallot() {
           </div>
         </div>
       )}
+
+      {/* ── face verification modal ──────────────────── */}
+      <PreCastFaceVerificationModal
+        open={showFaceVerify}
+        electionId={electionId}
+        onVerified={handleFaceVerified}
+        onCancel={handleFaceVerifyCancel}
+      />
     </div>
   );
 }

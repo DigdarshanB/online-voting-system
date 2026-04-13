@@ -17,7 +17,7 @@ from app.models.password_reset_code import PasswordResetCode
 from app.models.pending_voter_registration import PendingVoterRegistration
 from app.models.totp_recovery_request import TotpRecoveryRequest
 from app.models.user import User
-from app.models.vote import Vote
+from app.models.ballot import Ballot
 from app.repositories import pending_registration_repository, totp_recovery_repository, user_repository
 from app.services.auth_audit import audit_auth_event
 from app.services.email_delivery import EmailDeliveryError
@@ -435,7 +435,7 @@ def delete_voter(
 
     voter = get_voter_or_404(user_id, db)
     vote_count = db.execute(
-        select(func.count(Vote.id)).where(Vote.voter_id == voter.id)
+        select(func.count(Ballot.id)).where(Ballot.voter_id == voter.id)
     ).scalar() or 0
 
     if voter.status == "DISABLED":
@@ -515,7 +515,7 @@ def update_voter(
     )
 
     vote_count = db.execute(
-        select(func.count(Vote.id)).where(Vote.voter_id == voter.id)
+        select(func.count(Ballot.id)).where(Ballot.voter_id == voter.id)
     ).scalar() or 0
     return voter, vote_count
 
@@ -728,7 +728,7 @@ def get_voter_detail(user_id: int, db: Session) -> dict:
     user = user_repository.get_user_by_id(db, user_id)
     if user and user.role == "voter":
         vote_count = db.execute(
-            select(func.count(Vote.id)).where(Vote.voter_id == user.id)
+            select(func.count(Ballot.id)).where(Ballot.voter_id == user.id)
         ).scalar() or 0
         detail = _serialize_voter_detail(user)
         detail.update({
@@ -763,8 +763,8 @@ def list_voters(
     page_size = min(max(page_size, 1), 100)
 
     vote_count_subq = (
-        select(func.count(Vote.id))
-        .where(Vote.voter_id == User.id)
+        select(func.count(Ballot.id))
+        .where(Ballot.voter_id == User.id)
         .correlate(User)
         .scalar_subquery()
         .label("vote_count")

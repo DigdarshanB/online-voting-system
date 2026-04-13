@@ -224,15 +224,6 @@ def _cascade_delete_election_data(db: Session, election_id: int) -> None:
             Ballot.__table__.delete().where(Ballot.election_id == election_id)
         )
 
-    # 6. legacy votes (if any)
-    try:
-        from app.models.vote import Vote
-        db.execute(
-            Vote.__table__.delete().where(Vote.election_id == election_id)
-        )
-    except Exception:
-        pass  # vote table may not exist
-
     # 7. fptp_candidate_nominations
     db.execute(
         FptpCandidateNomination.__table__.delete().where(

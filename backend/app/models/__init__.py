@@ -1,6 +1,5 @@
 from app.models.user import User
 from app.models.election import Election
-from app.models.vote import Vote
 from app.models.admin_invite import AdminInvite
 from app.models.email_verification import EmailVerification
 from app.models.password_reset_code import PasswordResetCode
