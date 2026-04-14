@@ -256,8 +256,9 @@ function TableView({ items, onRevoke, onDelete }) {
                 </td>
                 <td style={{ ...tdStyle, textAlign: "right" }}>
                   <div style={{ display: "flex", justifyContent: "flex-end", gap: T.space.sm }}>
-                    {item.status === "ISSUED" && (
+                    {(item.status === "ISSUED" || item.status === "SENT") && (
                       <button
+                        type="button"
                         style={{
                           display: "inline-flex", alignItems: "center", gap: 4,
                           padding: "5px 10px", backgroundColor: "transparent",
@@ -341,8 +342,9 @@ function MobileView({ items, onRevoke, onDelete }) {
                 borderTop: `1px solid ${T.borderLight}`,
                 display: "flex", justifyContent: "flex-end", gap: T.space.sm,
               }}>
-                {item.status === 'ISSUED' && (
+                {(item.status === 'ISSUED' || item.status === 'SENT') && (
                   <button
+                    type="button"
                     onClick={() => onRevoke(item)}
                     style={{
                       display: "inline-flex", alignItems: "center", gap: 4,

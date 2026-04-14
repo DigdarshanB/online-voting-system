@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import apiClient from "../lib/apiClient";
 import { useLanguage } from "../lib/LanguageContext";
+import { PortalHero, HeroChip, HERO_TINTS, VoterPageContainer, VoterKeyframes } from "../components/VoterUI";
 
 /* ─── Injected CSS (once) ────────────────────────────────────── */
 const STYLE_ID = "vc-hub-styles";
@@ -121,110 +122,27 @@ export default function VoterCandidates() {
   }, []);
 
   return (
-    <div
-      style={{
-        maxWidth: 920,
-        margin: "0 auto",
-        padding: "32px 16px",
-        fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
-      }}
-    >
-      {/* Hero header */}
-      <div
-        style={{
-          background: `linear-gradient(135deg, ${PALETTE.navy} 0%, #1E4D8C 100%)`,
-          borderRadius: 18,
-          padding: "28px 28px 24px",
-          marginBottom: 28,
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
-        {/* Nepal flag accent stripe */}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 4,
-            background: "linear-gradient(90deg, #DC143C 0%, #DC143C 50%, #003893 50%, #003893 100%)",
-          }}
-        />
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <div
-            style={{
-              width: 52,
-              height: 52,
-              borderRadius: 14,
-              background: "rgba(255,255,255,0.12)",
-              backdropFilter: "blur(8px)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-              border: "1px solid rgba(255,255,255,0.15)",
-            }}
-          >
-            <Shield size={26} color="#fff" strokeWidth={2} />
-          </div>
-          <div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                marginBottom: 4,
-              }}
-            >
-              <h1
-                style={{
-                  fontSize: "clamp(22px, 3vw, 28px)",
-                  fontWeight: 800,
-                  color: "#FFFFFF",
-                  margin: 0,
-                  lineHeight: 1.2,
-                  letterSpacing: "-0.01em",
-                }}
-              >
-                {t("candidates.title")}
-              </h1>
-              <span
-                style={{
-                  padding: "2px 10px",
-                  borderRadius: 6,
-                  fontSize: 10,
-                  fontWeight: 700,
-                  background: "rgba(255,255,255,0.15)",
-                  color: "rgba(255,255,255,0.85)",
-                  letterSpacing: "0.04em",
-                  textTransform: "uppercase",
-                }}
-              >
-                Election Commission
-              </span>
-            </div>
-            <p
-              style={{
-                color: "rgba(255,255,255,0.7)",
-                margin: 0,
-                fontSize: 14,
-                lineHeight: 1.4,
-              }}
-            >
-              View candidates nominated for elections you are eligible to vote
-              in. Select an election level below.
-            </p>
-          </div>
-        </div>
-      </div>
+    <VoterPageContainer>
+      <VoterKeyframes />
+      <PortalHero
+        eyebrow="Election Commission Nepal"
+        title={t("candidates.title")}
+        subtitle="Review approved nominated candidates standing across federal, provincial, and local contests you are eligible to participate in."
+        rightContent={
+          <>
+            <HeroChip label="Federal" tint={HERO_TINTS.federal} />
+            <HeroChip label="Provincial" tint={HERO_TINTS.provincial} />
+            <HeroChip label="Local" tint={HERO_TINTS.local} />
+          </>
+        }
+      />
 
       {/* Family cards — responsive grid */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))",
-          gap: 20,
+          gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 300px), 1fr))",
+          gap: 24,
         }}
       >
         {FAMILIES.map((f, idx) => (
@@ -241,35 +159,36 @@ export default function VoterCandidates() {
       {/* Info callout */}
       <div
         style={{
-          marginTop: 32,
-          padding: "16px 20px",
+          marginTop: 40,
+          padding: "20px 24px",
           background: PALETTE.accentLight,
-          borderRadius: 12,
+          borderRadius: 14,
           border: `1px solid ${PALETTE.accent}20`,
+          boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
           display: "flex",
-          gap: 12,
+          gap: 14,
           alignItems: "flex-start",
         }}
       >
         <Info
-          size={16}
+          size={18}
           color={PALETTE.accent}
-          style={{ flexShrink: 0, marginTop: 2 }}
+          style={{ flexShrink: 0, marginTop: 1 }}
         />
         <p
           style={{
             margin: 0,
-            fontSize: 13,
+            fontSize: 13.5,
             color: PALETTE.textSecondary,
-            lineHeight: 1.55,
+            lineHeight: 1.6,
           }}
         >
-          Only candidates nominated for elections currently open for polling in
-          your registered voting area are shown. Once an election closes,
-          candidates move to the Results section.
+          Only candidates from elections currently open for polling in your
+          registered jurisdiction are listed here. Once polling closes,
+          candidates and outcomes are available in the Results section.
         </p>
       </div>
-    </div>
+    </VoterPageContainer>
   );
 }
 
@@ -323,7 +242,7 @@ function FamilyCard({ family, isLive, animDelay, onClick }) {
       }}
     >
       {/* Card body */}
-      <div style={{ padding: "22px 22px 16px", flex: 1 }}>
+      <div style={{ padding: "26px 26px 20px", flex: 1 }}>
         {/* Icon + title row */}
         <div
           style={{
@@ -335,9 +254,9 @@ function FamilyCard({ family, isLive, animDelay, onClick }) {
         >
           <div
             style={{
-              width: 46,
-              height: 46,
-              borderRadius: 12,
+              width: 48,
+              height: 48,
+              borderRadius: 14,
               background: family.bgStrong,
               border: `1px solid ${family.color}15`,
               display: "flex",
@@ -346,7 +265,7 @@ function FamilyCard({ family, isLive, animDelay, onClick }) {
               flexShrink: 0,
             }}
           >
-            <Icon size={23} color={family.color} strokeWidth={2.2} />
+            <Icon size={24} color={family.color} strokeWidth={2.2} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <span
@@ -411,9 +330,9 @@ function FamilyCard({ family, isLive, animDelay, onClick }) {
         <p
           style={{
             margin: "0 0 14px",
-            fontSize: 13.5,
+            fontSize: 14,
             color: PALETTE.textSecondary,
-            lineHeight: 1.55,
+            lineHeight: 1.6,
           }}
         >
           {family.description}
@@ -425,7 +344,7 @@ function FamilyCard({ family, isLive, animDelay, onClick }) {
             <span
               key={chip}
               style={{
-                padding: "3px 10px",
+                padding: "4px 12px",
                 borderRadius: 6,
                 fontSize: 11,
                 fontWeight: 600,
@@ -446,7 +365,7 @@ function FamilyCard({ family, isLive, animDelay, onClick }) {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "12px 22px",
+          padding: "14px 24px",
           borderTop: `1px solid ${PALETTE.borderLight}`,
           background: PALETTE.surfaceAlt,
         }}

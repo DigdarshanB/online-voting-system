@@ -203,10 +203,10 @@ export default function ScheduledElectionsPanel({
         overflow: "hidden",
         background: TOKENS.surface,
         border: "1px solid " + TOKENS.border,
-        borderRadius: "28px",
-        boxShadow: "0 10px 34px rgba(15, 23, 42, 0.06)",
-        padding: "24px 28px",
-        gap: "18px",
+        borderRadius: "16px",
+        boxShadow: "0 2px 10px rgba(15, 23, 42, 0.03)",
+        padding: "24px",
+        gap: "16px",
       }}
     >
       <header
@@ -225,10 +225,9 @@ export default function ScheduledElectionsPanel({
             style={{
               margin: 0,
               color: TOKENS.text,
-              fontSize: "20px",
-              fontWeight: 800,
+              fontSize: "16px",
+              fontWeight: 700,
               lineHeight: 1.2,
-              letterSpacing: "-0.02em",
             }}
           >
             {title}
@@ -238,7 +237,7 @@ export default function ScheduledElectionsPanel({
               margin: 0,
               color: TOKENS.textMuted,
               fontSize: "13px",
-              fontWeight: 600,
+              fontWeight: 500,
               lineHeight: 1.4,
             }}
           >

@@ -14,7 +14,9 @@ import { VT } from "../lib/voterTokens";
 import {
   VoterKeyframes,
   VoterPageContainer,
-  VoterHubBanner,
+  PortalHero,
+  HeroChip,
+  HERO_TINTS,
   VoterLevelCard,
   VoterSummaryStrip,
   VoterMetricCard,
@@ -103,11 +105,18 @@ export default function VoterResultsHub() {
       <VoterKeyframes />
 
       {/* ── Banner ───────────────────────────────────────────── */}
-      <VoterHubBanner
-        icon={BarChart3}
+      <PortalHero
+        eyebrow="Election Commission Nepal"
         title="Election Results"
-        subtitle="Published results across Nepal's three-tier elections"
-        badge={resultsBadge}
+        subtitle="Certified electoral outcomes from finalized contests across Nepal's federal, provincial, and local governance levels."
+        rightContent={
+          <>
+            <HeroChip label="Federal" tint={HERO_TINTS.federal} />
+            <HeroChip label="Provincial" tint={HERO_TINTS.provincial} />
+            <HeroChip label="Local" tint={HERO_TINTS.local} />
+            {resultsBadge && <HeroChip label={resultsBadge} tint={HERO_TINTS.success} />}
+          </>
+        }
       />
 
       {/* ── Level cards ──────────────────────────────────────── */}

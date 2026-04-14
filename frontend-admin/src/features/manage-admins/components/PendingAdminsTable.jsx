@@ -158,7 +158,7 @@ function TableView({ items, onApprove, onReject }) {
                         fontSize: 12.5, fontWeight: 600, color: T.success,
                         cursor: "pointer", transition: T.transition,
                       }}
-                      onClick={() => onApprove(item.id)}
+                      onClick={() => onApprove(item)}
                       onMouseOver={(e) => (e.currentTarget.style.backgroundColor = `${T.success}18`)}
                       onMouseOut={(e) => (e.currentTarget.style.backgroundColor = T.successBg)}
                       title="Approve Enrollment"
@@ -217,7 +217,7 @@ function MobileView({ items, onApprove, onReject }) {
             </button>
             {item.status === 'PENDING_APPROVAL' && (
               <button
-                onClick={() => onApprove(item.id)}
+                onClick={() => onApprove(item)}
                 style={{
                   display: "inline-flex", alignItems: "center", gap: 4,
                   padding: "6px 12px", fontSize: 13, fontWeight: 600,

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { T } from "../../../components/ui/tokens";
-import { ClipboardList, ShieldCheck } from "lucide-react";
+import { ClipboardList, ShieldCheck, ArrowLeft } from "lucide-react";
 import VerificationQueueToolbar from "./VerificationQueueToolbar";
 import VoterVerificationQueue from "./VoterVerificationQueue";
 import VoterVerificationReviewPanel from "./VoterVerificationReviewPanel";
@@ -16,43 +16,67 @@ function ReviewPanelPlaceholder() {
       flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
-      padding: "64px 48px",
+      padding: "72px 48px",
       textAlign: "center",
-      minHeight: 400,
+      minHeight: 480,
       boxShadow: T.shadow.sm,
+      position: "relative",
+      overflow: "hidden",
     }}>
+      {/* Subtle dot-grid background */}
       <div style={{
-        width: 64,
-        height: 64,
-        borderRadius: "50%",
-        background: `${T.accent}0d`,
-        border: `1.5px solid ${T.accent}22`,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        marginBottom: 20,
-        color: T.accentMuted,
-      }}>
-        <ShieldCheck size={30} />
+        position: "absolute",
+        inset: 0,
+        backgroundImage: `radial-gradient(${T.borderLight} 1px, transparent 1px)`,
+        backgroundSize: "22px 22px",
+        opacity: 0.65,
+        pointerEvents: "none",
+      }} />
+
+      {/* Content */}
+      <div style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center" }}>
+        {/* Icon ring */}
+        <div style={{
+          width: 72, height: 72, borderRadius: "50%",
+          background: `linear-gradient(145deg, ${T.accent}14, ${T.accent}06)`,
+          border: `2px solid ${T.accent}22`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          marginBottom: 22,
+          boxShadow: `0 0 0 8px ${T.accent}06`,
+        }}>
+          <ShieldCheck size={30} color={T.accentMuted} strokeWidth={1.8} />
+        </div>
+
+        <h3 style={{
+          fontSize: 15.5,
+          fontWeight: 700,
+          color: T.text,
+          margin: "0 0 8px",
+          letterSpacing: "-0.02em",
+        }}>
+          No submission selected
+        </h3>
+        <p style={{
+          fontSize: 13,
+          color: T.muted,
+          maxWidth: 260,
+          margin: "0 0 22px",
+          lineHeight: 1.7,
+        }}>
+          Choose a submission from the queue to inspect artifacts and make an adjudication decision.
+        </p>
+
+        {/* Hint chip */}
+        <div style={{
+          display: "inline-flex", alignItems: "center", gap: 6,
+          padding: "6px 14px", borderRadius: T.radius.md,
+          background: T.surfaceAlt, border: `1px solid ${T.borderLight}`,
+          fontSize: 12, color: T.subtle, fontWeight: 500,
+        }}>
+          <ArrowLeft size={12} color={T.subtle} />
+          Select a submission from the queue
+        </div>
       </div>
-      <h3 style={{
-        fontSize: 15,
-        fontWeight: 700,
-        color: T.text,
-        margin: "0 0 8px",
-        letterSpacing: "-0.01em",
-      }}>
-        No submission selected
-      </h3>
-      <p style={{
-        fontSize: 13,
-        color: T.muted,
-        maxWidth: 280,
-        margin: 0,
-        lineHeight: 1.65,
-      }}>
-        Select a submission from the queue to begin artifact review and adjudication.
-      </p>
     </div>
   );
 }
@@ -140,29 +164,39 @@ export default function VerificationWorkbench({
         }}>
           {/* Queue pane header */}
           <div style={{
-            padding: "13px 18px",
+            padding: "14px 18px",
             borderBottom: `1px solid ${T.border}`,
             display: "flex",
             alignItems: "center",
             gap: 8,
             background: T.surfaceAlt,
           }}>
-            <ClipboardList size={14} color={T.accent} />
-            <span style={{ fontSize: 12.5, fontWeight: 700, color: T.text, letterSpacing: "-0.01em" }}>
-              Verification Queue
-            </span>
+            <div style={{
+              width: 28, height: 28, borderRadius: T.radius.sm,
+              background: T.accentLight, display: "flex",
+              alignItems: "center", justifyContent: "center",
+              flexShrink: 0,
+            }}>
+              <ClipboardList size={14} color={T.accent} />
+            </div>
+            <div>
+              <span style={{ fontSize: 13, fontWeight: 700, color: T.text, letterSpacing: "-0.01em" }}>
+                Verification Queue
+              </span>
+            </div>
             {!isLoading && (
               <span style={{
                 marginLeft: "auto",
-                fontSize: 10.5,
+                fontSize: 11,
                 fontWeight: 700,
-                background: `${queueBadgeColor}18`,
-                color: queueBadgeColor,
-                padding: "2px 8px",
+                background: filteredItems.length === 0 ? T.surfaceSubtle : `${queueBadgeColor}14`,
+                color: filteredItems.length === 0 ? T.subtle : queueBadgeColor,
+                padding: "3px 9px",
                 borderRadius: 9999,
-                border: `1px solid ${queueBadgeColor}28`,
+                border: `1px solid ${filteredItems.length === 0 ? T.borderLight : `${queueBadgeColor}30`}`,
+                letterSpacing: "0.01em",
               }}>
-                {filteredItems.length} {filteredItems.length === 1 ? "submission" : "submissions"}
+                {filteredItems.length} {filteredItems.length === 1 ? "item" : "items"}
               </span>
             )}
           </div>
@@ -187,7 +221,7 @@ export default function VerificationWorkbench({
             />
           ) : (
             <VerificationEmptyState
-              title={hasFilters ? "No matching submissions" : "No pending submissions"}
+              title={hasFilters ? "No matching submissions" : "Queue is clear"}
               description={
                 hasFilters
                   ? "Try adjusting your search or filter criteria."

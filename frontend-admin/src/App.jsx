@@ -107,7 +107,9 @@ export default function App() {
           </RequireSuperAdmin>
         }
       />
-      {/* Public: no auth guard – the invited admin has no token yet */}
+      {/* Canonical activation path — matches backend-generated invite URLs */}
+      <Route path="/activate-admin" element={<ActivateInvitePage />} />
+      {/* Legacy alias — backward-compatible with any existing /activate-invite links */}
       <Route path="/activate-invite" element={<ActivateInvitePage />} />
       {/* Email verification: required before TOTP setup */}
       <Route path="/verify-email" element={<AdminEmailVerification />} />

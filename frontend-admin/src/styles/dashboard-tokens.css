@@ -88,6 +88,19 @@
   box-shadow: 0 0 0 2px var(--dashboard-accent-soft);
 }
 
+/* Responsive: collapse bottom row to single column on narrow screens */
+@media (max-width: 900px) {
+  .dashboard-bottom-row {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-page-shell {
+    padding: 20px 16px 48px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dashboard-page-shell *,
   .dashboard-page-shell *::before,

@@ -288,6 +288,7 @@ def activate_admin(
     if is_valid_email(invite_recipient) and invite_recipient != email:
         raise HTTPException(status_code=400, detail="Email does not match invite")
 
+    now = datetime.now(timezone.utc)
     user = User(
         email=email,
         full_name=full_name,
@@ -297,15 +298,16 @@ def activate_admin(
         hashed_password=hash_password(password),
         role="admin",
         status="PENDING_MFA",
+        # The invite itself is the identity trust mechanism for admin accounts;
+        # email verification is not required in the admin onboarding flow.
+        email_verified_at=now,
     )
     db.add(user)
 
-    invite.used_at = datetime.now(timezone.utc)
+    invite.used_at = now
     invite.status = "USED"
     db.commit()
     db.refresh(user)
-
-    issue_email_verification_token(user=user, db=db, request=request)
     audit_auth_event(
         action="ADMIN_ACTIVATION_COMPLETED",
         actor_user_id=user.id,
@@ -449,10 +451,10 @@ def login_admin(
     if user.role not in ("admin", "super_admin"):
         raise HTTPException(status_code=403, detail="Access denied: admin accounts only")
 
-    if user.status not in ("ACTIVE", "PENDING_MFA"):
+    if user.status not in ("ACTIVE", "PENDING_MFA", "PENDING_APPROVAL"):
         raise HTTPException(
             status_code=403,
-            detail="Admin account pending MFA setup or approval. Please complete MFA enrolment first.",
+            detail="Admin account is not authorized to log in at this time.",
         )
 
     token = create_access_token(subject=str(user.id), role=user.role, token_version=user.token_version)

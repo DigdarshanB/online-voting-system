@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import AdminAlertCard from "./AdminAlertCard";
 import AdminCommandTile from "./AdminCommandTile";
 
@@ -177,21 +177,27 @@ export default function CoreAdministrationPanel({
   subtitle = "Primary administrative workflows",
 }) {
   const hasItems = Array.isArray(items) && items.length > 0;
-  const [isMobile, setIsMobile] = useState(false);
+  const [containerWidth, setContainerWidth] = useState(0);
+  const containerRef = React.useRef(null);
 
   useEffect(() => {
-    function handleResize() {
-      setIsMobile(window.innerWidth <= 640);
-    }
-    handleResize(); // initial
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        setContainerWidth(entry.contentRect.width);
+      }
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
   }, []);
+
+  // Responsive columns based on container width
+  const cols = containerWidth < 400 ? 1 : containerWidth < 700 ? 2 : 3;
 
   const gridStyle = {
     display: "grid",
-    gap: "16px",
-    gridTemplateColumns: isMobile ? "1fr" : "repeat(2, minmax(0, 1fr))",
+    gap: "14px",
+    gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
     width: "100%",
     minWidth: 0,
     maxWidth: "100%",
@@ -200,21 +206,21 @@ export default function CoreAdministrationPanel({
 
   return (
     <section
+      ref={containerRef}
       style={{
         background: TOKENS.surface,
         border: "1px solid " + TOKENS.border,
-        borderRadius: "28px",
-        boxShadow: "0 10px 34px rgba(15, 23, 42, 0.06)",
-        padding: "28px",
+        borderRadius: "16px",
+        boxShadow: "0 2px 10px rgba(15, 23, 42, 0.03)",
+        padding: "24px",
         width: "100%",
         maxWidth: "100%",
         minWidth: 0,
-        height: "100%",
         display: "flex",
         flexDirection: "column",
         boxSizing: "border-box",
         overflow: "hidden",
-        gap: "18px",
+        gap: "16px",
       }}
     >
       <header style={{ width: "100%", minWidth: 0, display: "grid", gap: "4px" }}>
@@ -222,10 +228,9 @@ export default function CoreAdministrationPanel({
           style={{
             margin: 0,
             color: TOKENS.text,
-            fontSize: "20px",
-            fontWeight: 800,
+            fontSize: "16px",
+            fontWeight: 700,
             lineHeight: 1.2,
-            letterSpacing: "-0.02em",
           }}
         >
           {title}
@@ -235,7 +240,7 @@ export default function CoreAdministrationPanel({
             margin: 0,
             color: TOKENS.textMuted,
             fontSize: "13px",
-            fontWeight: 600,
+            fontWeight: 500,
             lineHeight: 1.4,
           }}
         >
@@ -243,11 +248,11 @@ export default function CoreAdministrationPanel({
         </p>
       </header>
 
-      <div style={{ width: "100%", minWidth: 0, display: "grid", gap: "18px" }}>
+      <div style={{ width: "100%", minWidth: 0, display: "grid", gap: "14px" }}>
         {loading ? (
           <>
             <div style={gridStyle}>
-              {[0, 1, 2, 3].map((index) => (
+              {[0, 1, 2, 3, 4, 5].map((index) => (
                 <SkeletonTile key={index} index={index} />
               ))}
             </div>

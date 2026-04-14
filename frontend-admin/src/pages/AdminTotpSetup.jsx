@@ -12,6 +12,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { QRCodeSVG } from "qrcode.react";
+import OtpInput from "../components/ui/OtpInput";
 import "./AdminAuthPage.css";   // reuse existing card/input/button styles
 
 const API = "http://localhost:8000";
@@ -54,14 +55,9 @@ export default function AdminTotpSetup() {
         }
 
         // Account is awaiting super-admin approval — show pending screen.
+        // (Admin's TOTP is already enrolled at this point; no setup loop needed.)
         if (data.status === "PENDING_APPROVAL") {
           navigate("/pending-approval", { replace: true });
-          return;
-        }
-
-        // Email must be verified before TOTP setup proceeds.
-        if (!data.email_verified) {
-          navigate("/verify-email", { replace: true });
           return;
         }
 
@@ -219,28 +215,21 @@ export default function AdminTotpSetup() {
               {secret}
             </div>
 
-            <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 8 }}>
+            <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12, textAlign: "center" }}>
               2. Enter the 6-digit code shown in your app:
             </p>
             <form onSubmit={handleVerify} className="admin-form">
               <div className="admin-field">
-                <label className="admin-label" htmlFor="totpCode">
+                <label className="admin-label" style={{ textAlign: "center", display: "block", marginBottom: 4 }}>
                   One-Time Code
                 </label>
-                <input
-                  id="totpCode"
-                  className="admin-input"
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  placeholder="123456"
+                <OtpInput
                   value={code}
-                  onChange={(e) => {
-                    setCode(e.target.value.replace(/\D/g, ""));
-                    setError("");
-                  }}
-                  autoComplete="one-time-code"
-                  required
+                  onChange={(val) => { setCode(val); setError(""); }}
+                  autoFocus
+                  disabled={step === "verifying"}
+                  hasError={!!error}
+                  ariaLabel="Authenticator one-time code"
                 />
               </div>
               <button
@@ -257,28 +246,21 @@ export default function AdminTotpSetup() {
         {/* ── Step: challenge (already enrolled; verify every login) ── */}
         {step === "challenge" && (
           <div style={{ padding: "16px 0" }}>
-            <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 8 }}>
+            <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 14, textAlign: "center", lineHeight: 1.6 }}>
               Enter the current 6-digit code from Microsoft Authenticator to continue.
             </p>
             <form onSubmit={handleVerify} className="admin-form">
               <div className="admin-field">
-                <label className="admin-label" htmlFor="totpCodeChallenge">
+                <label className="admin-label" style={{ textAlign: "center", display: "block", marginBottom: 4 }}>
                   One-Time Code
                 </label>
-                <input
-                  id="totpCodeChallenge"
-                  className="admin-input"
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  placeholder="123456"
+                <OtpInput
                   value={code}
-                  onChange={(e) => {
-                    setCode(e.target.value.replace(/\D/g, ""));
-                    setError("");
-                  }}
-                  autoComplete="one-time-code"
-                  required
+                  onChange={(val) => { setCode(val); setError(""); }}
+                  autoFocus
+                  disabled={step === "verifying"}
+                  hasError={!!error}
+                  ariaLabel="Authenticator one-time code"
                 />
               </div>
               <button

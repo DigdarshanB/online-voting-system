@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { extractError } from "../lib/token";
 import { totpSetup, totpVerify } from "../features/verification/api/verificationApi";
+import OtpInput from "../components/OtpInput";
 import "./VoterAuthPage.css";
 
 function extractSecret(uri) {
@@ -120,20 +121,17 @@ export default function VoterTotpSetup() {
                 </>
               )}
               <form onSubmit={handleVerify}>
-                <div className="voter-field" style={{ marginBottom: 12 }}>
-                  <label className="voter-label" htmlFor="totpCode">
+                <div className="voter-field" style={{ marginBottom: 12, textAlign: "center" }}>
+                  <label className="voter-label" style={{ display: "block", textAlign: "center", marginBottom: 10 }}>
                     6-digit code from the app
                   </label>
-                  <input
-                    id="totpCode"
-                    className="voter-input"
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={6}
-                    placeholder="123456"
+                  <OtpInput
                     value={code}
-                    onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-                    autoComplete="one-time-code"
+                    onChange={(val) => { setCode(val); setError(""); }}
+                    autoFocus
+                    disabled={step === "verifying"}
+                    hasError={!!error}
+                    ariaLabel="Authenticator setup code"
                   />
                 </div>
                 <button
@@ -150,20 +148,17 @@ export default function VoterTotpSetup() {
           {/* ── challenge (TOTP already set up, just verify) ── */}
           {step === "challenge" && (
             <form onSubmit={handleVerify} style={{ padding: "16px 0" }}>
-              <div className="voter-field" style={{ marginBottom: 12 }}>
-                <label className="voter-label" htmlFor="totpCodeChallenge">
+              <div className="voter-field" style={{ marginBottom: 12, textAlign: "center" }}>
+                <label className="voter-label" style={{ display: "block", textAlign: "center", marginBottom: 10 }}>
                   6-digit code from Microsoft Authenticator
                 </label>
-                <input
-                  id="totpCodeChallenge"
-                  className="voter-input"
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  placeholder="123456"
+                <OtpInput
                   value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-                  autoComplete="one-time-code"
+                  onChange={(val) => { setCode(val); setError(""); }}
+                  autoFocus
+                  disabled={step === "verifying"}
+                  hasError={!!error}
+                  ariaLabel="Authenticator verification code"
                 />
               </div>
               <button

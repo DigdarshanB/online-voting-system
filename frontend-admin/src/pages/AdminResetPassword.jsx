@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
+import OtpInput from "../components/ui/OtpInput";
 import "./AdminAuthPage.css";
 
 const API = "http://localhost:8000";
@@ -153,19 +154,16 @@ export default function AdminResetPassword() {
               </div>
 
               <div className="admin-field">
-                <label className="admin-label" htmlFor="arpCode">
+                <label className="admin-label" style={{ textAlign: "center", display: "block", marginBottom: 4 }}>
                   Reset Code
                 </label>
-                <input
-                  id="arpCode"
-                  className="admin-input"
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="6-digit code from your email"
+                <OtpInput
                   value={form.code}
-                  onChange={(e) => update("code", e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  autoComplete="one-time-code"
-                  maxLength={6}
+                  onChange={(val) => update("code", val)}
+                  autoFocus={false}
+                  disabled={loading}
+                  hasError={!!error && !form.code.trim()}
+                  ariaLabel="Password reset code"
                 />
               </div>
 

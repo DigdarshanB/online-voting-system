@@ -14,7 +14,9 @@ import { VT } from "../lib/voterTokens";
 import {
   VoterKeyframes,
   VoterPageContainer,
-  VoterHubBanner,
+  PortalHero,
+  HeroChip,
+  HERO_TINTS,
   VoterLevelCard,
   VoterProgressSteps,
 } from "../components/VoterUI";
@@ -131,11 +133,18 @@ export default function VoterElectionsHub() {
       <VoterKeyframes />
 
       {/* ── Banner ───────────────────────────────────────────── */}
-      <VoterHubBanner
-        icon={Vote}
+      <PortalHero
+        eyebrow="Election Commission Nepal"
         title={t("elections.title")}
-        subtitle={t("elections.subtitle")}
-        badge={progressBadge}
+        subtitle="Browse federal, provincial, and local contests you are eligible to participate in across your registered voting jurisdiction."
+        rightContent={
+          <>
+            <HeroChip label="Federal" tint={HERO_TINTS.federal} />
+            <HeroChip label="Provincial" tint={HERO_TINTS.provincial} />
+            <HeroChip label="Local" tint={HERO_TINTS.local} />
+            {progressBadge && <HeroChip label={progressBadge} tint={HERO_TINTS.success} />}
+          </>
+        }
       />
 
       {/* ── Level cards ──────────────────────────────────────── */}

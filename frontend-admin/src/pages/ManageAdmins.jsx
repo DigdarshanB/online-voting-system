@@ -315,6 +315,7 @@ export default function ManageAdmins() {
           submitting={inviteMutation.isPending}
           error={localError}
           resultProps={inviteResult}
+          onDismissResult={() => setInviteResult(null)}
         />
         <TotpRecoveryQueueTable 
           items={recoveryQuery.data || []}

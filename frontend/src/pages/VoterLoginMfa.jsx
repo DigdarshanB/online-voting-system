@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { setToken } from "../lib/authStorage";
 import { verifyLoginMfa } from "../features/auth/api/authApi";
 import { extractError } from "../lib/token";
+import OtpInput from "../components/OtpInput";
 import "./VoterAuthPage.css";
 
 export default function VoterLoginMfa() {
@@ -68,21 +69,17 @@ export default function VoterLoginMfa() {
         )}
 
         <form className="voter-form" onSubmit={handleVerify}>
-          <div className="voter-field" style={{ marginBottom: 12 }}>
-            <label className="voter-label" htmlFor="mfaCode">
+          <div className="voter-field" style={{ marginBottom: 12, textAlign: "center" }}>
+            <label className="voter-label" style={{ display: "block", textAlign: "center", marginBottom: 10 }}>
               6-digit code from Microsoft Authenticator
             </label>
-            <input
-              id="mfaCode"
-              className="voter-input"
-              type="text"
-              inputMode="numeric"
-              maxLength={6}
-              placeholder="123456"
+            <OtpInput
               value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-              autoComplete="one-time-code"
+              onChange={(val) => { setCode(val); setError(""); }}
               autoFocus
+              disabled={loading}
+              hasError={!!error}
+              ariaLabel="Authenticator verification code"
             />
           </div>
           <button

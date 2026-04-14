@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { extractError } from "../lib/token";
 import { requestTotpRecovery, completeTotpRecovery } from "../features/auth/api/authApi";
+import OtpInput from "../components/OtpInput";
 import "./VoterAuthPage.css";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -99,17 +100,15 @@ export default function VoterTotpRecovery() {
 
         {requested && (
           <form className="voter-form" onSubmit={handleComplete} noValidate style={{ marginTop: 14 }}>
-            <div className="voter-field">
-              <label className="voter-label" htmlFor="vtrCode">Recovery Code</label>
-              <input
-                id="vtrCode"
-                className="voter-input"
-                type="text"
+            <div className="voter-field" style={{ textAlign: "center" }}>
+              <label className="voter-label" style={{ display: "block", textAlign: "center", marginBottom: 10 }}>Recovery Code</label>
+              <OtpInput
                 value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                placeholder="6-digit code from email"
-                inputMode="numeric"
-                maxLength={6}
+                onChange={(val) => { setCode(val); setError(""); }}
+                autoFocus
+                disabled={loadingComplete}
+                hasError={!!error && !code.trim()}
+                ariaLabel="TOTP recovery code"
               />
             </div>
             <button className="voter-continue" type="submit" disabled={loadingComplete}>

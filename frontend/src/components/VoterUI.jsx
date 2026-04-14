@@ -230,6 +230,102 @@ export function VoterHubBanner({ icon: Icon, title, subtitle, badge }) {
   );
 }
 
+/* ── Portal hero — shared across Candidates, Elections, Results ─ */
+
+export const HERO_TINTS = {
+  federal:    { bg: "rgba(191,219,254,0.18)", text: "#BFDBFE", border: "rgba(191,219,254,0.35)" },
+  provincial: { bg: "rgba(196,181,253,0.18)", text: "#C4B5FD", border: "rgba(196,181,253,0.35)" },
+  local:      { bg: "rgba(253,186,116,0.18)", text: "#FED7AA", border: "rgba(253,186,116,0.35)" },
+  success:    { bg: "rgba(167,243,208,0.18)", text: "#A7F3D0", border: "rgba(167,243,208,0.35)" },
+  default:    { bg: "rgba(255,255,255,0.12)", text: "rgba(255,255,255,0.88)", border: "rgba(255,255,255,0.22)" },
+};
+
+export function HeroChip({ label, tint }) {
+  const s = tint || HERO_TINTS.default;
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center",
+      padding: "6px 16px", borderRadius: 20,
+      background: s.bg, border: `1px solid ${s.border}`,
+      color: s.text, fontSize: 12, fontWeight: 700,
+      letterSpacing: "0.01em", whiteSpace: "nowrap",
+    }}>
+      {label}
+    </span>
+  );
+}
+
+export function PortalHero({ eyebrow, title, subtitle, rightContent }) {
+  return (
+    <div style={{
+      background: "linear-gradient(135deg, #173B72 0%, #2F6FED 100%)",
+      borderRadius: VT.radius.xl,
+      padding: "clamp(22px, 3vw, 34px) clamp(22px, 4vw, 44px)",
+      color: "#FFF",
+      marginBottom: VT.space.xl,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      flexWrap: "wrap",
+      gap: VT.space.lg,
+      position: "relative",
+      overflow: "hidden",
+    }}>
+      {/* Decorative circles */}
+      <div style={{
+        position: "absolute", right: -60, top: -60,
+        width: 240, height: 240, borderRadius: "50%",
+        background: "rgba(255,255,255,0.05)", pointerEvents: "none",
+      }} />
+      <div style={{
+        position: "absolute", right: 80, bottom: -80,
+        width: 180, height: 180, borderRadius: "50%",
+        background: "rgba(255,255,255,0.04)", pointerEvents: "none",
+      }} />
+
+      {/* Left: text */}
+      <div style={{
+        flex: "1 1 300px", minWidth: 0, position: "relative",
+      }}>
+          {eyebrow && (
+            <div style={{
+              display: "inline-flex", alignItems: "center",
+              marginBottom: 10, padding: "4px 12px", borderRadius: 20,
+              background: "rgba(255,255,255,0.14)",
+              fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.88)",
+              letterSpacing: "0.05em", textTransform: "uppercase",
+            }}>
+              {eyebrow}
+            </div>
+          )}
+          <h1 style={{
+            margin: 0, fontSize: "clamp(20px, 2.5vw, 26px)", fontWeight: 800,
+            letterSpacing: "-0.02em", lineHeight: 1.25, color: "#FFF",
+          }}>
+            {title}
+          </h1>
+          <p style={{
+            margin: "8px 0 0", fontSize: 14, color: "rgba(255,255,255,0.80)",
+            fontWeight: 500, lineHeight: 1.55,
+          }}>
+            {subtitle}
+          </p>
+      </div>
+
+      {/* Right: chips / badges */}
+      {rightContent && (
+        <div style={{
+          display: "flex", flexWrap: "wrap", gap: 8,
+          alignSelf: "center", flexShrink: 0,
+          position: "relative", justifyContent: "flex-end",
+        }}>
+          {rightContent}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── Level card ──────────────────────────────────────────────── */
 export function VoterLevelCard({ icon: Icon, title, description, chips, cta, ctaColor, dimmed, onClick }) {
   return (

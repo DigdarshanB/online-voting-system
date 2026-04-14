@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import OtpInput from "../components/ui/OtpInput";
 import "./AdminAuthPage.css";
 
 const API = "http://localhost:8000";
@@ -112,16 +113,16 @@ export default function AdminTotpRecovery() {
         {requested && (
           <form className="admin-form" onSubmit={handleComplete} noValidate style={{ marginTop: 14 }}>
             <div className="admin-field">
-              <label className="admin-label" htmlFor="atrCode">Recovery Code</label>
-              <input
-                id="atrCode"
-                className="admin-input"
-                type="text"
+              <label className="admin-label" style={{ textAlign: "center", display: "block", marginBottom: 4 }}>
+                Recovery Code
+              </label>
+              <OtpInput
                 value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                placeholder="6-digit code from email"
-                inputMode="numeric"
-                maxLength={6}
+                onChange={(val) => setCode(val)}
+                autoFocus
+                disabled={loadingComplete}
+                hasError={!!error && !code.trim()}
+                ariaLabel="TOTP recovery code"
               />
             </div>
             <button className="admin-continue" type="submit" disabled={loadingComplete}>

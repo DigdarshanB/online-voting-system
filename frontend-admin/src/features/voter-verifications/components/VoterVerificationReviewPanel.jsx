@@ -1,9 +1,10 @@
 import React from "react";
 import { T } from "../../../components/ui/tokens";
-import { X, Mail, Phone, ShieldCheck } from "lucide-react";
+import { X, Mail, Phone, ShieldCheck, Calendar } from "lucide-react";
 import VerificationImagePanel from "./VerificationImagePanel";
 import VerificationChecklist from "./VerificationChecklist";
 import VerificationDecisionPanel from "./VerificationDecisionPanel";
+import StatusPill from "./StatusPill";
 
 const SectionDivider = ({ label }) => (
   <div style={{
@@ -94,11 +95,14 @@ export default function VoterVerificationReviewPanel({
             <ShieldCheck size={18} />
           </div>
           <div>
-            <h3 style={{ fontSize: 14, fontWeight: 800, margin: 0, color: T.text, letterSpacing: "-0.01em" }}>
-              Reviewing Application
-            </h3>
-            <p style={{ fontSize: 11, color: T.muted, margin: 0, fontWeight: 500, marginTop: 1 }}>
-              Ref: {voter.id}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+              <h3 style={{ fontSize: 14, fontWeight: 800, margin: 0, color: T.text, letterSpacing: "-0.02em" }}>
+                {voter.full_name}
+              </h3>
+              <StatusPill status={voter.status} />
+            </div>
+            <p style={{ fontSize: 11, color: T.muted, margin: 0, fontWeight: 400 }}>
+              #{voter.citizenship_no_normalized || voter.id}
             </p>
           </div>
         </div>
@@ -134,7 +138,7 @@ export default function VoterVerificationReviewPanel({
         }}>
           <div>
             <div style={infoLabel}>Full Name</div>
-            <div style={{ ...infoValue, fontWeight: 700, fontSize: 14 }}>{voter.full_name}</div>
+            <div style={{ ...infoValue, fontWeight: 700, fontSize: 13.5 }}>{voter.full_name}</div>
           </div>
           <div>
             <div style={infoLabel}>Citizenship Number</div>
@@ -153,9 +157,22 @@ export default function VoterVerificationReviewPanel({
             <div style={infoLabel}>Phone Number</div>
             <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
               <Phone size={12} style={{ color: T.muted, flexShrink: 0 }} />
-              <span style={{ ...infoValue, fontSize: 12.5 }}>{voter.phone_number}</span>
+              <span style={{ ...infoValue, fontSize: 12.5 }}>{voter.phone_number || "—"}</span>
             </div>
           </div>
+          {(voter.submitted_at || voter.document_uploaded_at) && (
+            <div>
+              <div style={infoLabel}>Submitted</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <Calendar size={12} style={{ color: T.muted, flexShrink: 0 }} />
+                <span style={{ ...infoValue, fontSize: 12.5 }}>
+                  {new Date(voter.submitted_at || voter.document_uploaded_at).toLocaleDateString("en-US", {
+                    month: "short", day: "numeric", year: "numeric",
+                  })}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Section: Submitted Artifacts */}

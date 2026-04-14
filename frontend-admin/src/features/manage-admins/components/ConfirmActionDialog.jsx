@@ -159,6 +159,7 @@ export default function ConfirmActionDialog({
             borderTop: `1px solid ${T.borderLight}`,
           }}>
             <button
+              type="button"
               onClick={onCancel}
               style={{
                 padding: '9px 18px', fontSize: 13.5, fontWeight: 600,
@@ -173,6 +174,7 @@ export default function ConfirmActionDialog({
               {cancelLabel}
             </button>
             <button
+              type="button"
               onClick={handleConfirm}
               disabled={!canConfirm}
               style={{

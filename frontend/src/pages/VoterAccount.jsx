@@ -35,6 +35,14 @@ import { clearToken } from "../lib/authStorage";
 import { fetchMe, changePassword, requestTotpRecovery, completeTotpRecovery } from "../features/auth/api/authApi";
 import { extractError } from "../lib/token";
 import { useLanguage } from "../lib/LanguageContext";
+import {
+  VoterPageContainer,
+  VoterKeyframes,
+  PortalHero,
+  HeroChip,
+  HERO_TINTS,
+} from "../components/VoterUI";
+import { VT } from "../lib/voterTokens";
 
 const PALETTE = {
   navy: "#173B72",
@@ -80,21 +88,39 @@ function strengthLabel(s) {
 
 function SectionHeading({ icon, text }) {
   return (
-    <h3
+    <div
       style={{
         display: "flex",
         alignItems: "center",
         gap: 8,
-        fontSize: 14,
-        fontWeight: 700,
-        color: PALETTE.navy,
-        marginBottom: 10,
-        letterSpacing: "-0.01em",
+        paddingBottom: 14,
+        marginBottom: 18,
+        borderBottom: `1.5px solid ${PALETTE.border}`,
       }}
     >
-      {icon}
-      {text}
-    </h3>
+      <div
+        style={{
+          width: 30, height: 30,
+          borderRadius: 8,
+          background: PALETTE.lightBlueBg,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        {React.cloneElement(icon, { size: 15, color: PALETTE.accentBlue, strokeWidth: 2.2 })}
+      </div>
+      <h3
+        style={{
+          margin: 0,
+          fontSize: 14,
+          fontWeight: 700,
+          color: PALETTE.navy,
+          letterSpacing: "-0.01em",
+        }}
+      >
+        {text}
+      </h3>
+    </div>
   );
 }
 
@@ -106,32 +132,50 @@ function InfoTile({ label, value, icon }) {
       onMouseLeave={() => setHov(false)}
       style={{
         display: "flex",
-        alignItems: "center",
-        gap: 10,
-        padding: "10px 14px",
-        background: "#F8FAFC",
-        borderRadius: 10,
-        border: `1px solid ${hov ? PALETTE.accentBlue : "#F1F5F9"}`,
-        borderLeft: `3px solid ${hov ? PALETTE.accentBlue : "#E2E8F0"}`,
+        alignItems: "flex-start",
+        gap: 12,
+        padding: "14px 16px",
+        background: hov ? "#F0F6FF" : "#F8FAFC",
+        borderRadius: VT.radius.lg,
+        border: `1.5px solid ${hov ? PALETTE.accentBlue + "40" : "#EEF2F8"}`,
         transition: "all 0.18s ease",
         transform: hov ? "translateY(-1px)" : "none",
-        boxShadow: hov ? "0 4px 12px rgba(47,111,237,0.07)" : "none",
+        boxShadow: hov ? "0 4px 14px rgba(47,111,237,0.08)" : "none",
+        minHeight: 68,
       }}
     >
-      <div style={{ flexShrink: 0, display: "flex" }}>{icon}</div>
-      <div>
+      <div
+        style={{
+          width: 34, height: 34, borderRadius: 9,
+          background: PALETTE.lightBlueBg,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          flexShrink: 0, marginTop: 1,
+        }}
+      >
+        {icon}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
             fontSize: 10.5,
             color: PALETTE.mutedText,
             fontWeight: 700,
             textTransform: "uppercase",
-            letterSpacing: "0.04em",
+            letterSpacing: "0.05em",
+            marginBottom: 3,
           }}
         >
           {label}
         </div>
-        <div style={{ fontSize: 13.5, fontWeight: 700, color: PALETTE.navy, marginTop: 1, wordBreak: "break-word" }}>
+        <div
+          style={{
+            fontSize: 13.5,
+            fontWeight: 700,
+            color: PALETTE.navy,
+            wordBreak: "break-word",
+            lineHeight: 1.35,
+          }}
+        >
           {value}
         </div>
       </div>
@@ -141,22 +185,40 @@ function InfoTile({ label, value, icon }) {
 
 function StatusPill({ label, ok, okText, notOkText }) {
   return (
-    <span
+    <div
       style={{
-        display: "inline-flex",
+        display: "flex",
         alignItems: "center",
-        gap: 6,
-        padding: "6px 14px",
-        borderRadius: 20,
-        fontSize: 12.5,
-        fontWeight: 700,
-        background: ok ? "#EAFBF4" : "#FEF2F2",
-        color: ok ? PALETTE.success : PALETTE.nepalRed,
-        border: ok ? "1px solid #BBF7D0" : "1px solid #FECACA",
+        gap: 12,
+        padding: "12px 16px",
+        borderRadius: VT.radius.lg,
+        background: ok ? "#F0FDF8" : "#FEF9F9",
+        border: `1.5px solid ${ok ? "#A7F3D0" : "#FECACA"}`,
+        flex: "1 1 200px",
       }}
     >
-      {ok ? "\u2713" : "!"} {label}: {ok ? okText : notOkText}
-    </span>
+      <div
+        style={{
+          width: 32, height: 32, borderRadius: 8,
+          background: ok ? "#D1FAE5" : "#FEE2E2",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        {ok
+          ? <BadgeCheck size={16} color={PALETTE.success} strokeWidth={2.2} />
+          : <AlertCircle size={16} color={PALETTE.nepalRed} strokeWidth={2.2} />
+        }
+      </div>
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: PALETTE.mutedText, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 1 }}>
+          {label}
+        </div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: ok ? PALETTE.success : PALETTE.nepalRed }}>
+          {ok ? okText : notOkText}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -691,23 +753,43 @@ export default function VoterAccount() {
 
   if (loading) {
     return (
-      <div style={{ textAlign: "center", padding: 48, color: PALETTE.mutedText, fontSize: 15, fontWeight: 500 }}>
-        {t("common.loading")}
-      </div>
+      <VoterPageContainer>
+        <VoterKeyframes />
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div className="voter-skeleton" style={{ height: 140, borderRadius: VT.radius.xl }} />
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+              gap: 12,
+            }}
+          >
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="voter-skeleton" style={{ height: 68, borderRadius: VT.radius.lg }} />
+            ))}
+          </div>
+        </div>
+      </VoterPageContainer>
     );
   }
 
   if (error) {
     return (
-      <div style={{ padding: "32px", maxWidth: 760, margin: "0 auto" }}>
+      <VoterPageContainer>
+        <VoterKeyframes />
         <div
-          style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 20px", background: "#FEF2F2", borderRadius: 10, border: "1px solid #FECACA", color: "#DC2626", fontSize: 14, fontWeight: 500 }}
+          style={{
+            display: "flex", alignItems: "center", gap: 10,
+            padding: "14px 20px",
+            background: "#FEF2F2", borderRadius: VT.radius.lg,
+            border: "1px solid #FECACA", color: "#DC2626", fontSize: 14, fontWeight: 500,
+          }}
           role="alert"
         >
           <AlertCircle size={18} />
           {error}
         </div>
-      </div>
+      </VoterPageContainer>
     );
   }
 
@@ -737,176 +819,216 @@ export default function VoterAccount() {
         }
         @media (max-width: 640px) {
           .va-info-grid { grid-template-columns: 1fr !important; }
+          .va-security-row { flex-direction: column !important; }
         }
       `}</style>
 
-      <div style={{ padding: "32px 32px 48px", maxWidth: 760, margin: "0 auto" }}>
+      <VoterPageContainer>
+        <VoterKeyframes />
 
-        {/* ── Profile Hero Card ──────────────────────────────── */}
+        {/* ── Hero ──────────────────────────────────────────────── */}
+        <PortalHero
+          eyebrow="Election Commission Nepal"
+          title={`Welcome, ${user?.full_name?.split(" ")[0] || "Voter"}`}
+          subtitle="Your secure voter profile, verification status, and account settings — all in one place."
+          rightContent={
+            <>
+              <HeroChip
+                label={isActive ? t("account.status_chip.active") : t("account.status_chip.inactive")}
+                tint={isActive ? HERO_TINTS.success : { bg: "rgba(220,44,58,0.18)", text: "#FCA5A5", border: "rgba(220,44,58,0.35)" }}
+              />
+              <HeroChip label={t("account.role_voter")} tint={HERO_TINTS.default} />
+              {user?.id && <HeroChip label={`ID #${user.id}`} tint={HERO_TINTS.default} />}
+            </>
+          }
+        />
+
+        {/* ── Account Overview / Profile identity card ──────────── */}
         <div
           style={{
             background: PALETTE.surface,
-            borderRadius: 16,
-            border: "1px solid #E2E8F0",
-            borderLeft: `4px solid ${PALETTE.nepalRed}`,
-            overflow: "hidden",
-            marginBottom: 20,
+            border: `1.5px solid ${PALETTE.border}`,
+            borderRadius: VT.radius.xl,
+            padding: "24px 28px",
+            boxShadow: VT.shadow.md,
+            display: "flex",
+            alignItems: "center",
+            gap: 20,
+            flexWrap: "wrap",
+            marginBottom: 28,
           }}
         >
-          {/* Gradient strip */}
-          <div
-            style={{
-              height: 110,
-              background: `linear-gradient(135deg, ${PALETTE.navy} 0%, ${PALETTE.accentBlue} 100%)`,
-              position: "relative",
-              overflow: "hidden",
-            }}
-          >
-            <svg width="100%" height="100%" style={{ position: "absolute", inset: 0, opacity: 0.06 }} xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <pattern id="vaDiag" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                  <line x1="0" y1="0" x2="0" y2="16" stroke="#fff" strokeWidth="1" />
-                </pattern>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#vaDiag)" />
-            </svg>
+          {/* Avatar */}
+          <div style={{ position: "relative", flexShrink: 0 }}>
+            <div
+              style={{
+                width: 68, height: 68, borderRadius: "50%",
+                background: PALETTE.lightBlueBg,
+                border: `2.5px solid ${PALETTE.accentBlue}20`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontWeight: 800, fontSize: 24, color: PALETTE.accentBlue,
+                letterSpacing: "-0.02em",
+                boxShadow: "0 2px 12px rgba(47,111,237,0.15)",
+              }}
+            >
+              {initials}
+            </div>
+            {isActive && (
+              <span
+                style={{
+                  position: "absolute", bottom: 2, right: 2,
+                  width: 14, height: 14, borderRadius: "50%",
+                  background: PALETTE.success,
+                  border: "2.5px solid #FFF",
+                  animation: "vaDotPulse 2s ease-in-out infinite",
+                }}
+              />
+            )}
           </div>
 
-          <div style={{ padding: "0 28px 24px", position: "relative" }}>
-            {/* Avatar */}
-            <div style={{ position: "relative", display: "inline-block", top: -36, marginBottom: -18 }}>
-              <div
-                style={{
-                  width: 72,
-                  height: 72,
-                  borderRadius: "50%",
-                  background: PALETTE.lightBlueBg,
-                  border: "3px solid #FFF",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: 800,
-                  fontSize: 26,
-                  color: PALETTE.accentBlue,
-                  letterSpacing: "-0.02em",
-                  boxShadow: "0 4px 16px rgba(23,59,114,0.15)",
-                }}
-              >
-                {initials}
-              </div>
-              {/* Active pulse dot */}
-              {isActive && (
-                <span
-                  style={{
-                    position: "absolute",
-                    bottom: 3,
-                    right: 3,
-                    width: 14,
-                    height: 14,
-                    borderRadius: "50%",
-                    background: PALETTE.success,
-                    border: "2px solid #FFF",
-                    animation: "vaDotPulse 2s ease-in-out infinite",
-                  }}
-                />
-              )}
+          {/* Identity */}
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <div style={{ fontSize: 20, fontWeight: 800, color: PALETTE.navy, letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+              {user?.full_name || "Voter"}
             </div>
-
-            <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: PALETTE.navy, letterSpacing: "-0.02em" }}>
-                {user?.full_name || "Voter"}
-              </h2>
-              <span style={{ padding: "3px 10px", borderRadius: 8, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", background: PALETTE.lightBlueBg, color: PALETTE.accentBlue }}>
-                {t("account.role_voter")}
-              </span>
-              <span style={{ padding: "3px 10px", borderRadius: 8, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", background: isActive ? "#EAFBF4" : "#FEF2F2", color: isActive ? PALETTE.success : PALETTE.nepalRed }}>
-                {isActive ? t("account.status_chip.active") : t("account.status_chip.inactive")}
-              </span>
-              {user?.id && (
-                <span style={{ padding: "3px 10px", borderRadius: 8, fontSize: 11, fontWeight: 700, background: "#F1F5F9", color: PALETTE.mutedText }}>
-                  ID #{user.id}
-                </span>
-              )}
+            <div style={{ fontSize: 13, color: PALETTE.mutedText, fontWeight: 500, marginTop: 3 }}>
+              {user?.email}
             </div>
-
             {maskedCitizenship && (
-              <div style={{ fontSize: 12, color: PALETTE.mutedText, fontWeight: 600, marginTop: 6, letterSpacing: "0.02em" }}>
+              <div style={{ fontSize: 12, color: PALETTE.mutedText, fontWeight: 600, marginTop: 4, letterSpacing: "0.02em" }}>
                 Citizenship: {maskedCitizenship}
               </div>
             )}
           </div>
+
+          {/* Status chips */}
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            <span style={{ padding: "4px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", background: PALETTE.lightBlueBg, color: PALETTE.accentBlue }}>
+              {t("account.role_voter")}
+            </span>
+            <span style={{ padding: "4px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", background: isActive ? "#D1FAE5" : "#FEE2E2", color: isActive ? PALETTE.success : PALETTE.nepalRed }}>
+              {isActive ? t("account.status_chip.active") : t("account.status_chip.inactive")}
+            </span>
+          </div>
         </div>
 
-        {/* ── Personal Information ───────────────────────────── */}
-        <SectionHeading icon={<UserCircle2 size={16} />} text={t("account.personal_info")} />
+        {/* ── Two-column layout for info + security ─────────────── */}
         <div
-          className="va-info-grid"
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: 10,
-            marginBottom: 20,
+            gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 480px), 1fr))",
+            gap: 24,
+            marginBottom: 24,
+            alignItems: "start",
           }}
         >
-          <InfoTile label={t("account.label.full_name")} value={user?.full_name || t("common.not_available")} icon={<UserCircle2 size={16} color={PALETTE.accentBlue} />} />
-          <InfoTile label={t("account.label.email")} value={user?.email || t("common.not_available")} icon={<Mail size={16} color={PALETTE.accentBlue} />} />
-          <InfoTile label={t("account.label.citizenship")} value={maskedCitizenship || t("common.not_available")} icon={<CreditCard size={16} color={PALETTE.accentBlue} />} />
-          <InfoTile label={t("account.label.phone")} value={user?.phone_number || t("common.not_available")} icon={<Phone size={16} color={PALETTE.accentBlue} />} />
-          <InfoTile label={t("account.label.member_since")} value={user?.member_since || t("common.not_available")} icon={<Calendar size={16} color={PALETTE.accentBlue} />} />
-          <InfoTile label={t("account.label.last_login")} value={lastLoginDisplay} icon={<Clock size={16} color={PALETTE.accentBlue} />} />
-          <InfoTile
-            label="Face ID"
-            value={user?.face_uploaded ? "Uploaded \u2713" : "Pending upload"}
-            icon={<Camera size={16} color={user?.face_uploaded ? PALETTE.success : PALETTE.warning} />}
-          />
+          {/* Personal Information card */}
+          <div
+            style={{
+              background: PALETTE.surface,
+              border: `1.5px solid ${PALETTE.border}`,
+              borderRadius: VT.radius.xl,
+              padding: "22px 24px 24px",
+              boxShadow: VT.shadow.sm,
+            }}
+          >
+            <SectionHeading icon={<UserCircle2 />} text={t("account.personal_info")} />
+            <div
+              className="va-info-grid"
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+                gap: 10,
+              }}
+            >
+              <InfoTile label={t("account.label.full_name")} value={user?.full_name || t("common.not_available")} icon={<UserCircle2 size={16} color={PALETTE.accentBlue} />} />
+              <InfoTile label={t("account.label.email")} value={user?.email || t("common.not_available")} icon={<Mail size={16} color={PALETTE.accentBlue} />} />
+              <InfoTile label={t("account.label.citizenship")} value={maskedCitizenship || t("common.not_available")} icon={<CreditCard size={16} color={PALETTE.accentBlue} />} />
+              <InfoTile label={t("account.label.phone")} value={user?.phone_number || t("common.not_available")} icon={<Phone size={16} color={PALETTE.accentBlue} />} />
+              <InfoTile label={t("account.label.member_since")} value={user?.member_since || t("common.not_available")} icon={<Calendar size={16} color={PALETTE.accentBlue} />} />
+              <InfoTile label={t("account.label.last_login")} value={lastLoginDisplay} icon={<Clock size={16} color={PALETTE.accentBlue} />} />
+              <InfoTile
+                label="Face ID"
+                value={user?.face_uploaded ? "Uploaded ✓" : "Pending upload"}
+                icon={<Camera size={16} color={user?.face_uploaded ? PALETTE.success : PALETTE.warning} />}
+              />
+            </div>
+          </div>
+
+          {/* Security & Verification card */}
+          <div
+            style={{
+              background: PALETTE.surface,
+              border: `1.5px solid ${PALETTE.border}`,
+              borderRadius: VT.radius.xl,
+              padding: "22px 24px 24px",
+              boxShadow: VT.shadow.sm,
+              display: "flex",
+              flexDirection: "column",
+              gap: 0,
+            }}
+          >
+            <SectionHeading icon={<ShieldCheck />} text={t("account.label.status")} />
+            <div className="va-security-row" style={{ display: "flex", gap: 10, marginBottom: 22, flexWrap: "wrap" }}>
+              <StatusPill
+                label={t("account.label.email_verified")}
+                ok={user?.email_verified}
+                okText={t("account.status.verified")}
+                notOkText={t("account.status.unverified")}
+              />
+              <StatusPill
+                label={t("account.label.2fa")}
+                ok={user?.totp_enabled}
+                okText={t("account.status.enabled")}
+                notOkText={t("account.status.not_setup")}
+              />
+            </div>
+
+            {/* Language */}
+            <SectionHeading icon={<Globe />} text={t("account.language")} />
+            <div style={{ marginBottom: 6 }}>
+              <LangToggle language={language} onChange={setLanguage} />
+              <p style={{ fontSize: 12, color: PALETTE.mutedText, marginTop: 10, marginBottom: 0, lineHeight: 1.5, fontWeight: 500 }}>
+                Select your preferred display language for the voter portal.
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* ── Account Security Status ───────────────────────── */}
-        <SectionHeading icon={<ShieldCheck size={16} />} text={t("account.label.status")} />
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 20 }}>
-          <StatusPill
-            label={t("account.label.email_verified")}
-            ok={user?.email_verified}
-            okText={t("account.status.verified")}
-            notOkText={t("account.status.unverified")}
-          />
-          <StatusPill
-            label={t("account.label.2fa")}
-            ok={user?.totp_enabled}
-            okText={t("account.status.enabled")}
-            notOkText={t("account.status.not_setup")}
-          />
+        {/* ── Security Actions card ─────────────────────────────── */}
+        <div
+          style={{
+            background: PALETTE.surface,
+            border: `1.5px solid ${PALETTE.border}`,
+            borderRadius: VT.radius.xl,
+            padding: "22px 24px 24px",
+            boxShadow: VT.shadow.sm,
+            marginBottom: 8,
+          }}
+        >
+          <SectionHeading icon={<KeyRound />} text={t("account.security")} />
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <ActionTile
+              icon={<KeyRound size={18} color={PALETTE.accentBlue} />}
+              label={t("account.change_password")}
+              description={t("account.change_password_desc")}
+              onClick={() => setActiveModal("change-password")}
+            />
+            <ActionTile
+              icon={<Smartphone size={18} color={PALETTE.accentBlue} />}
+              label={t("account.totp_recovery")}
+              description={t("account.totp_recovery_desc")}
+              onClick={() => setActiveModal("totp-recovery")}
+            />
+            <ActionTile
+              icon={<Download size={18} color={PALETTE.accentBlue} />}
+              label="Download My Data"
+              description="Export a copy of your account information and voting history"
+              onClick={() => setToast("Coming Soon — this feature is under development.")}
+            />
+          </div>
         </div>
-
-        {/* ── Language ──────────────────────────────────────── */}
-        <SectionHeading icon={<Globe size={16} />} text={t("account.language")} />
-        <div style={{ marginBottom: 24 }}>
-          <LangToggle language={language} onChange={setLanguage} />
-        </div>
-
-        {/* ── Security & Actions ────────────────────────────── */}
-        <SectionHeading icon={<KeyRound size={16} />} text={t("account.security")} />
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <ActionTile
-            icon={<KeyRound size={18} color={PALETTE.accentBlue} />}
-            label={t("account.change_password")}
-            description={t("account.change_password_desc")}
-            onClick={() => setActiveModal("change-password")}
-          />
-          <ActionTile
-            icon={<Smartphone size={18} color={PALETTE.accentBlue} />}
-            label={t("account.totp_recovery")}
-            description={t("account.totp_recovery_desc")}
-            onClick={() => setActiveModal("totp-recovery")}
-          />
-          <ActionTile
-            icon={<Download size={18} color={PALETTE.accentBlue} />}
-            label="Download My Data"
-            description="Export a copy of your account information and voting history"
-            onClick={() => setToast("Coming Soon — this feature is under development.")}
-          />
-        </div>
-      </div>
+      </VoterPageContainer>
 
       {/* ── Modals ────────────────────────────────────────── */}
       {activeModal === "change-password" && (

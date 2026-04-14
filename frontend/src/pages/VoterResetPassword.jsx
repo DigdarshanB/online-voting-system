@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { extractError } from "../lib/token";
 import { resetPassword } from "../features/auth/api/authApi";
+import OtpInput from "../components/OtpInput";
 import "./VoterAuthPage.css";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -149,20 +150,17 @@ export default function VoterResetPassword() {
                 />
               </div>
 
-              <div className="voter-field">
-                <label className="voter-label" htmlFor="rpCode">
+              <div className="voter-field" style={{ textAlign: "center" }}>
+                <label className="voter-label" style={{ display: "block", textAlign: "center", marginBottom: 10 }}>
                   Reset Code
                 </label>
-                <input
-                  id="rpCode"
-                  className="voter-input"
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="6-digit code from your email"
+                <OtpInput
                   value={form.code}
-                  onChange={(e) => update("code", e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  autoComplete="one-time-code"
-                  maxLength={6}
+                  onChange={(val) => update("code", val)}
+                  autoFocus={false}
+                  disabled={loading}
+                  hasError={!!error && !form.code.trim()}
+                  ariaLabel="Password reset code"
                 />
               </div>
 

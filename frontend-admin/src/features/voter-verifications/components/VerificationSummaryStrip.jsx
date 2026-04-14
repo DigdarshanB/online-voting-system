@@ -1,112 +1,103 @@
 import React from "react";
 import { T } from "../../../components/ui/tokens";
-import { Users, Clock, AlertCircle, FileText } from "lucide-react";
+import { Clock, CheckCircle, FileText, AlertCircle } from "lucide-react";
 
-const PRIMARY = [
+const CARDS = [
   {
-    label: "Pending Submissions",
-    helper: "Awaiting admin action",
+    label: "Pending Review",
+    helper: "Awaiting admin decision",
     key: "pending",
     icon: Clock,
     color: T.accent,
     bg: T.accentLight,
+    border: `${T.accent}30`,
   },
   {
-    label: "Ready for Review",
-    helper: "Complete artifact set",
+    label: "Ready to Approve",
+    helper: "All artifacts present",
     key: "ready",
-    icon: Users,
+    icon: CheckCircle,
     color: T.success,
     bg: T.successBg,
+    border: T.successBorder,
   },
-];
-
-const SECONDARY = [
   {
-    label: "Missing Documents",
-    helper: "Submission incomplete",
+    label: "Missing Artifacts",
+    helper: "Document or face absent",
     key: "missingDocs",
     icon: FileText,
     color: T.warn,
     bg: T.warnBg,
+    border: T.warnBorder,
   },
   {
-    label: "System Alerts",
+    label: "Flagged",
     helper: "Requires manual attention",
     key: "alerts",
     icon: AlertCircle,
     color: T.error,
     bg: T.errorBg,
+    border: T.errorBorder,
   },
 ];
 
-function MetricCard({ card, metrics, variant }) {
-  const value = metrics[card.key] || 0;
-  const isPrimary = variant === "primary";
+function MetricCard({ card, value }) {
+  const isEmpty = value === 0;
+  const Icon = card.icon;
 
   return (
     <div style={{
       background: T.surface,
       border: `1px solid ${T.border}`,
-      borderRadius: T.radius.xl,
-      padding: isPrimary ? "22px 20px" : "16px 18px",
+      borderLeft: `4px solid ${isEmpty ? T.borderLight : card.color}`,
+      borderRadius: T.radius.lg,
+      padding: "18px 20px",
       display: "flex",
-      flexDirection: "column",
-      alignItems: "flex-start",
-      gap: 0,
-      boxShadow: isPrimary ? T.shadow.md : T.shadow.sm,
-      borderTop: `3px solid ${card.color}`,
+      alignItems: "center",
+      gap: 16,
+      boxShadow: T.shadow.sm,
       transition: T.transition,
-      minHeight: isPrimary ? 110 : 90,
+      minHeight: 88,
     }}>
       <div style={{
+        width: 42,
+        height: 42,
+        borderRadius: "50%",
+        background: isEmpty ? T.surfaceAlt : card.bg,
+        border: `1.5px solid ${isEmpty ? T.borderLight : card.border}`,
         display: "flex",
         alignItems: "center",
-        gap: 8,
-        marginBottom: 10,
+        justifyContent: "center",
+        flexShrink: 0,
+        transition: T.transition,
       }}>
+        <Icon size={18} color={isEmpty ? T.subtle : card.color} />
+      </div>
+
+      <div style={{ minWidth: 0, flex: 1 }}>
         <div style={{
-          width: isPrimary ? 34 : 28,
-          height: isPrimary ? 34 : 28,
-          borderRadius: T.radius.md,
-          background: card.bg,
-          color: card.color,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
+          fontSize: 26,
+          fontWeight: 800,
+          color: isEmpty ? T.subtle : T.text,
+          letterSpacing: "-0.03em",
+          lineHeight: 1,
+          marginBottom: 4,
+          transition: T.transition,
         }}>
-          <card.icon size={isPrimary ? 17 : 14} />
+          {value}
         </div>
-        <span style={{
-          fontSize: 10.5,
+        <div style={{
+          fontSize: 12.5,
           fontWeight: 700,
-          color: T.muted,
-          textTransform: "uppercase",
-          letterSpacing: "0.07em",
+          color: isEmpty ? T.subtle : T.textSecondary,
           lineHeight: 1.2,
+          marginBottom: 2,
         }}>
           {card.label}
-        </span>
-      </div>
-
-      <div style={{
-        fontSize: isPrimary ? 28 : 22,
-        fontWeight: 800,
-        color: value === 0 ? T.subtle : T.text,
-        letterSpacing: "-0.03em",
-        lineHeight: 1,
-        marginBottom: 5,
-      }}>
-        {value}
-      </div>
-
-      <div style={{
-        fontSize: 11,
-        color: T.muted,
-        fontWeight: 500,
-      }}>
-        {card.helper}
+        </div>
+        <div style={{ fontSize: 11, color: T.subtle, fontWeight: 400 }}>
+          {card.helper}
+        </div>
       </div>
     </div>
   );
@@ -114,29 +105,15 @@ function MetricCard({ card, metrics, variant }) {
 
 export default function VerificationSummaryStrip({ metrics }) {
   return (
-    <div style={{ marginBottom: T.space.xl }}>
-      {/* Primary metrics */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-        gap: T.space.lg,
-        marginBottom: T.space.md,
-      }}>
-        {PRIMARY.map(card => (
-          <MetricCard key={card.key} card={card} metrics={metrics} variant="primary" />
-        ))}
-      </div>
-
-      {/* Secondary metrics */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-        gap: T.space.lg,
-      }}>
-        {SECONDARY.map(card => (
-          <MetricCard key={card.key} card={card} metrics={metrics} variant="secondary" />
-        ))}
-      </div>
+    <div style={{
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+      gap: 14,
+      marginBottom: T.space.xl,
+    }}>
+      {CARDS.map(card => (
+        <MetricCard key={card.key} card={card} value={metrics[card.key] || 0} />
+      ))}
     </div>
   );
 }

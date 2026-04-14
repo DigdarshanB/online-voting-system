@@ -1,10 +1,10 @@
 import React from "react";
 import { T } from "../../../components/ui/tokens";
-import { Inbox } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 
 export default function VerificationEmptyState({
-  title = "No pending submissions",
-  description = "New identity submissions will appear here for review.",
+  title = "Queue is clear",
+  description = "All submissions have been reviewed. New identity requests will appear here.",
 }) {
   return (
     <div style={{
@@ -12,36 +12,48 @@ export default function VerificationEmptyState({
       flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
-      padding: "40px 24px",
+      padding: "56px 32px",
       textAlign: "center",
     }}>
+      {/* Outer ring */}
       <div style={{
-        width: 48,
-        height: 48,
-        borderRadius: "50%",
-        background: `${T.muted}10`,
-        color: T.subtle,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        marginBottom: 14,
+        position: "relative",
+        width: 72, height: 72,
+        marginBottom: 20,
       }}>
-        <Inbox size={24} />
+        <div style={{
+          position: "absolute", inset: 0,
+          borderRadius: "50%",
+          background: `${T.success}12`,
+          border: `1.5px solid ${T.success}30`,
+        }} />
+        <div style={{
+          position: "absolute", inset: 10,
+          borderRadius: "50%",
+          background: T.successBg,
+          border: `1.5px solid ${T.successBorder}`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <CheckCircle2 size={22} color={T.success} strokeWidth={2} />
+        </div>
       </div>
+
       <p style={{
-        fontSize: 13.5,
+        fontSize: 14,
         fontWeight: 700,
-        color: T.textSecondary,
-        margin: "0 0 4px",
+        color: T.text,
+        margin: "0 0 6px",
+        letterSpacing: "-0.01em",
       }}>
         {title}
       </p>
       <p style={{
         fontSize: 12.5,
         color: T.muted,
-        maxWidth: 240,
+        maxWidth: 220,
         margin: 0,
-        lineHeight: 1.6,
+        lineHeight: 1.65,
+        fontWeight: 400,
       }}>
         {description}
       </p>

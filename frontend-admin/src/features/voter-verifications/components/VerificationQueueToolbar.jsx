@@ -41,12 +41,12 @@ export default function VerificationQueueToolbar({
 }) {
   return (
     <div style={{
-      padding: "10px 14px",
-      borderBottom: `1px solid ${T.border}`,
+      padding: "10px 16px",
+      borderBottom: `1px solid ${T.borderLight}`,
       display: "flex",
       gap: 8,
       alignItems: "center",
-      background: T.surfaceAlt,
+      background: T.surface,
       flexWrap: "wrap",
     }}>
       {/* Search */}
