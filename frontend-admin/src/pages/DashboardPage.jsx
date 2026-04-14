@@ -21,6 +21,10 @@ import SystemStatusPanel from "../components/dashboard/SystemStatusPanel";
 import useDashboardData from "../hooks/useDashboardData";
 import useDashboardAnalytics from "../hooks/useDashboardAnalytics";
 import { getToken, getTokenRole } from "../lib/auth";
+import { T } from "../components/ui/tokens";
+import {
+  AdminPortalHero, AdminHeroChip, AdminKeyframes, ADMIN_HERO_TINTS,
+} from "../components/ui/AdminUI";
 
 /* ── Status label map for election levels ───────────────── */
 const LEVEL_LABELS = {
@@ -99,7 +103,7 @@ export default function DashboardPage() {
   const registeredVoters = Number(summary?.registered_voters ?? 0);
   const pendingVerifications = Number(summary?.pending_verifications ?? 0);
   const totalVotesCast = Number(summary?.total_votes_cast ?? 0);
-  const scheduledCount = Number(summary?.scheduled_elections ?? 0);
+
 
   const electionBreakdown = buildElectionBreakdown(scheduledElections, activeElections);
 
@@ -204,41 +208,23 @@ export default function DashboardPage() {
       : null;
 
   return (
-    <div className="dashboard-page-shell">
-      {/* ─── Header ─────────────────────────────────────────── */}
-      <header
+    <div className="dashboard-page-shell admin-page-enter">
+      <AdminKeyframes />
+
+      {/* ─── Compact Header ─────────────────────────────────── */}
+      <div
         style={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
           flexWrap: "wrap",
-          gap: 16,
-          marginBottom: 28,
+          gap: 10,
+          marginBottom: T.space.xl,
         }}
       >
-        <div>
-          <h2
-            style={{
-              margin: 0,
-              fontSize: 22,
-              fontWeight: 800,
-              color: "var(--dashboard-text)",
-              letterSpacing: "-0.02em",
-            }}
-          >
-            Election Command Center
-          </h2>
-          <p
-            style={{
-              margin: "4px 0 0",
-              fontSize: 13,
-              color: "var(--dashboard-text-soft)",
-              fontWeight: 500,
-            }}
-          >
-            {dateStr}
-          </p>
-        </div>
+        <p style={{ margin: 0, fontSize: 13, color: T.muted, fontWeight: 500 }}>
+          {dateStr}
+        </p>
 
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
           <button
@@ -250,14 +236,14 @@ export default function DashboardPage() {
               alignItems: "center",
               gap: 6,
               padding: "8px 14px",
-              borderRadius: 10,
-              border: "1px solid var(--dashboard-border)",
-              background: "var(--dashboard-surface)",
-              color: "var(--dashboard-text-soft)",
+              borderRadius: T.radius.md,
+              border: `1px solid ${T.border}`,
+              background: T.surface,
+              color: T.textSecondary,
               fontSize: 13,
               fontWeight: 600,
               cursor: "pointer",
-              transition: "all 0.18s ease",
+              transition: T.transition,
             }}
           >
             <RefreshCw size={14} strokeWidth={2.2} />
@@ -267,13 +253,13 @@ export default function DashboardPage() {
             to="/admin/voter-verifications"
             style={{
               padding: "8px 16px",
-              borderRadius: 10,
-              background: "var(--dashboard-accent)",
+              borderRadius: T.radius.md,
+              background: T.accent,
               color: "#FFF",
               textDecoration: "none",
               fontSize: 13,
               fontWeight: 600,
-              transition: "opacity 0.18s ease",
+              transition: `opacity ${T.transition}`,
             }}
           >
             Review Queue
@@ -293,7 +279,21 @@ export default function DashboardPage() {
             )}
           </Link>
         </div>
-      </header>
+      </div>
+
+      {/* ─── Portal Hero ────────────────────────────────────── */}
+      <AdminPortalHero
+        eyebrow="Admin Portal"
+        title="Election Command Center"
+        subtitle="Monitor live election metrics, review voter registrations, and manage administrative operations from a single unified interface."
+        rightContent={<>
+          <AdminHeroChip label={`${activeElections} Active`} tint={activeElections > 0 ? ADMIN_HERO_TINTS.success : ADMIN_HERO_TINTS.default} />
+          <AdminHeroChip label={`${registeredVoters.toLocaleString("en-US")} Voters`} tint={ADMIN_HERO_TINTS.info} />
+          {pendingVerifications > 0 && (
+            <AdminHeroChip label={`${pendingVerifications} Pending`} tint={ADMIN_HERO_TINTS.warn} />
+          )}
+        </>}
+      />
 
       {/* ─── KPI Summary Band ───────────────────────────────── */}
       <div
@@ -301,8 +301,8 @@ export default function DashboardPage() {
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-          gap: 20,
-          marginBottom: 28,
+          gap: T.space.xl,
+          marginBottom: T.space.xl,
         }}
       >
         <PremiumMetricCard
@@ -369,9 +369,9 @@ export default function DashboardPage() {
       <div
         style={{
           display: "grid",
-          gap: 20,
+          gap: T.space.xl,
           gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 400px), 1fr))",
-          marginBottom: 28,
+          marginBottom: T.space.xl,
         }}
       >
         <div style={{ minWidth: 0, maxWidth: "100%" }}>
@@ -469,9 +469,9 @@ export default function DashboardPage() {
       <div
         style={{
           display: "grid",
-          gap: 20,
+          gap: T.space.xl,
           gridTemplateColumns: "minmax(0, 1.2fr) minmax(0, 1fr)",
-          marginBottom: 28,
+          marginBottom: T.space.xl,
         }}
         className="dashboard-bottom-row"
       >

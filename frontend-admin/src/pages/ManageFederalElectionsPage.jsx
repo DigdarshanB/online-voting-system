@@ -16,6 +16,7 @@ import {
   PageContainer, BackLink, StatusBanner,
   SectionCard, SectionHeader, AdminBadge, Btn, WorkflowTimeline,
   AdminKeyframes, formatDateTime, inputStyle, labelStyle,
+  AdminPortalHero, AdminHeroChip, AdminPageHeader, ADMIN_HERO_TINTS,
 } from "../components/ui/AdminUI";
 
 /* ── Constants ───────────────────────────────────────────────── */
@@ -164,6 +165,25 @@ export default function ManageFederalElectionsPage() {
 
       {/* Back nav */}
       <BackLink onClick={() => navigate("/admin/manage-elections")}>Election Hub</BackLink>
+
+      <AdminPageHeader
+        icon={Landmark}
+        title="Federal Elections"
+        subtitle="House of Representatives · 165 FPTP + 110 PR = 275 seats"
+      />
+      <AdminPortalHero
+        eyebrow="Election Operations"
+        title="Federal Election Workspace"
+        subtitle="Create, configure, and advance House of Representatives elections through every lifecycle stage — Article 84, Constitution of Nepal."
+        gradient={`linear-gradient(135deg, ${T.navy}, ${T.accent})`}
+        rightContent={
+          <div className="admin-hero-chips" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'flex-end' }}>
+            <AdminHeroChip label={`${elections.length} election${elections.length !== 1 ? 's' : ''}`} tint="info" />
+            <AdminHeroChip label={`${activeCount} active`} tint="success" />
+            <AdminHeroChip label={`${draftCount} draft`} tint="warn" />
+          </div>
+        }
+      />
 
       {/* ── Unified dashboard header ───────────────────────────── */}
       <div style={{

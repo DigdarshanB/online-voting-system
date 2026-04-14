@@ -9,6 +9,7 @@ import {
   PageContainer, BackLink, SectionCard, SectionHeader,
   AdminBadge, Btn, SearchInput, Toast, AdminKeyframes,
   StatusBanner, imageUrl, errMsg,
+  AdminPortalHero, AdminHeroChip, AdminPageHeader, ADMIN_HERO_TINTS,
 } from "../components/ui/AdminUI";
 import useParties from "../features/candidates/hooks/useParties";
 import useCandidateProfiles from "../features/candidates/hooks/useCandidateProfiles";
@@ -88,24 +89,23 @@ export default function ManageProvincialCandidatesPage() {
         <BackLink to="/admin/manage-candidates" label="Candidate Management" />
       </div>
 
-      {/* ── Context band ── */}
-      <div style={{
-        background: T.surfaceAlt, border: `1px solid ${T.borderLight}`,
-        borderRadius: T.radius.lg, padding: "14px 20px",
-        marginBottom: T.space.xl, display: "flex", gap: 12,
-        alignItems: "flex-start", flexWrap: "wrap",
-      }}>
-        <Building2 size={16} color={T.purple || T.accent} style={{ marginTop: 2, flexShrink: 0 }} />
-        <div style={{ flex: 1, minWidth: 200 }}>
-          <span style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>
-            Provincial candidates workspace
-          </span>
-          <p style={{ margin: "4px 0 0", fontSize: 12, color: T.muted, lineHeight: 1.5 }}>
-            <strong>Party registry</strong> and <strong>candidate profiles</strong> are shared master data.{" "}
-            <strong>Nominations</strong> and <strong>PR lists</strong> are scoped to individual provincial elections.
-          </p>
-        </div>
-      </div>
+      <AdminPageHeader
+        icon={Building2}
+        title="Provincial Candidates"
+        subtitle="Profiles · Nominations · PR lists — 7 Provincial Assemblies"
+      />
+      <AdminPortalHero
+        eyebrow="Candidate Operations"
+        title="Provincial Candidates Workspace"
+        subtitle="Manage candidate profiles, nominations, and PR list submissions scoped to provincial assembly elections across all seven provinces."
+        gradient={`linear-gradient(135deg, ${T.purple || T.navy}, ${T.accent})`}
+        rightContent={
+          <div className="admin-hero-chips" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'flex-end' }}>
+            <AdminHeroChip label="Provincial Assembly" tint="info" />
+            <AdminHeroChip label="7 Provinces" tint="default" />
+          </div>
+        }
+      />
 
       {/* ── Workspace switcher ── */}
       <WorkspaceTabs tabs={TABS} activeTab={tab} onSelect={setTab} id={tablistId} />

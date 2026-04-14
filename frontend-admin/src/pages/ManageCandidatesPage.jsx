@@ -8,6 +8,7 @@ import { T } from "../components/ui/tokens";
 import {
   PageContainer, AdminBadge, Btn,
   SearchInput, Toast, AdminKeyframes, imageUrl, errMsg,
+  AdminPortalHero, AdminHeroChip, ADMIN_HERO_TINTS,
 } from "../components/ui/AdminUI";
 import useParties from "../features/candidates/hooks/useParties";
 import { createParty, deleteParty, uploadPartySymbol, removePartySymbol } from "../features/candidates/api/candidatesApi";
@@ -81,8 +82,19 @@ export default function ManageCandidatesPage() {
       <AdminKeyframes />
       <Toast msg={msg} onClose={() => setMsg(null)} />
 
-      {/* ── Hero Strip ── */}
-      <HeroStrip partyCount={parties.length} />
+      {/* ── Portal Hero ── */}
+      <AdminPortalHero
+        eyebrow="Candidate Operations"
+        title="Candidate Administration"
+        subtitle="Review party submissions, control nomination workflows, organize approved candidate records, and manage PR lists across all three government levels."
+        rightContent={<>
+          <AdminHeroChip label={`${parties.length} ${parties.length === 1 ? "Party" : "Parties"}`} tint={ADMIN_HERO_TINTS.info} />
+          <AdminHeroChip label="Federal" tint={ADMIN_HERO_TINTS.federal} />
+          <AdminHeroChip label="Provincial" tint={ADMIN_HERO_TINTS.provincial} />
+          <AdminHeroChip label="Local" tint={ADMIN_HERO_TINTS.local} />
+        </>}
+      />
+
 
       {/* ═══════════════════════════════════════════════════ */}
       {/*  SECTION 1 — Party Registry                       */}

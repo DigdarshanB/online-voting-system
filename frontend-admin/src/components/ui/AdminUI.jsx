@@ -434,6 +434,146 @@ export const thStyle = {
 
 export const tdStyle = { padding: "12px 14px", fontSize: 13 };
 
+/* ── AdminPortalHero — premium gradient hero matching voter PortalHero ── */
+
+export const ADMIN_HERO_TINTS = {
+  federal:    { bg: "rgba(191,219,254,0.18)", text: "#BFDBFE", border: "rgba(191,219,254,0.35)" },
+  provincial: { bg: "rgba(196,181,253,0.18)", text: "#C4B5FD", border: "rgba(196,181,253,0.35)" },
+  local:      { bg: "rgba(253,186,116,0.18)", text: "#FED7AA", border: "rgba(253,186,116,0.35)" },
+  success:    { bg: "rgba(167,243,208,0.18)", text: "#A7F3D0", border: "rgba(167,243,208,0.35)" },
+  info:       { bg: "rgba(165,243,252,0.18)", text: "#A5F3FC", border: "rgba(165,243,252,0.35)" },
+  warn:       { bg: "rgba(253,224,71,0.18)", text: "#FDE047", border: "rgba(253,224,71,0.35)" },
+  danger:     { bg: "rgba(252,165,165,0.18)", text: "#FCA5A5", border: "rgba(252,165,165,0.35)" },
+  default:    { bg: "rgba(255,255,255,0.12)", text: "rgba(255,255,255,0.88)", border: "rgba(255,255,255,0.22)" },
+};
+
+export function AdminHeroChip({ label, tint }) {
+  const s = (typeof tint === "string" ? ADMIN_HERO_TINTS[tint] : tint) || ADMIN_HERO_TINTS.default;
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center",
+      padding: "6px 16px", borderRadius: 20,
+      background: s.bg, border: `1px solid ${s.border}`,
+      color: s.text, fontSize: 12, fontWeight: 700,
+      letterSpacing: "0.01em", whiteSpace: "nowrap",
+    }}>
+      {label}
+    </span>
+  );
+}
+
+export function AdminPortalHero({ eyebrow, title, subtitle, rightContent, gradient }) {
+  return (
+    <div style={{
+      background: gradient || "linear-gradient(135deg, #152D58 0%, #2563EB 100%)",
+      borderRadius: T.radius.xl,
+      padding: "clamp(22px, 3vw, 34px) clamp(22px, 4vw, 44px)",
+      color: "#FFF",
+      marginBottom: T.space.xl,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      flexWrap: "wrap",
+      gap: T.space.lg,
+      position: "relative",
+      overflow: "hidden",
+    }}>
+      {/* Decorative circles */}
+      <div style={{
+        position: "absolute", right: -60, top: -60,
+        width: 240, height: 240, borderRadius: "50%",
+        background: "rgba(255,255,255,0.05)", pointerEvents: "none",
+      }} />
+      <div style={{
+        position: "absolute", right: 80, bottom: -80,
+        width: 180, height: 180, borderRadius: "50%",
+        background: "rgba(255,255,255,0.04)", pointerEvents: "none",
+      }} />
+      <div style={{
+        position: "absolute", left: -30, bottom: -50,
+        width: 140, height: 140, borderRadius: "50%",
+        background: "rgba(255,255,255,0.03)", pointerEvents: "none",
+      }} />
+
+      {/* Left: text */}
+      <div style={{ flex: "1 1 300px", minWidth: 0, position: "relative" }}>
+        {eyebrow && (
+          <div style={{
+            display: "inline-flex", alignItems: "center",
+            marginBottom: 10, padding: "4px 12px", borderRadius: 20,
+            background: "rgba(255,255,255,0.14)",
+            fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.88)",
+            letterSpacing: "0.05em", textTransform: "uppercase",
+          }}>
+            {eyebrow}
+          </div>
+        )}
+        <h1 style={{
+          margin: 0, fontSize: "clamp(20px, 2.5vw, 26px)", fontWeight: 800,
+          letterSpacing: "-0.02em", lineHeight: 1.25, color: "#FFF",
+        }}>
+          {title}
+        </h1>
+        <p style={{
+          margin: "8px 0 0", fontSize: 14, color: "rgba(255,255,255,0.80)",
+          fontWeight: 500, lineHeight: 1.55, maxWidth: 540,
+        }}>
+          {subtitle}
+        </p>
+      </div>
+
+      {/* Right: chips / badges */}
+      {rightContent && (
+        <div className="admin-hero-chips" style={{
+          display: "flex", flexWrap: "wrap", gap: 8,
+          alignSelf: "center", flexShrink: 0,
+          position: "relative", justifyContent: "flex-end",
+        }}>
+          {rightContent}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── AdminPageHeader — compact top bar above hero ────────────── */
+
+export function AdminPageHeader({ icon: Icon, title, subtitle, action }) {
+  return (
+    <div style={{
+      display: "flex", justifyContent: "space-between", alignItems: "center",
+      marginBottom: T.space.lg, gap: 16, flexWrap: "wrap",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+        {Icon && (
+          <div style={{
+            width: 40, height: 40, borderRadius: T.radius.md,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: `${T.accent}12`, border: `1.5px solid ${T.accent}25`,
+            flexShrink: 0,
+          }}>
+            <Icon size={20} color={T.accent} strokeWidth={2.2} />
+          </div>
+        )}
+        <div>
+          <h2 style={{
+            margin: 0, fontSize: 18, fontWeight: 800, color: T.text,
+            letterSpacing: "-0.02em", lineHeight: 1.2,
+          }}>
+            {title}
+          </h2>
+          {subtitle && (
+            <p style={{ margin: "2px 0 0", fontSize: 13, color: T.muted, fontWeight: 500 }}>
+              {subtitle}
+            </p>
+          )}
+        </div>
+      </div>
+      {action && <div style={{ flexShrink: 0 }}>{action}</div>}
+    </div>
+  );
+}
+
 /* ── Global keyframes (inject once) ──────────────────────────── */
 
 export function AdminKeyframes() {
@@ -441,6 +581,28 @@ export function AdminKeyframes() {
     <style>{`
       @keyframes adminSpin { to { transform: rotate(360deg); } }
       @keyframes adminToastIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+      @keyframes adminFadeIn {
+        from { opacity: 0; transform: translateY(6px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      .admin-page-enter { animation: adminFadeIn 0.30s ease both; }
+
+      /* Card hover lift */
+      .admin-level-card:hover {
+        transform: translateY(-2px);
+        box-shadow: ${T.shadow.lg} !important;
+      }
+      .admin-level-card:focus-visible {
+        outline: none;
+        box-shadow: ${T.focusRing} !important;
+      }
+
+      /* Hero chips responsive */
+      @media (max-width: 767px) {
+        .admin-hero-chips { display: none !important; }
+        .admin-summary-strip { grid-template-columns: 1fr 1fr !important; }
+      }
+
       @media (max-width: 768px) {
         .admin-workflow-hz { display: none !important; }
         .admin-workflow-vt { display: block !important; }

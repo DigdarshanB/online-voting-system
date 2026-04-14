@@ -11,6 +11,10 @@ import {
   getProvincialSummary, getPrElectedMembers,
   getLocalSummary,
 } from "../features/results/api/resultsApi";
+import { T } from "../components/ui/tokens";
+import {
+  PageContainer, AdminKeyframes, AdminPortalHero, AdminHeroChip, AdminPageHeader, ADMIN_HERO_TINTS,
+} from "../components/ui/AdminUI";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
@@ -70,26 +74,36 @@ export default function ResultsPage() {
   const clearMessages = () => { setActionError(null); setActionSuccess(null); };
 
   return (
-    <div style={{ padding: "32px 40px", maxWidth: 1200, margin: "0 auto" }}>
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <BarChart3 size={28} color={P.navy} />
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: P.text, margin: 0 }}>
-            Election Results
-          </h2>
-        </div>
-        <button
-          onClick={reload}
-          style={{
-            display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 16px",
-            borderRadius: 10, border: `1px solid ${P.border}`, background: P.surface,
-            color: P.muted, fontSize: 13, fontWeight: 600, cursor: "pointer",
-          }}
-        >
-          <RefreshCw size={14} /> Refresh
-        </button>
-      </div>
+    <PageContainer>
+      <AdminKeyframes />
+      <AdminPageHeader
+        icon={BarChart3}
+        title="Election Results"
+        subtitle="Ballot counting, tallying, and result certification"
+        action={
+          <button
+            onClick={reload}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 16px",
+              borderRadius: 10, border: `1px solid ${P.border}`, background: P.surface,
+              color: P.muted, fontSize: 13, fontWeight: 600, cursor: "pointer",
+            }}
+          >
+            <RefreshCw size={14} /> Refresh
+          </button>
+        }
+      />
+      <AdminPortalHero
+        eyebrow="Results Centre"
+        title="Ballot Count & Result Engine"
+        subtitle="Initiate count runs, review FPTP tallies and PR seat allocations, lock certified results, and finalize election outcomes."
+        gradient={`linear-gradient(135deg, ${T.navy}, ${T.accent})`}
+        rightContent={
+          <div className="admin-hero-chips" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'flex-end' }}>
+            <AdminHeroChip label={`${elections.length} election${elections.length !== 1 ? 's' : ''}`} tint="info" />
+          </div>
+        }
+      />
 
       {/* Global messages */}
       {actionError && (
@@ -134,7 +148,7 @@ export default function ResultsPage() {
           clearMessages={clearMessages}
         />
       ))}
-    </div>
+    </PageContainer>
   );
 }
 

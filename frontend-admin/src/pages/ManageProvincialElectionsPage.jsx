@@ -15,6 +15,7 @@ import {
   PageContainer, BackLink, StatusBanner,
   SectionCard, SectionHeader, AdminBadge, Btn, WorkflowTimeline,
   AdminKeyframes, formatDateTime, inputStyle, labelStyle,
+  AdminPortalHero, AdminHeroChip, AdminPageHeader, ADMIN_HERO_TINTS,
 } from "../components/ui/AdminUI";
 
 /* ── Province seat table (constitutional — Article 176) ─────── */
@@ -177,6 +178,25 @@ export default function ManageProvincialElectionsPage() {
 
       {/* Back nav */}
       <BackLink onClick={() => navigate("/admin/manage-elections")}>Election Hub</BackLink>
+
+      <AdminPageHeader
+        icon={Building2}
+        title="Provincial Elections"
+        subtitle="7 Provincial Assembly elections · Article 176"
+      />
+      <AdminPortalHero
+        eyebrow="Election Operations"
+        title="Provincial Election Workspace"
+        subtitle="Create, configure, and manage Provincial Assembly elections across all seven provinces of Nepal — 330 total seats."
+        gradient={`linear-gradient(135deg, ${T.purple || T.navy}, ${T.accent})`}
+        rightContent={
+          <div className="admin-hero-chips" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'flex-end' }}>
+            <AdminHeroChip label={`${elections.length} election${elections.length !== 1 ? 's' : ''}`} tint="info" />
+            <AdminHeroChip label={`${activeCount} active`} tint="success" />
+            <AdminHeroChip label={`${provincesWithElections} provinces`} tint="default" />
+          </div>
+        }
+      />
 
       {/* ── Unified dashboard header ───────────────────────────── */}
       <div style={{

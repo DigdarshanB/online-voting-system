@@ -25,7 +25,9 @@ import {
   listAssignableVoters,
 } from "../features/voter-assignments/api/voterAssignmentsApi";
 import { T } from "../components/ui/tokens";
-import { PageContainer, AdminKeyframes } from "../components/ui/AdminUI";
+import {
+  PageContainer, AdminKeyframes, AdminPortalHero, AdminHeroChip, ADMIN_HERO_TINTS,
+} from "../components/ui/AdminUI";
 
 /* ── Shared styles ───────────────────────────────────────────── */
 const card = {
@@ -206,27 +208,20 @@ export default function VoterAssignmentsPage() {
   return (
     <PageContainer>
       <AdminKeyframes />
-      <div style={{ maxWidth: 1140, margin: "0 auto" }}>
-        {/* ── Page header ──────────────────────────────── */}
-        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
-          <div style={{
-            width: 48, height: 48, borderRadius: T.radius.lg, display: "flex",
-            alignItems: "center", justifyContent: "center",
-            background: `linear-gradient(135deg, ${T.accent}18, ${T.accent}08)`,
-            border: `1.5px solid ${T.accent}30`,
-          }}><MapPin size={22} color={T.accent} /></div>
-          <div>
-            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: T.text, letterSpacing: "-0.02em" }}>
-              Voter Assignments
-            </h1>
-            <p style={{ margin: "2px 0 0", color: T.muted, fontSize: 14, fontWeight: 500 }}>
-              Assign registered voters to their electoral constituencies, provincial areas, and local wards.
-            </p>
-          </div>
-        </div>
-
+      <div className="admin-page-enter" style={{ maxWidth: 1140, margin: "0 auto" }}>
+        {/* ── Portal Hero ──────────────────────────────── */}
+        <AdminPortalHero
+          eyebrow="Constituency Management"
+          title="Electoral Assignment Control"
+          subtitle="Assign voters to federal constituencies, provincial assembly areas, and local wards — ensuring accurate electoral roll mapping across Nepal's three-tier government structure."
+          rightContent={<>
+            <AdminHeroChip label="Federal" tint={ADMIN_HERO_TINTS.federal} />
+            <AdminHeroChip label="Provincial" tint={ADMIN_HERO_TINTS.provincial} />
+            <AdminHeroChip label="Local" tint={ADMIN_HERO_TINTS.local} />
+          </>}
+        />
         {/* ── Hub-style level switcher ─────────────────── */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, marginBottom: 24 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: T.space.lg, marginBottom: T.space.xl }}>
           {LEVELS.map(({ key, label, description, icon: Icon, color, bg, borderAccent, active, to, chips }) => (
             <div key={key}
               onClick={() => !active && navigate(to)}

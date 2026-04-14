@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Building2, ArrowLeft, RefreshCw, AlertTriangle, CheckCircle2, BarChart3 } from "lucide-react";
 import useElectionsForResults from "../features/results/hooks/useResults";
 import ElectionResultCard from "../features/results/components/ElectionResultCard";
-import { PageContainer } from "../components/ui/AdminUI";
+import { PageContainer, AdminKeyframes, AdminPortalHero, AdminHeroChip, AdminPageHeader, BackLink, ADMIN_HERO_TINTS } from "../components/ui/AdminUI";
+import { T } from "../components/ui/tokens";
 
 const P = {
   navy: "#173B72", accent: "#2F6FED", surface: "#FFFFFF", bg: "#F5F7FB",
@@ -52,36 +53,35 @@ export default function ProvincialResultsPage() {
 
   return (
     <PageContainer>
-      <button onClick={() => navigate("/admin/results")} style={{
-        display: "inline-flex", alignItems: "center", gap: 6, background: "none",
-        border: "none", color: P.navy, fontSize: 13, fontWeight: 600, cursor: "pointer",
-        padding: 0, marginBottom: 20,
-      }}>
-        <ArrowLeft size={16} /> Election Results
-      </button>
+      <AdminKeyframes />
+      <BackLink onClick={() => navigate("/admin/results")}>Election Results</BackLink>
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div style={{
-            width: 44, height: 44, borderRadius: 12,
-            background: "linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%)",
-            display: "flex", alignItems: "center", justifyContent: "center",
+      <AdminPageHeader
+        icon={Building2}
+        title="Provincial Election Results"
+        subtitle={`${provincialElections.length} election(s) available`}
+        action={
+          <button onClick={reload} style={{
+            display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 16px",
+            borderRadius: 10, border: `1.5px solid ${P.border}`, background: P.surface,
+            color: P.muted, fontSize: 13, fontWeight: 600, cursor: "pointer",
           }}>
-            <Building2 size={22} color="#fff" />
+            <RefreshCw size={14} /> Refresh
+          </button>
+        }
+      />
+      <AdminPortalHero
+        eyebrow="Results Centre"
+        title="Provincial Result Tallies"
+        subtitle="Review FPTP and PR results for all seven Provincial Assembly elections, lock certified outcomes, and track seat allocations."
+        gradient={`linear-gradient(135deg, ${T.purple || T.navy}, ${T.accent})`}
+        rightContent={
+          <div className="admin-hero-chips" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'flex-end' }}>
+            <AdminHeroChip label={`${provincialElections.length} elections`} tint="info" />
+            <AdminHeroChip label="7 Provinces" tint="default" />
           </div>
-          <div>
-            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: P.navy }}>Provincial Election Results</h1>
-            <p style={{ margin: 0, fontSize: 13, color: P.muted }}>{provincialElections.length} election(s) available</p>
-          </div>
-        </div>
-        <button onClick={reload} style={{
-          display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 16px",
-          borderRadius: 10, border: `1.5px solid ${P.border}`, background: P.surface,
-          color: P.muted, fontSize: 13, fontWeight: 600, cursor: "pointer",
-        }}>
-          <RefreshCw size={14} /> Refresh
-        </button>
-      </div>
+        }
+      />
 
       {/* Province filter pills */}
       <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap", overflowX: "auto" }}>

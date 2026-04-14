@@ -8,7 +8,9 @@ import {
   UserMinus, UserPlus, RotateCcw, FileText, Camera, Ban,
 } from "lucide-react";
 import { T } from "../components/ui/tokens";
-import { PageContainer, AdminKeyframes } from "../components/ui/AdminUI";
+import {
+  PageContainer, AdminKeyframes, AdminPortalHero, AdminHeroChip, ADMIN_HERO_TINTS,
+} from "../components/ui/AdminUI";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -1063,29 +1065,26 @@ export default function ManageVotersDashboard() {
         @keyframes slideUpFade { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
       `}</style>
 
-      <div style={{ width: "min(1260px, 100%)", margin: "0 auto", padding: "0 24px 40px" }}>
-        {/* ── Page header ─────────────────────────────────────── */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <div style={{
-              width: 48, height: 48, borderRadius: T.radius.lg, display: "flex",
-              alignItems: "center", justifyContent: "center",
-              background: `linear-gradient(135deg, ${T.accent}18, ${T.accent}08)`,
-              border: `1.5px solid ${T.accent}30`,
-            }}><Users size={22} color={T.accent} /></div>
-            <div>
-              <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: T.text, letterSpacing: "-0.02em" }}>
-                Voters Registry
-              </h1>
-              <p style={{ margin: "2px 0 0", color: T.muted, fontSize: 14, fontWeight: 500 }}>
-                Search, review, and manage official registered voter profiles.
-              </p>
-            </div>
-          </div>
+      <div className="admin-page-enter" style={{ width: "min(1260px, 100%)", margin: "0 auto", padding: "0 0 40px" }}>
+        {/* ── Portal Hero ──────────────────────────────────── */}
+        <AdminPortalHero
+          eyebrow="Voter Registry"
+          title="Voter Lifecycle Administration"
+          subtitle="Comprehensive voter management — search records, review approval status, manage account lifecycle, and perform bulk administrative operations across the entire voter registry."
+          rightContent={<>
+            <AdminHeroChip label={`${total.toLocaleString()} Total`} tint={ADMIN_HERO_TINTS.info} />
+            {pendingRegs.length > 0 && (
+              <AdminHeroChip label={`${pendingRegs.length} Pending`} tint={ADMIN_HERO_TINTS.warn} />
+            )}
+          </>}
+        />
+
+        {/* ── KPI strip ─────────────────────────────────────────────────────── */}
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
           <button onClick={handleRefresh} style={{
             border: `1px solid ${T.border}`, background: T.surface,
-            borderRadius: T.radius.md, padding: "9px 16px", fontSize: 13,
-            fontWeight: 700, cursor: "pointer", color: T.text,
+            borderRadius: T.radius.md, padding: "8px 14px", fontSize: 13,
+            fontWeight: 600, cursor: "pointer", color: T.textSecondary,
             display: "inline-flex", alignItems: "center", gap: 7,
             transition: T.transition, boxShadow: T.shadow.sm,
           }}
@@ -1093,8 +1092,6 @@ export default function ManageVotersDashboard() {
             onMouseLeave={e => { e.currentTarget.style.borderColor = T.border; e.currentTarget.style.boxShadow = T.shadow.sm; }}
           ><RefreshCw size={14} />Refresh Data</button>
         </div>
-
-        {/* ── KPI strip ──────────────────────────────────────── */}
         <div style={{
           display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
           gap: 14, marginBottom: 22,

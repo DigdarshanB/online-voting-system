@@ -14,7 +14,10 @@ import {
   Copy, Check, XCircle, ArrowRight, CheckCircle2,
 } from "lucide-react";
 import { T } from "../components/ui/tokens";
-import { PageContainer, errMsg, formatDateTime } from "../components/ui/AdminUI";
+import {
+  PageContainer, errMsg, formatDateTime,
+  AdminKeyframes, AdminPortalHero, AdminHeroChip, ADMIN_HERO_TINTS,
+} from "../components/ui/AdminUI";
 import PremiumMetricCard from "../components/dashboard/PremiumMetricCard";
 import { useAuditLogs, useAuditSummary } from "../features/audit/hooks/useAuditLogs";
 import { fetchAuditExport } from "../features/audit/api/auditApi";
@@ -1351,27 +1354,19 @@ export default function AuditReportsPage() {
 
   return (
     <PageContainer>
-      {/* Header row — single title + actions */}
-      <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "flex-start",
-        marginBottom: 8,
-        flexWrap: "wrap",
-        gap: 12,
-      }}>
-        <div>
-          <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: T.text, letterSpacing: "-0.02em" }}>
-            Audit Reports
-          </h2>
-          <p style={{ margin: "4px 0 0", fontSize: 13.5, color: T.muted, fontWeight: 500 }}>
-            Review system audit trail, security events, and administrative actions
-          </p>
-        </div>
+      <AdminKeyframes />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
-        {/* Action toolbar */}
+      {/* ── Page toolbar ─────────────────────────────────────── */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        flexWrap: "wrap", gap: 8, marginBottom: 20,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11.5, color: T.subtle, fontWeight: 500 }}>
+          <Clock size={12} />
+          Last updated: {formatDateTime(lastRefreshed.toISOString())}
+        </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-          {/* Refresh — icon-only ghost with loading state */}
           <button
             onClick={handleRefresh}
             title="Refresh data"
@@ -1379,8 +1374,7 @@ export default function AuditReportsPage() {
               display: "flex", alignItems: "center", justifyContent: "center",
               width: 36, height: 36, borderRadius: T.radius.md,
               border: `1px solid ${T.border}`, background: T.surface,
-              cursor: "pointer", boxShadow: T.shadow.sm,
-              outline: "none",
+              cursor: "pointer", boxShadow: T.shadow.sm, outline: "none",
             }}
             onFocus={e => { e.currentTarget.style.boxShadow = T.focusRing; }}
             onBlur={e => { e.currentTarget.style.boxShadow = T.shadow.sm; }}
@@ -1390,7 +1384,6 @@ export default function AuditReportsPage() {
               : <RefreshCw size={15} color={T.muted} />}
           </button>
 
-          {/* Export dropdown */}
           <div ref={exportRef} style={{ position: "relative" }}>
             <button
               onClick={() => setExportOpen(v => !v)}
@@ -1453,7 +1446,6 @@ export default function AuditReportsPage() {
             )}
           </div>
 
-          {/* Report Snapshot — primary CTA */}
           <button
             onClick={() => setShowReport(true)}
             style={{
@@ -1475,15 +1467,17 @@ export default function AuditReportsPage() {
         </div>
       </div>
 
-      {/* Last refreshed indicator */}
-      <div style={{
-        display: "flex", alignItems: "center", gap: 5,
-        fontSize: 11.5, color: T.subtle, fontWeight: 500,
-        marginBottom: 20,
-      }}>
-        <Clock size={12} />
-        Last updated: {formatDateTime(lastRefreshed.toISOString())}
-      </div>
+      {/* ── Portal Hero ──────────────────────────────── */}
+      <AdminPortalHero
+        eyebrow="Security & Compliance"
+        title="System Audit Trail"
+        subtitle="Monitor authentication events, track administrative actions, review security incidents, and generate compliance reports across all portal operations."
+        rightContent={<>
+          <AdminHeroChip label="Authentication" tint={ADMIN_HERO_TINTS.info} />
+          <AdminHeroChip label="Security" tint={ADMIN_HERO_TINTS.warn} />
+          <AdminHeroChip label="Admin Actions" tint={ADMIN_HERO_TINTS.default} />
+        </>}
+      />
 
       {/* KPI Strip */}
       <KPIStrip summary={summaryData} loading={summaryLoading} />

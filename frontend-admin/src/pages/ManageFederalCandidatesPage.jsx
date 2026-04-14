@@ -9,6 +9,7 @@ import {
   PageContainer, BackLink, SectionCard, SectionHeader,
   AdminBadge, Btn, SearchInput, Toast, AdminKeyframes,
   StatusBanner, imageUrl, errMsg,
+  AdminPortalHero, AdminHeroChip, AdminPageHeader, ADMIN_HERO_TINTS,
 } from "../components/ui/AdminUI";
 import useParties from "../features/candidates/hooks/useParties";
 import useCandidateProfiles from "../features/candidates/hooks/useCandidateProfiles";
@@ -132,45 +133,23 @@ function WorkspaceHeader() {
       {/* Breadcrumb */}
       <BackLink to="/admin/manage-candidates" label="Candidate Management" />
 
-      {/* Header row */}
-      <div style={{
-        background: T.surface,
-        border: `1px solid ${T.border}`,
-        borderLeft: `4px solid ${T.accent}`,
-        borderRadius: T.radius.xl,
-        padding: "20px 28px",
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        gap: 20, flexWrap: "wrap",
-        boxShadow: T.shadow.sm,
-      }}>
-        {/* Left: icon + heading */}
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <div style={{
-            width: 48, height: 48, borderRadius: T.radius.lg, flexShrink: 0,
-            background: T.accentLight, border: `1px solid ${T.accent}20`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
-            <FileText size={22} color={T.accent} strokeWidth={2.2} />
+      <AdminPageHeader
+        icon={FileText}
+        title="Federal Candidates"
+        subtitle="Profiles · Nominations · PR lists — House of Representatives"
+      />
+      <AdminPortalHero
+        eyebrow="Candidate Operations"
+        title="Federal Candidates Workspace"
+        subtitle="Manage candidate profiles, adjudicate FPTP nominations, and control PR list submissions for federal elections."
+        gradient={`linear-gradient(135deg, ${T.navy}, ${T.accent})`}
+        rightContent={
+          <div className="admin-hero-chips" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'flex-end' }}>
+            <AdminHeroChip label="House of Representatives" tint="info" />
+            <AdminHeroChip label="165 FPTP + 110 PR" tint="default" />
           </div>
-          <div>
-            <h1 style={{ margin: 0, fontSize: "clamp(17px, 2vw, 22px)", fontWeight: 800, color: T.navy, lineHeight: 1.2 }}>
-              Federal Candidates Workspace
-            </h1>
-            <p style={{ margin: "4px 0 0", fontSize: 12, color: T.muted }}>
-              Candidate profiles · Nominations · PR lists — all scoped to federal elections
-            </p>
-          </div>
-        </div>
-        {/* Right: accent badge */}
-        <span style={{
-          padding: "6px 14px", borderRadius: 20,
-          fontSize: 11, fontWeight: 700,
-          background: T.accentLight, color: T.accent,
-          border: `1px solid ${T.accent}25`, whiteSpace: "nowrap",
-        }}>
-          House of Representatives
-        </span>
-      </div>
+        }
+      />
     </div>
   );
 }

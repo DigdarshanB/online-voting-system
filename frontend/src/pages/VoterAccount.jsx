@@ -8,7 +8,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   UserCircle2,
   ShieldCheck,
@@ -735,12 +735,22 @@ function Toast({ message, onDone }) {
 
 export default function VoterAccount() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { language, setLanguage, t } = useLanguage();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeModal, setActiveModal] = useState(null);
+  const [activeModal, setActiveModal] = useState(
+    () => location.state?.openModal || null,
+  );
   const [toast, setToast] = useState(null);
+
+  /* Clear navigation state so a browser refresh won't reopen the modal */
+  useEffect(() => {
+    if (location.state?.openModal) {
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     fetchMe()

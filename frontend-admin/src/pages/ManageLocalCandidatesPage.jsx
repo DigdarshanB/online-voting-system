@@ -8,6 +8,7 @@ import {
   PageContainer, BackLink, SectionCard, SectionHeader,
   AdminBadge, Btn, SearchInput, Toast, AdminKeyframes,
   StatusBanner, imageUrl, errMsg,
+  AdminPortalHero, AdminHeroChip, AdminPageHeader, ADMIN_HERO_TINTS,
 } from "../components/ui/AdminUI";
 import useParties from "../features/candidates/hooks/useParties";
 import useCandidateProfiles from "../features/candidates/hooks/useCandidateProfiles";
@@ -86,24 +87,23 @@ export default function ManageLocalCandidatesPage() {
         <BackLink to="/admin/manage-candidates" label="Candidate Management" />
       </div>
 
-      {/* ── Context band ── */}
-      <div style={{
-        background: T.surfaceAlt, border: `1px solid ${T.borderLight}`,
-        borderRadius: T.radius.lg, padding: "14px 20px",
-        marginBottom: T.space.xl, display: "flex", gap: 12,
-        alignItems: "flex-start", flexWrap: "wrap",
-      }}>
-        <MapPin size={16} color={accentColor} style={{ marginTop: 2, flexShrink: 0 }} />
-        <div style={{ flex: 1, minWidth: 200 }}>
-          <span style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>
-            Local candidates workspace
-          </span>
-          <p style={{ margin: "4px 0 0", fontSize: 12, color: T.muted, lineHeight: 1.5 }}>
-            <strong>Candidate profiles</strong> are shared master data.{" "}
-            <strong>Nominations</strong> are scoped to individual local elections — covering Mayor, Deputy Mayor, Ward Chair, and ward-level member contests across all 753 local bodies.
-          </p>
-        </div>
-      </div>
+      <AdminPageHeader
+        icon={MapPin}
+        title="Local Candidates"
+        subtitle="Profiles · Nominations — 753 local bodies"
+      />
+      <AdminPortalHero
+        eyebrow="Candidate Operations"
+        title="Local Candidates Workspace"
+        subtitle="Manage candidate profiles and nomination workflows for Mayor, Deputy Mayor, Ward Chair, and ward-level member contests across all local bodies."
+        gradient={`linear-gradient(135deg, ${T.orange || T.navy}, ${T.accent})`}
+        rightContent={
+          <div className="admin-hero-chips" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'flex-end' }}>
+            <AdminHeroChip label="Municipal & Rural" tint="info" />
+            <AdminHeroChip label="753 Local Bodies" tint="default" />
+          </div>
+        }
+      />
 
       {/* ── Workspace switcher ── */}
       <WorkspaceTabs tabs={TABS} activeTab={tab} onSelect={setTab} id={tablistId} />

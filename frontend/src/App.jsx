@@ -25,7 +25,7 @@ import VoterFaceVerification from "./pages/VoterFaceVerification";
 import VoterEmailVerification from "./pages/VoterEmailVerification";
 import VoterForgotPassword from "./pages/VoterForgotPassword";
 import VoterResetPassword from "./pages/VoterResetPassword";
-import VoterChangePassword from "./pages/VoterChangePassword";
+
 import VoterTotpRecovery from "./pages/VoterTotpRecovery";
 import VoterLoginMfa from "./pages/VoterLoginMfa";
 import VoterDashboard from "./pages/VoterDashboard";
@@ -251,16 +251,8 @@ export default function App() {
           </RequireActiveVoter>
         }
       />
-      <Route
-        path="/change-password"
-        element={
-          <RequireActiveVoter>
-            <VoterShell title="Change Password" subtitle="Update your account password">
-              <VoterChangePassword />
-            </VoterShell>
-          </RequireActiveVoter>
-        }
-      />
+      {/* /change-password removed — password change lives in Account Centre modal */}
+      <Route path="/change-password" element={<Navigate to="/account" state={{ openModal: "change-password" }} replace />} />
       <Route
         path="/guide"
         element={

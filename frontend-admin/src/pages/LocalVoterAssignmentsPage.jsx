@@ -14,7 +14,7 @@ import {
   removeAreaAssignment,
 } from "../features/voter-assignments/api/voterAreaAssignmentsApi";
 import { T } from "../components/ui/tokens";
-import { PageContainer, AdminKeyframes } from "../components/ui/AdminUI";
+import { PageContainer, AdminKeyframes, AdminPortalHero, AdminHeroChip, AdminPageHeader, BackLink, ADMIN_HERO_TINTS } from "../components/ui/AdminUI";
 
 const card = { background: T.surface, border: `1px solid ${T.border}`, borderRadius: T.radius.xl, padding: 24, marginBottom: 22, boxShadow: T.shadow.sm };
 const btn = (bg, color) => ({ padding: "9px 18px", borderRadius: T.radius.md, border: "none", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, background: bg, color, transition: T.transition, boxShadow: T.shadow.sm });
@@ -121,36 +121,25 @@ export default function LocalVoterAssignmentsPage() {
       <AdminKeyframes />
       <div style={{ maxWidth: 1140, margin: "0 auto" }}>
       {/* Back link */}
-      <button
-        onClick={() => navigate("/admin/voter-assignments")}
-        style={{
-          display: "inline-flex", alignItems: "center", gap: 6,
-          background: "none", border: "none", cursor: "pointer",
-          fontSize: 13, fontWeight: 600, color: T.muted, padding: 0, marginBottom: 14,
-          transition: T.transition,
-        }}
-        onMouseEnter={e => { e.currentTarget.style.color = T.accent; }}
-        onMouseLeave={e => { e.currentTarget.style.color = T.muted; }}
-      >
-        <ArrowLeft size={14} /> Back to Voter Assignments
-      </button>
-      {/* Page header with icon */}
-      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
-        <div style={{
-          width: 48, height: 48, borderRadius: T.radius.lg, display: "flex",
-          alignItems: "center", justifyContent: "center",
-          background: `linear-gradient(135deg, ${T.orange || "#C2410C"}18, ${T.orange || "#C2410C"}08)`,
-          border: `1.5px solid ${T.orange || "#C2410C"}30`,
-        }}><Home size={22} color={T.orange || "#C2410C"} /></div>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: T.text, letterSpacing: "-0.02em" }}>
-            Local Ward Assignments
-          </h1>
-          <p style={{ margin: "2px 0 0", color: T.muted, fontSize: 13.5, fontWeight: 500 }}>
-            Assign voters to wards within their local bodies (municipalities and rural municipalities).
-          </p>
-        </div>
-      </div>
+      <BackLink onClick={() => navigate("/admin/voter-assignments")}>Voter Assignments</BackLink>
+
+      <AdminPageHeader
+        icon={Home}
+        title="Local Ward Assignments"
+        subtitle="Assign voters to wards within municipalities and rural municipalities"
+      />
+      <AdminPortalHero
+        eyebrow="Voter Operations"
+        title="Local Ward Assignment Control"
+        subtitle="Map verified voters to their local body wards, manage existing assignments, and ensure complete ward-level electoral coverage across all 753 local bodies."
+        gradient={`linear-gradient(135deg, ${T.orange || T.navy}, ${T.accent})`}
+        rightContent={
+          <div className="admin-hero-chips" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'flex-end' }}>
+            <AdminHeroChip label="753 Local Bodies" tint="info" />
+            <AdminHeroChip label="Ward Level" tint="default" />
+          </div>
+        }
+      />
 
       {/* Message banner */}
       {msg && (

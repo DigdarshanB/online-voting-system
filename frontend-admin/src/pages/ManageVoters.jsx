@@ -3,8 +3,10 @@ import axios from "axios";
 import VerificationSummaryStrip from "../features/voter-verifications/components/VerificationSummaryStrip";
 import VerificationWorkbench from "../features/voter-verifications/components/VerificationWorkbench";
 import { T } from "../components/ui/tokens";
-import { PageContainer, AdminKeyframes } from "../components/ui/AdminUI";
-import { CheckCircle2, AlertTriangle, ShieldCheck, RefreshCw, Clock } from "lucide-react";
+import {
+  PageContainer, AdminKeyframes, AdminPortalHero, AdminHeroChip, ADMIN_HERO_TINTS,
+} from "../components/ui/AdminUI";
+import { CheckCircle2, AlertTriangle, RefreshCw, Clock } from "lucide-react";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -107,73 +109,51 @@ export default function ManageVoters() {
       <PageContainer>
         <AdminKeyframes />
         <style>{`@keyframes vvSpin { to { transform: rotate(360deg); } }`}</style>
-        <div style={{ maxWidth: 1320, margin: "0 auto", padding: "0 0 40px" }}>
+        <div className="admin-page-enter" style={{ maxWidth: 1320, margin: "0 auto", padding: "0 0 40px" }}>
 
-          {/* ── Page header ─────────────────────────────── */}
-          <div style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: T.space.xl,
-            gap: 16,
-            flexWrap: "wrap",
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <div style={{
-                width: 46, height: 46, borderRadius: T.radius.lg,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                background: `linear-gradient(135deg, ${T.accent}18, ${T.accent}08)`,
-                border: `1.5px solid ${T.accent}30`,
-                flexShrink: 0,
-              }}>
-                <ShieldCheck size={22} color={T.accent} />
-              </div>
-              <div>
-                <h1 style={{
-                  margin: 0, fontSize: 22, fontWeight: 800, color: T.text,
-                  letterSpacing: "-0.02em", lineHeight: 1.2,
-                }}>
-                  Voter Verifications
-                </h1>
-                <p style={{ margin: "3px 0 0", color: T.muted, fontSize: 13.5, fontWeight: 500, lineHeight: 1.4 }}>
-                  Review pending identity submissions and adjudicate voter applications.
-                </p>
-              </div>
-            </div>
-
-            {/* Refresh action */}
-            <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
-              {lastRefreshed && (
-                <div style={{
-                  display: "flex", alignItems: "center", gap: 5,
-                  fontSize: 11.5, color: T.subtle, fontWeight: 500,
-                }}>
-                  <Clock size={12} color={T.subtle} />
-                  <span>Updated {lastRefreshed}</span>
-                </div>
+          {/* ── Portal Hero ──────────────────────────────────── */}
+          <AdminPortalHero
+            eyebrow="Identity Verification"
+            title="Verification Command Centre"
+            subtitle="Adjudicate voter identity submissions, review uploaded citizenship documents and biometric data, and ensure every registered voter meets verification requirements."
+            rightContent={<>
+              <AdminHeroChip label={`${metrics.pending} Pending`} tint={metrics.pending > 0 ? ADMIN_HERO_TINTS.warn : ADMIN_HERO_TINTS.success} />
+              <AdminHeroChip label={`${metrics.ready} Ready`} tint={ADMIN_HERO_TINTS.info} />
+              {metrics.alerts > 0 && (
+                <AdminHeroChip label={`${metrics.alerts} Flagged`} tint={ADMIN_HERO_TINTS.danger} />
               )}
-              <button
-                onClick={() => fetchVoters(true)}
-                disabled={isRefreshing}
-                style={{
-                  display: "inline-flex", alignItems: "center", gap: 7,
-                  padding: "8px 16px", borderRadius: T.radius.md,
-                  border: `1px solid ${T.border}`, background: T.surface,
-                  fontSize: 13, fontWeight: 600, color: T.textSecondary,
-                  cursor: isRefreshing ? "not-allowed" : "pointer",
-                  transition: T.transition, opacity: isRefreshing ? 0.6 : 1,
-                  boxShadow: T.shadow.sm,
-                }}
-                onMouseEnter={e => { if (!isRefreshing) { e.currentTarget.style.background = T.surfaceAlt; e.currentTarget.style.borderColor = T.borderStrong; } }}
-                onMouseLeave={e => { e.currentTarget.style.background = T.surface; e.currentTarget.style.borderColor = T.border; }}
-              >
-                <RefreshCw size={13} style={isRefreshing ? { animation: "vvSpin 1s linear infinite" } : {}} />
-                Refresh Queue
-              </button>
-            </div>
+            </>}
+          />
+
+          {/* ── Queue actions ───────────────────────────────── */}
+          <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 12, marginBottom: T.space.lg }}>
+            {lastRefreshed && (
+              <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11.5, color: T.subtle, fontWeight: 500 }}>
+                <Clock size={12} color={T.subtle} />
+                <span>Updated {lastRefreshed}</span>
+              </div>
+            )}
+            <button
+              onClick={() => fetchVoters(true)}
+              disabled={isRefreshing}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 7,
+                padding: "8px 16px", borderRadius: T.radius.md,
+                border: `1px solid ${T.border}`, background: T.surface,
+                fontSize: 13, fontWeight: 600, color: T.textSecondary,
+                cursor: isRefreshing ? "not-allowed" : "pointer",
+                transition: T.transition, opacity: isRefreshing ? 0.6 : 1,
+                boxShadow: T.shadow.sm,
+              }}
+              onMouseEnter={e => { if (!isRefreshing) { e.currentTarget.style.background = T.surfaceAlt; e.currentTarget.style.borderColor = T.borderStrong; } }}
+              onMouseLeave={e => { e.currentTarget.style.background = T.surface; e.currentTarget.style.borderColor = T.border; }}
+            >
+              <RefreshCw size={13} style={isRefreshing ? { animation: "vvSpin 1s linear infinite" } : {}} />
+              Refresh Queue
+            </button>
           </div>
 
-          {/* ── Queue health metrics ─────────────────────── */}
+          {/* ── Queue health metrics ──────────────────────────── */}
           <VerificationSummaryStrip metrics={metrics} />
 
           {/* ── Status banner ───────────────────────────── */}

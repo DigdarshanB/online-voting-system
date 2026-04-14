@@ -4,7 +4,8 @@ import {
   BarChart3, Landmark, Building2, MapPin, ArrowRight,
   ClipboardCheck, Calculator, FileCheck, Lock,
 } from "lucide-react";
-import { PageContainer, AdminKeyframes } from "../components/ui/AdminUI";
+import { PageContainer, AdminKeyframes, AdminPortalHero, AdminHeroChip, ADMIN_HERO_TINTS } from "../components/ui/AdminUI";
+import { T } from "../components/ui/tokens";
 import ResultsHubCard from "../features/results/components/ResultsHubCard";
 
 /* ── Level card data ─────────────────────────────────────────── */
@@ -65,60 +66,24 @@ export default function ResultsHubPage() {
       <AdminKeyframes />
       <HubStyles />
 
-      {/* ── Intro banner ──────────────────────────────── */}
-      <div style={{
-        background: "linear-gradient(135deg, #EAF2FF 0%, #F5F7FB 100%)",
-        border: `1px solid ${P.border}`,
-        borderRadius: 16,
-        padding: "28px 32px",
-        marginBottom: 32,
-        display: "flex",
-        alignItems: "center",
-        gap: 20,
-        flexWrap: "wrap",
-      }}>
-        <div style={{
-          width: 52, height: 52, borderRadius: 14,
-          background: "linear-gradient(135deg, #2F6FED 0%, #1D4ED8 100%)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          flexShrink: 0,
-        }}>
-          <BarChart3 size={26} color="#fff" strokeWidth={2.2} />
-        </div>
-        <div style={{ flex: 1, minWidth: 200 }}>
-          <h1 style={{
-            margin: 0, fontSize: "clamp(20px, 2.4vw, 28px)", fontWeight: 800,
-            color: P.navy, lineHeight: 1.2, letterSpacing: "-0.01em",
-          }}>
-            Election Results Centre
-          </h1>
-          <p style={{ margin: "4px 0 0", fontSize: 14, color: P.muted, lineHeight: 1.45, maxWidth: 480 }}>
-            Select a government level to view and manage election results.
-          </p>
-        </div>
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          {[
-            { label: "Federal", bg: "#EAF2FF", color: "#2F6FED" },
-            { label: "Provincial", bg: "#F5F3FF", color: "#7C3AED" },
-            { label: "Local", bg: "#FFF7ED", color: "#EA580C" },
-          ].map((tag) => (
-            <span key={tag.label} style={{
-              padding: "4px 12px", borderRadius: 6, fontSize: 11, fontWeight: 700,
-              letterSpacing: "0.02em", background: tag.bg, color: tag.color,
-              border: `1px solid ${tag.color}18`, whiteSpace: "nowrap",
-            }}>
-              {tag.label}
-            </span>
-          ))}
-        </div>
-      </div>
+      {/* ── Portal Hero ──────────────────────────────── */}
+      <AdminPortalHero
+        eyebrow="Results & Counting"
+        title="Election Results Centre"
+        subtitle="Initiate ballot counts, review FPTP tallies and PR allocations, handle adjudication cases, and certify final results — organized by government level."
+        rightContent={<>
+          <AdminHeroChip label="Federal" tint={ADMIN_HERO_TINTS.federal} />
+          <AdminHeroChip label="Provincial" tint={ADMIN_HERO_TINTS.provincial} />
+          <AdminHeroChip label="Local" tint={ADMIN_HERO_TINTS.local} />
+        </>}
+      />
 
-      {/* ── Level cards ───────────────────────────────── */}
+      {/* ── Level cards ─────────────────────────────────── */}
       <div style={{
         display: "grid",
         gridTemplateColumns: "repeat(auto-fill, minmax(310px, 1fr))",
-        gap: 20,
-        marginBottom: 36,
+        gap: T.space.xl,
+        marginBottom: T.space["3xl"],
       }}>
         {LEVELS.map((level) => (
           <ResultsHubCard

@@ -27,6 +27,10 @@ import {
 import { isMfaVerified, clearToken, clearMfaVerified } from "../lib/auth";
 import { getMe } from "../features/admin-management/api/adminManagementApi";
 import apiClient from "../lib/apiClient";
+import { T } from "../components/ui/tokens";
+import {
+  AdminKeyframes, AdminPortalHero, AdminHeroChip, AdminPageHeader, ADMIN_HERO_TINTS,
+} from "../components/ui/AdminUI";
 
 const P = {
   primary: "#173B72",
@@ -710,8 +714,27 @@ export default function AccountCenterPage() {
           .ac-two-col { grid-template-columns: 1fr !important; }
         }
       `}</style>
+      <AdminKeyframes />
 
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "40px 24px 64px" }}>
+      <div className="admin-page-enter" style={{ maxWidth: 900, margin: "0 auto", padding: "clamp(16px, 3vw, 40px) clamp(16px, 4vw, 48px) 64px" }}>
+
+        {/* ── Compact page header ────────────────────────── */}
+        <AdminPageHeader
+          icon={UserCircle2}
+          title="Account Center"
+          subtitle="Manage your profile, security settings, and session."
+        />
+
+        {/* ── Portal Hero ────────────────────────────────── */}
+        <AdminPortalHero
+          eyebrow="Administrator Profile"
+          title="Account & Security Settings"
+          subtitle="Review your administrator profile, manage authentication credentials, two-factor authentication, and monitor active session status."
+          rightContent={<>
+            <AdminHeroChip label={formatRole(user?.role)} tint={ADMIN_HERO_TINTS.info} />
+            <AdminHeroChip label={(user?.status || "UNKNOWN").charAt(0) + (user?.status || "").slice(1).toLowerCase()} tint={user?.status === "ACTIVE" ? ADMIN_HERO_TINTS.success : ADMIN_HERO_TINTS.warn} />
+          </>}
+        />
 
         {/* ── Profile Hero ───────────────────────────────────── */}
         <div

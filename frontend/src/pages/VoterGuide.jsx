@@ -238,7 +238,8 @@ function HeroSection() {
             Vote Confirmation
           </Link>
           <Link
-            to="/change-password"
+            to="/account"
+            state={{ openModal: "change-password" }}
             className="vg-action-btn"
             style={heroBtn}
           >
@@ -674,7 +675,7 @@ function PasswordSection() {
               current password to set a new one. All other sessions will be
               signed out.
             </p>
-            <Link to="/change-password" className="vg-action-btn">
+            <Link to="/account" state={{ openModal: "change-password" }} className="vg-action-btn">
               <KeyRound size={15} />
               Change Password
             </Link>
@@ -843,7 +844,8 @@ function NeedHelpCard() {
           Vote Receipts
         </Link>
         <Link
-          to="/change-password"
+          to="/account"
+          state={{ openModal: "change-password" }}
           className="vg-action-btn"
           style={{ fontSize: 12 }}
         >

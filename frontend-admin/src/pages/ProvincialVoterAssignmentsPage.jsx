@@ -14,7 +14,7 @@ import {
   removeAreaAssignment,
 } from "../features/voter-assignments/api/voterAreaAssignmentsApi";
 import { T } from "../components/ui/tokens";
-import { PageContainer, AdminKeyframes } from "../components/ui/AdminUI";
+import { PageContainer, AdminKeyframes, AdminPortalHero, AdminHeroChip, AdminPageHeader, BackLink, ADMIN_HERO_TINTS } from "../components/ui/AdminUI";
 
 const PROVINCE_NAMES = {
   1: "Koshi", 2: "Madhesh", 3: "Bagmati", 4: "Gandaki",
@@ -133,36 +133,25 @@ export default function ProvincialVoterAssignmentsPage() {
       <AdminKeyframes />
       <div style={{ maxWidth: 1140, margin: "0 auto" }}>
       {/* Back link */}
-      <button
-        onClick={() => navigate("/admin/voter-assignments")}
-        style={{
-          display: "inline-flex", alignItems: "center", gap: 6,
-          background: "none", border: "none", cursor: "pointer",
-          fontSize: 13, fontWeight: 600, color: T.muted, padding: 0, marginBottom: 14,
-          transition: T.transition,
-        }}
-        onMouseEnter={e => { e.currentTarget.style.color = T.accent; }}
-        onMouseLeave={e => { e.currentTarget.style.color = T.muted; }}
-      >
-        <ArrowLeft size={14} /> Back to Voter Assignments
-      </button>
-      {/* Page header with icon */}
-      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
-        <div style={{
-          width: 48, height: 48, borderRadius: T.radius.lg, display: "flex",
-          alignItems: "center", justifyContent: "center",
-          background: `linear-gradient(135deg, ${T.purple}18, ${T.purple}08)`,
-          border: `1.5px solid ${T.purple}30`,
-        }}><Building2 size={22} color={T.purple} /></div>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: T.text, letterSpacing: "-0.02em" }}>
-            Provincial Area Assignments
-          </h1>
-          <p style={{ margin: "2px 0 0", color: T.muted, fontSize: 13.5, fontWeight: 500 }}>
-            Assign voters to provincial assembly areas across all 7 provinces.
-          </p>
-        </div>
-      </div>
+      <BackLink onClick={() => navigate("/admin/voter-assignments")}>Voter Assignments</BackLink>
+
+      <AdminPageHeader
+        icon={Building2}
+        title="Provincial Area Assignments"
+        subtitle="Assign voters to provincial assembly areas across all 7 provinces"
+      />
+      <AdminPortalHero
+        eyebrow="Voter Operations"
+        title="Provincial Assignment Control"
+        subtitle="Map verified voters to their provincial assembly areas, manage existing assignments, and ensure complete electoral coverage across all seven provinces."
+        gradient={`linear-gradient(135deg, ${T.purple || T.navy}, ${T.accent})`}
+        rightContent={
+          <div className="admin-hero-chips" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'flex-end' }}>
+            <AdminHeroChip label="7 Provinces" tint="info" />
+            <AdminHeroChip label="Provincial Assembly" tint="default" />
+          </div>
+        }
+      />
 
       {/* Message banner */}
       {msg && (
