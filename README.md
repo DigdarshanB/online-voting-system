@@ -4,6 +4,12 @@ A web-based online voting system with separate **Voter** and **Admin** portals, 
 
 ---
 
+## Database Schema
+
+See [docs/database-schema.md](docs/database-schema.md) for the full entity-relationship diagram.
+
+---
+
 ## Tech Stack
 - **Frontend (Voter + Admin):** React (Vite), React Router, Axios, TailwindCSS
 - **Backend:** FastAPI, SQLAlchemy 2.x, Alembic, Pydantic v2, JWT (python-jose), Passlib/Bcrypt, Uvicorn
