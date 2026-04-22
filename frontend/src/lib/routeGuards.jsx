@@ -1,29 +1,14 @@
-/**
- * Centralised route-guard components for the voter portal.
- *
- * Each guard reads auth state via lib/authStorage.js and redirects
- * when preconditions are not met. They are intentionally kept
- * as thin wrapper components so App.jsx stays declarative.
- */
+// Route guards for the voter portal. Each guard reads auth state from
+// ./authStorage and redirects when preconditions fail, keeping App.jsx
+// declarative.
 
 import React, { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { getToken, clearToken } from "./authStorage";
 import { fetchMe } from "../features/auth/api/authApi";
 
-/**
- * Requires a valid token AND a fully verified & active voter account.
- * Used for all protected portal pages (dashboard, elections, results, etc.).
- *
- * Checks:
- *   1. Token exists
- *   2. /auth/me succeeds (token valid)
- *   3. email_verified === true
- *   4. totp_enabled === true
- *   5. status === "ACTIVE"
- *
- * If the user is mid-verification, redirects to the appropriate step.
- */
+// Requires a fully verified, ACTIVE voter (token + /auth/me + email verified
+// + TOTP enrolled). Redirects mid-verification users to the right step.
 export function RequireActiveVoter({ children }) {
   const [state, setState] = useState("loading"); // loading | ok | redirect
   const [redirectTo, setRedirectTo] = useState("/");

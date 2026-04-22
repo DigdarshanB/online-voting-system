@@ -1,9 +1,5 @@
-/**
- * Pre-configured axios instance pointing at the backend.
- *
- * Every outgoing request automatically attaches the Bearer token
- * (when one exists) so callers never build auth headers manually.
- */
+// Pre-configured axios instance. Auto-attaches the Bearer token from local
+// storage when one is present, so callers don't have to.
 
 import axios from "axios";
 import { getToken } from "./authStorage";

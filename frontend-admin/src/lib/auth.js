@@ -52,10 +52,8 @@ export function getTokenRole(token) {
   return payload?.role ?? null;
 }
 
-/**
- * Extract a user-data object from the current JWT.
- * Falls back to sensible defaults when the token is missing or malformed.
- */
+// Best-effort user-data extraction; returns sensible defaults when the JWT
+// is missing or malformed so the UI never crashes mid-render.
 export function getTokenUserData(token) {
   const payload = parseTokenPayload(token);
   if (!payload) {

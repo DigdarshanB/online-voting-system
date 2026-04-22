@@ -1,14 +1,9 @@
-/**
- * translations.js
- *
- * Flat key→value dictionary for English (en) and Nepali (ne).
- * Covers VoterShell, VoterAccount, VoterDashboard, VoterElections,
- * VoterReceipt, VoterCandidates, VoterGuide, and inline modals.
- */
+// Flat key→value dictionary for English (en) and Nepali (ne) used across
+// the voter portal.
 
 const translations = {
   en: {
-    // ── Navigation (VoterShell) ──────────────────────────────
+    // Navigation (VoterShell)
     "nav.dashboard": "Dashboard",
     "nav.elections": "Elections",
     "nav.results": "Results",

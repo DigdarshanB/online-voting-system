@@ -1,13 +1,10 @@
-"""Unified geographic/administrative area model.
+"""Unified Nepal geography model.
 
-Stores ALL Nepal geography in one hierarchical table:
-  COUNTRY → PROVINCE → DISTRICT → CONSTITUENCY (federal)
-                                → MUNICIPALITY / RURAL_MUNICIPALITY / METROPOLITAN / SUB_METROPOLITAN (local)
-                                    → WARD (within local bodies)
-
-Used by ElectionContest to target contests at any government level.
-The existing districts/constituencies tables remain for backward compatibility
-with voter_constituency_assignments and other existing FKs.
+One hierarchical table holds COUNTRY → PROVINCE → DISTRICT →
+CONSTITUENCY (federal) and DISTRICT → local body → WARD. Used by
+``ElectionContest`` to target contests at any government level. The legacy
+``districts`` / ``constituencies`` tables remain for backward compatibility
+with existing FKs.
 """
 
 from datetime import datetime

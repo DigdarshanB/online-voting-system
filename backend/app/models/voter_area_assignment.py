@@ -1,15 +1,9 @@
-"""Voter area assignment — maps a voter to an AreaUnit for a specific government level.
+"""Voter ↔ AreaUnit assignment, scoped per government level.
 
-This table is ADDITIVE alongside the existing voter_constituency_assignments table.
-The legacy table is preserved for federal HoR flows that are already working.
-
-For provincial elections the voter is assigned to the CONSTITUENCY area_unit
-within their province.  The government_level column allows one assignment per
-level per voter, so a voter can have both a federal and a provincial assignment
-without conflict.
-
-For local elections the area_unit would be the MUNICIPALITY / RURAL_MUNICIPALITY /
-METROPOLITAN / SUB_METROPOLITAN the voter is registered in.
+Additive alongside the legacy ``voter_constituency_assignments`` table
+(kept for federal HoR flows). The ``government_level`` column allows one
+assignment per level per voter, so a single voter can hold federal,
+provincial, and local assignments simultaneously.
 """
 
 from datetime import datetime

@@ -1,13 +1,6 @@
-/**
- * VoterDashboard.jsx
- *
- * Redesigned voter command-center dashboard.
- * Sections: Welcome header + verification status, KPI stat cards,
- * charts (donut + timeline), next-action panel, quick actions grid.
- *
- * Data source: GET /voter/elections (eligible elections with has_voted flag)
- * User object: { full_name, is_active, email_verified, totp_enabled }
- */
+// Voter command-center dashboard. Pulls eligible elections from
+// GET /voter/elections (each row carries a has_voted flag) and renders
+// status KPIs, charts, the next action panel, and quick links.
 
 import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
@@ -23,7 +16,6 @@ import apiClient from "../lib/apiClient";
 import { useLanguage } from "../lib/LanguageContext";
 import { VT } from "../lib/voterTokens";
 
-/* ── Derived data helpers ─────────────────────────────────── */
 
 function deriveStats(elections) {
   const eligible = elections.length;

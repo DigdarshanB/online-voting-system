@@ -1,13 +1,10 @@
-/**
- * Shared voter UI primitives — mirrors AdminUI.jsx pattern.
- * All voter election/results pages import from here for visual consistency.
- */
+// Shared voter UI primitives. Mirrors the AdminUI pattern; all voter
+// election/results pages import from here for visual consistency.
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, AlertCircle, CheckCircle2 } from "lucide-react";
 import { VT } from "../lib/voterTokens";
 
-/* ── Global keyframes injected once ─────────────────────────── */
 export function VoterKeyframes() {
   return (
     <style>{`

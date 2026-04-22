@@ -1,12 +1,7 @@
-"""PR elected member — persists each seat won via proportional representation.
+"""PR elected member — one row per seat awarded by Sainte-Laguë allocation.
 
-After the Sainte-Laguë allocation in count_service, the elected candidates
-are written here for permanent record.  Each row represents one PR seat
-awarded to a specific candidate from a party's closed list for a specific
-election contest (PR contest).
-
-This table is populated during counting / finalization; it does NOT replace
-the pr_result_rows table which stores the per-party aggregate tallies.
+Written during counting/finalization; complements (does not replace) the
+``pr_result_rows`` table which holds the per-party aggregate tallies.
 """
 
 from datetime import datetime

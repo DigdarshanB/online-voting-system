@@ -1,16 +1,12 @@
-"""Election management service — CRUD, structure generation, readiness checks.
+"""Election management service: CRUD, structure generation, readiness checks.
 
-Business rules enforced here:
-- Structure generation dispatches by (government_level, election_subtype)
-- Federal HoR: 165 FPTP + 1 PR contest atomically
-- Provincial Assembly: N FPTP + 1 PR per province (N = constituency count)
-- Local: 2 head contests per local body + 4 ward contests per ward
-  (WARD_MEMBER_OPEN has seat_count=2, total 7 selections per voter)
-- Ward data is REQUIRED for local election structure generation
-- Generation blocked unless area_units master data is sufficient
-- Only DRAFT elections may have structure generated or be edited/deleted
-- Configure (DRAFT→CONFIGURED) blocked unless structure passes readiness
-- Lifecycle transitions enforced via ALLOWED_TRANSITIONS map
+Key rules enforced here:
+  - Structure generation dispatches by (government_level, election_subtype).
+  - Federal HoR creates 165 FPTP + 1 PR contest atomically.
+  - Provincial Assembly creates N FPTP + 1 PR per province (N = constituencies).
+  - Local elections need ward data; without it generation fails fast.
+  - Only DRAFT elections can be edited, deleted, or have structure generated.
+  - Status transitions go through ALLOWED_TRANSITIONS.
 """
 
 from datetime import datetime, timezone
@@ -74,14 +70,13 @@ def create_election(
     if end_time <= start_time:
         raise ElectionServiceError("end_time must be after start_time")
 
-    # Validate that we have a known structure definition
     struct_def = get_structure_def(government_level, election_subtype)
     if struct_def is None:
         raise ElectionServiceError(
             f"Unsupported election type: {government_level}/{election_subtype}"
         )
 
-    # For provincial elections, resolve scope_area_id from province_code
+    # Provincial elections need their scope wired to a province area_unit.
     scope_area_id = None
     if government_level == "PROVINCIAL" and province_code:
         province_au = _get_area_by_code(db, province_code)
@@ -95,7 +90,7 @@ def create_election(
     election = Election(
         title=title,
         description=description,
-        election_type=government_level,  # keep legacy column populated
+        election_type=government_level,  # legacy column kept in sync
         government_level=government_level,
         election_subtype=election_subtype,
         province_code=province_code,
@@ -160,9 +155,9 @@ def delete_election(db: Session, election: Election) -> None:
 
 
 def _cascade_delete_election_data(db: Session, election_id: int) -> None:
-    """Remove all dependent data for an election before contests/election are deleted.
+    """Wipe all dependent rows for an election before contests/election rows go.
 
-    Deletion order follows FK dependency depth (deepest first):
+    Order follows FK depth (deepest first):
       pr_result_rows → fptp_result_rows → pr_party_list_entries →
       ballot_entries → count_runs → ballots → votes →
       fptp_candidate_nominations → pr_party_submissions
@@ -242,15 +237,8 @@ def _cascade_delete_election_data(db: Session, election_id: int) -> None:
     db.flush()
 
 
-# ── Universal structure generation (dispatches by level/subtype) ──
-
-
 def generate_election_structure(db: Session, election: Election) -> dict:
-    """Generate contest structure for any supported election type.
-
-    Dispatches to the correct generator based on government_level + election_subtype.
-    This is the new universal entry point.
-    """
+    """Generate contest structure for any supported election type."""
     _require_status(election, STRUCTURE_GEN_STATUSES, "generate structure")
 
     existing = election_repository.count_contests(db, election.id)
@@ -266,7 +254,6 @@ def generate_election_structure(db: Session, election: Election) -> dict:
             f"{election.government_level}/{election.election_subtype}"
         )
 
-    # Dispatch to level-specific generators
     key = (election.government_level, election.election_subtype)
     if key == ("FEDERAL", "HOR_DIRECT"):
         return _generate_federal_hor(db, election)
@@ -303,7 +290,6 @@ def _generate_federal_hor(db: Session, election: Election) -> dict:
             f"found {constituency_count}. Seed geography data first."
         )
 
-    # Load constituencies + their matching area_units
     constituencies = list(
         db.execute(
             select(Constituency).order_by(Constituency.id)
@@ -311,10 +297,8 @@ def _generate_federal_hor(db: Session, election: Election) -> dict:
     )
     fptp_constituencies = constituencies[:FEDERAL_HOR_FPTP_CONSTITUENCY_COUNT]
 
-    # Build code → area_unit.id mapping
     area_map = _get_area_map(db, "CONSTITUENCY")
 
-    # Create FPTP contests
     for c in fptp_constituencies:
         contest = ElectionContest(
             election_id=election.id,
@@ -326,7 +310,7 @@ def _generate_federal_hor(db: Session, election: Election) -> dict:
         )
         db.add(contest)
 
-    # PR national contest
+    # National PR contest.
     np_area = _get_area_by_code(db, "NP")
     pr_contest = ElectionContest(
         election_id=election.id,
@@ -366,7 +350,7 @@ def _generate_provincial_assembly(db: Session, election: Election) -> dict:
             "A provincial election must be scoped to a specific province (e.g. 'P1')."
         )
 
-    # Fetch the province area_unit
+    # Resolve province area_unit and verify it carries a province_number.
     province = _get_area_by_code(db, election.province_code)
     if province is None or province.category != "PROVINCE":
         raise ElectionServiceError(
@@ -381,11 +365,9 @@ def _generate_provincial_assembly(db: Session, election: Election) -> dict:
 
     prov_num = province.province_number
 
-    # Wire scope_area_id so the election is formally linked to its province
     if election.scope_area_id is None:
         election.scope_area_id = province.id
 
-    # Look up expected PR seat count from provincial constants
     pr_seat_count = PROVINCIAL_PR_SEATS.get(prov_num)
     if pr_seat_count is None:
         raise ElectionServiceError(
@@ -393,7 +375,6 @@ def _generate_provincial_assembly(db: Session, election: Election) -> dict:
             "Check provincial_constants.py."
         )
 
-    # Fetch all CONSTITUENCY area_units that belong to this province
     constituencies = list(
         db.execute(
             select(AreaUnit)
@@ -418,7 +399,7 @@ def _generate_provincial_assembly(db: Session, election: Election) -> dict:
             f"(province_number={prov_num}). Seed geography data first."
         )
 
-    # Create one FPTP contest per constituency in the province
+    # One FPTP contest per province constituency.
     for c in constituencies:
         db.add(ElectionContest(
             election_id=election.id,
@@ -428,7 +409,7 @@ def _generate_provincial_assembly(db: Session, election: Election) -> dict:
             area_id=c.id,
         ))
 
-    # Create one province-wide PR contest with correct seat count
+    # Single province-wide PR contest with the constitutionally fixed seat count.
     db.add(ElectionContest(
         election_id=election.id,
         contest_type=CONTEST_TYPE_PR,
@@ -478,7 +459,6 @@ def _generate_local(db: Session, election: Election) -> dict:
         RURAL_LOCAL_BODY_CATEGORIES,
     )
 
-    # Determine which local body categories to target
     if election.election_subtype == "LOCAL_RURAL":
         target_categories = RURAL_LOCAL_BODY_CATEGORIES
     else:
@@ -498,10 +478,8 @@ def _generate_local(db: Session, election: Election) -> dict:
             "Seed area unit data first."
         )
 
-    # Collect local body codes to find their wards
     lb_codes = [lb.code for lb in local_bodies]
 
-    # Find wards belonging to these local bodies
     wards = list(
         db.execute(
             select(AreaUnit)
@@ -520,12 +498,10 @@ def _generate_local(db: Session, election: Election) -> dict:
             "Seed ward data first, then re-generate structure."
         )
 
-    # Group wards by parent local body code
     wards_by_lb: dict[str, list] = {}
     for w in wards:
         wards_by_lb.setdefault(w.parent_code, []).append(w)
 
-    # Verify every local body has at least one ward
     bodies_without_wards = [lb.code for lb in local_bodies if lb.code not in wards_by_lb]
     if bodies_without_wards:
         raise ElectionServiceError(
@@ -776,17 +752,7 @@ def _check_provincial_readiness(db: Session, election: Election, fptp: int, pr: 
 def _check_local_readiness(
     db: Session, election: Election, contest_counts: dict[str, int],
 ) -> list[str]:
-    """Local election readiness checks.
-
-    Requirements (all must pass):
-    1. Ward data must exist in area_units
-    2. Mayor/Chair and Deputy/Vice counts must match expected local body count
-    3. Mayor and Deputy counts must be equal
-    4. Each ward contest type count must equal total ward count
-    5. WARD_MEMBER_OPEN contests must have seat_count=2
-    6. No duplicate (contest_type, area_id) pairs
-    7. All contest titles must be non-empty
-    """
+    """Local election readiness: ward data, head/ward counts, seat_count, dups."""
     from app.core.election_constants import (
         CONTEST_TYPE_MAYOR,
         CONTEST_TYPE_DEPUTY_MAYOR,
@@ -800,7 +766,6 @@ def _check_local_readiness(
 
     issues: list[str] = []
 
-    # ── 1. Determine targeted categories and expected counts ──
     if election.election_subtype == "LOCAL_RURAL":
         expected_categories = RURAL_LOCAL_BODY_CATEGORIES
     else:
@@ -812,7 +777,7 @@ def _check_local_readiness(
         .where(AreaUnit.category.in_(expected_categories))
     ).scalar_one()
 
-    # Count wards belonging to targeted local bodies
+    # Wards belonging to the targeted local bodies.
     lb_codes = [
         row[0] for row in db.execute(
             select(AreaUnit.code).where(AreaUnit.category.in_(expected_categories))
@@ -827,16 +792,14 @@ def _check_local_readiness(
         )
     ).scalar_one() if lb_codes else 0
 
-    # ── 2. Ward data required ──
     if expected_ward_count == 0:
         issues.append(
             "No ward data in area_units for targeted local bodies. "
             "Local elections require ward master data (nepal_ward_data.json). "
             "Seed ward data and re-generate structure."
         )
-        return issues  # No point checking further
+        return issues  # nothing else is meaningful without wards
 
-    # ── 3. Head contest counts ──
     mayor_count = contest_counts.get(CONTEST_TYPE_MAYOR, 0)
     deputy_count = contest_counts.get(CONTEST_TYPE_DEPUTY_MAYOR, 0)
 
@@ -854,7 +817,7 @@ def _check_local_readiness(
             f"{election.election_subtype}, found {mayor_count}"
         )
 
-    # ── 4. Ward contest counts (4 types, each must equal total ward count) ──
+    # Each ward contest type should appear once per ward.
     ward_chair = contest_counts.get(CONTEST_TYPE_WARD_CHAIR, 0)
     ward_woman = contest_counts.get(CONTEST_TYPE_WARD_WOMAN_MEMBER, 0)
     ward_dalit = contest_counts.get(CONTEST_TYPE_WARD_DALIT_WOMAN_MEMBER, 0)
@@ -874,7 +837,7 @@ def _check_local_readiness(
                 f"(1 per ward), found {count}"
             )
 
-    # ── 5. Verify WARD_MEMBER_OPEN seat_count=2 ──
+    # WARD_MEMBER_OPEN must use seat_count=2.
     if ward_open > 0:
         bad_seat_count = db.execute(
             select(func.count())
@@ -891,7 +854,7 @@ def _check_local_readiness(
                 f"(expected 2 for all)"
             )
 
-    # ── 6. Duplicate (contest_type, area_id) check ──
+    # No duplicate (contest_type, area_id) pairs allowed.
     dup_count = db.execute(
         select(func.count()).select_from(
             select(

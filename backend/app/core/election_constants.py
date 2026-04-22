@@ -1,11 +1,9 @@
 """Election structure definitions for all government levels.
 
-Each (government_level, election_subtype) maps to a structure definition
-that tells the service how to generate contests.
-
-This replaces the federal-only assumptions in the old federal_constants.py.
-The old file is preserved for backward compatibility but new code should
-use this module's ELECTION_STRUCTURES dict.
+Maps each (government_level, election_subtype) to the structure used by
+the service layer to generate contests. New code should pull from
+``ELECTION_STRUCTURES`` here rather than from the legacy federal-only
+module.
 """
 
 from app.core.federal_constants import (

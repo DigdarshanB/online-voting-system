@@ -1,10 +1,6 @@
 import React from "react";
 
-/**
- * Provides a consistent page shell for administrative console pages.
- * It establishes the main heading, subtitle, and content layout, ensuring
- * a standardized and calm government-grade information architecture.
- */
+// Standard page shell for admin-management screens.
 export default function ManageAdminsPageShell({ children }) {
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">

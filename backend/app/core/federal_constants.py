@@ -1,10 +1,5 @@
-"""Centralized constants for Federal House of Representatives elections.
+"""Federal House of Representatives constants. Single source of truth."""
 
-All federal numeric and structural constants live here.
-Do NOT scatter these numbers across routes, services, or UI code.
-"""
-
-# ── Seat counts ─────────────────────────────────────────────────
 FEDERAL_HOR_TOTAL_SEATS = 275
 FEDERAL_HOR_FPTP_SEATS = 165
 FEDERAL_HOR_PR_SEATS = 110

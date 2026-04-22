@@ -1,16 +1,10 @@
-"""Safely repair geography and contaminated election data.
+"""Safely repair contaminated geography and election data.
 
-This script:
-1. Checks for transactional data that would block repair (ballots, results)
-2. Removes test nominations/submissions that reference contaminated contests
-3. Removes contaminated election contests
-4. Resets affected elections to DRAFT
-5. Deletes incorrect geography data
-6. Re-seeds from canonical JSON
-7. Regenerates election structure
-8. Validates the result
+Detects blocking transactional data, removes test nominations/contests
+tied to bad geography, resets affected elections, re-seeds canonical
+geography, regenerates election structure, and validates the result.
 
-Run:  python -m app.scripts.repair_geography
+Run: ``python -m app.scripts.repair_geography``
 """
 
 import sys

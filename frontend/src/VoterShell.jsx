@@ -1,10 +1,4 @@
-/**
- * VoterShell.jsx
- *
- * Shell layout for the authenticated voter portal.
- * Mirrors the AdminShell architecture with responsive sidebar,
- * topbar with title/subtitle, secure badge, and footer.
- */
+// Authenticated voter shell: sidebar + topbar + footer. Mirrors AdminShell.
 
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -391,7 +385,7 @@ export default function VoterShell({ children, title, subtitle }) {
             <Menu size={22} strokeWidth={2.2} />
           </button>
 
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <h1
               style={{
                 margin: 0,
@@ -399,6 +393,9 @@ export default function VoterShell({ children, title, subtitle }) {
                 fontWeight: 800,
                 color: PALETTE.topbarText,
                 letterSpacing: "-0.02em",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
               }}
             >
               {displayTitle}

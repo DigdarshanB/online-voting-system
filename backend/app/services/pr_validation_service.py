@@ -1,19 +1,8 @@
 """PR closed-list validation service — system-driven, non-bypassable.
 
-Validation checks:
-1. List is not empty
-2. Entry count does not exceed PR seat count for this election
-3. List positions are sequential 1..N with no gaps
-4. No duplicate candidates within same list
-5. No candidate appears in another party's PR list for the same election
-6. No candidate appears in both FPTP and PR for the same election
-7. Required metadata present on every candidate (full_name, date_of_birth, gender)
-8. Quota-readiness direction hints (warnings only, not blocking)
-
-PR seat limits are resolved per-election from the election's PR contest(s)
-and are never hard-coded to a federal assumption.
-
-Admin UI displays outcomes but cannot override structural validation.
+PR seat limits are resolved per-election from the election's PR contest(s);
+they are never hard-coded to a federal assumption. The admin UI surfaces
+results but cannot override structural validation.
 """
 
 import json

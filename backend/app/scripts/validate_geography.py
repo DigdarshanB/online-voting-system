@@ -1,40 +1,10 @@
-"""Geography validation for Nepal administrative hierarchy.
+"""Validate the Nepal geography source file and the live database.
 
-Validates the geography source file and the live database against the
-canonical data provided by ``app.core.geography_loader``.
+Covers the source JSON, the legacy districts/constituencies tables, the
+area_units master table, and provincial coverage required for provincial
+election generation.
 
-Checks covered
---------------
-Source file
-  - All 8 category counts match expected values
-  - No unknown categories
-  - All codes are non-empty, globally unique, and uniquely within category
-  - All parent_codes reference existing codes
-  - Category parent-chain rules (PROVINCE→COUNTRY, DISTRICT→PROVINCE, …)
-  - Province code pattern (P1–P7)
-  - Constituency code pattern (FC###)
-  - Per-province constituency counts for provincial election readiness
-
-Database — districts table
-  - Expected count (77)
-  - Every JSON district present with correct name and province_number
-  - No extra districts not in JSON source
-
-Database — constituencies table
-  - Expected count (165)
-  - Every JSON constituency present with correct name and parent district
-
-Database — area_units table
-  - Total count (1 003)
-  - Counts per category match expected
-  - Every JSON record present with correct name, category, parent_code
-  - province_number populated for all non-COUNTRY/PROVINCE nodes that need it
-
-Provincial coverage (for provincial election generation)
-  - Each of the 7 provinces has the correct number of CONSTITUENCY area_units
-  - Each is reachable via area_unit.province_number
-
-Run:  python -m app.scripts.validate_geography
+Run: ``python -m app.scripts.validate_geography``
 """
 
 from collections import defaultdict
@@ -56,21 +26,10 @@ from app.models.district import District
 from app.models.constituency import Constituency
 
 
-# ---------------------------------------------------------------------------
-# Source validation — thin wrapper that delegates to geography_loader
-# ---------------------------------------------------------------------------
-
 def validate_json_source() -> list[str]:
-    """Run the comprehensive source-file validation from geography_loader.
-
-    Returns a list of issue strings (empty = PASS).
-    """
+    """Run the source-file validation in geography_loader."""
     return validate_source()
 
-
-# ---------------------------------------------------------------------------
-# Database — legacy districts/constituencies tables
-# ---------------------------------------------------------------------------
 
 def validate_database() -> list[str]:
     """Validate the districts and constituencies tables against the JSON source."""
@@ -84,7 +43,6 @@ def validate_database() -> list[str]:
         expected_districts = EXPECTED["DISTRICT"]
         expected_constituencies = EXPECTED["CONSTITUENCY"]
 
-        # --- District count ---
         db_district_count = db.execute(
             select(func.count()).select_from(District)
         ).scalar_one()
@@ -93,7 +51,6 @@ def validate_database() -> list[str]:
                 f"DB districts: expected {expected_districts}, got {db_district_count}."
             )
 
-        # --- Constituency count ---
         db_const_count = db.execute(
             select(func.count()).select_from(Constituency)
         ).scalar_one()
@@ -102,7 +59,6 @@ def validate_database() -> list[str]:
                 f"DB constituencies: expected {expected_constituencies}, got {db_const_count}."
             )
 
-        # --- Validate each district ---
         db_districts = list(db.execute(select(District)).scalars().all())
         db_district_by_code: dict[str, District] = {}
         for d in db_districts:
@@ -137,7 +93,6 @@ def validate_database() -> list[str]:
                     f"DB: missing district {json_districts[code]['name']!r} ({code})."
                 )
 
-        # --- Validate each constituency ---
         db_constituencies = list(db.execute(select(Constituency)).scalars().all())
         db_district_id_to_code = {d.id: d.code for d in db_districts}
         db_const_by_code: dict[str, Constituency] = {}
@@ -178,7 +133,7 @@ def validate_database() -> list[str]:
                     f"{json_constituencies[code]['name']!r} ({code})."
                 )
 
-        # --- Province constituency totals ---
+        # Province totals across the constituencies table.
         prov_totals: dict[int, int] = defaultdict(int)
         dist_id_to_prov = {d.id: d.province_number for d in db_districts}
         for c in db_constituencies:
@@ -199,17 +154,8 @@ def validate_database() -> list[str]:
     return issues
 
 
-# ---------------------------------------------------------------------------
-# Database — area_units table
-# ---------------------------------------------------------------------------
-
 def validate_area_units() -> list[str]:
-    """Validate the area_units table against the JSON source.
-
-    This is the primary geography store used by election generation.
-    Every record in the JSON source must appear in area_units with
-    matching name, category, parent_code, and correct province_number.
-    """
+    """Validate the area_units table — the primary store used by election generation."""
     issues: list[str] = []
     db = SessionLocal()
     try:
@@ -243,14 +189,12 @@ def validate_area_units() -> list[str]:
                     f"area_units[{cat}]: expected {expected_count}, got {actual}."
                 )
 
-        # Build DB lookup
         db_by_code: dict[str, AreaUnit] = {}
         for row in db_rows:
             if row.code in db_by_code:
                 issues.append(f"area_units: duplicate code {row.code!r}.")
             db_by_code[row.code] = row
 
-        # Compare against source
         all_records = load_all()
         code_to_item = {r["code"]: r for r in all_records}
 
@@ -279,7 +223,8 @@ def validate_area_units() -> list[str]:
                     f"DB={db_row.parent_code!r}, source={src.get('parent_code')!r}."
                 )
 
-        # province_number populated for CONSTITUENCY nodes (needed for provincial elections)
+        # province_number is required on CONSTITUENCY rows for provincial
+        # election generation, and on DISTRICT rows for general scoping.
         for row in db_by_cat.get("CONSTITUENCY", []):
             if row.province_number is None:
                 issues.append(
@@ -287,7 +232,6 @@ def validate_area_units() -> list[str]:
                     "provincial election generation will fail for this constituency."
                 )
 
-        # province_number populated for DISTRICT nodes
         for row in db_by_cat.get("DISTRICT", []):
             if row.province_number is None:
                 issues.append(
@@ -300,16 +244,8 @@ def validate_area_units() -> list[str]:
     return issues
 
 
-# ---------------------------------------------------------------------------
-# Provincial coverage check
-# ---------------------------------------------------------------------------
-
 def validate_provincial_coverage() -> list[str]:
-    """Verify that each province has the correct number of CONSTITUENCY area_units.
-
-    This is a pre-flight check specifically for provincial election generation.
-    Returns blocking issues; empty list means all 7 provinces are ready.
-    """
+    """Pre-flight check that every province has the right CONSTITUENCY count."""
     issues: list[str] = []
     db = SessionLocal()
     try:
@@ -329,7 +265,7 @@ def validate_provincial_coverage() -> list[str]:
                     "Provincial election generation will fail for this province."
                 )
 
-        # Also verify the source mapping matches (cross-check JSON vs DB)
+        # Cross-check the JSON source mapping matches the DB count.
         json_map = province_constituency_map()
         for prov_code, constituencies in json_map.items():
             prov_num = PROVINCE_CODE_TO_NUMBER[prov_code]
@@ -345,10 +281,6 @@ def validate_provincial_coverage() -> list[str]:
 
     return issues
 
-
-# ---------------------------------------------------------------------------
-# Aggregate runner
-# ---------------------------------------------------------------------------
 
 def validate_all() -> dict:
     """Run all four validation suites and return a structured report."""
@@ -371,10 +303,6 @@ def validate_all() -> dict:
         ),
     }
 
-
-# ---------------------------------------------------------------------------
-# CLI entry-point
-# ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
     print("=" * 65)

@@ -1,8 +1,8 @@
-"""Routes for the pending voter registration lifecycle.
+"""Pending voter registration routes.
 
-These endpoints are UNAUTHENTICATED (no JWT required) because the registrant
-does not yet have a ``users`` row. Authentication is via the registration ID
-and TOTP verification.
+Unauthenticated by design: the registrant has no ``users`` row yet, so
+these endpoints rely on the registration ID + TOTP verification instead
+of a JWT.
 """
 
 import logging

@@ -3,8 +3,7 @@ import getpass
 import os
 from urllib.parse import urljoin
 
-# --- Configuration ---
-BASE_URL = "http://127.0.0.1:8000"  # Your local FastAPI server URL
+BASE_URL = "http://127.0.0.1:8000"
 SUPERADMIN_EMAIL = os.environ.get("SUPERADMIN_EMAIL", "superadmin@example.com")
 
 def get_api_error_message(response: requests.Response):
@@ -75,15 +74,12 @@ def perform_password_reset():
         print(f"[!] Connection Error: Is the backend server running at {BASE_URL}?")
 
 def clear_totp_fields():
-    """
-    Connects to the database to clear TOTP fields for the superadmin.
-    This is a sensitive operation and should only be used for local recovery.
-    """
+    """Clear the superadmin TOTP fields directly in the database. Local recovery only."""
     from sqlalchemy import create_engine, update
     from sqlalchemy.orm import sessionmaker
     import sys
 
-    # Add app path to allow model imports
+    # Allow imports of app.* when run as a standalone script.
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), 'app')))
     from models.user import User
     from core.config import get_settings
@@ -96,7 +92,6 @@ def clear_totp_fields():
         SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
         db = SessionLocal()
 
-        # Find the superadmin user
         superadmin_user = db.query(User).filter(User.email == SUPERADMIN_EMAIL).first()
 
         if not superadmin_user:
@@ -104,10 +99,9 @@ def clear_totp_fields():
             db.close()
             return
 
-        # Update the user object
         superadmin_user.is_totp_enabled = False
         superadmin_user.totp_secret = None
-        # Increment token_version to invalidate any existing sessions
+        # Bumps token_version so existing JWTs are immediately invalidated.
         superadmin_user.token_version += 1
 
         db.commit()
@@ -125,7 +119,6 @@ def clear_totp_fields():
 
 
 def main():
-    """Main function to drive the recovery process."""
     print("--- Superadmin Recovery for Local Development ---")
     print("Choose your recovery scenario:")
     print("1. I forgot my password ONLY.")
@@ -137,14 +130,11 @@ def main():
         print("Invalid choice. Please run the script again.")
         return
 
-    # Step 1: Request the password reset. This is common for both scenarios.
     if not request_password_reset():
         return
 
-    # Step 2: Guide user to get the code and reset the password.
     perform_password_reset()
 
-    # Step 3 (Optional): Clear TOTP fields if requested.
     if choice == "2":
         print("\n-------------------------------------------------")
         print("Proceeding to clear TOTP (MFA) fields from your account.")

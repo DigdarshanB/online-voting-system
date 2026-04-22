@@ -1,7 +1,8 @@
-"""Registration service – manages the pending voter registration lifecycle.
+"""Pending voter registration lifecycle.
 
-Handles: submission, TOTP setup/verify, document upload, face upload.
-Admin approval and user-row conversion live in verification_service.py.
+Covers submission, TOTP setup/verify, and document/face uploads.
+Admin approval and conversion into a real user row are handled in
+verification_service.py.
 """
 
 import logging

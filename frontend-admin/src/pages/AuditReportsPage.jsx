@@ -1,10 +1,5 @@
-/**
- * AuditReportsPage.jsx
- *
- * Production-grade audit reports page for the Admin Portal.
- * Displays ONLY real backend-recorded audit data from auth_audit_logs.
- * Super-admin only access.
- */
+// Audit reports page (super-admin only). Renders only data that has been
+// recorded into auth_audit_logs by the backend; no synthesised entries.
 import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import {
   RefreshCw, FileJson, FileText, Camera,

@@ -1,16 +1,4 @@
-"""Admin results routes — count runs, results, finalization.
-
-Endpoints:
-  POST   /admin/results/{election_id}/count-runs          — initiate new count
-  POST   /admin/results/count-runs/{id}/execute            — execute a pending count
-  GET    /admin/results/{election_id}/count-runs            — list count runs
-  GET    /admin/results/count-runs/{id}                     — get single count run
-  GET    /admin/results/count-runs/{id}/summary             — result summary
-  GET    /admin/results/count-runs/{id}/fptp                — FPTP result rows
-  GET    /admin/results/count-runs/{id}/pr                  — PR result rows
-  POST   /admin/results/count-runs/{id}/finalize            — finalize a count
-  POST   /admin/results/count-runs/{id}/lock                — lock a count run
-"""
+"""Admin routes for count runs, results, and finalization."""
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session

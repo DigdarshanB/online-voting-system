@@ -1,23 +1,18 @@
 """Count service — ballot decryption, FPTP tally, PR allocation (Sainte-Laguë).
 
-ALL counting logic lives here.  The UI never computes results.
+All counting logic lives here; the UI never computes results.
 
-Key mathematics
-───────────────
-FPTP winner  = highest valid vote count in each constituency contest.
-FPTP tie     = REQUIRES_ADJUDICATION — no invented automatic tie-break.
+Notes on the math:
+  FPTP winner = highest valid vote count in each contest. Ties surface as
+  REQUIRES_ADJUDICATION; we do not invent an automatic tie-break.
 
-PR threshold = parties with  v_p / V_total  >= 0.03  (3 %).
-PR seats     = Sainte-Laguë using divisors 1, 3, 5, 7, …
-               Take the top 110 quotients only.
-               Exact comparison via ``fractions.Fraction`` — no floats.
-               Quotient tie at the 110th boundary → REQUIRES_ADJUDICATION.
+  PR threshold = parties with v_p / V_total >= 0.03. Sainte-Laguë seat
+  allocation uses divisors 1, 3, 5, ... and takes the top 110 quotients.
+  Comparisons use ``fractions.Fraction`` (exact, no floats); a quotient tie
+  at the 110th boundary surfaces as REQUIRES_ADJUDICATION.
 
-Finalization rules
-──────────────────
-• Unresolved FPTP ties  → block automatic finalization.
-• Unresolved PR boundary ties → block automatic finalization.
-• Result locking prevents silent post-count mutation.
+  Result locking blocks any silent post-count mutation. Unresolved ties
+  (FPTP or PR boundary) block automatic finalization.
 """
 
 from __future__ import annotations

@@ -429,8 +429,8 @@ export default function AdminShell({ children, title, subtitle }) {
             <Menu size={22} strokeWidth={2.2} />
           </button>
 
-          <div style={{ flex: 1 }}>
-            <h1 style={{ margin: 0, fontSize: isMobile ? 16 : 19, fontWeight: 800, color: PALETTE.topbarText, letterSpacing: "-0.02em" }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h1 style={{ margin: 0, fontSize: isMobile ? 16 : 19, fontWeight: 800, color: PALETTE.topbarText, letterSpacing: "-0.02em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {currentMeta.title}
             </h1>
             {!isMobile && currentMeta.subtitle && (

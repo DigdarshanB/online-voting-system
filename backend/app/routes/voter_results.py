@@ -1,12 +1,7 @@
-"""Public / voter-facing result endpoints.
+"""Voter-facing result endpoints.
 
-Results are visible only when the election has been FINALIZED (or when
-result_visible_from has passed).
-
-Endpoints:
-  GET  /voter/results/{election_id}/summary   — high-level summary
-  GET  /voter/results/{election_id}/fptp      — FPTP constituency results
-  GET  /voter/results/{election_id}/pr        — PR seat allocation results
+Results are exposed only after the election is FINALIZED, or once
+``result_visible_from`` has passed.
 """
 
 from fastapi import APIRouter, Depends, HTTPException

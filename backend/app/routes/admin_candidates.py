@@ -1,12 +1,4 @@
-"""Admin candidate management routes — profiles, FPTP nominations, PR submissions.
-
-Route groups:
-  /admin/candidates/profiles/*                        — candidate profile CRUD
-  /admin/candidates/profiles/{id}/photo               — candidate photo upload/remove
-  /admin/candidates/elections/{eid}/fptp-nominations/* — FPTP nomination management
-  /admin/candidates/elections/{eid}/pr-submissions/*   — PR submission & list management
-  /admin/candidates/elections/{eid}/readiness          — candidate-side readiness check
-"""
+"""Admin routes for candidate profiles, FPTP nominations, and PR submissions."""
 
 import json
 from pathlib import Path

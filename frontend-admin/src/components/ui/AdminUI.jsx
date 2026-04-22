@@ -1,7 +1,4 @@
-/**
- * Shared admin UI primitives for election and candidate management pages.
- * Provides consistent, institutional components with responsive design.
- */
+// Shared UI primitives used by the admin election/candidate management pages.
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -9,8 +6,6 @@ import {
   Search, Clock, ChevronRight,
 } from "lucide-react";
 import { T } from "./tokens";
-
-/* ── Utilities ───────────────────────────────────────────────── */
 
 export function errMsg(err) {
   return err?.response?.data?.detail || err?.message || String(err);
@@ -30,7 +25,6 @@ export function formatDateTime(iso) {
   });
 }
 
-/* ── PageContainer ───────────────────────────────────────────── */
 
 export function PageContainer({ children, narrow }) {
   return (
@@ -47,14 +41,12 @@ export function PageContainer({ children, narrow }) {
   );
 }
 
-/* ── BackLink ────────────────────────────────────────────────── */
-
 export function BackLink({ onClick, to, children = "Back", label }) {
   const navigate = useNavigate();
   const handleClick = () => {
     if (onClick) { onClick(); return; }
     if (to) {
-      // Safe back: try history first, fallback to explicit route
+      // Try a real history pop first; fall back to the explicit route.
       if (window.history.length > 2) {
         navigate(-1);
       } else {

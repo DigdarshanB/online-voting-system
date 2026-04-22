@@ -1,12 +1,5 @@
-/**
- * Shared auth-guard hook used by protected pages.
- *
- * On mount it checks for a stored token, calls GET /auth/me,
- * and returns { loading, user }.
- *
- * If there is no token or the request fails the visitor is
- * redirected to "/" and the token is cleared.
- */
+// Auth guard for protected pages. Looks up the stored token, calls
+// /auth/me, and clears + bounces to / if anything fails.
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";

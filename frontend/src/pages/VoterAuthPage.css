@@ -272,3 +272,13 @@
     display: none;
   }
 }
+
+@media (max-width: 420px) {
+  .voter-auth-shell {
+    padding: 16px;
+  }
+
+  .voter-title {
+    font-size: 22px;
+  }
+}

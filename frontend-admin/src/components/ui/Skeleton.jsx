@@ -1,14 +1,6 @@
 import React from "react";
 
-/**
- * Simple skeleton loader block.
- *
- * Props:
- *   width  — CSS width (default "100%")
- *   height — CSS height (default 16)
- *   radius — border radius (default 6)
- *   style  — additional inline styles
- */
+// Animated placeholder block used while real content loads.
 export default function Skeleton({ width = "100%", height = 16, radius = 6, style }) {
   return (
     <div

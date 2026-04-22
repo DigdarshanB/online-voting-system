@@ -1,19 +1,18 @@
-"""Candidate profile + nomination service.
+"""Candidate profile and nomination service.
 
-Business rules:
-- Candidates may be nominated only in NOMINATIONS_OPEN elections
-- One nomination per candidate per contest (enforced by unique constraint)
-- A candidate may only contest one FPTP constituency per election (federal/provincial)
-- A candidate cannot be in both FPTP and PR for the same election
-- A party can have at most one pending/approved candidate per single-seat contest
-- For WARD_MEMBER_OPEN (seat_count=2): a party may nominate up to 2 candidates
-- For provincial elections: contest area must belong to the election's province
-- Local reserved-seat validation: WARD_WOMAN_MEMBER requires FEMALE gender,
-  WARD_DALIT_WOMAN requires FEMALE gender (Dalit eligibility recorded via notes)
-- Cross-role ward protection: a candidate cannot hold nominations for multiple
-  ward-level roles in the same ward within the same election
-- Only PENDING / WITHDRAWN nominations may be deleted
-- Approve/reject transitions require admin review
+Key rules enforced here:
+  - Nominations only allowed while the election is NOMINATIONS_OPEN.
+  - One nomination per candidate per contest (DB unique constraint).
+  - A candidate may contest only one FPTP constituency per election, and
+    cannot appear in both FPTP and PR for the same election.
+  - Single-seat contests: at most one pending/approved candidate per party.
+    WARD_MEMBER_OPEN allows up to two per party (seat_count=2).
+  - Provincial elections: contest area must belong to the election's province.
+  - Reserved-seat checks for ward roles (e.g. WARD_WOMAN_MEMBER requires
+    FEMALE; WARD_DALIT_WOMAN tracks Dalit eligibility in notes).
+  - A candidate cannot hold multiple ward-level nominations in the same ward.
+  - Only PENDING / WITHDRAWN nominations may be deleted; approve/reject
+    transitions require admin review.
 """
 
 from datetime import datetime, timezone

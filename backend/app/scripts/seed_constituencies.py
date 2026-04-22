@@ -1,10 +1,7 @@
 """Seed Nepal's 77 districts and 165 federal HoR constituencies.
 
-Geography data is loaded via app.core.geography_loader, which reads from
-``nepal_geography.json`` (clean extraction) with fallback to the RTF source
-``Constituencies, Provinces and Municipalities.json`` — both in the repo root.
-
-Run:  python -m app.scripts.seed_constituencies
+Geography is loaded via ``app.core.geography_loader``. Run with:
+``python -m app.scripts.seed_constituencies``
 """
 
 from sqlalchemy import select, func

@@ -126,6 +126,43 @@
   align-items: center;
   gap: 10px;
   margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* ── Small screen topbar refinements ────────────────────────── */
+@media (max-width: 640px) {
+  .voter-topbar {
+    padding: 0 12px !important;
+  }
+
+  .voter-topbar h1 {
+    font-size: 15px !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .voter-topbar p {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .voter-topbar {
+    height: 60px !important;
+  }
+
+  /* Hide the "Secure" label text on very small screens; keep dot only */
+  .voter-topbar-actions span {
+    display: none;
+  }
+}
+
+/* ── Footer padding reduction on small screens ───────────────── */
+@media (max-width: 640px) {
+  .voter-footer {
+    padding: 12px 16px !important;
+  }
 }
 
 /* ── Print styles ────────────────────────────────────────────── */

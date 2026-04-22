@@ -1,18 +1,4 @@
-"""Admin election management routes.
-
-Endpoints:
-  GET    /admin/elections              — list elections
-  POST   /admin/elections              — create draft election
-  GET    /admin/elections/{id}         — get election detail
-  PATCH  /admin/elections/{id}         — update draft election
-  DELETE /admin/elections/{id}         — delete draft election
-  POST   /admin/elections/{id}/generate-structure  — generate FPTP + PR contests
-  GET    /admin/elections/{id}/contests            — list contests
-  GET    /admin/elections/{id}/readiness           — structure readiness check
-  POST   /admin/elections/{id}/configure           — lock setup (DRAFT→CONFIGURED)
-  POST   /admin/elections/{id}/advance             — advance to next lifecycle status
-  GET    /admin/elections/master-data/status        — constituency/district counts
-"""
+"""Admin election management routes."""
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session

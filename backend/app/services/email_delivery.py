@@ -1,8 +1,7 @@
-"""Centralized email delivery service with SMTP and dev fallback.
+"""Centralized email delivery: SMTP with an explicit dev fallback.
 
-All email-based flows must use this module to send mail. It validates
-configuration, sends via SMTP, and provides an honest dev fallback that exposes
-codes/tokens only when explicitly enabled.
+Every email-based flow goes through this module. Codes/tokens are only
+exposed via the dev fallback when the relevant setting is enabled.
 """
 
 from datetime import datetime

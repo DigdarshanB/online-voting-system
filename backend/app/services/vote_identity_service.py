@@ -1,14 +1,9 @@
-"""Vote identity verification orchestration service.
+"""Vote identity verification orchestration.
 
-Responsibilities:
-- Validate voter / election state for face-session start
-- Enforce retry / cooldown / lock policy from audit history
-- Issue and validate signed verification context tokens
-- Check replay via provider session ID audit trail
-- Call provider adapter for liveness + face comparison
-- Decide pass / fail / lock outcome
-- Write audit rows inside the caller's DB session (transactional)
-- Dispatch to existing ballot-casting functions only after verification passes
+Owns the pre-cast verification flow: state checks, retry/cooldown/lock
+policy, signed verification context tokens, replay defence, the call into
+the face provider, audit writes (in the caller's transaction), and the
+hand-off to ballot casting.
 """
 
 import logging

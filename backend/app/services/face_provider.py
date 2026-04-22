@@ -1,13 +1,8 @@
-"""Face-comparison provider adapter — internal service boundary.
+"""Face-comparison provider adapter (DeepFace).
 
-Uses DeepFace for local face similarity verification between a stored
-enrollment image and a live captured frame.
-
-All provider logic is isolated here. No election / ballot logic.
+Isolated from any election/ballot logic. The single integration point is
+``compare_faces``, used by vote_identity_service before a ballot is cast.
 Fail-closed: any provider failure prevents vote casting.
-
-The compare_faces() function is the single integration point used by
-vote_identity_service for pre-cast face identity verification.
 """
 
 import base64

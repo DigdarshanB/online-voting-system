@@ -1,28 +1,19 @@
-/**
- * Centralised route-guard components for the admin portal.
- *
- * Each guard reads auth state via lib/auth.js and redirects
- * when preconditions are not met.  They are intentionally kept
- * as thin wrapper components so App.jsx stays declarative.
- */
+// Route guards for the admin portal. Each one is a thin wrapper that reads
+// auth state from ./auth and redirects when preconditions fail, so App.jsx
+// can stay declarative.
 
 import React from "react";
 import { Navigate } from "react-router-dom";
 import { getToken, isMfaVerified, getTokenRole } from "./auth";
 
-/**
- * Requires a valid token AND completed MFA.
- * Used for all dashboard-level pages.
- */
+// Token + completed MFA — used by all dashboard pages.
 export function RequireDashboardMfa({ children }) {
   if (!getToken()) return <Navigate to="/" replace />;
   if (!isMfaVerified()) return <Navigate to="/totp-setup" replace />;
   return children;
 }
 
-/**
- * Requires token + MFA + role in {admin, super_admin}.
- */
+// Token + MFA + admin or super_admin role.
 export function RequireAdminOrSuperAdmin({ children }) {
   const token = getToken();
   const role = getTokenRole(token);
@@ -34,19 +25,14 @@ export function RequireAdminOrSuperAdmin({ children }) {
   return children;
 }
 
-/**
- * Requires a token but NO completed MFA.
- * Used for the TOTP-setup page (between login and MFA verification).
- */
+// Token but MFA NOT yet completed — used by the TOTP setup page.
 export function RequireAuthForTotp({ children }) {
   if (!getToken()) return <Navigate to="/" replace />;
   if (isMfaVerified()) return <Navigate to="/dashboard" replace />;
   return children;
 }
 
-/**
- * Requires token + MFA + super_admin role.
- */
+// Token + MFA + super_admin role only.
 export function RequireSuperAdmin({ children }) {
   const token = getToken();
   const role = getTokenRole(token);
