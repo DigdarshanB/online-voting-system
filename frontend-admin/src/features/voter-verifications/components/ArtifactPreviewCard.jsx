@@ -3,7 +3,7 @@ import axios from "axios";
 import { T } from "../../../components/ui/tokens";
 import { Maximize2, AlertCircle, RefreshCw } from "lucide-react";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API = import.meta.env.VITE_API_URL || "http://54.167.199.49:8000";
 
 function SkeletonBar({ height, width = "100%" }) {
   return (

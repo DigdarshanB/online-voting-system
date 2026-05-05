@@ -8,7 +8,7 @@ import {
 } from "../components/ui/AdminUI";
 import { CheckCircle2, AlertTriangle, RefreshCw, Clock } from "lucide-react";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API = import.meta.env.VITE_API_URL || "http://54.167.199.49:8000";
 
 function authHeaders() {
   const token = localStorage.getItem("access_token");

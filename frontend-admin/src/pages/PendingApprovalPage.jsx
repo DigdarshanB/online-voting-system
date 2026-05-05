@@ -4,7 +4,7 @@ import axios from "axios";
 import "./AdminAuthPage.css";
 import "./PendingApprovalPage.css";
 
-const API = "http://localhost:8000";
+const API = "http://54.167.199.49:8000";
 
 function authHeaders() {
   const token = localStorage.getItem("access_token");

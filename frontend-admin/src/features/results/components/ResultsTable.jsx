@@ -1,7 +1,7 @@
 import React from "react";
 import { Award, TrendingUp, AlertTriangle } from "lucide-react";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://54.167.199.49:8000";
 
 const P = {
   navy: "#173B72", accent: "#2F6FED", surface: "#FFFFFF", bg: "#F5F7FB",

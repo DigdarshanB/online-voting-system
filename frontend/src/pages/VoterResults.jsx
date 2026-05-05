@@ -12,7 +12,7 @@ import {
   VoterStatusBadge,
 } from "../components/VoterUI";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://54.167.199.49:8000";
 
 /* ── SectionCard ─────────────────────────────────────────────── */
 function SectionCard({ children, style }) {

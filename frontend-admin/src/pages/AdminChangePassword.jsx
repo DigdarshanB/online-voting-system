@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./AdminAuthPage.css";
 
-const API = "http://localhost:8000";
+const API = "http://54.167.199.49:8000";
 
 function authHeaders() {
   return { Authorization: `Bearer ${localStorage.getItem("access_token")}` };

@@ -13,7 +13,7 @@ export function errMsg(err) {
 
 export function imageUrl(path) {
   if (!path) return null;
-  const base = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+  const base = import.meta.env.VITE_API_BASE_URL || "http://54.167.199.49:8000";
   return `${base}/${path}`;
 }
 

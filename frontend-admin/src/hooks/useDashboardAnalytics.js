@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://54.167.199.49:8000";
 
 export default function useDashboardAnalytics(range = "6m") {
   const [statusDistribution, setStatusDistribution] = useState({ items: [], total: 0 });

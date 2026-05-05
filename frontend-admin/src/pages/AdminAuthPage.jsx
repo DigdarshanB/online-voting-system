@@ -20,7 +20,7 @@ import { useNavigate, useLocation, useSearchParams, Link } from "react-router-do
 import axios from "axios";
 import "./AdminAuthPage.css";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://54.167.199.49:8000";
 
 // Create a small axios instance so we can set a timeout and a single base URL.
 const api = axios.create({ baseURL: API_BASE, timeout: 10000 });

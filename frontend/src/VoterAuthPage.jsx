@@ -30,7 +30,7 @@ export default function VoterAuthPage() {
      * Output:
      *   A string URL used as the prefix for all backend requests.
      */
-    return import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+    return import.meta.env.VITE_API_BASE_URL || "http://54.167.199.49:8000";
   }, []);
 
   const portalConfig = useMemo(() => {

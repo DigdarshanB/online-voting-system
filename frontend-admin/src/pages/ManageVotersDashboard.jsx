@@ -12,7 +12,7 @@ import {
   PageContainer, AdminKeyframes, AdminPortalHero, AdminHeroChip, ADMIN_HERO_TINTS,
 } from "../components/ui/AdminUI";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API = import.meta.env.VITE_API_URL || "http://54.167.199.49:8000";
 
 /* ── Badge colour map ────────────────────────────────────────── */
 const BADGE_STYLES = {

@@ -19,7 +19,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import "./AdminAuthPage.css";
 
-const API = "http://localhost:8000";
+const API = "http://54.167.199.49:8000";
 
 function isEmail(str) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str);

@@ -11,7 +11,7 @@ import { saveVoteReceipt } from "./VoterReceipt";
 import PreCastFaceVerificationModal from "../components/PreCastFaceVerificationModal";
 import "./VoterBallot.css";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://54.167.199.49:8000";
 
 /* ── Level badge config ───────────────────────────────────────── */
 const LEVEL_META = {

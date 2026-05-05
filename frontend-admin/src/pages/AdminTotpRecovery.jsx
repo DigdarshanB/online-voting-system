@@ -4,7 +4,7 @@ import axios from "axios";
 import OtpInput from "../components/ui/OtpInput";
 import "./AdminAuthPage.css";
 
-const API = "http://localhost:8000";
+const API = "http://54.167.199.49:8000";
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function AdminTotpRecovery() {

@@ -8,7 +8,7 @@
  * @param {string|null|undefined} path  Relative path from DB (e.g. photo_path, symbol_path)
  * @returns {string|null}  Full URL or null when no path is provided
  */
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://54.167.199.49:8000";
 
 export default function mediaUrl(path) {
   if (!path) return null;
