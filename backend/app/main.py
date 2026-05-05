@@ -31,6 +31,8 @@ origins = [
     "http://localhost:5174",
     "http://127.0.0.1:5173",
     "http://127.0.0.1:5174",
+    "http://54.167.199.49:5173", #aws ec2 public ip of the frontend server
+    "http://54.167.199.49:5174",#aws ec2 public ip of the frontend-admin server
 ]
 
 app.add_middleware(
